@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34202.233
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeltaEngineEditor", "DeltaEngineEditor.csproj", "{EE42808A-B8E3-4540-AEA4-B7EA40156508}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeltaEngineEditor", "DeltaEngineEditor.csproj", "{7EB2F1AF-7784-4FF4-B2F2-071F46C07796}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,17 +11,17 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{EE42808A-B8E3-4540-AEA4-B7EA40156508}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EE42808A-B8E3-4540-AEA4-B7EA40156508}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EE42808A-B8E3-4540-AEA4-B7EA40156508}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
-		{EE42808A-B8E3-4540-AEA4-B7EA40156508}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EE42808A-B8E3-4540-AEA4-B7EA40156508}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EE42808A-B8E3-4540-AEA4-B7EA40156508}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{7EB2F1AF-7784-4FF4-B2F2-071F46C07796}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7EB2F1AF-7784-4FF4-B2F2-071F46C07796}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7EB2F1AF-7784-4FF4-B2F2-071F46C07796}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{7EB2F1AF-7784-4FF4-B2F2-071F46C07796}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7EB2F1AF-7784-4FF4-B2F2-071F46C07796}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7EB2F1AF-7784-4FF4-B2F2-071F46C07796}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {90747BCC-0023-4B72-9779-9619E16535D9}
+		SolutionGuid = {0FE9A7C0-D37D-4E67-90B1-338B89FF3723}
 	EndGlobalSection
 EndGlobal
