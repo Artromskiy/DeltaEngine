@@ -1,4 +1,4 @@
-# DeltaEngine
+# Delta Engine
 This repository contains the editor and game engine project.
 This is the very beginning of development and, like any other similar project, it can cease to exist even without becoming a minimum viable product. At least we tried.
 
