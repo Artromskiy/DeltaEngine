@@ -1,6 +1,3 @@
 [submodule "Depend/Silk.NET"]
 	path = Depend/Silk.NET
 	url = https://github.com/dotnet/Silk.NET.git
-[submodule "Depend/VulkanSharp"]
-	path = Depend/VulkanSharp
-	url = https://github.com/mono/VulkanSharp.git
