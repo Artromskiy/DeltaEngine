@@ -1,7 +1,7 @@
 ﻿using ObjCRuntime;
 using UIKit;
 
-namespace DeltaEngineEditor
+namespace DeltaEditor
 {
     public class Program
     {

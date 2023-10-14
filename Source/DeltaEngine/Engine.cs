@@ -2,14 +2,15 @@
 {
     public class Engine
     {
+        private readonly Renderer _renderer;
         public Engine()
         {
-
+            _renderer = new Renderer();
         }
 
-        public void RunScene(Scene scene)
+        public void Run()
         {
-
+            _renderer.Run();
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using Foundation;
 
-namespace DeltaEngineEditor
+namespace DeltaEditor
 {
     [Register("AppDelegate")]
     public class AppDelegate : MauiUIApplicationDelegate

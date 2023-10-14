@@ -2,7 +2,7 @@ using Microsoft.Maui;
 using Microsoft.Maui.Hosting;
 using System;
 
-namespace DeltaEngineEditor
+namespace DeltaEditor
 {
     internal class Program : MauiApplication
     {

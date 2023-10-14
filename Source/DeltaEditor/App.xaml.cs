@@ -1,4 +1,4 @@
-﻿namespace DeltaEngineEditor
+﻿namespace DeltaEditor
 {
     public partial class App : Application
     {

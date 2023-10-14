@@ -1,7 +1,7 @@
 ﻿using Android.App;
 using Android.Runtime;
 
-namespace DeltaEngineEditor
+namespace DeltaEditor
 {
     [Application]
     public class MainApplication : MauiApplication
