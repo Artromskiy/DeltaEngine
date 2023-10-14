@@ -9,10 +9,4 @@
     <PublishAot>true</PublishAot>
   </PropertyGroup>
 
-
-
-  <ItemGroup>
-    <PackageReference Include="Silk.NET" Version="2.17.1" />
-  </ItemGroup>
-
 </Project>

@@ -1,0 +1,3 @@
+[submodule "Depend/Silk.NET"]
+	path = Depend/Silk.NET
+	url = https://github.com/dotnet/Silk.NET.git
