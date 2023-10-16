@@ -1,19 +1,16 @@
-﻿namespace DeltaEditor
+﻿using DeltaEngine;
+
+namespace DeltaEditor
 {
     public partial class App : Application
     {
+        private readonly Engine _engine;
         public App()
         {
             InitializeComponent();
-
             MainPage = new AppShell();
+            _engine = new Engine();
+            _engine.Run();
         }
-
-        //protected override Window CreateWindow(IActivationState activationState)
-        //{
-        //    var window = base.CreateWindow(activationState);
-        //    window.Title = "Delta Engine";
-        //    return window;
-        //}
     }
 }

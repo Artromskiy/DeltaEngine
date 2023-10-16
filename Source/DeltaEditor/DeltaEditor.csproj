@@ -16,7 +16,7 @@
 
 		<!-- App Identifier -->
 		<ApplicationId>com.companyname.deltaeditor</ApplicationId>
-		<ApplicationIdGuid>6683c8a5-9d0f-4d10-b053-9de110356bf6</ApplicationIdGuid>
+		<ApplicationIdGuid>3397cdaf-5d46-46e3-b91d-6fabd4d7bb07</ApplicationIdGuid>
 
 		<!-- Versions -->
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
@@ -28,7 +28,6 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
-		<Nullable>enable</Nullable>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -54,9 +53,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Reference Include="DeltaEngine">
-	    <HintPath>..\DeltaEngine\bin\Release\net7.0\DeltaEngine.dll</HintPath>
-	  </Reference>
+	  <ProjectReference Include="..\DeltaEngine\DeltaEngine.csproj" />
 	</ItemGroup>
 
 </Project>
