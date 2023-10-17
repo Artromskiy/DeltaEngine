@@ -1,5 +1,4 @@
-﻿using CommunityToolkit.HighPerformance;
-using Silk.NET.Core;
+﻿using Silk.NET.Core;
 using Silk.NET.Core.Native;
 using Silk.NET.SDL;
 using Silk.NET.Vulkan;
@@ -34,8 +33,8 @@ namespace DeltaEngine
               WindowFlags.Vulkan
             | WindowFlags.Shown
             | WindowFlags.Resizable
-            //            | WindowFlags.AllowHighdpi 
-            | WindowFlags.Borderless
+       //            | WindowFlags.AllowHighdpi 
+       //            | WindowFlags.Borderless
        //            | WindowFlags.FullscreenDesktop
        );
 
@@ -278,12 +277,12 @@ namespace DeltaEngine
             GraphicsPipelineCreateInfo pipelineInfo = new()
             {
                 SType = StructureType.GraphicsPipelineCreateInfo,
-                StageCount = 2,
-                PStages = shaderStages,
+                StageCount = 0,
+                PStages = (PipelineShaderStageCreateInfo*)null,// shaderStages,
                 PVertexInputState = &vertexInputInfo,
                 PInputAssemblyState = &inputAssembly,
                 PViewportState = &viewportState,
-                PRasterizationState = &rasterizer,
+                PRasterizationState = (PipelineRasterizationStateCreateInfo*)null, //& rasterizer,
                 PMultisampleState = &multisampling,
                 PColorBlendState = &colorBlending,
                 Layout = pipelineLayout,
@@ -350,7 +349,7 @@ namespace DeltaEngine
             return commandPool;
         }
 
-        public static unsafe CommandBuffer[] CreateCommandBuffers(Api api, Framebuffer[] swapChainFramebuffers, CommandPool commandPool, Device device, RenderPass renderPass, Extent2D swapChainExtent, Pipeline graphicsPipeline)
+        public static unsafe CommandBuffer[] CreateCommandBuffers(Api api, Framebuffer[] swapChainFramebuffers, CommandPool commandPool, Device device, RenderPass renderPass, Extent2D swapChainExtent, Pipeline? graphicsPipeline)
         {
             var commandBuffers = new CommandBuffer[swapChainFramebuffers.Length];
             CommandBufferAllocateInfo allocInfo = new()
@@ -389,7 +388,8 @@ namespace DeltaEngine
                 renderPassInfo.PClearValues = &clearColor;
 
                 api.vk.CmdBeginRenderPass(commandBuffers[i], &renderPassInfo, SubpassContents.Inline);
-                api.vk.CmdBindPipeline(commandBuffers[i], PipelineBindPoint.Graphics, graphicsPipeline);
+                if (graphicsPipeline != null)
+                    api.vk.CmdBindPipeline(commandBuffers[i], PipelineBindPoint.Graphics, graphicsPipeline.Value);
                 //api.vk.CmdDraw(commandBuffers[i], 3, 1, 0, 0); // Actual draw
                 api.vk.CmdEndRenderPass(commandBuffers[i]);
                 _ = api.vk.EndCommandBuffer(commandBuffers[i]);

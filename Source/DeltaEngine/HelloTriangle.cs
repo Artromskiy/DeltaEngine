@@ -72,7 +72,7 @@ namespace DeltaEngine
 
         private RenderPass renderPass;
         private PipelineLayout pipelineLayout;
-        private Pipeline graphicsPipeline;
+        private Pipeline? graphicsPipeline;
 
         private CommandPool commandPool;
         private CommandBuffer[]? commandBuffers;
@@ -107,7 +107,7 @@ namespace DeltaEngine
             (khrSwapChain, swapChain, swapChainImages, swapChainImageFormat, swapChainExtent) = RenderHelper.CreateSwapChain(_api, window, instance, device, physicalDevice, surface, khrsf);
             swapChainImageViews = RenderHelper.CreateImageViews(_api, device, swapChainImages, swapChainImageFormat);
             renderPass = RenderHelper.CreateRenderPass(_api, device, swapChainImageFormat);
-            (graphicsPipeline, pipelineLayout) = RenderHelper.CreateGraphicsPipeline(_api, device, swapChainExtent, renderPass);
+            //(graphicsPipeline, pipelineLayout) = RenderHelper.CreateGraphicsPipeline(_api, device, swapChainExtent, renderPass);
             swapChainFramebuffers = RenderHelper.CreateFramebuffers(_api, device, swapChainImageViews, renderPass, swapChainExtent);
             commandPool = RenderHelper.CreateCommandPool(_api, physicalDevice, device, surface, khrsf);
             commandBuffers = RenderHelper.CreateCommandBuffers(_api, swapChainFramebuffers, commandPool, device, renderPass, swapChainExtent, graphicsPipeline);
@@ -143,7 +143,8 @@ namespace DeltaEngine
                 _api.vk.DestroyFramebuffer(device, framebuffer, null);
             }
 
-            _api.vk.DestroyPipeline(device, graphicsPipeline, null);
+            if(graphicsPipeline.HasValue)
+            _api.vk.DestroyPipeline(device, graphicsPipeline.Value, null);
             _api.vk.DestroyPipelineLayout(device, pipelineLayout, null);
             _api.vk.DestroyRenderPass(device, renderPass, null);
 
@@ -354,152 +355,6 @@ namespace DeltaEngine
             }
         }
 
-        private void CreateGraphicsPipeline()
-        {
-            var p = Directory.GetCurrentDirectory();
-            var vertShaderCode = File.ReadAllBytes("shaders/vert.spv");
-            var fragShaderCode = File.ReadAllBytes("shaders/frag.spv");
-
-            var vertShaderModule = CreateShaderModule(vertShaderCode);
-            var fragShaderModule = CreateShaderModule(fragShaderCode);
-
-            PipelineShaderStageCreateInfo vertShaderStageInfo = new()
-            {
-                SType = StructureType.PipelineShaderStageCreateInfo,
-                Stage = ShaderStageFlags.VertexBit,
-                Module = vertShaderModule,
-                PName = (byte*)SilkMarshal.StringToPtr("main")
-            };
-
-            PipelineShaderStageCreateInfo fragShaderStageInfo = new()
-            {
-                SType = StructureType.PipelineShaderStageCreateInfo,
-                Stage = ShaderStageFlags.FragmentBit,
-                Module = fragShaderModule,
-                PName = (byte*)SilkMarshal.StringToPtr("main")
-            };
-
-            var shaderStages = stackalloc[]
-            {
-                vertShaderStageInfo,
-                fragShaderStageInfo
-            };
-
-            PipelineVertexInputStateCreateInfo vertexInputInfo = new()
-            {
-                SType = StructureType.PipelineVertexInputStateCreateInfo,
-                VertexBindingDescriptionCount = 0,
-                VertexAttributeDescriptionCount = 0,
-            };
-
-            PipelineInputAssemblyStateCreateInfo inputAssembly = new()
-            {
-                SType = StructureType.PipelineInputAssemblyStateCreateInfo,
-                Topology = PrimitiveTopology.TriangleList,
-                PrimitiveRestartEnable = false,
-            };
-
-            Viewport viewport = new()
-            {
-                X = 0,
-                Y = 0,
-                Width = swapChainExtent.Width,
-                Height = swapChainExtent.Height,
-                MinDepth = 0,
-                MaxDepth = 1,
-            };
-
-            Rect2D scissor = new()
-            {
-                Offset = { X = 0, Y = 0 },
-                Extent = swapChainExtent,
-            };
-
-            PipelineViewportStateCreateInfo viewportState = new()
-            {
-                SType = StructureType.PipelineViewportStateCreateInfo,
-                ViewportCount = 1,
-                PViewports = &viewport,
-                ScissorCount = 1,
-                PScissors = &scissor,
-            };
-
-            PipelineRasterizationStateCreateInfo rasterizer = new()
-            {
-                SType = StructureType.PipelineRasterizationStateCreateInfo,
-                DepthClampEnable = false,
-                RasterizerDiscardEnable = false,
-                PolygonMode = PolygonMode.Fill,
-                LineWidth = 1,
-                CullMode = CullModeFlags.BackBit,
-                FrontFace = FrontFace.Clockwise,
-                DepthBiasEnable = false,
-            };
-
-            PipelineMultisampleStateCreateInfo multisampling = new()
-            {
-                SType = StructureType.PipelineMultisampleStateCreateInfo,
-                SampleShadingEnable = false,
-                RasterizationSamples = SampleCountFlags.Count1Bit,
-            };
-
-            PipelineColorBlendAttachmentState colorBlendAttachment = new()
-            {
-                ColorWriteMask = ColorComponentFlags.RBit | ColorComponentFlags.GBit | ColorComponentFlags.BBit | ColorComponentFlags.ABit,
-                BlendEnable = false,
-            };
-
-            PipelineColorBlendStateCreateInfo colorBlending = new()
-            {
-                SType = StructureType.PipelineColorBlendStateCreateInfo,
-                LogicOpEnable = false,
-                LogicOp = LogicOp.Copy,
-                AttachmentCount = 1,
-                PAttachments = &colorBlendAttachment,
-            };
-
-            colorBlending.BlendConstants[0] = 0;
-            colorBlending.BlendConstants[1] = 0;
-            colorBlending.BlendConstants[2] = 0;
-            colorBlending.BlendConstants[3] = 0;
-
-            PipelineLayoutCreateInfo pipelineLayoutInfo = new()
-            {
-                SType = StructureType.PipelineLayoutCreateInfo,
-                SetLayoutCount = 0,
-                PushConstantRangeCount = 0,
-            };
-
-            if (_api.vk.CreatePipelineLayout(device, pipelineLayoutInfo, null, out pipelineLayout) != Result.Success)
-            {
-                throw new Exception("failed to create pipeline layout!");
-            }
-
-            GraphicsPipelineCreateInfo pipelineInfo = new()
-            {
-                SType = StructureType.GraphicsPipelineCreateInfo,
-                StageCount = 2,
-                PStages = shaderStages,
-                PVertexInputState = &vertexInputInfo,
-                PInputAssemblyState = &inputAssembly,
-                PViewportState = &viewportState,
-                PRasterizationState = &rasterizer,
-                PMultisampleState = &multisampling,
-                PColorBlendState = &colorBlending,
-                Layout = pipelineLayout,
-                RenderPass = renderPass,
-                Subpass = 0,
-                BasePipelineHandle = default
-            };
-
-            _ = _api.vk.CreateGraphicsPipelines(device, default, 1, pipelineInfo, null, out graphicsPipeline);
-
-            _api.vk.DestroyShaderModule(device, fragShaderModule, null);
-            _api.vk.DestroyShaderModule(device, vertShaderModule, null);
-
-            SilkMarshal.Free((nint)vertShaderStageInfo.PName);
-            SilkMarshal.Free((nint)fragShaderStageInfo.PName);
-        }
 
         private void CreateFramebuffers()
         {
@@ -540,75 +395,6 @@ namespace DeltaEngine
             if (_api.vk.CreateCommandPool(device, poolInfo, null, out commandPool) != Result.Success)
             {
                 throw new Exception("failed to create command pool!");
-            }
-        }
-
-        private void CreateCommandBuffers()
-        {
-            commandBuffers = new CommandBuffer[swapChainFramebuffers!.Length];
-
-            CommandBufferAllocateInfo allocInfo = new()
-            {
-                SType = StructureType.CommandBufferAllocateInfo,
-                CommandPool = commandPool,
-                Level = CommandBufferLevel.Primary,
-                CommandBufferCount = (uint)commandBuffers.Length,
-            };
-
-            fixed (CommandBuffer* commandBuffersPtr = commandBuffers)
-            {
-                if (_api.vk.AllocateCommandBuffers(device, allocInfo, commandBuffersPtr) != Result.Success)
-                {
-                    throw new Exception("failed to allocate command buffers!");
-                }
-            }
-
-
-            for (int i = 0; i < commandBuffers.Length; i++)
-            {
-                CommandBufferBeginInfo beginInfo = new()
-                {
-                    SType = StructureType.CommandBufferBeginInfo,
-                };
-
-                if (_api.vk.BeginCommandBuffer(commandBuffers[i], beginInfo) != Result.Success)
-                {
-                    throw new Exception("failed to begin recording command buffer!");
-                }
-
-                RenderPassBeginInfo renderPassInfo = new()
-                {
-                    SType = StructureType.RenderPassBeginInfo,
-                    RenderPass = renderPass,
-                    Framebuffer = swapChainFramebuffers[i],
-                    RenderArea =
-                {
-                    Offset = { X = 0, Y = 0 },
-                    Extent = swapChainExtent,
-                }
-                };
-
-                ClearValue clearColor = new()
-                {
-                    Color = new() { Float32_0 = 0, Float32_1 = 0, Float32_2 = 0, Float32_3 = 1 },
-                };
-
-                renderPassInfo.ClearValueCount = 1;
-                renderPassInfo.PClearValues = &clearColor;
-
-                _api.vk.CmdBeginRenderPass(commandBuffers[i], &renderPassInfo, SubpassContents.Inline);
-
-                _api.vk.CmdBindPipeline(commandBuffers[i], PipelineBindPoint.Graphics, graphicsPipeline);
-
-                _api.vk.CmdDraw(commandBuffers[i], 3, 1, 0, 0);
-
-                _api.vk.CmdEndRenderPass(commandBuffers[i]);
-
-                if (_api.vk.EndCommandBuffer(commandBuffers[i]) != Result.Success)
-                {
-                    throw new Exception("failed to record command buffer!");
-                }
-
             }
         }
 
