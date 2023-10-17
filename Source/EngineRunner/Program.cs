@@ -20,5 +20,3 @@ while(true)
     sw.Stop();
     Console.WriteLine(sw.ElapsedTicks);
 }
-
-Console.ReadKey();

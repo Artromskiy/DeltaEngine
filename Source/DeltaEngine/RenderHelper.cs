@@ -1,13 +1,15 @@
-﻿using Silk.NET.Core;
+﻿using CommunityToolkit.HighPerformance;
+using Silk.NET.Core;
 using Silk.NET.Core.Native;
 using Silk.NET.SDL;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.EXT;
 using Silk.NET.Vulkan.Extensions.KHR;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -29,12 +31,12 @@ namespace DeltaEngine
 
         private const uint flags = (uint)
         (
-              WindowFlags.Vulkan 
+              WindowFlags.Vulkan
             | WindowFlags.Shown
             | WindowFlags.Resizable
-//            | WindowFlags.AllowHighdpi 
-            | WindowFlags.Borderless 
-//            | WindowFlags.FullscreenDesktop
+            //            | WindowFlags.AllowHighdpi 
+            | WindowFlags.Borderless
+       //            | WindowFlags.FullscreenDesktop
        );
 
         public static unsafe Window* CreateWindow(Api api, string title)
@@ -62,8 +64,8 @@ namespace DeltaEngine
                 PNext = null,
             };
             _ = api.vk.CreateInstance(createInfo, null, out var instance);
-            Marshal.FreeHGlobal((IntPtr)appInfo.PApplicationName);
-            Marshal.FreeHGlobal((IntPtr)appInfo.PEngineName);
+            Marshal.FreeHGlobal((nint)appInfo.PApplicationName);
+            Marshal.FreeHGlobal((nint)appInfo.PEngineName);
             SilkMarshal.Free((nint)createInfo.PpEnabledExtensionNames);
             return instance;
         }
@@ -140,7 +142,7 @@ namespace DeltaEngine
             HashSet<string> layersNames = new();
             foreach (var layer in layers)
             {
-                var layerName = Marshal.PtrToStringUTF8((IntPtr)layer.LayerName);
+                var layerName = Marshal.PtrToStringUTF8((nint)layer.LayerName);
                 if (!string.IsNullOrEmpty(layerName))
                     layersNames.Add(layerName);
             }
@@ -155,6 +157,246 @@ namespace DeltaEngine
             return nondispatchable.ToSurface();
         }
 
+
+        public static unsafe (Pipeline pipeline, PipelineLayout layout) CreateGraphicsPipeline(Api api, Device device, Extent2D swapChainExtent, RenderPass renderPass)
+        {
+            var vertShaderCode = File.ReadAllBytes("shaders/vert.spv");
+            var fragShaderCode = File.ReadAllBytes("shaders/frag.spv");
+
+            var vertShaderModule = CreateShaderModule(api, device, vertShaderCode);
+            var fragShaderModule = CreateShaderModule(api, device, fragShaderCode);
+
+            PipelineShaderStageCreateInfo vertShaderStageInfo = new()
+            {
+                SType = StructureType.PipelineShaderStageCreateInfo,
+                Stage = ShaderStageFlags.VertexBit,
+                Module = vertShaderModule,
+                PName = (byte*)SilkMarshal.StringToPtr("main")
+            };
+
+            PipelineShaderStageCreateInfo fragShaderStageInfo = new()
+            {
+                SType = StructureType.PipelineShaderStageCreateInfo,
+                Stage = ShaderStageFlags.FragmentBit,
+                Module = fragShaderModule,
+                PName = (byte*)SilkMarshal.StringToPtr("main")
+            };
+
+            var shaderStages = stackalloc PipelineShaderStageCreateInfo[]
+            {
+                vertShaderStageInfo,
+                fragShaderStageInfo
+            };
+
+            PipelineVertexInputStateCreateInfo vertexInputInfo = new()
+            {
+                SType = StructureType.PipelineVertexInputStateCreateInfo,
+                VertexBindingDescriptionCount = 0,
+                VertexAttributeDescriptionCount = 0,
+            };
+
+            PipelineInputAssemblyStateCreateInfo inputAssembly = new()
+            {
+                SType = StructureType.PipelineInputAssemblyStateCreateInfo,
+                Topology = PrimitiveTopology.TriangleList,
+                PrimitiveRestartEnable = false,
+            };
+
+            Viewport viewport = new()
+            {
+                X = 0,
+                Y = 0,
+                Width = swapChainExtent.Width,
+                Height = swapChainExtent.Height,
+                MinDepth = 0,
+                MaxDepth = 1,
+            };
+
+            Rect2D scissor = new()
+            {
+                Offset = { X = 0, Y = 0 },
+                Extent = swapChainExtent,
+            };
+
+            PipelineViewportStateCreateInfo viewportState = new()
+            {
+                SType = StructureType.PipelineViewportStateCreateInfo,
+                ViewportCount = 1,
+                PViewports = &viewport,
+                ScissorCount = 1,
+                PScissors = &scissor,
+            };
+
+            PipelineRasterizationStateCreateInfo rasterizer = new()
+            {
+                SType = StructureType.PipelineRasterizationStateCreateInfo,
+                DepthClampEnable = false,
+                RasterizerDiscardEnable = false,
+                PolygonMode = PolygonMode.Fill,
+                LineWidth = 1,
+                CullMode = CullModeFlags.BackBit,
+                FrontFace = FrontFace.Clockwise,
+                DepthBiasEnable = false,
+            };
+
+            PipelineMultisampleStateCreateInfo multisampling = new()
+            {
+                SType = StructureType.PipelineMultisampleStateCreateInfo,
+                SampleShadingEnable = false,
+                RasterizationSamples = SampleCountFlags.Count1Bit,
+            };
+
+            PipelineColorBlendAttachmentState colorBlendAttachment = new()
+            {
+                ColorWriteMask = ColorComponentFlags.RBit | ColorComponentFlags.GBit | ColorComponentFlags.BBit | ColorComponentFlags.ABit,
+                BlendEnable = false,
+            };
+
+            PipelineColorBlendStateCreateInfo colorBlending = new()
+            {
+                SType = StructureType.PipelineColorBlendStateCreateInfo,
+                LogicOpEnable = false,
+                LogicOp = LogicOp.Copy,
+                AttachmentCount = 1,
+                PAttachments = &colorBlendAttachment,
+            };
+
+            colorBlending.BlendConstants[0] = 0;
+            colorBlending.BlendConstants[1] = 0;
+            colorBlending.BlendConstants[2] = 0;
+            colorBlending.BlendConstants[3] = 0;
+
+            PipelineLayoutCreateInfo pipelineLayoutInfo = new()
+            {
+                SType = StructureType.PipelineLayoutCreateInfo,
+                SetLayoutCount = 0,
+                PushConstantRangeCount = 0,
+            };
+
+            _ = api.vk.CreatePipelineLayout(device, pipelineLayoutInfo, null, out var pipelineLayout);
+
+            GraphicsPipelineCreateInfo pipelineInfo = new()
+            {
+                SType = StructureType.GraphicsPipelineCreateInfo,
+                StageCount = 2,
+                PStages = shaderStages,
+                PVertexInputState = &vertexInputInfo,
+                PInputAssemblyState = &inputAssembly,
+                PViewportState = &viewportState,
+                PRasterizationState = &rasterizer,
+                PMultisampleState = &multisampling,
+                PColorBlendState = &colorBlending,
+                Layout = pipelineLayout,
+                RenderPass = renderPass,
+                Subpass = 0,
+                BasePipelineHandle = default
+            };
+
+            _ = api.vk.CreateGraphicsPipelines(device, default, 1, pipelineInfo, null, out var graphicsPipeline);
+
+            api.vk.DestroyShaderModule(device, fragShaderModule, null);
+            api.vk.DestroyShaderModule(device, vertShaderModule, null);
+
+            SilkMarshal.Free((nint)vertShaderStageInfo.PName);
+            SilkMarshal.Free((nint)fragShaderStageInfo.PName);
+            return (graphicsPipeline, pipelineLayout);
+        }
+
+
+        private static unsafe ShaderModule CreateShaderModule(Api api, Device device, byte[] shaderCode)
+        {
+            ShaderModuleCreateInfo createInfo = new()
+            {
+                SType = StructureType.ShaderModuleCreateInfo,
+                CodeSize = (nuint)shaderCode.Length,
+            };
+            using pin<byte> hn = new(shaderCode);
+            createInfo.PCode = (uint*)hn.handle;
+            _ = api.vk.CreateShaderModule(device, createInfo, null, out ShaderModule shaderModule);
+            return shaderModule;
+        }
+
+
+        public static unsafe Framebuffer[] CreateFramebuffers(Api api, Device device, ImageView[] swapChainImageViews, RenderPass renderPass, Extent2D swapChainExtent)
+        {
+            var swapChainFramebuffers = new Framebuffer[swapChainImageViews.Length];
+            for (int i = 0; i < swapChainImageViews.Length; i++)
+            {
+                var attachment = swapChainImageViews[i];
+                FramebufferCreateInfo framebufferInfo = new()
+                {
+                    SType = StructureType.FramebufferCreateInfo,
+                    RenderPass = renderPass,
+                    AttachmentCount = 1,
+                    PAttachments = &attachment,
+                    Width = swapChainExtent.Width,
+                    Height = swapChainExtent.Height,
+                    Layers = 1,
+                };
+                _ = api.vk.CreateFramebuffer(device, framebufferInfo, null, out swapChainFramebuffers[i]);
+            }
+            return swapChainFramebuffers;
+        }
+
+        public static unsafe CommandPool CreateCommandPool(Api api, PhysicalDevice gpu, Device device, SurfaceKHR surface, KhrSurface khrsf)
+        {
+            var queueFamiliyIndicies = FindQueueFamilies(api, gpu, surface, khrsf);
+            CommandPoolCreateInfo poolInfo = new()
+            {
+                SType = StructureType.CommandPoolCreateInfo,
+                QueueFamilyIndex = queueFamiliyIndicies.GraphicsFamily.Value,
+            };
+            _ = api.vk.CreateCommandPool(device, poolInfo, null, out var commandPool);
+            return commandPool;
+        }
+
+        public static unsafe CommandBuffer[] CreateCommandBuffers(Api api, Framebuffer[] swapChainFramebuffers, CommandPool commandPool, Device device, RenderPass renderPass, Extent2D swapChainExtent, Pipeline graphicsPipeline)
+        {
+            var commandBuffers = new CommandBuffer[swapChainFramebuffers.Length];
+            CommandBufferAllocateInfo allocInfo = new()
+            {
+                SType = StructureType.CommandBufferAllocateInfo,
+                CommandPool = commandPool,
+                Level = CommandBufferLevel.Primary,
+                CommandBufferCount = (uint)commandBuffers.Length,
+            };
+            fixed (CommandBuffer* commandBuffersPtr = commandBuffers)
+                _ = api.vk.AllocateCommandBuffers(device, allocInfo, commandBuffersPtr);
+
+            for (int i = 0; i < commandBuffers.Length; i++)
+            {
+                CommandBufferBeginInfo beginInfo = new();
+                _ = api.vk.BeginCommandBuffer(commandBuffers[i], beginInfo);
+
+                RenderPassBeginInfo renderPassInfo = new()
+                {
+                    SType = StructureType.RenderPassBeginInfo,
+                    RenderPass = renderPass,
+                    Framebuffer = swapChainFramebuffers[i],
+                    RenderArea =
+                    {
+                        Offset = { X = 0, Y = 0 },
+                        Extent = swapChainExtent,
+                    }
+                };
+                var n = new { k = 0 };
+                ClearValue clearColor = new()
+                {
+                    Color = { Float32_0 = 0, Float32_1 = 0, Float32_2 = 0, Float32_3 = 1 },
+                };
+
+                renderPassInfo.ClearValueCount = 1;
+                renderPassInfo.PClearValues = &clearColor;
+
+                api.vk.CmdBeginRenderPass(commandBuffers[i], &renderPassInfo, SubpassContents.Inline);
+                api.vk.CmdBindPipeline(commandBuffers[i], PipelineBindPoint.Graphics, graphicsPipeline);
+                //api.vk.CmdDraw(commandBuffers[i], 3, 1, 0, 0); // Actual draw
+                api.vk.CmdEndRenderPass(commandBuffers[i]);
+                _ = api.vk.EndCommandBuffer(commandBuffers[i]);
+
+            }
+            return commandBuffers;
+        }
 
         public static unsafe PhysicalDevice PickPhysicalDevice(Api api, Instance instance, SurfaceKHR surface, KhrSurface khrsf, string[] neededExtensions)
         {
@@ -188,7 +430,7 @@ namespace DeltaEngine
                     Image = swapChainImages[i],
                     ViewType = ImageViewType.Type2D,
                     Format = swapchainImageFormat,
-                    Components = 
+                    Components =
                     {
                         R = ComponentSwizzle.Identity,
                         G = ComponentSwizzle.Identity,
@@ -213,17 +455,13 @@ namespace DeltaEngine
         public static unsafe (Device device, Queue graphicsQueue, Queue presentQueue) CreateLogicalDevice(Api api, PhysicalDevice gpu, SurfaceKHR surface, KhrSurface khrsf, string[] deviceExtensions)
         {
             var indices = FindQueueFamilies(api, gpu, surface, khrsf);
-
-            var uniqueQueueFamilies = new[] { indices.GraphicsFamily!.Value, indices.PresentFamily!.Value };
+            var uniqueQueueFamilies = new[] { indices.GraphicsFamily.Value, indices.PresentFamily.Value };
             uniqueQueueFamilies = uniqueQueueFamilies.Distinct().ToArray();
-
-            using var mem = GlobalMemory.Allocate(uniqueQueueFamilies.Length * sizeof(DeviceQueueCreateInfo));
-            var queueCreateInfos = (DeviceQueueCreateInfo*)Unsafe.AsPointer(ref mem.GetPinnableReference());
-
+            var infos = stackalloc DeviceQueueCreateInfo[uniqueQueueFamilies.Length];
             float queuePriority = 1.0f;
             for (int i = 0; i < uniqueQueueFamilies.Length; i++)
             {
-                queueCreateInfos[i] = new()
+                infos[i] = new()
                 {
                     QueueFamilyIndex = uniqueQueueFamilies[i],
                     QueueCount = 1,
@@ -232,11 +470,10 @@ namespace DeltaEngine
             }
 
             PhysicalDeviceFeatures deviceFeatures = new();
-
             DeviceCreateInfo createInfo = new()
             {
                 QueueCreateInfoCount = (uint)uniqueQueueFamilies.Length,
-                PQueueCreateInfos = queueCreateInfos,
+                PQueueCreateInfos = infos,
 
                 PEnabledFeatures = &deviceFeatures,
 
@@ -244,11 +481,10 @@ namespace DeltaEngine
                 PpEnabledExtensionNames = (byte**)SilkMarshal.StringArrayToPtr(deviceExtensions),
                 EnabledLayerCount = 0
             };
-
             _ = api.vk.CreateDevice(gpu, &createInfo, null, out var device);
 
-            api.vk.GetDeviceQueue(device, indices.GraphicsFamily!.Value, 0, out var graphicsQueue);
-            api.vk.GetDeviceQueue(device, indices.PresentFamily!.Value, 0, out var presentQueue);
+            api.vk.GetDeviceQueue(device, indices.GraphicsFamily.Value, 0, out var graphicsQueue);
+            api.vk.GetDeviceQueue(device, indices.PresentFamily.Value, 0, out var presentQueue);
 
             SilkMarshal.Free((nint)createInfo.PpEnabledExtensionNames);
             return (device, graphicsQueue, presentQueue);
@@ -283,7 +519,7 @@ namespace DeltaEngine
             };
 
             var indices = FindQueueFamilies(api, physicalDevice, surface, khrsf);
-            var queueFamilyIndices = stackalloc[] { indices.GraphicsFamily!.Value, indices.PresentFamily!.Value };
+            var queueFamilyIndices = stackalloc[] { indices.GraphicsFamily.Value, indices.PresentFamily.Value };
 
             if (indices.GraphicsFamily != indices.PresentFamily)
             {
@@ -359,7 +595,7 @@ namespace DeltaEngine
                 w = h = 0;
                 api.sdl.VulkanGetDrawableSize(window, ref w, ref h);
                 var framebufferSize = new Extent2D((uint)w, (uint)h);
-                //var framebufferSize = window!.FramebufferSize;
+                //var framebufferSize = window.FramebufferSize;
 
                 Extent2D actualExtent = new()
                 {
@@ -405,7 +641,7 @@ namespace DeltaEngine
                 if (queueFamily.QueueFlags.HasFlag(QueueFlags.GraphicsBit))
                     indices.GraphicsFamily = i;
 
-                khrsf!.GetPhysicalDeviceSurfaceSupport(device, i, surface, out var presentSupport);
+                khrsf.GetPhysicalDeviceSurfaceSupport(device, i, surface, out var presentSupport);
 
                 if (presentSupport)
                     indices.PresentFamily = i;
@@ -463,7 +699,7 @@ namespace DeltaEngine
             api.vk.EnumerateDeviceExtensionProperties(device, (byte*)null, &extentionsCount, availableExtensions);
 
             foreach (var needed in neededExtensions)
-                if (!availableExtensions.Exist(present => needed == Marshal.PtrToStringAnsi((IntPtr)present.ExtensionName)))
+                if (!availableExtensions.Exist(present => needed == Marshal.PtrToStringAnsi((nint)present.ExtensionName)))
                     return false;
             return true;
         }

@@ -1,5 +1,4 @@
-﻿using Silk.NET.Core;
-using Silk.NET.Core.Native;
+﻿using Silk.NET.Core.Native;
 using Silk.NET.SDL;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.EXT;
@@ -7,10 +6,7 @@ using Silk.NET.Vulkan.Extensions.KHR;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 
 namespace DeltaEngine
@@ -33,7 +29,7 @@ namespace DeltaEngine
         public PresentModeKHR[] PresentModes;
     }
 
-    internal unsafe class HelloTriangleApplication: IDisposable
+    internal unsafe class HelloTriangleApplication : IDisposable
     {
         private const int WIDTH = 800;
         private const int HEIGHT = 600;
@@ -50,7 +46,7 @@ namespace DeltaEngine
             KhrSwapchain.ExtensionName
         };
 
-        private Window* window;
+        private readonly Window* window;
         private Api _api;
 
         private Instance instance;
@@ -103,6 +99,7 @@ namespace DeltaEngine
         private void InitVulkan()
         {
             instance = RenderHelper.CreateVkInstance(_api, window, "Lol", "kek");
+            //SetupDebugMessenger();
             _ = _api.vk.TryGetInstanceExtension<KhrSurface>(instance, out khrsf);
             surface = RenderHelper.CreateSurface(_api, window, instance);
             physicalDevice = RenderHelper.PickPhysicalDevice(_api, instance, surface, khrsf, deviceExtensions);
@@ -110,17 +107,18 @@ namespace DeltaEngine
             (khrSwapChain, swapChain, swapChainImages, swapChainImageFormat, swapChainExtent) = RenderHelper.CreateSwapChain(_api, window, instance, device, physicalDevice, surface, khrsf);
             swapChainImageViews = RenderHelper.CreateImageViews(_api, device, swapChainImages, swapChainImageFormat);
             renderPass = RenderHelper.CreateRenderPass(_api, device, swapChainImageFormat);
-            
+            (graphicsPipeline, pipelineLayout) = RenderHelper.CreateGraphicsPipeline(_api, device, swapChainExtent, renderPass);
+            swapChainFramebuffers = RenderHelper.CreateFramebuffers(_api, device, swapChainImageViews, renderPass, swapChainExtent);
+            commandPool = RenderHelper.CreateCommandPool(_api, physicalDevice, device, surface, khrsf);
+            commandBuffers = RenderHelper.CreateCommandBuffers(_api, swapChainFramebuffers, commandPool, device, renderPass, swapChainExtent, graphicsPipeline);
             //PickPhysicalDevice();
             //CreateLogicalDevice();
             //CreateSwapChain();
             //CreateImageViews();
             //CreateRenderPass();
-            
-            CreateGraphicsPipeline();
-            CreateFramebuffers();
-            CreateCommandPool();
-            CreateCommandBuffers();
+            //CreateFramebuffers();
+            //CreateCommandPool();
+            //CreateCommandBuffers();
             CreateSyncObjects();
         }
 
@@ -172,32 +170,23 @@ namespace DeltaEngine
         }
 
 
-        private void PopulateDebugMessengerCreateInfo(ref DebugUtilsMessengerCreateInfoEXT createInfo)
-        {
-            createInfo.SType = StructureType.DebugUtilsMessengerCreateInfoExt;
-            createInfo.MessageSeverity = DebugUtilsMessageSeverityFlagsEXT.VerboseBitExt |
-                                         DebugUtilsMessageSeverityFlagsEXT.WarningBitExt |
-                                         DebugUtilsMessageSeverityFlagsEXT.ErrorBitExt;
-            createInfo.MessageType = DebugUtilsMessageTypeFlagsEXT.GeneralBitExt |
-                                     DebugUtilsMessageTypeFlagsEXT.PerformanceBitExt |
-                                     DebugUtilsMessageTypeFlagsEXT.ValidationBitExt;
-            createInfo.PfnUserCallback = (DebugUtilsMessengerCallbackFunctionEXT)DebugCallback;
-        }
-
         private void SetupDebugMessenger()
         {
-            if (!EnableValidationLayers) return;
+            _ = !_api.vk.TryGetInstanceExtension(instance, out debugUtils);
 
-            //TryGetInstanceExtension equivilant to method CreateDebugUtilsMessengerEXT from original tutorial.
-            if (!_api.vk.TryGetInstanceExtension(instance, out debugUtils)) return;
-
-            DebugUtilsMessengerCreateInfoEXT createInfo = new();
-            PopulateDebugMessengerCreateInfo(ref createInfo);
-
-            if (debugUtils!.CreateDebugUtilsMessenger(instance, in createInfo, null, out debugMessenger) != Result.Success)
+            DebugUtilsMessengerCreateInfoEXT createInfo = new()
             {
-                throw new Exception("failed to set up debug messenger!");
-            }
+                SType = StructureType.DebugUtilsMessengerCreateInfoExt,
+                MessageSeverity = DebugUtilsMessageSeverityFlagsEXT.VerboseBitExt |
+                                         DebugUtilsMessageSeverityFlagsEXT.WarningBitExt |
+                                         DebugUtilsMessageSeverityFlagsEXT.ErrorBitExt,
+                MessageType = DebugUtilsMessageTypeFlagsEXT.GeneralBitExt |
+                                     DebugUtilsMessageTypeFlagsEXT.PerformanceBitExt |
+                                     DebugUtilsMessageTypeFlagsEXT.ValidationBitExt,
+                PfnUserCallback = (PfnDebugUtilsMessengerCallbackEXT)DebugCallback,
+            };
+
+            _ = debugUtils!.CreateDebugUtilsMessenger(instance, &createInfo, null, out debugMessenger);
         }
 
         private void CreateSwapChain()
@@ -367,6 +356,7 @@ namespace DeltaEngine
 
         private void CreateGraphicsPipeline()
         {
+            var p = Directory.GetCurrentDirectory();
             var vertShaderCode = File.ReadAllBytes("shaders/vert.spv");
             var fragShaderCode = File.ReadAllBytes("shaders/frag.spv");
 
@@ -502,11 +492,7 @@ namespace DeltaEngine
                 BasePipelineHandle = default
             };
 
-            if (_api.vk.CreateGraphicsPipelines(device, default, 1, pipelineInfo, null, out graphicsPipeline) != Result.Success)
-            {
-                throw new Exception("failed to create graphics pipeline!");
-            }
-
+            _ = _api.vk.CreateGraphicsPipelines(device, default, 1, pipelineInfo, null, out graphicsPipeline);
 
             _api.vk.DestroyShaderModule(device, fragShaderModule, null);
             _api.vk.DestroyShaderModule(device, vertShaderModule, null);
@@ -647,8 +633,8 @@ namespace DeltaEngine
             for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
             {
                 _ = _api.vk.CreateSemaphore(device, semaphoreInfo, null, out imageAvailableSemaphores[i]);
-                    _ = _api.vk.CreateSemaphore(device, semaphoreInfo, null, out renderFinishedSemaphores[i]);
-                    _ = _api.vk.CreateFence(device, fenceInfo, null, out inFlightFences[i]);
+                _ = _api.vk.CreateSemaphore(device, semaphoreInfo, null, out renderFinishedSemaphores[i]);
+                _ = _api.vk.CreateFence(device, fenceInfo, null, out inFlightFences[i]);
             }
         }
 

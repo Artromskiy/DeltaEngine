@@ -10,7 +10,6 @@
 
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <PublishAot>true</PublishAot>
-    <PublishTrimmed>true</PublishTrimmed>
     <IncludeSymbols>true</IncludeSymbols>
   </PropertyGroup>
 
@@ -20,6 +19,15 @@
     <PackageReference Include="Silk.NET.Vulkan" Version="2.17.1" />
     <PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" Version="2.17.1" />
     <PackageReference Include="Silk.NET.Vulkan.Extensions.KHR" Version="2.17.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="shaders\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="shaders\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

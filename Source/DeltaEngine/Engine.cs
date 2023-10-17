@@ -9,7 +9,7 @@ namespace DeltaEngine
         public Engine()
         {
             tr = new HelloTriangleApplication();
-            //_renderer = new Renderer("lol");
+            _renderer = new Renderer("lol");
         }
 
         public void Run()
