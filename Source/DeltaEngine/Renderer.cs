@@ -2,97 +2,124 @@
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
 using System;
-using System.Text;
 using static DeltaEngine.ThrowHelper;
+using Semaphore = Silk.NET.Vulkan.Semaphore;
 
-namespace DeltaEngine
+namespace DeltaEngine;
+
+internal sealed unsafe class Renderer : IDisposable
 {
-    public struct Api
+    private readonly Data _data;
+    private readonly Api _api;
+
+
+    private struct Data
     {
-        public Sdl sdl;
-        public Vk vk;
-        public KhrSurface _khrSurf;
+        public Window* _window;
+        public Instance _instance;
+        public PhysicalDevice _gpu;
+        public Device _device;
+        public SurfaceKHR _surface;
+        public SwapchainKHR _swapchain;
+        public Queue _queue;
     }
 
-    internal sealed unsafe class Renderer : IDisposable
+    private const string RendererName = "Delta Renderer";
+    private readonly string _appName;
+
+    private Pipeline? graphicsPipeline;
+
+    private Queue graphicsQueue;
+    private Queue presentQueue;
+
+    private readonly KhrSwapchain khrSwapChain;
+    private readonly KhrSurface khrsf;
+
+    private RenderPass renderPass;
+    private PipelineLayout pipelineLayout;
+    private CommandPool commandPool;
+    private readonly Image[] swapChainImages;
+    private readonly ImageView[] swapChainImageViews;
+    private readonly Framebuffer[] swapChainFramebuffers;
+    private readonly CommandBuffer[] commandBuffers;
+
+    private readonly Semaphore[] imageAvailableSemaphores;
+    private readonly Semaphore[] renderFinishedSemaphores;
+    private readonly Fence[] inFlightFences;
+    private readonly Fence[] imagesInFlight;
+    private int currentFrame = 0;
+
+    private readonly string[] deviceExtensions = new[]
     {
-        private readonly Data _data;
-        private Api _api;
-
-
-        private struct Data
-        {
-            public Window* _window;
-            public Instance _instance;
-            public PhysicalDevice _gpu;
-            public Device _device;
-            public SurfaceKHR _surface;
-            public SwapchainKHR _swapchain;
-            public Queue _queue;
-        }
-
-        private const string RendererName = "Delta Renderer";
-        private readonly byte[] name = Encoding.UTF8.GetBytes(RendererName);
-        private readonly string _appName;
-
-        private readonly string[] requiredVkLayers = new[]
-        {
-            "VK_LAYER_NV_optimus",
-            "VK_LAYER_KHRONOS_validation"
-        };
-        private readonly string[] deviceExtensions = new[]
-        {
             KhrSwapchain.ExtensionName
-        };
+    };
 
 
-        public Renderer(string appName)
-        {
-            _appName = appName;
-            _api = RenderHelper.CreateApi();
-            _data._window = RenderHelper.CreateWindow(_api, RendererName);
-            //_api.sdl.SetWindowResizable(_data._window, SdlBool.False);
-            //_api.sdl.SetWindowBordered(_data._window, SdlBool.False);
-            var extens = RenderHelper.GetVulkanExtensions(_api, _data._window);
-            var layers = RenderHelper.GetVulkanLayers(_api, requiredVkLayers);
-            _data._instance = RenderHelper.CreateVkInstance(_api, _data._window, appName, RendererName);
-            _ = _api.vk.TryGetInstanceExtension<KhrSurface>(_data._instance, out var khrsf);
-            _data._surface = RenderHelper.CreateSurface(_api, _data._window, _data._instance);
-            //_ = layers.Length == reqVkLayers.Length;
-            _data._gpu = RenderHelper.PickPhysicalDevice(_api, _data._instance, _data._surface, khrsf, deviceExtensions);
-            (_data._device, var graphicsQueue, var presentQueue) = RenderHelper.CreateLogicalDevice(_api, _data._gpu, _data._surface, khrsf, deviceExtensions);
-            (var khrSwapChain, _data._swapchain, var swapChainImages, var swapChainImageFormat, var swapChainExtent) = RenderHelper.CreateSwapChain(_api, _data._window, _data._instance, _data._device, _data._gpu, _data._surface, khrsf);
-            var swapChainImageViews = RenderHelper.CreateImageViews(_api, _data._device, swapChainImages, swapChainImageFormat);
-            var renderPass = RenderHelper.CreateRenderPass(_api, _data._device, swapChainImageFormat);
+    public Renderer(string appName)
+    {
+        _appName = appName;
+        _api = new();
+        _data._window = RenderHelper.CreateWindow(_api, _appName);
+        _data._instance = RenderHelper.CreateVkInstance(_api, _data._window, _appName, RendererName);
+        _ = _api.vk.TryGetInstanceExtension(_data._instance, out khrsf);
+        _data._surface = RenderHelper.CreateSurface(_api, _data._window, _data._instance);
+        _data._gpu = RenderHelper.PickPhysicalDevice(_api, _data._instance, _data._surface, khrsf, deviceExtensions);
+        (_data._device, graphicsQueue, presentQueue) = RenderHelper.CreateLogicalDevice(_api, _data._gpu, _data._surface, khrsf, deviceExtensions);
+        (khrSwapChain, _data._swapchain, swapChainImages, var swapChainImageFormat, var swapChainExtent) = RenderHelper.CreateSwapChain(_api, _data._window, _data._instance, _data._device, _data._gpu, _data._surface, khrsf);
+        swapChainImageViews = RenderHelper.CreateImageViews(_api, _data._device, swapChainImages, swapChainImageFormat);
+        renderPass = RenderHelper.CreateRenderPass(_api, _data._device, swapChainImageFormat);
+        //(graphicsPipeline, pipelineLayout) = RenderHelper.CreateGraphicsPipeline(_api, device, swapChainExtent, renderPass);
+        swapChainFramebuffers = RenderHelper.CreateFramebuffers(_api, _data._device, swapChainImageViews, renderPass, swapChainExtent);
+        commandPool = RenderHelper.CreateCommandPool(_api, _data._gpu, _data._device, _data._surface, khrsf);
+        commandBuffers = RenderHelper.CreateCommandBuffers(_api, swapChainFramebuffers, commandPool, _data._device, renderPass, swapChainExtent, graphicsPipeline);
+        (imageAvailableSemaphores, renderFinishedSemaphores, inFlightFences, imagesInFlight) = RenderHelper.CreateSyncObjects(_api, _data._device, swapChainImages, 1);
+    }
 
-            //_data._device = CreateDevice(_api, _data._gpu);
-            //_ = _api.vk.TryGetInstanceExtension(_data._instance, out _api._khrSurf);
-            //PresentModeKHR pm = PresentModeKHR.FifoKhr;
-            //_data._swapchain = CreateSwapChain(_api, _data, gsurfaceFormat, gTransform, requestedImageUsages, ref pm);
-            //var ih = getSwapChainImageHandles(_device, _swapchain);
-            //vk.GetDeviceQueue(_device, 0, 0, out _queue);
-        }
+    public void Dispose()
+    {
+        foreach (var semaphore in renderFinishedSemaphores)
+            _api.vk.DestroySemaphore(_data._device, semaphore, null);
+        foreach (var semaphore in imageAvailableSemaphores)
+            _api.vk.DestroySemaphore(_data._device, semaphore, null);
+        foreach (var fence in inFlightFences)
+            _api.vk.DestroyFence(_data._device, fence, null);
+        _api.vk.DestroyCommandPool(_data._device, commandPool, null);
 
-        public void Dispose()
-        {
-            new KhrSwapchain(_api.vk.Context).DestroySwapchain(_data._device, _data._swapchain, null);
-            _api.vk.DestroyDevice(_data._device, null);
-            _api.vk.DestroyInstance(_data._instance, null);
-            _api.vk.Dispose();
-            _api.sdl.DestroyWindow(_data._window);
-            _api.sdl.Dispose();
-        }
+        foreach (var framebuffer in swapChainFramebuffers!)
+            _api.vk.DestroyFramebuffer(_data._device, framebuffer, null);
 
-        public void Run()
-        {
-            _api.sdl.PollEvent((Silk.NET.SDL.Event*)null);
-            //sdl.SetWindowResizable(_window, SdlBool.False);
-            //sdl.SetWindowBordered(_window, SdlBool.False);
-            //int t, l, b, r;
-            //t = l = b = r = 0;
-            //sdl.GetWindowBordersSize(_window, ref t, ref l, ref b, ref r);
-            //Console.WriteLine("s");
-        }
+        if (graphicsPipeline.HasValue)
+            _api.vk.DestroyPipeline(_data._device, graphicsPipeline.Value, null);
 
+        _api.vk.DestroyPipelineLayout(_data._device, pipelineLayout, null);
+        _api.vk.DestroyRenderPass(_data._device, renderPass, null);
+
+        foreach (var image in swapChainImages)
+            _api.vk.DestroyImage(_data._device, image, null);
+        foreach (var imageView in swapChainImageViews)
+            _api.vk.DestroyImageView(_data._device, imageView, null);
+
+        khrSwapChain.DestroySwapchain(_data._device, _data._swapchain, null);
+
+        _api.vk.DestroyDevice(_data._device, null);
+
+        khrsf.DestroySurface(_data._instance, _data._surface, null);
+        _api.vk.DestroyInstance(_data._instance, null);
+        _api.vk.Dispose();
+
+        _api.vk.DestroyDevice(_data._device, null);
+        _api.vk.DestroyInstance(_data._instance, null);
+        _api.vk.Dispose();
+        _api.sdl.DestroyWindow(_data._window);
+        _api.sdl.Dispose();
+    }
+
+    public void Run()
+    {
+        _api.sdl.PollEvent((Silk.NET.SDL.Event*)null);
+    }
+    public void Draw()
+    {
+        RenderHelper.DrawFrame(_api, _data._device, _data._swapchain, khrSwapChain, commandBuffers, inFlightFences, imagesInFlight, imageAvailableSemaphores, renderFinishedSemaphores, graphicsQueue, presentQueue, ref currentFrame);
     }
 }

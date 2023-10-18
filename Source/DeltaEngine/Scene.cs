@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace DeltaEngine;
 
-namespace DeltaEngine
+public class Scene
 {
-    public class Scene
-    {
 
-    }
 }

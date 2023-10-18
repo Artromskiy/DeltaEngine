@@ -11,8 +11,8 @@ Console.WriteLine("Hello, World!");
 
 var eng = new Engine();
 eng.Run();
-Stopwatch sw = new Stopwatch();
-while(true)
+Stopwatch sw = new();
+while (true)
 {
     sw.Restart();
     Thread.Yield();

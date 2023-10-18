@@ -1,28 +1,22 @@
 ﻿using System;
+namespace DeltaEngine;
 
-namespace DeltaEngine
+public sealed class Engine : IDisposable
 {
-    public sealed class Engine : IDisposable
+    private readonly Renderer? _renderer;
+    public Engine()
     {
-        private readonly Renderer? _renderer;
-        private readonly HelloTriangleApplication? tr;
-        public Engine()
-        {
-            tr = new HelloTriangleApplication();
-            //_renderer = new Renderer("lol");
-        }
+        _renderer = new Renderer("lol");
+    }
 
-        public void Run()
-        {
-            _renderer?.Run();
-            tr?.DrawFrame();
-            tr?.Update();
-        }
+    public void Run()
+    {
+        _renderer?.Run();
+        _renderer?.Draw();
+    }
 
-        public void Dispose()
-        {
-            tr?.Dispose();
-            _renderer?.Dispose();
-        }
+    public void Dispose()
+    {
+        _renderer?.Dispose();
     }
 }

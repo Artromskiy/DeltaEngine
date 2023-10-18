@@ -1,6 +1,4 @@
-﻿using Microsoft.Maui.Platform;
-
-namespace DeltaEditor
+﻿namespace DeltaEditor
 {
     public partial class MainPage : ContentPage
     {
