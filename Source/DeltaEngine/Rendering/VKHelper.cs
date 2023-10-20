@@ -2,7 +2,7 @@
 using Silk.NET.Vulkan.Extensions.KHR;
 using System.Linq;
 
-namespace DeltaEngine;
+namespace DeltaEngine.Rendering;
 
 internal static unsafe class VKHelper
 {

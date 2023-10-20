@@ -20,16 +20,18 @@ internal static unsafe class ThrowHelper
     internal readonly struct ResultStruct
     {
         public readonly bool succeed;
+        public readonly string data;
 
-        private ResultStruct(bool succeed)
+        private ResultStruct(bool succeed, string data)
         {
+            this.data = data;
             this.succeed = succeed;
         }
-        public ResultStruct() : this(false) { }
+        public ResultStruct() : this(false, string.Empty) { }
 
-        public static implicit operator ResultStruct(Result r) => new(r == Result.Success);
-        public static implicit operator ResultStruct(SdlBool r) => new(r == SdlBool.True);
-        public static implicit operator ResultStruct(bool r) => new(r);
-        public static implicit operator ResultStruct(int r) => new(r == 0);
+        public static implicit operator ResultStruct(Result r) => new(r == Result.Success, r.ToString());
+        public static implicit operator ResultStruct(SdlBool r) => new(r == SdlBool.True, string.Empty);
+        public static implicit operator ResultStruct(bool r) => new(r, string.Empty);
+        public static implicit operator ResultStruct(int r) => new(r == 0, string.Empty);
     }
 }

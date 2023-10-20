@@ -1,8 +1,16 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using DeltaEngine;
+using Microsoft.Extensions.Logging;
 namespace DeltaEditor
 {
     public static class MauiProgram
     {
+
+        public static readonly Engine _engine;
+        static MauiProgram()
+        {
+            _engine = new Engine();
+        }
+
         public static MauiApp CreateMauiApp()
         {
             var builder = MauiApp.CreateBuilder();
