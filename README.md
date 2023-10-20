@@ -17,4 +17,4 @@ This will be enough to create games. AAA graphics or cool shaders and particles 
 
 **Dev stack**
 
-I want this project to use the latest versions of C#, .NET, Vulkan
+I want this project to use the latest versions of C# and .NET. I want to use Vulkan as graphics backend
