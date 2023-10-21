@@ -10,7 +10,6 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
-
 using static DeltaEngine.ThrowHelper;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 
@@ -31,7 +30,7 @@ public static class RenderHelper
 
     public static unsafe Window* CreateWindow(Sdl sdl, string title)
     {
-        return sdl.CreateWindow(Encoding.UTF8.GetBytes(title), 100, 100, 500, 500, flags);
+        return sdl.CreateWindow(Encoding.UTF8.GetBytes(title), 100, 100, 1000, 1000, flags);
     }
 
     public static unsafe Instance CreateVkInstance(Vk vk, Sdl sdl, Window* window, string app, string engine)
@@ -60,13 +59,12 @@ public static class RenderHelper
         return instance;
     }
 
-    public static unsafe (Semaphore[] imageAvailableSemaphores, Semaphore[] renderFinishedSemaphores, Fence[] inFlightFences, Fence[] imagesInFlight)
+    public static unsafe (Semaphore[] imageAvailableSemaphores, Semaphore[] renderFinishedSemaphores, Fence[] inFlightFences)
         CreateSyncObjects(Api api, Device device, int swapChainImagesCount, int maxFramesInFlight)
     {
         var imageAvailableSemaphores = new Semaphore[maxFramesInFlight];
         var renderFinishedSemaphores = new Semaphore[maxFramesInFlight];
         var inFlightFences = new Fence[maxFramesInFlight];
-        var imagesInFlight = new Fence[swapChainImagesCount];
 
         SemaphoreCreateInfo semaphoreInfo = new();
 
@@ -81,7 +79,7 @@ public static class RenderHelper
             _ = api.vk.CreateSemaphore(device, semaphoreInfo, null, out renderFinishedSemaphores[i]);
             _ = api.vk.CreateFence(device, fenceInfo, null, out inFlightFences[i]);
         }
-        return (imageAvailableSemaphores, renderFinishedSemaphores, inFlightFences, imagesInFlight);
+        return (imageAvailableSemaphores, renderFinishedSemaphores, inFlightFences);
     }
 
     public static unsafe RenderPass CreateRenderPass(Api api, Device device, Format swapChainImageFormat)
@@ -176,8 +174,9 @@ public static class RenderHelper
         var vertShaderCode = File.ReadAllBytes("shaders/vert.spv");
         var fragShaderCode = File.ReadAllBytes("shaders/frag.spv");
 
-        var vertShaderModule = CreateShaderModule(api, device, vertShaderCode);
-        var fragShaderModule = CreateShaderModule(api, device, fragShaderCode);
+        var vertShaderModule = CreateShaderModule(api.vk, device, vertShaderCode);
+        var fragShaderModule = CreateShaderModule(api.vk, device, fragShaderCode);
+
 
         PipelineShaderStageCreateInfo vertShaderStageInfo = new()
         {
@@ -262,7 +261,6 @@ public static class RenderHelper
 
         PipelineLayoutCreateInfo pipelineLayoutInfo = new();
         _ = api.vk.CreatePipelineLayout(device, pipelineLayoutInfo, null, out var pipelineLayout);
-
         GraphicsPipelineCreateInfo pipelineInfo = new()
         {
             StageCount = 2,
@@ -276,7 +274,7 @@ public static class RenderHelper
             Layout = pipelineLayout,
             RenderPass = renderPass,
             Subpass = 0,
-            BasePipelineHandle = default
+            BasePipelineHandle = default,
         };
         _ = api.vk.CreateGraphicsPipelines(device, default, 1, pipelineInfo, null, out var graphicsPipeline);
         api.vk.DestroyShaderModule(device, fragShaderModule, null);
@@ -288,7 +286,104 @@ public static class RenderHelper
     }
 
 
-    private static unsafe ShaderModule CreateShaderModule(Api api, Device device, byte[] shaderCode)
+    public static unsafe (Pipeline pipeline, PipelineLayout layout) CreateGraphicsPipeline(Renderer.RendererData data, Extent2D swapChainExtent, RenderPass renderPass)
+    {
+        using var vertShader = new Shader(data, ShaderStageFlags.VertexBit, "shaders/vert.spv");
+        using var fragShader = new Shader(data, ShaderStageFlags.FragmentBit, "shaders/frag.spv");
+        using var groupCreator = new ShaderModuleGroupCreator();
+
+        var stages = stackalloc PipelineShaderStageCreateInfo[2]
+        {
+            groupCreator.Create(vertShader),
+            groupCreator.Create(fragShader)
+        };
+
+        PipelineVertexInputStateCreateInfo vertexInputInfo = new()
+        {
+            VertexBindingDescriptionCount = 0,
+            VertexAttributeDescriptionCount = 0,
+        };
+
+        PipelineInputAssemblyStateCreateInfo inputAssembly = new()
+        {
+            Topology = PrimitiveTopology.TriangleList,
+            PrimitiveRestartEnable = false,
+        };
+
+        Viewport viewport = new()
+        {
+            Width = swapChainExtent.Width,
+            Height = swapChainExtent.Height,
+            MinDepth = 0,
+            MaxDepth = 1,
+        };
+
+        Rect2D scissor = new(extent: swapChainExtent);
+
+        PipelineViewportStateCreateInfo viewportState = new()
+        {
+            ViewportCount = 1,
+            PViewports = &viewport,
+            ScissorCount = 1,
+            PScissors = &scissor,
+        };
+
+        PipelineRasterizationStateCreateInfo rasterizer = new()
+        {
+            DepthClampEnable = false,
+            RasterizerDiscardEnable = false,
+            PolygonMode = PolygonMode.Fill,
+            LineWidth = 1,
+            CullMode = CullModeFlags.BackBit,
+            FrontFace = FrontFace.Clockwise,
+            DepthBiasEnable = false,
+        };
+
+        PipelineMultisampleStateCreateInfo multisampling = new()
+        {
+            SampleShadingEnable = false,
+            RasterizationSamples = SampleCountFlags.Count1Bit,
+        };
+
+        PipelineColorBlendAttachmentState colorBlendAttachment = new()
+        {
+            ColorWriteMask = ColorComponentFlags.RBit | ColorComponentFlags.GBit | ColorComponentFlags.BBit | ColorComponentFlags.ABit,
+            BlendEnable = false,
+        };
+
+        PipelineColorBlendStateCreateInfo colorBlending = new()
+        {
+            LogicOpEnable = false,
+            LogicOp = LogicOp.Copy,
+            AttachmentCount = 1,
+            PAttachments = &colorBlendAttachment,
+        };
+
+        PipelineLayoutCreateInfo pipelineLayoutInfo = new();
+        _ = data.vk.CreatePipelineLayout(data.device, pipelineLayoutInfo, null, out var pipelineLayout);
+
+        GraphicsPipelineCreateInfo pipelineInfo = new()
+        {
+            StageCount = 2,
+            PStages = stages,
+            PVertexInputState = &vertexInputInfo,
+            PInputAssemblyState = &inputAssembly,
+            PViewportState = &viewportState,
+            PRasterizationState = &rasterizer,
+            PMultisampleState = &multisampling,
+            PColorBlendState = &colorBlending,
+            Layout = pipelineLayout,
+            RenderPass = renderPass,
+            Subpass = 0,
+            BasePipelineHandle = default,
+        };
+        _ = data.vk.CreateGraphicsPipelines(data.device, default, 1, pipelineInfo, null, out var graphicsPipeline);
+
+        return (graphicsPipeline, pipelineLayout);
+    }
+
+
+    private static unsafe ShaderModule CreateShaderModule(Vk vk, Device device, byte[] shaderCode)
     {
         ShaderModuleCreateInfo createInfo = new()
         {
@@ -296,7 +391,7 @@ public static class RenderHelper
         };
         using pin<byte> hn = new(shaderCode);
         createInfo.PCode = (uint*)hn.handle;
-        _ = api.vk.CreateShaderModule(device, createInfo, null, out ShaderModule shaderModule);
+        _ = vk.CreateShaderModule(device, createInfo, null, out ShaderModule shaderModule);
         return shaderModule;
     }
 
@@ -330,6 +425,17 @@ public static class RenderHelper
             QueueFamilyIndex = queueFamiliyIndicies.graphicsFamily,
         };
         _ = api.vk.CreateCommandPool(device, poolInfo, null, out var commandPool);
+        return commandPool;
+    }
+
+    public static unsafe CommandPool CreateCommandPool(Renderer.RendererData data)
+    {
+        CommandPoolCreateInfo poolInfo = new()
+        {
+            QueueFamilyIndex = data.indiciesDetails.graphicsFamily,
+            Flags = CommandPoolCreateFlags.ResetCommandBufferBit,
+        };
+        _ = data.vk.CreateCommandPool(data.device, poolInfo, null, out var commandPool);
         return commandPool;
     }
 
@@ -421,6 +527,52 @@ public static class RenderHelper
         }
         return commandBuffers;
     }
+
+
+    internal static unsafe CommandBuffer[] CreateCommandBuffers(Renderer.RendererData data, SwapChain sw , CommandPool commandPool, RenderPass renderPass, Extent2D swapChainExtent, Pipeline? graphicsPipeline)
+    {
+        var commandBuffers = new CommandBuffer[sw.frameBuffers.Length];
+        CommandBufferAllocateInfo allocInfo = new()
+        {
+            CommandPool = commandPool,
+            Level = CommandBufferLevel.Primary,
+            CommandBufferCount = (uint)commandBuffers.Length,
+        };
+        fixed (CommandBuffer* commandBuffersPtr = commandBuffers)
+            _ = data.vk.AllocateCommandBuffers(data.device, allocInfo, commandBuffersPtr);
+
+        ClearValue clearColor = new()
+        {
+            Color = { Float32_0 = 0, Float32_1 = 0, Float32_2 = 0, Float32_3 = 1 },
+        };
+
+        for (int i = 0; i < commandBuffers.Length; i++)
+        {
+            CommandBufferBeginInfo beginInfo = new();
+            _ = data.vk.BeginCommandBuffer(commandBuffers[i], beginInfo);
+
+            RenderPassBeginInfo renderPassInfo = new()
+            {
+                SType = StructureType.RenderPassBeginInfo,
+                RenderPass = renderPass,
+                Framebuffer = sw.frameBuffers[i],
+                RenderArea = new(extent: swapChainExtent),
+                ClearValueCount = 1,
+                PClearValues = &clearColor
+            };
+
+            data.vk.CmdBeginRenderPass(commandBuffers[i], &renderPassInfo, SubpassContents.Inline);
+            if (graphicsPipeline.HasValue)
+                data.vk.CmdBindPipeline(commandBuffers[i], PipelineBindPoint.Graphics, graphicsPipeline.Value);
+            if (graphicsPipeline.HasValue)
+                data.vk.CmdDraw(commandBuffers[i], 3, 1, 0, 0); // Actual draw
+            data.vk.CmdEndRenderPass(commandBuffers[i]);
+            _ = data.vk.EndCommandBuffer(commandBuffers[i]);
+        }
+        return commandBuffers;
+    }
+
+
 
     public static unsafe PhysicalDevice PickPhysicalDevice(Vk vk, Instance instance, SurfaceKHR surface, KhrSurface khrsf, string[] neededExtensions)
     {
@@ -713,5 +865,72 @@ public class SwapChainSupportDetails
         uint presentModeCount = 0;
         _ = khrsf.GetPhysicalDeviceSurfacePresentModes(physicalDevice, surface, &presentModeCount, null);
         return (formatCount, presentModeCount);
+    }
+}
+
+public ref struct ShaderModuleGroupCreator
+{
+    private const string entryName = "main";
+    private readonly nint namePtr;
+
+    public unsafe ShaderModuleGroupCreator()
+    {
+        namePtr = SilkMarshal.StringToPtr(entryName);
+    }
+
+    public unsafe PipelineShaderStageCreateInfo Create(ShaderModule module, ShaderStageFlags flag)
+    {
+        return new()
+        {
+            Module = module,
+            PName = (byte*)namePtr,
+            Stage = flag
+        };
+    }
+
+    public unsafe PipelineShaderStageCreateInfo Create(Shader shader)
+    {
+        return new()
+        {
+            Module = shader.module,
+            PName = (byte*)namePtr,
+            Stage = shader.stage
+        };
+    }
+
+    public readonly void Dispose()
+    {
+        SilkMarshal.Free(namePtr);
+    }
+}
+
+
+public readonly struct Shader : IDisposable
+{
+    public readonly ShaderModule module;
+    public readonly ShaderStageFlags stage;
+
+    private readonly Vk _vk;
+    private readonly Device _device;
+
+    public unsafe Shader(Renderer.RendererData data, ShaderStageFlags stage, byte[] shaderCode)
+    {
+        _vk = data.vk;
+        _device = data.device;
+        this.stage = stage;
+        ShaderModuleCreateInfo createInfo = new()
+        {
+            CodeSize = (nuint)shaderCode.Length,
+        };
+        using pin<byte> hn = new(shaderCode);
+        createInfo.PCode = (uint*)hn.handle;
+        _ = _vk.CreateShaderModule(_device, createInfo, null, out module);
+    }
+
+    public unsafe Shader(Renderer.RendererData data, ShaderStageFlags stage, string path) : this(data, stage, File.ReadAllBytes(path)) { }
+
+    public unsafe void Dispose()
+    {
+        _vk.DestroyShaderModule(_device, module, null);
     }
 }

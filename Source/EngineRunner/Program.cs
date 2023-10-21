@@ -14,9 +14,10 @@ eng.Run();
 Stopwatch sw = new();
 while (true)
 {
-    sw.Restart();
     Thread.Yield();
+    sw.Restart();
     eng.Run();
+    eng.Draw();
     sw.Stop();
-    Console.WriteLine(sw.ElapsedTicks);
+    //Console.WriteLine((int)((1f/sw.ElapsedMilliseconds) * 1000));
 }

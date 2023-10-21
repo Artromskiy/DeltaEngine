@@ -16,6 +16,10 @@ public sealed class Engine : IDisposable
     public void Run()
     {
         _renderer?.Run();
+    }
+
+    public void Draw()
+    {
         _renderer?.Draw();
     }
 

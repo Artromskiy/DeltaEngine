@@ -2,17 +2,18 @@
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
 using System;
+using System.Diagnostics;
 using static DeltaEngine.ThrowHelper;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 
 namespace DeltaEngine.Rendering;
 
-internal sealed unsafe class Renderer : IDisposable
+public sealed class Renderer : IDisposable
 {
     private readonly Data _data;
     private readonly Api _api;
 
-    private struct Data
+    private unsafe struct Data
     {
         public Window* _window;
         public Queue _queue;
@@ -25,7 +26,7 @@ internal sealed unsafe class Renderer : IDisposable
 
     private Pipeline? graphicsPipeline;
 
-    private readonly SwapChain swapChain;
+    private SwapChain swapChain;
 
     private RenderPass renderPass;
     private PipelineLayout pipelineLayout;
@@ -35,7 +36,6 @@ internal sealed unsafe class Renderer : IDisposable
     private readonly Semaphore[] imageAvailableSemaphores;
     private readonly Semaphore[] renderFinishedSemaphores;
     private readonly Fence[] inFlightFences;
-    private readonly Fence[] imagesInFlight;
     private int currentFrame = 0;
 
     private readonly string[] deviceExtensions = new[]
@@ -44,7 +44,7 @@ internal sealed unsafe class Renderer : IDisposable
     };
 
 
-    public Renderer(string appName)
+    public unsafe Renderer(string appName)
     {
         _appName = appName;
         _api = new();
@@ -52,23 +52,21 @@ internal sealed unsafe class Renderer : IDisposable
         _rendererData = new RendererData(_api, _data._window, deviceExtensions, _appName, RendererName);
 
         renderPass = RenderHelper.CreateRenderPass(_api, _rendererData.device, _rendererData.format.Format);
-        int w, h;
-        w = h = 0;
-        _api.sdl.VulkanGetDrawableSize(_data._window, ref w, ref h);
-        swapChain = new SwapChain(_api, _rendererData, renderPass, w, h);
-        (graphicsPipeline, pipelineLayout) = RenderHelper.CreateGraphicsPipeline(_api, _rendererData.device, swapChain.extent, renderPass);
-        commandPool = RenderHelper.CreateCommandPool(_api, _rendererData.instance, _rendererData.gpu, _rendererData.device, _rendererData.surface);
-        commandBuffers = RenderHelper.CreateCommandBuffers(_api, swapChain.frameBuffers.AsSpan(), commandPool, _rendererData.device, renderPass, swapChain.extent, graphicsPipeline); ;
-        (imageAvailableSemaphores, renderFinishedSemaphores, inFlightFences, imagesInFlight) = RenderHelper.CreateSyncObjects(_api, _rendererData.device, swapChain.images.Length, 1);
+        (var w, var h) = GetSdlWindowSize();
+        swapChain = new SwapChain(_api, _rendererData, renderPass, w, h, 3);
+        (graphicsPipeline, pipelineLayout) = RenderHelper.CreateGraphicsPipeline(_rendererData, swapChain.extent, renderPass);
+        commandPool = RenderHelper.CreateCommandPool(_rendererData);
+        commandBuffers = RenderHelper.CreateCommandBuffers(_rendererData, swapChain, commandPool, renderPass, swapChain.extent, graphicsPipeline);
+        (imageAvailableSemaphores, renderFinishedSemaphores, inFlightFences) = RenderHelper.CreateSyncObjects(_api, _rendererData.device, swapChain.images.Length, (int)swapChain.imageCount);
     }
 
-    public void SetWindowPositionAndSize((int x, int y, int w, int h) rect)
+    public unsafe void SetWindowPositionAndSize((int x, int y, int w, int h) rect)
     {
         _api.sdl.SetWindowPosition(_data._window, rect.x, rect.y);
         _api.sdl.SetWindowSize(_data._window, rect.w, rect.h);
     }
 
-    public void Dispose()
+    public unsafe void Dispose()
     {
         foreach (var semaphore in renderFinishedSemaphores)
             _api.vk.DestroySemaphore(_rendererData.device, semaphore, null);
@@ -93,23 +91,123 @@ internal sealed unsafe class Renderer : IDisposable
         _api.vk.DestroyInstance(_rendererData.instance, null);
         _api.vk.Dispose();
 
-        _api.vk.DestroyDevice(_rendererData.device, null);
-        _api.vk.DestroyInstance(_rendererData.instance, null);
-        _api.vk.Dispose();
         _api.sdl.DestroyWindow(_data._window);
         _api.sdl.Dispose();
     }
 
-    public void Run()
+    public unsafe void Run()
     {
         _api.sdl.PollEvent((Silk.NET.SDL.Event*)null);
     }
-    public void Draw()
+
+    private unsafe (int w,int h) GetSdlWindowSize()
     {
-        _ = _api.vk.TryGetDeviceExtension(_rendererData.instance, _rendererData.device, out KhrSwapchain khrSwapChain);
-        RenderHelper.DrawFrame(_api, _rendererData.device, swapChain.swapChain, khrSwapChain, commandBuffers,
-            inFlightFences, imagesInFlight, imageAvailableSemaphores, renderFinishedSemaphores,
-            _rendererData.graphicsQueue, _rendererData.presentQueue, ref currentFrame);
+        int w, h;
+        w = h = 0;
+        _api.sdl.VulkanGetDrawableSize(_data._window, ref w, ref h);
+        return (w, h);
+    }
+
+    public unsafe void Draw()
+    {
+        _rendererData.vk.WaitForFences(_rendererData.device, 1, inFlightFences[currentFrame], true, ulong.MaxValue);
+
+        uint imageIndex = 0;
+
+        var waitSemaphores = stackalloc[] { imageAvailableSemaphores[currentFrame] };
+        var waitStages = stackalloc[] { PipelineStageFlags.ColorAttachmentOutputBit };
+        var signalSemaphores = stackalloc[] { renderFinishedSemaphores[currentFrame] };
+
+        var res = swapChain.khrSw.AcquireNextImage(_rendererData.device, swapChain.swapChain, ulong.MaxValue, *waitSemaphores, default, ref imageIndex);
+        
+        if(res == Result.SuboptimalKhr || res == Result.ErrorOutOfDateKhr)
+        {
+            OnResize();
+            return;
+        }
+        _rendererData.vk.ResetFences(_rendererData.device, 1, inFlightFences[currentFrame]);
+
+        _rendererData.vk.ResetCommandBuffer(commandBuffers[currentFrame], 0);
+        RecordCommandBuffer(commandBuffers[currentFrame], imageIndex);
+
+
+        var buffer = commandBuffers[imageIndex];
+        SubmitInfo submitInfo = new()
+        {
+            WaitSemaphoreCount = 1,
+            PWaitSemaphores = waitSemaphores,
+            PWaitDstStageMask = waitStages,
+            CommandBufferCount = 1,
+            PCommandBuffers = &buffer,
+            SignalSemaphoreCount = 1,
+            PSignalSemaphores = signalSemaphores,
+        };
+        _ = _rendererData.vk.QueueSubmit(_rendererData.graphicsQueue, 1, submitInfo, inFlightFences[currentFrame]);
+
+        var swapChains = stackalloc[] { swapChain.swapChain };
+        PresentInfoKHR presentInfo = new()
+        {
+            WaitSemaphoreCount = 1,
+            PWaitSemaphores = signalSemaphores,
+            SwapchainCount = 1,
+            PSwapchains = swapChains,
+            PImageIndices = &imageIndex
+        };
+        res = swapChain.khrSw.QueuePresent(_rendererData.presentQueue, presentInfo);
+
+        if (res == Result.SuboptimalKhr || res == Result.ErrorOutOfDateKhr)
+        {
+            OnResize();
+            return;
+        }
+
+        currentFrame = (currentFrame + 1) % (int)swapChain.imageCount;
+    }
+
+    private void OnResize()
+    {
+        swapChain.Dispose();
+        (var w, var h) = GetSdlWindowSize();
+        _rendererData.UpdateSupportDetails();
+        swapChain = new SwapChain(_api, _rendererData, renderPass, w, h, 3);
+    }
+
+    private unsafe void RecordCommandBuffer(CommandBuffer commandBuffer, uint imageIndex)
+    {
+        CommandBufferBeginInfo beginInfo = new(StructureType.CommandBufferBeginInfo);
+        ClearValue clearColor = new(new ClearColorValue(0, 0, 0, 1));
+
+        RenderPassBeginInfo renderPassInfo = new()
+        {
+            SType = StructureType.RenderPassBeginInfo,
+            RenderPass = renderPass,
+            Framebuffer = swapChain.frameBuffers[(int)imageIndex],
+            ClearValueCount = 1,
+            PClearValues = &clearColor,
+            RenderArea = new Rect2D(extent: swapChain.extent)
+        };
+
+        Viewport viewport = new()
+        {
+            Width = swapChain.extent.Width,
+            Height = swapChain.extent.Height,
+            MinDepth = 0.0f,
+            MaxDepth = 1.0f
+        };
+
+        Rect2D scissor = new(extent: swapChain.extent);
+
+        _ = _rendererData.vk.BeginCommandBuffer(commandBuffer, &beginInfo);
+
+        _rendererData.vk.CmdBeginRenderPass(commandBuffer, &renderPassInfo, SubpassContents.Inline);
+        if (graphicsPipeline.HasValue)
+            _rendererData.vk.CmdBindPipeline(commandBuffer, PipelineBindPoint.Graphics, graphicsPipeline.Value);
+        _rendererData.vk.CmdSetViewport(commandBuffer, 0, 1, &viewport);
+        _rendererData.vk.CmdSetScissor(commandBuffer, 0, 1, &scissor);
+        _rendererData.vk.CmdDraw(commandBuffer, 3, 1, 0, 0);
+        _rendererData.vk.CmdEndRenderPass(commandBuffer);
+
+        _ = _rendererData.vk.EndCommandBuffer(commandBuffer);
     }
 
 
@@ -123,19 +221,21 @@ internal sealed unsafe class Renderer : IDisposable
         public readonly PhysicalDevice gpu;
         public readonly Device device;
 
+        public readonly KhrSurface khrsf;
+
         public readonly SurfaceFormatKHR format;
 
-        public readonly SwapChainSupportDetails swapChainSupport;
+        public SwapChainSupportDetails swapChainSupport;
         public readonly QueueFamilyIndiciesDetails indiciesDetails;
 
         public readonly Queue graphicsQueue;
         public readonly Queue presentQueue;
 
-        public RendererData(Api api, Window* window, string[] deviceExtensions, string appName, string rendererName)
+        public unsafe RendererData(Api api, Window* window, string[] deviceExtensions, string appName, string rendererName)
         {
             vk = api.vk;
             instance = RenderHelper.CreateVkInstance(vk, api.sdl, window, appName, rendererName);
-            _ = vk.TryGetInstanceExtension<KhrSurface>(instance, out var khrsf);
+            _ = vk.TryGetInstanceExtension(instance, out khrsf);
             surface = RenderHelper.CreateSurface(api.sdl, window, instance);
             gpu = RenderHelper.PickPhysicalDevice(vk, instance, surface, khrsf, deviceExtensions);
             (device, graphicsQueue, presentQueue) = RenderHelper.CreateLogicalDevice(vk, gpu, surface, khrsf, deviceExtensions);
@@ -143,6 +243,12 @@ internal sealed unsafe class Renderer : IDisposable
             swapChainSupport = new SwapChainSupportDetails(gpu, surface, khrsf);
             indiciesDetails = new QueueFamilyIndiciesDetails(vk, surface, gpu, khrsf);
             format = RenderHelper.ChooseSwapSurfaceFormat(swapChainSupport.Formats);
+        }
+
+        public void UpdateSupportDetails()
+        {
+            swapChainSupport = new SwapChainSupportDetails(gpu, surface, khrsf);
+
         }
     }
 }
