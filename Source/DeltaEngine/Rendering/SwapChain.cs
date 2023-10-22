@@ -17,9 +17,9 @@ internal class SwapChain : IDisposable
     public readonly KhrSwapchain khrSw;
     public readonly SwapchainKHR swapChain;
 
-    private readonly Renderer.RendererData data;
+    private readonly RenderBase data;
 
-    public unsafe SwapChain(Api api, Renderer.RendererData data, RenderPass rp, int width, int height, uint trgImageCount)
+    public unsafe SwapChain(Api api, RenderBase data, RenderPass rp, (int w, int h) size, uint trgImageCount)
     {
         this.data = data;
         var swSupport = data.swapChainSupport;
@@ -27,7 +27,7 @@ internal class SwapChain : IDisposable
 
         format = RenderHelper.ChooseSwapSurfaceFormat(swSupport.Formats);
         var presentMode = RenderHelper.ChoosePresentMode(swSupport.PresentModes);
-        extent = RenderHelper.ChooseSwapExtent(width, height, swSupport.Capabilities);
+        extent = RenderHelper.ChooseSwapExtent(size.w, size.h, swSupport.Capabilities);
 
         uint maxImageCount = swSupport.Capabilities.MaxImageCount;
         maxImageCount = maxImageCount == 0 ? int.MaxValue : maxImageCount;
@@ -74,8 +74,6 @@ internal class SwapChain : IDisposable
 
         foreach (var framebuffer in frameBuffers)
             data.vk.DestroyFramebuffer(data.device, framebuffer, null);
-        //foreach (var image in images)
-        //    data.vk.DestroyImage(data.device, image, null);
         foreach (var imageView in imageViews)
             data.vk.DestroyImageView(data.device, imageView, null);
 

@@ -1,5 +1,5 @@
-﻿using System;
-using DeltaEngine.Rendering;
+﻿using DeltaEngine.Rendering;
+using System;
 
 namespace DeltaEngine;
 
@@ -20,7 +20,7 @@ public sealed class Engine : IDisposable
 
     public void Draw()
     {
-        _renderer?.Draw();
+        _renderer?.SendDrawEvent();
     }
 
     public void Dispose()

@@ -23,8 +23,8 @@ public static class RenderHelper
           WindowFlags.Vulkan
         | WindowFlags.Shown
         | WindowFlags.Resizable
-   //            | WindowFlags.AllowHighdpi 
-   //            | WindowFlags.Borderless
+        | WindowFlags.AllowHighdpi
+        | WindowFlags.Borderless
    //            | WindowFlags.FullscreenDesktop
    );
 
@@ -60,11 +60,11 @@ public static class RenderHelper
     }
 
     public static unsafe (Semaphore[] imageAvailableSemaphores, Semaphore[] renderFinishedSemaphores, Fence[] inFlightFences)
-        CreateSyncObjects(Api api, Device device, int swapChainImagesCount, int maxFramesInFlight)
+        CreateSyncObjects(Api api, Device device, int swapChainImagesCount)
     {
-        var imageAvailableSemaphores = new Semaphore[maxFramesInFlight];
-        var renderFinishedSemaphores = new Semaphore[maxFramesInFlight];
-        var inFlightFences = new Fence[maxFramesInFlight];
+        var imageAvailableSemaphores = new Semaphore[swapChainImagesCount];
+        var renderFinishedSemaphores = new Semaphore[swapChainImagesCount];
+        var inFlightFences = new Fence[swapChainImagesCount];
 
         SemaphoreCreateInfo semaphoreInfo = new();
 
@@ -73,7 +73,7 @@ public static class RenderHelper
             Flags = FenceCreateFlags.SignaledBit,
         };
 
-        for (var i = 0; i < maxFramesInFlight; i++)
+        for (var i = 0; i < swapChainImagesCount; i++)
         {
             _ = api.vk.CreateSemaphore(device, semaphoreInfo, null, out imageAvailableSemaphores[i]);
             _ = api.vk.CreateSemaphore(device, semaphoreInfo, null, out renderFinishedSemaphores[i]);
@@ -286,7 +286,7 @@ public static class RenderHelper
     }
 
 
-    public static unsafe (Pipeline pipeline, PipelineLayout layout) CreateGraphicsPipeline(Renderer.RendererData data, Extent2D swapChainExtent, RenderPass renderPass)
+    public static unsafe (Pipeline pipeline, PipelineLayout layout) CreateGraphicsPipeline(RenderBase data, Extent2D swapChainExtent, RenderPass renderPass)
     {
         using var vertShader = new Shader(data, ShaderStageFlags.VertexBit, "shaders/vert.spv");
         using var fragShader = new Shader(data, ShaderStageFlags.FragmentBit, "shaders/frag.spv");
@@ -428,7 +428,7 @@ public static class RenderHelper
         return commandPool;
     }
 
-    public static unsafe CommandPool CreateCommandPool(Renderer.RendererData data)
+    public static unsafe CommandPool CreateCommandPool(RenderBase data)
     {
         CommandPoolCreateInfo poolInfo = new()
         {
@@ -529,7 +529,7 @@ public static class RenderHelper
     }
 
 
-    internal static unsafe CommandBuffer[] CreateCommandBuffers(Renderer.RendererData data, SwapChain sw , CommandPool commandPool, RenderPass renderPass, Extent2D swapChainExtent, Pipeline? graphicsPipeline)
+    internal static unsafe CommandBuffer[] CreateCommandBuffers(RenderBase data, SwapChain sw, CommandPool commandPool, RenderPass renderPass, Extent2D swapChainExtent, Pipeline? graphicsPipeline)
     {
         var commandBuffers = new CommandBuffer[sw.frameBuffers.Length];
         CommandBufferAllocateInfo allocInfo = new()
@@ -785,152 +785,4 @@ public static class RenderHelper
         return true;
     }
 
-}
-
-public class QueueFamilyIndiciesDetails
-{
-    public readonly ImmutableArray<QueueFamilyProperties> queueFamilyProperties;
-
-    public readonly uint graphicsFamily;
-    public readonly uint presentFamily;
-
-    public readonly bool suitable;
-
-    public unsafe QueueFamilyIndiciesDetails(Vk vk, SurfaceKHR surface, PhysicalDevice gpu, KhrSurface khrsf)
-    {
-        uint queueFamilityCount = 0;
-        vk.GetPhysicalDeviceQueueFamilyProperties(gpu, &queueFamilityCount, null);
-        Span<QueueFamilyProperties> queueFamilies = stackalloc QueueFamilyProperties[(int)queueFamilityCount];
-        vk.GetPhysicalDeviceQueueFamilyProperties(gpu, &queueFamilityCount, queueFamilies);
-        queueFamilyProperties = ImmutableArray.Create(queueFamilies);
-
-
-        int graphicsFamily, presentFamily;
-        graphicsFamily = presentFamily = -1;
-        for (int i = 0; i < queueFamilyProperties.Length; i++)
-        {
-            var queueFamily = queueFamilyProperties[i];
-            if (queueFamily.QueueFlags.HasFlag(QueueFlags.GraphicsBit))
-                graphicsFamily = i;
-
-            _ = khrsf.GetPhysicalDeviceSurfaceSupport(gpu, (uint)i, surface, out var presentSupport);
-            if (presentSupport)
-                presentFamily = i;
-
-            if (graphicsFamily >= 0 && presentFamily >= 0)
-                break;
-            i++;
-        }
-
-
-
-        suitable = graphicsFamily >= 0 && presentFamily >= 0;
-        this.graphicsFamily = (uint)graphicsFamily;
-        this.presentFamily = (uint)presentFamily;
-    }
-}
-
-
-public class SwapChainSupportDetails
-{
-    public readonly SurfaceCapabilitiesKHR Capabilities;
-    public readonly ImmutableArray<PresentModeKHR> PresentModes;
-    public readonly ImmutableArray<SurfaceFormatKHR> Formats;
-
-    public unsafe SwapChainSupportDetails(PhysicalDevice physicalDevice, SurfaceKHR surface, KhrSurface khrsf)
-    {
-        _ = khrsf.GetPhysicalDeviceSurfaceCapabilities(physicalDevice, surface, out Capabilities);
-        (var formatCount, var presentModeCount) = GetSizes(physicalDevice, surface, khrsf);
-
-        Span<SurfaceFormatKHR> formats = stackalloc SurfaceFormatKHR[(int)formatCount];
-        _ = khrsf.GetPhysicalDeviceSurfaceFormats(physicalDevice, surface, &formatCount, formats);
-        Formats = ImmutableArray.Create(formats);
-
-        Span<PresentModeKHR> presentModes = stackalloc PresentModeKHR[(int)presentModeCount];
-        _ = khrsf.GetPhysicalDeviceSurfacePresentModes(physicalDevice, surface, &presentModeCount, presentModes);
-        PresentModes = ImmutableArray.Create(presentModes);
-    }
-
-    public static bool Adequate(PhysicalDevice physicalDevice, SurfaceKHR surface, KhrSurface khrsf)
-    {
-        var (formatCount, presentModeCount) = GetSizes(physicalDevice, surface, khrsf);
-        return formatCount != 0 && presentModeCount != 0;
-    }
-
-    private static unsafe (uint formatCount, uint presentModeCount) GetSizes(PhysicalDevice physicalDevice, SurfaceKHR surface, KhrSurface khrsf)
-    {
-        uint formatCount = 0;
-        _ = khrsf.GetPhysicalDeviceSurfaceFormats(physicalDevice, surface, &formatCount, null);
-
-        uint presentModeCount = 0;
-        _ = khrsf.GetPhysicalDeviceSurfacePresentModes(physicalDevice, surface, &presentModeCount, null);
-        return (formatCount, presentModeCount);
-    }
-}
-
-public ref struct ShaderModuleGroupCreator
-{
-    private const string entryName = "main";
-    private readonly nint namePtr;
-
-    public unsafe ShaderModuleGroupCreator()
-    {
-        namePtr = SilkMarshal.StringToPtr(entryName);
-    }
-
-    public unsafe PipelineShaderStageCreateInfo Create(ShaderModule module, ShaderStageFlags flag)
-    {
-        return new()
-        {
-            Module = module,
-            PName = (byte*)namePtr,
-            Stage = flag
-        };
-    }
-
-    public unsafe PipelineShaderStageCreateInfo Create(Shader shader)
-    {
-        return new()
-        {
-            Module = shader.module,
-            PName = (byte*)namePtr,
-            Stage = shader.stage
-        };
-    }
-
-    public readonly void Dispose()
-    {
-        SilkMarshal.Free(namePtr);
-    }
-}
-
-
-public readonly struct Shader : IDisposable
-{
-    public readonly ShaderModule module;
-    public readonly ShaderStageFlags stage;
-
-    private readonly Vk _vk;
-    private readonly Device _device;
-
-    public unsafe Shader(Renderer.RendererData data, ShaderStageFlags stage, byte[] shaderCode)
-    {
-        _vk = data.vk;
-        _device = data.device;
-        this.stage = stage;
-        ShaderModuleCreateInfo createInfo = new()
-        {
-            CodeSize = (nuint)shaderCode.Length,
-        };
-        using pin<byte> hn = new(shaderCode);
-        createInfo.PCode = (uint*)hn.handle;
-        _ = _vk.CreateShaderModule(_device, createInfo, null, out module);
-    }
-
-    public unsafe Shader(Renderer.RendererData data, ShaderStageFlags stage, string path) : this(data, stage, File.ReadAllBytes(path)) { }
-
-    public unsafe void Dispose()
-    {
-        _vk.DestroyShaderModule(_device, module, null);
-    }
 }
