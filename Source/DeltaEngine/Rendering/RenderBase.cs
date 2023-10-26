@@ -18,6 +18,7 @@ public class RenderBase
 
     public SwapChainSupportDetails swapChainSupport;
     public readonly QueueFamilyIndiciesDetails indiciesDetails;
+    public readonly MemoryDetails gpuMemory;
 
     public readonly Queue graphicsQueue;
     public readonly Queue presentQueue;
@@ -29,6 +30,8 @@ public class RenderBase
         _ = vk.TryGetInstanceExtension(instance, out khrsf);
         surface = RenderHelper.CreateSurface(api.sdl, window, instance);
         gpu = RenderHelper.PickPhysicalDevice(vk, instance, surface, khrsf, deviceExtensions);
+        gpuMemory = new MemoryDetails(vk, gpu);
+
         (device, graphicsQueue, presentQueue) = RenderHelper.CreateLogicalDevice(vk, gpu, surface, khrsf, deviceExtensions);
 
         swapChainSupport = new SwapChainSupportDetails(gpu, surface, khrsf);

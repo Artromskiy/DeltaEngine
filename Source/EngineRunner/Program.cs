@@ -12,5 +12,5 @@ while (true)
     eng.Run();
     eng.Draw();
     sw.Stop();
-    Console.WriteLine((int)(10000000f / sw.ElapsedTicks));
+    Console.WriteLine((int)(10000000f / sw.ElapsedTicks)); // FPS of main thread
 }

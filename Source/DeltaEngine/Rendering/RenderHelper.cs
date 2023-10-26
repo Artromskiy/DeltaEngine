@@ -8,9 +8,11 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using static DeltaEngine.ThrowHelper;
+using Buffer = Silk.NET.Vulkan.Buffer;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 
 namespace DeltaEngine.Rendering;
@@ -168,123 +170,50 @@ public static class RenderHelper
         return nondispatchable.ToSurface();
     }
 
-
-    public static unsafe (Pipeline pipeline, PipelineLayout layout) CreateGraphicsPipeline(Api api, Device device, Extent2D swapChainExtent, RenderPass renderPass)
+    public static unsafe (Buffer, DeviceMemory) CreateVertexBuffer(RenderBase data, Vertex[] vertices)
     {
-        var vertShaderCode = File.ReadAllBytes("shaders/vert.spv");
-        var fragShaderCode = File.ReadAllBytes("shaders/frag.spv");
-
-        var vertShaderModule = CreateShaderModule(api.vk, device, vertShaderCode);
-        var fragShaderModule = CreateShaderModule(api.vk, device, fragShaderCode);
-
-
-        PipelineShaderStageCreateInfo vertShaderStageInfo = new()
+        BufferCreateInfo createInfo = new()
         {
-            Stage = ShaderStageFlags.VertexBit,
-            Module = vertShaderModule,
-            PName = (byte*)SilkMarshal.StringToPtr("main")
+            SType = StructureType.BufferCreateInfo,
+            Size = (uint)(Vertex.Size * vertices.Length),
+            Usage = BufferUsageFlags.VertexBufferBit,
+            SharingMode = SharingMode.Exclusive,
+            Flags = default,
         };
+        _ = data.vk.CreateBuffer(data.device, createInfo, null, out var buffer);
 
-        PipelineShaderStageCreateInfo fragShaderStageInfo = new()
+        MemoryPropertyFlags flags = MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit;
+
+        var reqs = data.vk.GetBufferMemoryRequirements(data.device, buffer);
+        MemoryAllocateInfo allocateInfo = new()
         {
-            Stage = ShaderStageFlags.FragmentBit,
-            Module = fragShaderModule,
-            PName = (byte*)SilkMarshal.StringToPtr("main")
+            SType = StructureType.MemoryAllocateInfo,
+            AllocationSize = reqs.Size,
+            MemoryTypeIndex = (uint)FindMemoryType(data, (int)reqs.MemoryTypeBits, flags)
         };
+        _ = data.vk.AllocateMemory(data.device, allocateInfo, null, out var memory);
+        data.vk.BindBufferMemory(data.device, buffer, memory, 0);
 
-        var shaderStages = stackalloc PipelineShaderStageCreateInfo[]
-        {
-            vertShaderStageInfo,
-            fragShaderStageInfo
-        };
+        void* datap;
+        data.vk.MapMemory(data.device, memory, 0, createInfo.Size, 0, &datap);
 
-        PipelineVertexInputStateCreateInfo vertexInputInfo = new()
-        {
-            VertexBindingDescriptionCount = 0,
-            VertexAttributeDescriptionCount = 0,
-        };
+        Unsafe.CopyBlockUnaligned(ref Unsafe.AsRef<byte>(datap),
+            ref Unsafe.As<Vertex, byte>(ref MemoryMarshal.GetArrayDataReference(vertices)),
+            (uint)createInfo.Size);
+        data.vk.UnmapMemory(data.device, memory);
 
-        PipelineInputAssemblyStateCreateInfo inputAssembly = new()
-        {
-            Topology = PrimitiveTopology.TriangleList,
-            PrimitiveRestartEnable = false,
-        };
-
-        Viewport viewport = new()
-        {
-            Width = swapChainExtent.Width,
-            Height = swapChainExtent.Height,
-            MinDepth = 0,
-            MaxDepth = 1,
-        };
-
-        Rect2D scissor = new(extent: swapChainExtent);
-
-        PipelineViewportStateCreateInfo viewportState = new()
-        {
-            ViewportCount = 1,
-            PViewports = &viewport,
-            ScissorCount = 1,
-            PScissors = &scissor,
-        };
-
-        PipelineRasterizationStateCreateInfo rasterizer = new()
-        {
-            DepthClampEnable = false,
-            RasterizerDiscardEnable = false,
-            PolygonMode = PolygonMode.Fill,
-            LineWidth = 1,
-            CullMode = CullModeFlags.BackBit,
-            FrontFace = FrontFace.Clockwise,
-            DepthBiasEnable = false,
-        };
-
-        PipelineMultisampleStateCreateInfo multisampling = new()
-        {
-            SampleShadingEnable = false,
-            RasterizationSamples = SampleCountFlags.Count1Bit,
-        };
-
-        PipelineColorBlendAttachmentState colorBlendAttachment = new()
-        {
-            ColorWriteMask = ColorComponentFlags.RBit | ColorComponentFlags.GBit | ColorComponentFlags.BBit | ColorComponentFlags.ABit,
-            BlendEnable = false,
-        };
-
-        PipelineColorBlendStateCreateInfo colorBlending = new()
-        {
-            LogicOpEnable = false,
-            LogicOp = LogicOp.Copy,
-            AttachmentCount = 1,
-            PAttachments = &colorBlendAttachment,
-        };
-
-        PipelineLayoutCreateInfo pipelineLayoutInfo = new();
-        _ = api.vk.CreatePipelineLayout(device, pipelineLayoutInfo, null, out var pipelineLayout);
-        GraphicsPipelineCreateInfo pipelineInfo = new()
-        {
-            StageCount = 2,
-            PStages = shaderStages,
-            PVertexInputState = &vertexInputInfo,
-            PInputAssemblyState = &inputAssembly,
-            PViewportState = &viewportState,
-            PRasterizationState = &rasterizer,
-            PMultisampleState = &multisampling,
-            PColorBlendState = &colorBlending,
-            Layout = pipelineLayout,
-            RenderPass = renderPass,
-            Subpass = 0,
-            BasePipelineHandle = default,
-        };
-        _ = api.vk.CreateGraphicsPipelines(device, default, 1, pipelineInfo, null, out var graphicsPipeline);
-        api.vk.DestroyShaderModule(device, fragShaderModule, null);
-        api.vk.DestroyShaderModule(device, vertShaderModule, null);
-
-        SilkMarshal.Free((nint)vertShaderStageInfo.PName);
-        SilkMarshal.Free((nint)fragShaderStageInfo.PName);
-        return (graphicsPipeline, pipelineLayout);
+        return (buffer, memory);
     }
 
+    private static int FindMemoryType(RenderBase data, int typeFilter, MemoryPropertyFlags properties)
+    {
+        int i = 0;
+        for (; i < data.gpuMemory.memoryProperties.MemoryTypeCount; i++)
+            if (Convert.ToBoolean(typeFilter & (1 << i)) && (data.gpuMemory.memoryProperties.MemoryTypes[i].PropertyFlags & properties) == properties)
+                return i;
+        _ = false;
+        return i;
+    }
 
     public static unsafe (Pipeline pipeline, PipelineLayout layout) CreateGraphicsPipeline(RenderBase data, Extent2D swapChainExtent, RenderPass renderPass)
     {
@@ -298,10 +227,15 @@ public static class RenderHelper
             groupCreator.Create(fragShader)
         };
 
+        var bind = Vertex.BindingDescription;
+        var attr = stackalloc VertexInputAttributeDescription[Vertex.AttributeDesctiption.Length];
+        Vertex.FillAttributeDesctiption(attr);
         PipelineVertexInputStateCreateInfo vertexInputInfo = new()
         {
-            VertexBindingDescriptionCount = 0,
-            VertexAttributeDescriptionCount = 0,
+            VertexBindingDescriptionCount = 1,
+            PVertexBindingDescriptions = &bind,
+            VertexAttributeDescriptionCount = (uint)Vertex.AttributeDesctiption.Length,
+            PVertexAttributeDescriptions = attr
         };
 
         PipelineInputAssemblyStateCreateInfo inputAssembly = new()
@@ -383,19 +317,6 @@ public static class RenderHelper
     }
 
 
-    private static unsafe ShaderModule CreateShaderModule(Vk vk, Device device, byte[] shaderCode)
-    {
-        ShaderModuleCreateInfo createInfo = new()
-        {
-            CodeSize = (nuint)shaderCode.Length,
-        };
-        using pin<byte> hn = new(shaderCode);
-        createInfo.PCode = (uint*)hn.handle;
-        _ = vk.CreateShaderModule(device, createInfo, null, out ShaderModule shaderModule);
-        return shaderModule;
-    }
-
-
     public static unsafe ImmutableArray<Framebuffer> CreateFramebuffers(Api api, Device device, ReadOnlySpan<ImageView> swapChainImageViews, RenderPass renderPass, Extent2D swapChainExtent)
     {
         Span<Framebuffer> swapChainFramebuffers = stackalloc Framebuffer[swapChainImageViews.Length];
@@ -416,18 +337,6 @@ public static class RenderHelper
         return ImmutableArray.Create(swapChainFramebuffers);
     }
 
-    public static unsafe CommandPool CreateCommandPool(Api api, Instance instance, PhysicalDevice gpu, Device device, SurfaceKHR surface)
-    {
-        api.vk.TryGetInstanceExtension(instance, out KhrSurface khrsf);
-        var queueFamiliyIndicies = new QueueFamilyIndiciesDetails(api.vk, surface, gpu, khrsf);
-        CommandPoolCreateInfo poolInfo = new()
-        {
-            QueueFamilyIndex = queueFamiliyIndicies.graphicsFamily,
-        };
-        _ = api.vk.CreateCommandPool(device, poolInfo, null, out var commandPool);
-        return commandPool;
-    }
-
     public static unsafe CommandPool CreateCommandPool(RenderBase data)
     {
         CommandPoolCreateInfo poolInfo = new()
@@ -439,136 +348,18 @@ public static class RenderHelper
         return commandPool;
     }
 
-    public static unsafe void DrawFrame(Api api, Device device, SwapchainKHR swapChain, KhrSwapchain khrSwapChain, CommandBuffer[] commandBuffers,
-        Fence[] inFlightFences, Fence[] imagesInFlight, Semaphore[] imageAvailableSemaphores, Semaphore[] renderFinishedSemaphores,
-        Queue graphicsQueue, Queue presentQueue, ref int currentFrame)
+
+    internal static unsafe CommandBuffer[] CreateCommandBuffers(RenderBase data, int buffersCount, CommandPool commandPool)
     {
-        api.vk.WaitForFences(device, 1, inFlightFences[currentFrame], true, ulong.MaxValue);
-
-        uint imageIndex = 0;
-        khrSwapChain.AcquireNextImage(device, swapChain, ulong.MaxValue, imageAvailableSemaphores[currentFrame], default, ref imageIndex);
-        if (imagesInFlight[imageIndex].Handle != default)
-            api.vk.WaitForFences(device, 1, imagesInFlight[imageIndex], true, ulong.MaxValue);
-        imagesInFlight[imageIndex] = inFlightFences[currentFrame];
-
-        var waitSemaphores = stackalloc[] { imageAvailableSemaphores[currentFrame] };
-        var waitStages = stackalloc[] { PipelineStageFlags.ColorAttachmentOutputBit };
-        var signalSemaphores = stackalloc[] { renderFinishedSemaphores[currentFrame] };
-
-        var buffer = commandBuffers[imageIndex];
-        SubmitInfo submitInfo = new()
-        {
-            WaitSemaphoreCount = 1,
-            PWaitSemaphores = waitSemaphores,
-            PWaitDstStageMask = waitStages,
-            CommandBufferCount = 1,
-            PCommandBuffers = &buffer,
-            SignalSemaphoreCount = 1,
-            PSignalSemaphores = signalSemaphores,
-        };
-
-        api.vk.ResetFences(device, 1, inFlightFences[currentFrame]);
-
-        _ = api.vk.QueueSubmit(graphicsQueue, 1, submitInfo, inFlightFences[currentFrame]);
-        var swapChains = stackalloc[] { swapChain };
-        PresentInfoKHR presentInfo = new()
-        {
-            WaitSemaphoreCount = 1,
-            PWaitSemaphores = signalSemaphores,
-            SwapchainCount = 1,
-            PSwapchains = swapChains,
-            PImageIndices = &imageIndex
-        };
-
-        khrSwapChain.QueuePresent(presentQueue, presentInfo);
-
-        currentFrame = (currentFrame + 1) % inFlightFences.Length;
-    }
-
-    public static unsafe CommandBuffer[] CreateCommandBuffers(Api api, ReadOnlySpan<Framebuffer> swapChainFramebuffers, CommandPool commandPool, Device device, RenderPass renderPass, Extent2D swapChainExtent, Pipeline? graphicsPipeline)
-    {
-        var commandBuffers = new CommandBuffer[swapChainFramebuffers.Length];
+        var commandBuffers = new CommandBuffer[buffersCount];
         CommandBufferAllocateInfo allocInfo = new()
         {
             CommandPool = commandPool,
             Level = CommandBufferLevel.Primary,
-            CommandBufferCount = (uint)commandBuffers.Length,
-        };
-        fixed (CommandBuffer* commandBuffersPtr = commandBuffers)
-            _ = api.vk.AllocateCommandBuffers(device, allocInfo, commandBuffersPtr);
-
-        for (int i = 0; i < commandBuffers.Length; i++)
-        {
-            CommandBufferBeginInfo beginInfo = new();
-            _ = api.vk.BeginCommandBuffer(commandBuffers[i], beginInfo);
-
-            RenderPassBeginInfo renderPassInfo = new()
-            {
-                SType = StructureType.RenderPassBeginInfo,
-                RenderPass = renderPass,
-                Framebuffer = swapChainFramebuffers[i],
-                RenderArea = new(extent: swapChainExtent)
-            };
-            ClearValue clearColor = new()
-            {
-                Color = { Float32_0 = 0, Float32_1 = 0, Float32_2 = 0, Float32_3 = 1 },
-            };
-
-            renderPassInfo.ClearValueCount = 1;
-            renderPassInfo.PClearValues = &clearColor;
-
-            api.vk.CmdBeginRenderPass(commandBuffers[i], &renderPassInfo, SubpassContents.Inline);
-            if (graphicsPipeline.HasValue)
-                api.vk.CmdBindPipeline(commandBuffers[i], PipelineBindPoint.Graphics, graphicsPipeline.Value);
-            if (graphicsPipeline.HasValue)
-                api.vk.CmdDraw(commandBuffers[i], 3, 1, 0, 0); // Actual draw
-            api.vk.CmdEndRenderPass(commandBuffers[i]);
-            _ = api.vk.EndCommandBuffer(commandBuffers[i]);
-        }
-        return commandBuffers;
-    }
-
-
-    internal static unsafe CommandBuffer[] CreateCommandBuffers(RenderBase data, SwapChain sw, CommandPool commandPool, RenderPass renderPass, Extent2D swapChainExtent, Pipeline? graphicsPipeline)
-    {
-        var commandBuffers = new CommandBuffer[sw.frameBuffers.Length];
-        CommandBufferAllocateInfo allocInfo = new()
-        {
-            CommandPool = commandPool,
-            Level = CommandBufferLevel.Primary,
-            CommandBufferCount = (uint)commandBuffers.Length,
+            CommandBufferCount = (uint)buffersCount,
         };
         fixed (CommandBuffer* commandBuffersPtr = commandBuffers)
             _ = data.vk.AllocateCommandBuffers(data.device, allocInfo, commandBuffersPtr);
-
-        ClearValue clearColor = new()
-        {
-            Color = { Float32_0 = 0, Float32_1 = 0, Float32_2 = 0, Float32_3 = 1 },
-        };
-
-        for (int i = 0; i < commandBuffers.Length; i++)
-        {
-            CommandBufferBeginInfo beginInfo = new();
-            _ = data.vk.BeginCommandBuffer(commandBuffers[i], beginInfo);
-
-            RenderPassBeginInfo renderPassInfo = new()
-            {
-                SType = StructureType.RenderPassBeginInfo,
-                RenderPass = renderPass,
-                Framebuffer = sw.frameBuffers[i],
-                RenderArea = new(extent: swapChainExtent),
-                ClearValueCount = 1,
-                PClearValues = &clearColor
-            };
-
-            data.vk.CmdBeginRenderPass(commandBuffers[i], &renderPassInfo, SubpassContents.Inline);
-            if (graphicsPipeline.HasValue)
-                data.vk.CmdBindPipeline(commandBuffers[i], PipelineBindPoint.Graphics, graphicsPipeline.Value);
-            if (graphicsPipeline.HasValue)
-                data.vk.CmdDraw(commandBuffers[i], 3, 1, 0, 0); // Actual draw
-            data.vk.CmdEndRenderPass(commandBuffers[i]);
-            _ = data.vk.EndCommandBuffer(commandBuffers[i]);
-        }
         return commandBuffers;
     }
 

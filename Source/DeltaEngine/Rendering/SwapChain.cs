@@ -12,7 +12,7 @@ internal class SwapChain : IDisposable
     public readonly SurfaceFormatKHR format;
     public Extent2D extent;
 
-    public uint imageCount;
+    public int imageCount;
 
     public readonly KhrSwapchain khrSw;
     public readonly SwapchainKHR swapChain;
@@ -31,7 +31,7 @@ internal class SwapChain : IDisposable
 
         uint maxImageCount = swSupport.Capabilities.MaxImageCount;
         maxImageCount = maxImageCount == 0 ? int.MaxValue : maxImageCount;
-        imageCount = Math.Clamp(trgImageCount, swSupport.Capabilities.MinImageCount, maxImageCount);
+        imageCount = (int)Math.Clamp(trgImageCount, swSupport.Capabilities.MinImageCount, maxImageCount);
 
         bool sameFamily = indiciesDetails.graphicsFamily == indiciesDetails.presentFamily;
 
@@ -41,7 +41,7 @@ internal class SwapChain : IDisposable
         {
             SType = StructureType.SwapchainCreateInfoKhr,
             Surface = data.surface,
-            MinImageCount = imageCount,
+            MinImageCount = (uint)imageCount,
             ImageFormat = format.Format,
             ImageColorSpace = format.ColorSpace,
             ImageExtent = extent,
@@ -59,7 +59,7 @@ internal class SwapChain : IDisposable
 
         _ = api.vk.TryGetDeviceExtension(data.instance, data.device, out khrSw);
         _ = khrSw.CreateSwapchain(data.device, creatInfo, null, out swapChain);
-        uint imCount = imageCount;
+        uint imCount = (uint)imageCount;
         _ = khrSw.GetSwapchainImages(data.device, swapChain, &imCount, null);
         Span<Image> imageSpan = stackalloc Image[(int)imCount];
         _ = khrSw.GetSwapchainImages(data.device, swapChain, &imCount, imageSpan);

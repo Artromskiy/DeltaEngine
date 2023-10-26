@@ -6,6 +6,7 @@ using System.Threading;
 using static DeltaEngine.ThrowHelper;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 using Thread = System.Threading.Thread;
+using Buffer = Silk.NET.Vulkan.Buffer;
 
 namespace DeltaEngine.Rendering;
 
@@ -42,6 +43,15 @@ public sealed unsafe class Renderer : IDisposable
             KhrSwapchain.ExtensionName,
     };
 
+    private readonly Buffer _vertexBuffer;
+    private readonly DeviceMemory _vertexBufferMemory;
+
+    private readonly Vertex[] triangleVertices = new Vertex[]
+    {
+        new (new(0.0f, -0.5f), new(1.0f, 1.0f, 1.0f)),
+        new (new(0.5f, 0.5f), new(0.0f, 1.0f, 0.0f)),
+        new (new(-0.5f, 0.5f), new(0.0f, 0.0f, 1.0f)),
+    };
 
     public unsafe Renderer(string appName)
     {
@@ -53,9 +63,10 @@ public sealed unsafe class Renderer : IDisposable
         renderPass = RenderHelper.CreateRenderPass(_api, _rendererData.device, _rendererData.format.Format);
         swapChain = new SwapChain(_api, _rendererData, renderPass, GetSdlWindowSize(), 3);
         (graphicsPipeline, pipelineLayout) = RenderHelper.CreateGraphicsPipeline(_rendererData, swapChain.extent, renderPass);
+        (_vertexBuffer, _vertexBufferMemory) = RenderHelper.CreateVertexBuffer(_rendererData, triangleVertices);
         commandPool = RenderHelper.CreateCommandPool(_rendererData);
-        commandBuffers = RenderHelper.CreateCommandBuffers(_rendererData, swapChain, commandPool, renderPass, swapChain.extent, graphicsPipeline);
-        (imageAvailableSemaphores, renderFinishedSemaphores, inFlightFences) = RenderHelper.CreateSyncObjects(_api, _rendererData.device, (int)swapChain.imageCount);
+        commandBuffers = RenderHelper.CreateCommandBuffers(_rendererData, swapChain.imageCount, commandPool);
+        (imageAvailableSemaphores, renderFinishedSemaphores, inFlightFences) = RenderHelper.CreateSyncObjects(_api, _rendererData.device, swapChain.imageCount);
         (_drawThread = new Thread(new ThreadStart(DrawLoop))).Start();
         _drawThread.Name = RendererName;
     }
@@ -212,7 +223,11 @@ public sealed unsafe class Renderer : IDisposable
             _rendererData.vk.CmdBindPipeline(commandBuffer, PipelineBindPoint.Graphics, graphicsPipeline.Value);
         _rendererData.vk.CmdSetViewport(commandBuffer, 0, 1, &viewport);
         _rendererData.vk.CmdSetScissor(commandBuffer, 0, 1, &scissor);
-        _rendererData.vk.CmdDraw(commandBuffer, 3, 1, 0, 0);
+
+        var buffer = stackalloc Buffer[]{ _vertexBuffer };
+        ulong offsets = 0;
+        _rendererData.vk.CmdBindVertexBuffers(commandBuffer, 0, 1, buffer, &offsets);
+        _rendererData.vk.CmdDraw(commandBuffer, (uint)triangleVertices.Length, 1, 0, 0);
         _rendererData.vk.CmdEndRenderPass(commandBuffer);
 
         _ = _rendererData.vk.EndCommandBuffer(commandBuffer);
