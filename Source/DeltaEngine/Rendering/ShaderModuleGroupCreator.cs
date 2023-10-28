@@ -13,23 +13,13 @@ public ref struct ShaderModuleGroupCreator
         namePtr = SilkMarshal.StringToPtr(entryName);
     }
 
-    public unsafe PipelineShaderStageCreateInfo Create(ShaderModule module, ShaderStageFlags flag)
-    {
-        return new()
-        {
-            Module = module,
-            PName = (byte*)namePtr,
-            Stage = flag
-        };
-    }
-
     public unsafe PipelineShaderStageCreateInfo Create(Shader shader)
     {
         return new()
         {
             Module = shader.module,
             PName = (byte*)namePtr,
-            Stage = shader.stage
+            Stage = shader.stage,
         };
     }
 

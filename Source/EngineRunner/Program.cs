@@ -1,10 +1,10 @@
 ﻿using DeltaEngine;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 
 var eng = new Engine();
 eng.Run();
 Stopwatch sw = new();
+
 while (true)
 {
     Thread.Yield();
@@ -12,5 +12,5 @@ while (true)
     eng.Run();
     eng.Draw();
     sw.Stop();
-    Console.WriteLine((int)(10000000f / sw.ElapsedTicks)); // FPS of main thread
+    //Console.WriteLine((int)(10000000f / sw.ElapsedTicks)); // FPS of main thread
 }

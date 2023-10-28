@@ -7,7 +7,6 @@ using Silk.NET.Vulkan.Extensions.KHR;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -35,7 +34,7 @@ public static class RenderHelper
         return sdl.CreateWindow(Encoding.UTF8.GetBytes(title), 100, 100, 1000, 1000, flags);
     }
 
-    public static unsafe Instance CreateVkInstance(Vk vk, Sdl sdl, Window* window, string app, string engine)
+    public static unsafe Instance CreateVkInstance(Vk vk, string app, string engine, string[] extensions, string[] layers, void* instanceChain)
     {
         ApplicationInfo appInfo = new()
         {
@@ -45,19 +44,21 @@ public static class RenderHelper
             ApplicationVersion = new Version32(1, 0, 0),
             ApiVersion = Vk.Version10
         };
-        var extensions = GetVulkanExtensions(sdl, window);
         InstanceCreateInfo createInfo = new()
         {
             PApplicationInfo = &appInfo,
             EnabledExtensionCount = (uint)extensions.Length,
             PpEnabledExtensionNames = (byte**)SilkMarshal.StringArrayToPtr(extensions),
-            EnabledLayerCount = 0,
-            PNext = null,
+            PpEnabledLayerNames = (byte**)SilkMarshal.StringArrayToPtr(layers),
+            EnabledLayerCount = (uint)layers.Length,
+            PNext = instanceChain,
         };
+
         _ = vk.CreateInstance(createInfo, null, out var instance);
         Marshal.FreeHGlobal((nint)appInfo.PApplicationName);
         Marshal.FreeHGlobal((nint)appInfo.PEngineName);
         SilkMarshal.Free((nint)createInfo.PpEnabledExtensionNames);
+        SilkMarshal.Free((nint)createInfo.PpEnabledLayerNames);
         return instance;
     }
 
@@ -97,11 +98,7 @@ public static class RenderHelper
             FinalLayout = ImageLayout.PresentSrcKhr,
         };
 
-        AttachmentReference colorAttachmentRef = new()
-        {
-            Attachment = 0,
-            Layout = ImageLayout.ColorAttachmentOptimal,
-        };
+        AttachmentReference colorAttachmentRef = new(0, ImageLayout.ColorAttachmentOptimal);
 
         SubpassDescription subpass = new()
         {
@@ -170,42 +167,89 @@ public static class RenderHelper
         return nondispatchable.ToSurface();
     }
 
-    public static unsafe (Buffer, DeviceMemory) CreateVertexBuffer(RenderBase data, Vertex[] vertices)
+    public static unsafe (Buffer buffer, DeviceMemory memory) CreateBuffer(RenderBase data, ulong size, BufferUsageFlags bufferUsageFlags, MemoryPropertyFlags memoryPropertyFlags)
     {
         BufferCreateInfo createInfo = new()
         {
             SType = StructureType.BufferCreateInfo,
-            Size = (uint)(Vertex.Size * vertices.Length),
-            Usage = BufferUsageFlags.VertexBufferBit,
+            Size = size,
+            Usage = bufferUsageFlags,
             SharingMode = SharingMode.Exclusive,
             Flags = default,
         };
         _ = data.vk.CreateBuffer(data.device, createInfo, null, out var buffer);
-
-        MemoryPropertyFlags flags = MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit;
-
         var reqs = data.vk.GetBufferMemoryRequirements(data.device, buffer);
         MemoryAllocateInfo allocateInfo = new()
         {
             SType = StructureType.MemoryAllocateInfo,
             AllocationSize = reqs.Size,
-            MemoryTypeIndex = (uint)FindMemoryType(data, (int)reqs.MemoryTypeBits, flags)
+            MemoryTypeIndex = (uint)FindMemoryType(data, (int)reqs.MemoryTypeBits, memoryPropertyFlags)
         };
         _ = data.vk.AllocateMemory(data.device, allocateInfo, null, out var memory);
-        data.vk.BindBufferMemory(data.device, buffer, memory, 0);
-
-        void* datap;
-        data.vk.MapMemory(data.device, memory, 0, createInfo.Size, 0, &datap);
-
-        Unsafe.CopyBlockUnaligned(ref Unsafe.AsRef<byte>(datap),
-            ref Unsafe.As<Vertex, byte>(ref MemoryMarshal.GetArrayDataReference(vertices)),
-            (uint)createInfo.Size);
-        data.vk.UnmapMemory(data.device, memory);
-
+        _ = data.vk.BindBufferMemory(data.device, buffer, memory, 0);
         return (buffer, memory);
     }
 
-    private static int FindMemoryType(RenderBase data, int typeFilter, MemoryPropertyFlags properties)
+    public static unsafe (Buffer, DeviceMemory) CreateVertexBuffer(RenderBase data, Vertex[] vertices)
+    {
+        var size = (uint)(Vertex.Size * vertices.Length);
+        var res = CreateBuffer(data, size, BufferUsageFlags.VertexBufferBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit);
+
+        void* datap;
+        data.vk.MapMemory(data.device, res.memory, 0, size, 0, &datap);
+
+        Unsafe.CopyBlockUnaligned(ref Unsafe.AsRef<byte>(datap),
+            ref Unsafe.As<Vertex, byte>(ref MemoryMarshal.GetArrayDataReference(vertices)),
+            size);
+
+        data.vk.UnmapMemory(data.device, res.memory);
+        return res;
+    }
+
+    public static unsafe(Buffer, DeviceMemory) CreateIndexBuffer(RenderBase data, uint[] indices)
+    {
+        uint size = (uint)(sizeof(uint) * indices.Length);
+        var res = CreateBuffer(data, size, BufferUsageFlags.IndexBufferBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit);
+
+        void* datap;
+        data.vk.MapMemory(data.device, res.memory, 0, size, 0, &datap);
+
+        Unsafe.CopyBlockUnaligned(ref Unsafe.AsRef<byte>(datap),
+            ref Unsafe.As<uint, byte>(ref MemoryMarshal.GetArrayDataReference(indices)),
+            size);
+
+        data.vk.UnmapMemory(data.device, res.memory);
+        return res;
+    }
+
+    public static unsafe void CopyBuffer(RenderBase data, Buffer source, Buffer destination, ulong sourceoffset, ulong destinationOffset, ulong size)
+    {
+        CommandBufferAllocateInfo allocateInfo = new()
+        {
+            SType = StructureType.CommandBufferAllocateInfo,
+            CommandBufferCount = 1,
+            CommandPool = data.commandPool,
+            Level = CommandBufferLevel.Primary,
+            PNext = null
+        };
+        data.vk.AllocateCommandBuffers(data.device, &allocateInfo, out var cmdbuffer);
+        CommandBufferBeginInfo beginInfo = new()
+        {
+            SType = StructureType.CommandBufferBeginInfo,
+            Flags = CommandBufferUsageFlags.OneTimeSubmitBit,
+        };
+        data.vk.BeginCommandBuffer(cmdbuffer, beginInfo);
+        BufferCopy copyRegion = new()
+        {
+            SrcOffset = sourceoffset,
+            DstOffset = destinationOffset,
+            Size = size,
+        };
+        data.vk.CmdCopyBuffer(cmdbuffer, source, destination, 1, &copyRegion);
+        data.vk.EndCommandBuffer(cmdbuffer);
+    }
+
+    public static int FindMemoryType(RenderBase data, int typeFilter, MemoryPropertyFlags properties)
     {
         int i = 0;
         for (; i < data.gpuMemory.memoryProperties.MemoryTypeCount; i++)
@@ -220,16 +264,15 @@ public static class RenderHelper
         using var vertShader = new Shader(data, ShaderStageFlags.VertexBit, "shaders/vert.spv");
         using var fragShader = new Shader(data, ShaderStageFlags.FragmentBit, "shaders/frag.spv");
         using var groupCreator = new ShaderModuleGroupCreator();
-
         var stages = stackalloc PipelineShaderStageCreateInfo[2]
         {
             groupCreator.Create(vertShader),
             groupCreator.Create(fragShader)
         };
 
-        var bind = Vertex.BindingDescription;
-        var attr = stackalloc VertexInputAttributeDescription[Vertex.AttributeDesctiption.Length];
-        Vertex.FillAttributeDesctiption(attr);
+        var bind = Vertex.GetBindingDescription(vertShader.attributeMask);
+        var attr = stackalloc VertexInputAttributeDescription[vertShader.attributeMask.GetAttributesCount()];
+        Vertex.FillAttributeDesctiption(attr, vertShader.attributeMask);
         PipelineVertexInputStateCreateInfo vertexInputInfo = new()
         {
             VertexBindingDescriptionCount = 1,
@@ -298,6 +341,7 @@ public static class RenderHelper
 
         GraphicsPipelineCreateInfo pipelineInfo = new()
         {
+            SType = StructureType.GraphicsPipelineCreateInfo,
             StageCount = 2,
             PStages = stages,
             PVertexInputState = &vertexInputInfo,
@@ -349,12 +393,12 @@ public static class RenderHelper
     }
 
 
-    internal static unsafe CommandBuffer[] CreateCommandBuffers(RenderBase data, int buffersCount, CommandPool commandPool)
+    internal static unsafe CommandBuffer[] CreateCommandBuffers(RenderBase data, int buffersCount)
     {
         var commandBuffers = new CommandBuffer[buffersCount];
         CommandBufferAllocateInfo allocInfo = new()
         {
-            CommandPool = commandPool,
+            CommandPool = data.commandPool,
             Level = CommandBufferLevel.Primary,
             CommandBufferCount = (uint)buffersCount,
         };
@@ -520,7 +564,13 @@ public static class RenderHelper
 
     public static SurfaceFormatKHR ChooseSwapSurfaceFormat(ImmutableArray<SurfaceFormatKHR> formats)
     {
-        return formats.AsSpan().Exist(f => f.Format == Format.B8G8R8A8Srgb && f.ColorSpace == ColorSpaceKHR.SpaceSrgbNonlinearKhr, out var format) ?
+        return ChooseSwapSurfaceFormat(formats, new(Format.B8G8R8A8Srgb, ColorSpaceKHR.SpaceSrgbNonlinearKhr));
+    }
+
+
+    public static SurfaceFormatKHR ChooseSwapSurfaceFormat(ImmutableArray<SurfaceFormatKHR> formats, SurfaceFormatKHR targetFormat)
+    {
+        return formats.AsSpan().Exist(f => f.Format == targetFormat.Format && f.ColorSpace == targetFormat.ColorSpace, out var format) ?
             format : formats[0];
     }
 

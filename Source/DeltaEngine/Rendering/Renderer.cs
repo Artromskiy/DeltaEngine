@@ -4,9 +4,9 @@ using Silk.NET.Vulkan.Extensions.KHR;
 using System;
 using System.Threading;
 using static DeltaEngine.ThrowHelper;
+using Buffer = Silk.NET.Vulkan.Buffer;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 using Thread = System.Threading.Thread;
-using Buffer = Silk.NET.Vulkan.Buffer;
 
 namespace DeltaEngine.Rendering;
 
@@ -30,7 +30,6 @@ public sealed unsafe class Renderer : IDisposable
 
     private RenderPass renderPass;
     private PipelineLayout pipelineLayout;
-    private CommandPool commandPool;
     private readonly CommandBuffer[] commandBuffers;
 
     private readonly Semaphore[] imageAvailableSemaphores;
@@ -38,19 +37,30 @@ public sealed unsafe class Renderer : IDisposable
     private readonly Fence[] inFlightFences;
     private int currentFrame = 0;
 
+
     private readonly string[] deviceExtensions = new[]
     {
-            KhrSwapchain.ExtensionName,
+        KhrSwapchain.ExtensionName,
     };
 
     private readonly Buffer _vertexBuffer;
     private readonly DeviceMemory _vertexBufferMemory;
 
-    private readonly Vertex[] triangleVertices = new Vertex[]
+
+    private readonly Buffer _indexBuffer;
+    private readonly DeviceMemory _indexBufferMemory;
+
+
+    private readonly Vertex[] triangleVertices = 
     {
-        new (new(0.0f, -0.5f), new(1.0f, 1.0f, 1.0f)),
-        new (new(0.5f, 0.5f), new(0.0f, 1.0f, 0.0f)),
-        new (new(-0.5f, 0.5f), new(0.0f, 0.0f, 1.0f)),
+        new (new(0, -0.5f), new(1.0f, 1.0f, 1.0f)),
+        new (new(0.5f, 0), new(0.0f, 0.0f, 1.0f)),
+        new (new(0, 0.5f), new(0.0f, 1.0f, 0.0f)),
+        new (new(-0.5f, 0f), new(1.0f, 0.0f, 0.0f)),
+    };
+    private readonly uint[] indices = 
+    {
+        0, 1, 2, 2, 3, 0
     };
 
     public unsafe Renderer(string appName)
@@ -59,13 +69,13 @@ public sealed unsafe class Renderer : IDisposable
         _api = new();
         _window = RenderHelper.CreateWindow(_api.sdl, _appName);
         _rendererData = new RenderBase(_api, _window, deviceExtensions, _appName, RendererName);
-
+        var count = _rendererData.vk.GetPhysicalDeviceProperties(_rendererData.gpu).Limits.MaxVertexInputAttributes;
         renderPass = RenderHelper.CreateRenderPass(_api, _rendererData.device, _rendererData.format.Format);
         swapChain = new SwapChain(_api, _rendererData, renderPass, GetSdlWindowSize(), 3);
         (graphicsPipeline, pipelineLayout) = RenderHelper.CreateGraphicsPipeline(_rendererData, swapChain.extent, renderPass);
         (_vertexBuffer, _vertexBufferMemory) = RenderHelper.CreateVertexBuffer(_rendererData, triangleVertices);
-        commandPool = RenderHelper.CreateCommandPool(_rendererData);
-        commandBuffers = RenderHelper.CreateCommandBuffers(_rendererData, swapChain.imageCount, commandPool);
+        (_indexBuffer, _indexBufferMemory) = RenderHelper.CreateIndexBuffer(_rendererData, indices);
+        commandBuffers = RenderHelper.CreateCommandBuffers(_rendererData, swapChain.imageCount);
         (imageAvailableSemaphores, renderFinishedSemaphores, inFlightFences) = RenderHelper.CreateSyncObjects(_api, _rendererData.device, swapChain.imageCount);
         (_drawThread = new Thread(new ThreadStart(DrawLoop))).Start();
         _drawThread.Name = RendererName;
@@ -74,9 +84,7 @@ public sealed unsafe class Renderer : IDisposable
     private void DrawLoop()
     {
         while (_drawEvent.WaitOne())
-        {
             Draw();
-        }
     }
 
     public void SendDrawEvent()
@@ -98,7 +106,7 @@ public sealed unsafe class Renderer : IDisposable
             _api.vk.DestroySemaphore(_rendererData.device, semaphore, null);
         foreach (var fence in inFlightFences)
             _api.vk.DestroyFence(_rendererData.device, fence, null);
-        _api.vk.DestroyCommandPool(_rendererData.device, commandPool, null);
+        _api.vk.DestroyCommandPool(_rendererData.device, _rendererData.commandPool, null);
 
         if (graphicsPipeline.HasValue)
             _api.vk.DestroyPipeline(_rendererData.device, graphicsPipeline.Value, null);
@@ -137,8 +145,6 @@ public sealed unsafe class Renderer : IDisposable
         _rendererData.vk.WaitForFences(_rendererData.device, 1, inFlightFences[currentFrame], true, ulong.MaxValue);
 
         var waitSemaphores = stackalloc[] { imageAvailableSemaphores[currentFrame] };
-        var waitStages = stackalloc[] { PipelineStageFlags.ColorAttachmentOutputBit };
-        var signalSemaphores = stackalloc[] { renderFinishedSemaphores[currentFrame] };
 
         uint imageIndex = 0;
         var res = swapChain.khrSw.AcquireNextImage(_rendererData.device, swapChain.swapChain, ulong.MaxValue, *waitSemaphores, default, ref imageIndex);
@@ -148,11 +154,14 @@ public sealed unsafe class Renderer : IDisposable
             OnResize();
             return;
         }
+
         _rendererData.vk.ResetFences(_rendererData.device, 1, inFlightFences[currentFrame]);
 
         _rendererData.vk.ResetCommandBuffer(commandBuffers[currentFrame], 0);
         RecordCommandBuffer(commandBuffers[currentFrame], imageIndex);
 
+        var waitStages = stackalloc[] { PipelineStageFlags.ColorAttachmentOutputBit };
+        var signalSemaphores = stackalloc[] { renderFinishedSemaphores[currentFrame] };
 
         var buffer = commandBuffers[imageIndex];
         SubmitInfo submitInfo = new()
@@ -181,7 +190,7 @@ public sealed unsafe class Renderer : IDisposable
         if (res == Result.SuboptimalKhr || res == Result.ErrorOutOfDateKhr)
             OnResize();
 
-        currentFrame = (currentFrame + 1) % (int)swapChain.imageCount;
+        currentFrame = (currentFrame + 1) % swapChain.imageCount;
     }
 
     private void OnResize()
@@ -194,7 +203,7 @@ public sealed unsafe class Renderer : IDisposable
     private unsafe void RecordCommandBuffer(CommandBuffer commandBuffer, uint imageIndex)
     {
         CommandBufferBeginInfo beginInfo = new(StructureType.CommandBufferBeginInfo);
-        ClearValue clearColor = new(new ClearColorValue(0, 0, 0, 1));
+        ClearValue clearColor = new(new ClearColorValue(0.05f, 0.05f, 0.05f, 1));
 
         RenderPassBeginInfo renderPassInfo = new()
         {
@@ -224,12 +233,16 @@ public sealed unsafe class Renderer : IDisposable
         _rendererData.vk.CmdSetViewport(commandBuffer, 0, 1, &viewport);
         _rendererData.vk.CmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-        var buffer = stackalloc Buffer[]{ _vertexBuffer };
+        var buffer = stackalloc Buffer[] { _vertexBuffer };
         ulong offsets = 0;
+
         _rendererData.vk.CmdBindVertexBuffers(commandBuffer, 0, 1, buffer, &offsets);
-        _rendererData.vk.CmdDraw(commandBuffer, (uint)triangleVertices.Length, 1, 0, 0);
+        _rendererData.vk.CmdBindIndexBuffer(commandBuffer, _indexBuffer, 0, IndexType.Uint32);
+        _rendererData.vk.CmdDrawIndexed(commandBuffer, (uint)indices.Length, 1, 0, 0, 0);
         _rendererData.vk.CmdEndRenderPass(commandBuffer);
 
         _ = _rendererData.vk.EndCommandBuffer(commandBuffer);
     }
+
+
 }

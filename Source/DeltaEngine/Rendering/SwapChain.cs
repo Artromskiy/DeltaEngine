@@ -25,7 +25,7 @@ internal class SwapChain : IDisposable
         var swSupport = data.swapChainSupport;
         var indiciesDetails = data.indiciesDetails;
 
-        format = RenderHelper.ChooseSwapSurfaceFormat(swSupport.Formats);
+        format = RenderHelper.ChooseSwapSurfaceFormat(swSupport.Formats, new SurfaceFormatKHR(Format.B8G8R8A8Srgb, ColorSpaceKHR.SpaceAdobergbLinearExt));
         var presentMode = RenderHelper.ChoosePresentMode(swSupport.PresentModes);
         extent = RenderHelper.ChooseSwapExtent(size.w, size.h, swSupport.Capabilities);
 
