@@ -1,9 +1,10 @@
-﻿using Silk.NET.Vulkan;
+﻿using Silk.NET.SPIRV;
+using Silk.NET.SPIRV.Cross;
+using Silk.NET.Vulkan;
 using System;
 using System.IO;
-using System.Runtime.CompilerServices;
-using Vortice.SpirvCross;
 using static DeltaEngine.ThrowHelper;
+
 namespace DeltaEngine.Rendering;
 
 public readonly struct Shader : IDisposable
@@ -21,8 +22,7 @@ public readonly struct Shader : IDisposable
         _vk = data.vk;
         _device = data.device;
         this.stage = stage;
-
-        if(stage == ShaderStageFlags.VertexBit)
+        if (stage == ShaderStageFlags.VertexBit)
             attributeMask = GetInputAttributes(shaderCode);
 
         fixed (byte* code = shaderCode)
@@ -40,37 +40,37 @@ public readonly struct Shader : IDisposable
     public Shader(RenderBase data, ShaderStageFlags stage, string path) : this(data, stage, File.ReadAllBytes(path)) { }
     private unsafe VertexAttribute GetInputAttributes(byte[] shaderCode)
     {
-        spvc_context context = default;
-        spvc_parsed_ir ir = default;
-        spvc_compiler compiler = default;
-        spvc_resources resources = default;
-        spvc_reflected_resource* list = default;
-        spvc_set set = default;
+        Context* context = default;
+        ParsedIr* ir = default;
+        Compiler* compiler = default;
+        Resources* resources = default;
+        ReflectedResource* list = default;
+        Set set = default;
         nuint count;
         nuint i;
         VertexAttribute res = default;
 
+        using Cross api = Cross.GetApi();
+        api.ContextCreate(&context);
 
         uint[] decoded = new uint[shaderCode.Length / 4];
         System.Buffer.BlockCopy(shaderCode, 0, decoded, 0, shaderCode.Length);
-
-        SpirvCrossApi.spvc_context_create(&context);
         fixed (uint* decodedPtr = decoded)
         {
-            SpirvCrossApi.spvc_context_parse_spirv(context, decodedPtr, (uint)decoded.Length, &ir);
-            var api = SpirvCrossApi.spvc_context_create_compiler(context, spvc_backend.SPVC_BACKEND_NONE, ir, spvc_capture_mode.SPVC_CAPTURE_MODE_TAKE_OWNERSHIP, out compiler);
-            SpirvCrossApi.spvc_compiler_get_active_interface_variables(compiler, &set);
-            SpirvCrossApi.spvc_compiler_create_shader_resources(compiler, &resources);
-            SpirvCrossApi.spvc_resources_get_resource_list_for_type(resources, spvc_resource_type.SPVC_RESOURCE_TYPE_STAGE_INPUT, &list, &count);
+            api.ContextParseSpirv(context, decodedPtr, (uint)decoded.Length, &ir);
+            api.ContextCreateCompiler(context, Backend.None, ir, CaptureMode.TakeOwnership, &compiler);
+            api.CompilerGetActiveInterfaceVariables(compiler, &set);
+            api.CompilerCreateShaderResources(compiler, &resources);
+            api.ResourcesGetResourceListForType(resources, ResourceType.StageInput, &list, &count);
             for (i = 0; i < count; i++)
             {
-                var loc = (int)SpirvCrossApi.spvc_compiler_get_decoration(compiler, list[i].id, Vortice.SPIRV.SpvDecoration.Location);
+                var loc = (int)api.CompilerGetDecoration(compiler, list[i].Id, Decoration.Location);
                 res |= (VertexAttribute)(1 << loc);
-                var binding = SpirvCrossApi.spvc_compiler_get_decoration(compiler, list[i].id, Vortice.SPIRV.SpvDecoration.Binding);
-                var dset = SpirvCrossApi.spvc_compiler_get_decoration(compiler, list[i].id, Vortice.SPIRV.SpvDecoration.DescriptorSet);
+                var binding = api.CompilerGetDecoration(compiler, list[i].Id, Decoration.Binding);
+                var dset = api.CompilerGetDecoration(compiler, list[i].Id, Decoration.DescriptorSet);
             }
         }
-        SpirvCrossApi.spvc_context_destroy(context);
+        api.ContextDestroy(context);
         return res;
     }
 
