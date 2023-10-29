@@ -3,8 +3,6 @@ using System;
 
 namespace DeltaEngine;
 
-
-
 public sealed class Engine : IDisposable
 {
     private readonly Renderer _renderer;

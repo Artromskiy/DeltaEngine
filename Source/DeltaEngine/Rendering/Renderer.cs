@@ -3,7 +3,9 @@ using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
 using System;
 using System.Threading;
-using static DeltaEngine.ThrowHelper;
+
+using static DeltaEngine.DebugHelper;
+
 using Buffer = Silk.NET.Vulkan.Buffer;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 using Thread = System.Threading.Thread;
@@ -51,14 +53,14 @@ public sealed unsafe class Renderer : IDisposable
     private readonly DeviceMemory _indexBufferMemory;
 
 
-    private readonly Vertex[] triangleVertices = 
+    private readonly Vertex[] triangleVertices =
     {
         new (new(0, -0.5f), new(1.0f, 1.0f, 1.0f)),
         new (new(0.5f, 0), new(0.0f, 0.0f, 1.0f)),
         new (new(0, 0.5f), new(0.0f, 1.0f, 0.0f)),
         new (new(-0.5f, 0f), new(1.0f, 0.0f, 0.0f)),
     };
-    private readonly uint[] indices = 
+    private readonly uint[] indices =
     {
         0, 1, 2, 2, 3, 0
     };
