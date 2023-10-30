@@ -19,13 +19,13 @@ internal class SwapChain : IDisposable
 
     private readonly RenderBase data;
 
-    public unsafe SwapChain(Api api, RenderBase data, RenderPass rp, (int w, int h) size, uint trgImageCount)
+    public unsafe SwapChain(Api api, RenderBase data, RenderPass rp, (int w, int h) size, uint trgImageCount, SurfaceFormatKHR targetFormat)
     {
         this.data = data;
         var swSupport = data.swapChainSupport;
         var indiciesDetails = data.indiciesDetails;
 
-        format = RenderHelper.ChooseSwapSurfaceFormat(swSupport.Formats, new SurfaceFormatKHR(Format.B8G8R8A8Srgb, ColorSpaceKHR.SpaceAdobergbLinearExt));
+        format = RenderHelper.ChooseSwapSurfaceFormat(swSupport.Formats, targetFormat);
         var presentMode = RenderHelper.ChoosePresentMode(swSupport.PresentModes);
         extent = RenderHelper.ChooseSwapExtent(size.w, size.h, swSupport.Capabilities);
 

@@ -17,6 +17,7 @@ public ref struct ShaderModuleGroupCreator
     {
         return new()
         {
+            SType = StructureType.PipelineShaderStageCreateInfo,
             Module = shader.module,
             PName = (byte*)namePtr,
             Stage = shader.stage,

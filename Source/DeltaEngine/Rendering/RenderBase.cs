@@ -1,5 +1,6 @@
 ﻿using Silk.NET.SDL;
 using Silk.NET.Vulkan;
+using Silk.NET.Vulkan.Extensions.EXT;
 using Silk.NET.Vulkan.Extensions.KHR;
 using System;
 using System.Runtime.InteropServices;
@@ -33,19 +34,23 @@ public class RenderBase : IDisposable
     };
 
 
-    public unsafe RenderBase(Api api, Window* window, string[] deviceExtensions, string appName, string rendererName)
+    public unsafe RenderBase(Api api, Window* window, string[] deviceExtensions, string appName, string rendererName, SurfaceFormatKHR targetFormat)
     {
         vk = api.vk;
 
         bool validationSupported = CheckValidationLayerSupport();
-        var extensions = RenderHelper.GetVulkanExtensions(api.sdl, window);
+        bool debugUtilsSupported = vk.IsInstanceExtensionPresent(ExtDebugUtils.ExtensionName);
+        var sdlExtensions = RenderHelper.GetRequiredVulkanExtensions(api.sdl, window);
         var layers = validationSupported ? validationLayers : Array.Empty<string>();
+        var instanceExtensions = new string[debugUtilsSupported ? sdlExtensions.Length + 1 : sdlExtensions.Length];
+        Array.Copy(sdlExtensions, instanceExtensions, sdlExtensions.Length);
+        instanceExtensions[^1] = debugUtilsSupported ? ExtDebugUtils.ExtensionName : instanceExtensions[^1];
 
         DebugUtilsMessengerCreateInfoEXT debugCreateInfo = default;
-        if (validationSupported)
+        if (debugUtilsSupported)
             PopulateDebugMessengerCreateInfo(ref debugCreateInfo);
 
-        instance = RenderHelper.CreateVkInstance(vk, appName, rendererName, extensions, layers, validationSupported ? &debugCreateInfo : null);
+        instance = RenderHelper.CreateVkInstance(vk, appName, rendererName, instanceExtensions, layers, debugUtilsSupported ? &debugCreateInfo : null);
         _ = vk.TryGetInstanceExtension(instance, out khrsf);
 
         surface = RenderHelper.CreateSurface(api.sdl, window, instance);
@@ -57,7 +62,7 @@ public class RenderBase : IDisposable
 
         swapChainSupport = new SwapChainSupportDetails(gpu, surface, khrsf);
         indiciesDetails = new QueueFamilyIndiciesDetails(vk, surface, gpu, khrsf);
-        format = RenderHelper.ChooseSwapSurfaceFormat(swapChainSupport.Formats);
+        format = RenderHelper.ChooseSwapSurfaceFormat(swapChainSupport.Formats, targetFormat);
         commandPool = RenderHelper.CreateCommandPool(this);
     }
 
@@ -75,7 +80,6 @@ public class RenderBase : IDisposable
     }
 
 
-
     private unsafe bool CheckValidationLayerSupport()
     {
         uint layerCount = 0;
@@ -83,10 +87,8 @@ public class RenderBase : IDisposable
         Span<LayerProperties> availableLayers = stackalloc LayerProperties[(int)layerCount];
         vk.EnumerateInstanceLayerProperties(&layerCount, availableLayers);
         foreach (var item in validationLayers)
-        {
             if (!availableLayers.Exist(layer => Marshal.PtrToStringAnsi((nint)layer.LayerName) == item))
                 return false;
-        }
         return true;
     }
 
@@ -99,12 +101,13 @@ public class RenderBase : IDisposable
         createInfo.MessageType = DebugUtilsMessageTypeFlagsEXT.GeneralBitExt |
                                  DebugUtilsMessageTypeFlagsEXT.PerformanceBitExt |
                                  DebugUtilsMessageTypeFlagsEXT.ValidationBitExt;
-        createInfo.PfnUserCallback = (PfnDebugUtilsMessengerCallbackEXT)DebugCallback;
+        createInfo.PfnUserCallback = new PfnDebugUtilsMessengerCallbackEXT(DebugCallback);
     }
 
     private unsafe uint DebugCallback(DebugUtilsMessageSeverityFlagsEXT messageSeverity, DebugUtilsMessageTypeFlagsEXT messageTypes, DebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
     {
-        Console.WriteLine(Marshal.PtrToStringAnsi((nint)pCallbackData->PMessage));
-        return Vk.False;
+        var message = (nint)pCallbackData->PMessage;
+        Console.WriteLine(Marshal.PtrToStringAnsi(message));
+        return Vk.True;
     }
 }

@@ -32,7 +32,7 @@ public sealed unsafe class Renderer : IDisposable
 
     private int currentFrame = 0;
 
-    private Frame[] _framesInFlight;
+    private Frame[] _frames;
 
     private readonly string[] deviceExtensions = new[]
     {
@@ -46,6 +46,7 @@ public sealed unsafe class Renderer : IDisposable
     private readonly Buffer _indexBuffer;
     private readonly DeviceMemory _indexBufferMemory;
 
+    private readonly SurfaceFormatKHR targetFormat = new(Format.B8G8R8A8Srgb, ColorSpaceKHR.SpaceAdobergbLinearExt);
 
     private readonly Vertex[] triangleVertices =
     {
@@ -64,17 +65,17 @@ public sealed unsafe class Renderer : IDisposable
         _appName = appName;
         _api = new();
         _window = RenderHelper.CreateWindow(_api.sdl, _appName);
-        _rendererData = new RenderBase(_api, _window, deviceExtensions, _appName, RendererName);
+        _rendererData = new RenderBase(_api, _window, deviceExtensions, _appName, RendererName, targetFormat);
         var count = _rendererData.vk.GetPhysicalDeviceProperties(_rendererData.gpu).Limits.MaxVertexInputAttributes;
         renderPass = RenderHelper.CreateRenderPass(_api, _rendererData.device, _rendererData.format.Format);
-        swapChain = new SwapChain(_api, _rendererData, renderPass, GetSdlWindowSize(), 3);
+        swapChain = new SwapChain(_api, _rendererData, renderPass, GetSdlWindowSize(), 3, _rendererData.format);
         (graphicsPipeline, pipelineLayout) = RenderHelper.CreateGraphicsPipeline(_rendererData, swapChain.extent, renderPass);
         (_vertexBuffer, _vertexBufferMemory) = RenderHelper.CreateVertexBuffer(_rendererData, triangleVertices);
         (_indexBuffer, _indexBufferMemory) = RenderHelper.CreateIndexBuffer(_rendererData, indices);
-        _framesInFlight = new Frame[swapChain.imageCount];
 
+        _frames = new Frame[swapChain.imageCount];
         for (int i = 0; i < swapChain.imageCount; i++)
-            _framesInFlight[i] = new Frame(_rendererData, swapChain);
+            _frames[i] = new Frame(_rendererData, swapChain);
 
         (_drawThread = new Thread(new ThreadStart(DrawLoop))).Start();
         _drawThread.Name = RendererName;
@@ -100,7 +101,7 @@ public sealed unsafe class Renderer : IDisposable
     public unsafe void Dispose()
     {
 
-        foreach (var frame in _framesInFlight)
+        foreach (var frame in _frames)
             frame.Dispose();
         _rendererData.vk.DestroyCommandPool(_rendererData.device, _rendererData.commandPool, null);
         _rendererData.vk.DestroyPipeline(_rendererData.device, graphicsPipeline, null);
@@ -130,31 +131,31 @@ public sealed unsafe class Renderer : IDisposable
 
     private unsafe void Draw()
     {
-        _framesInFlight[currentFrame].Draw(renderPass, graphicsPipeline, _vertexBuffer, _indexBuffer, (uint)indices.Length, out var resize);
+        _frames[currentFrame].Draw(renderPass, graphicsPipeline, _vertexBuffer, _indexBuffer, (uint)indices.Length, out var resize);
         if (resize)
         {
             OnResize();
             return;
         }
-        currentFrame = (currentFrame + 1) % swapChain.imageCount;
+        currentFrame = (currentFrame + 1) % _frames.Length;
     }
 
     private void OnResize()
     {
         swapChain.Dispose();
         _rendererData.UpdateSupportDetails();
-        swapChain = new SwapChain(_api, _rendererData, renderPass, GetSdlWindowSize(), 3);
+        swapChain = new SwapChain(_api, _rendererData, renderPass, GetSdlWindowSize(), 3, _rendererData.format);
 
-        if (swapChain.imageCount != _framesInFlight.Length)
+        if (swapChain.imageCount != _frames.Length)
         {
-            foreach (var frame in _framesInFlight)
+            foreach (var frame in _frames)
                 frame.Dispose();
-            _framesInFlight = new Frame[swapChain.imageCount];
+            _frames = new Frame[swapChain.imageCount];
             for (int i = 0; i < swapChain.imageCount; i++)
-                _framesInFlight[i] = new Frame(_rendererData, swapChain);
+                _frames[i] = new Frame(_rendererData, swapChain);
             return;
         }
-        foreach (var frame in _framesInFlight)
+        foreach (var frame in _frames)
             frame.UpdateSwapChain(swapChain);
     }
 }

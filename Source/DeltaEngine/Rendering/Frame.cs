@@ -1,17 +1,17 @@
 ﻿using Silk.NET.Vulkan;
-using Buffer = Silk.NET.Vulkan.Buffer;
-using static DeltaEngine.DebugHelper;
 using System;
+using static DeltaEngine.DebugHelper;
+using Buffer = Silk.NET.Vulkan.Buffer;
 
 namespace DeltaEngine.Rendering;
-internal class Frame: IDisposable
+internal class Frame : IDisposable
 {
     private readonly RenderBase _rendererData;
     private SwapChain _swapChain;
 
     private Semaphore imageAvailable;
     private Semaphore renderFinished;
-    private Fence inFlight;
+    private Fence queueSubmited;
 
     private CommandBuffer commandBuffer;
 
@@ -26,10 +26,11 @@ internal class Frame: IDisposable
         _swapChain = swapChain;
 
         FenceCreateInfo fenceInfo = new(StructureType.FenceCreateInfo, null, FenceCreateFlags.SignaledBit);
-        SemaphoreCreateInfo semaphoreInfo = new();
+        SemaphoreCreateInfo semaphoreInfo = new(StructureType.SemaphoreCreateInfo);
 
         CommandBufferAllocateInfo allocInfo = new()
         {
+            SType = StructureType.CommandBufferAllocateInfo,
             CommandPool = _rendererData.commandPool,
             Level = CommandBufferLevel.Primary,
             CommandBufferCount = 1,
@@ -38,7 +39,7 @@ internal class Frame: IDisposable
         _ = _rendererData.vk.AllocateCommandBuffers(_rendererData.device, allocInfo, out commandBuffer);
         _ = _rendererData.vk.CreateSemaphore(_rendererData.device, semaphoreInfo, null, out imageAvailable);
         _ = _rendererData.vk.CreateSemaphore(_rendererData.device, semaphoreInfo, null, out renderFinished);
-        _ = _rendererData.vk.CreateFence(_rendererData.device, fenceInfo, null, out inFlight);
+        _ = _rendererData.vk.CreateFence(_rendererData.device, fenceInfo, null, out queueSubmited);
     }
 
     public unsafe void Dispose()
@@ -46,45 +47,48 @@ internal class Frame: IDisposable
         _rendererData.vk.FreeCommandBuffers(_rendererData.device, _rendererData.commandPool, new Span<CommandBuffer>(ref commandBuffer));
         _rendererData.vk.DestroySemaphore(_rendererData.device, imageAvailable, null);
         _rendererData.vk.DestroySemaphore(_rendererData.device, renderFinished, null);
-        _rendererData.vk.DestroyFence(_rendererData.device, inFlight, null);
+        _rendererData.vk.DestroyFence(_rendererData.device, queueSubmited, null);
     }
 
     public unsafe void Draw(RenderPass renderPass, Pipeline graphicsPipeline, Buffer vbo, Buffer ibo, uint indices, out bool resize)
     {
-        _rendererData.vk.WaitForFences(_rendererData.device, 1, inFlight, true, ulong.MaxValue);
-        var waitSemaphores = stackalloc[] { imageAvailable };
+        _rendererData.vk.WaitForFences(_rendererData.device, 1, queueSubmited, true, ulong.MaxValue);
+        var imageAvailable = stackalloc[] { this.imageAvailable };
         uint imageIndex = 0;
-        var res = _swapChain.khrSw.AcquireNextImage(_rendererData.device, _swapChain.swapChain, ulong.MaxValue, *waitSemaphores, default, &imageIndex);
+        var res = _swapChain.khrSw.AcquireNextImage(_rendererData.device, _swapChain.swapChain, ulong.MaxValue, *imageAvailable, default, &imageIndex);
 
         resize = res == Result.SuboptimalKhr || res == Result.ErrorOutOfDateKhr;
 
         if (resize)
             return;
 
-        _rendererData.vk.ResetFences(_rendererData.device, 1, inFlight);
+        _rendererData.vk.ResetFences(_rendererData.device, 1, queueSubmited);
         _rendererData.vk.ResetCommandBuffer(commandBuffer, 0);
 
         RecordCommandBuffer(commandBuffer, imageIndex, renderPass, graphicsPipeline, vbo, ibo, indices);
 
         var waitStages = stackalloc[] { PipelineStageFlags.ColorAttachmentOutputBit };
-        var signalSemaphores = stackalloc[] { renderFinished };
+        var renderFinished = stackalloc[] { this.renderFinished };
+
         var buffer = commandBuffer;
         SubmitInfo submitInfo = new()
         {
+            SType = StructureType.SubmitInfo,
             WaitSemaphoreCount = 1,
-            PWaitSemaphores = waitSemaphores,
+            PWaitSemaphores = imageAvailable,
             PWaitDstStageMask = waitStages,
             CommandBufferCount = 1,
             PCommandBuffers = &buffer,
             SignalSemaphoreCount = 1,
-            PSignalSemaphores = signalSemaphores,
+            PSignalSemaphores = renderFinished,
         };
-        _ = _rendererData.vk.QueueSubmit(_rendererData.graphicsQueue, 1, submitInfo, inFlight);
+        _ = _rendererData.vk.QueueSubmit(_rendererData.graphicsQueue, 1, submitInfo, queueSubmited);
         var swapChains = stackalloc[] { _swapChain.swapChain };
         PresentInfoKHR presentInfo = new()
         {
+            SType = StructureType.PresentInfoKhr,
             WaitSemaphoreCount = 1,
-            PWaitSemaphores = signalSemaphores,
+            PWaitSemaphores = renderFinished,
             SwapchainCount = 1,
             PSwapchains = swapChains,
             PImageIndices = &imageIndex

@@ -46,6 +46,7 @@ public static class RenderHelper
         };
         InstanceCreateInfo createInfo = new()
         {
+            SType  = StructureType.InstanceCreateInfo,
             PApplicationInfo = &appInfo,
             EnabledExtensionCount = (uint)extensions.Length,
             PpEnabledExtensionNames = (byte**)SilkMarshal.StringArrayToPtr(extensions),
@@ -116,6 +117,7 @@ public static class RenderHelper
 
         RenderPassCreateInfo renderPassInfo = new()
         {
+            SType = StructureType.RenderPassCreateInfo,
             AttachmentCount = 1,
             PAttachments = &colorAttachment,
             SubpassCount = 1,
@@ -128,16 +130,13 @@ public static class RenderHelper
         return renderPass;
     }
 
-    public static unsafe string[] GetVulkanExtensions(Sdl sdl, Window* window)
+    public static unsafe string[] GetRequiredVulkanExtensions(Sdl sdl, Window* window)
     {
         uint extCount = 0;
-        _ = sdl.VulkanGetInstanceExtensions(window, ref extCount, (byte**)null);
+        _ = sdl.VulkanGetInstanceExtensions(window, &extCount, (byte**)null);
         string[] extensions = new string[extCount];
-        _ = sdl.VulkanGetInstanceExtensions(window, ref extCount, extensions);
-        var res = new List<string>();
-        res.AddRange(extensions);
-        res.Add(ExtDebugReport.ExtensionName);
-        return res.ToArray();
+        _ = sdl.VulkanGetInstanceExtensions(window, &extCount, extensions);
+        return extensions;
     }
 
     public static unsafe string[] GetVulkanLayers(Api api, string[] reqVkLayers)
@@ -203,7 +202,7 @@ public static class RenderHelper
         return res;
     }
 
-    public static unsafe(Buffer, DeviceMemory) CreateIndexBuffer(RenderBase data, uint[] indices)
+    public static unsafe (Buffer, DeviceMemory) CreateIndexBuffer(RenderBase data, uint[] indices)
     {
         uint size = (uint)(sizeof(uint) * indices.Length);
         var res = CreateBuffer(data, size, BufferUsageFlags.IndexBufferBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit);
@@ -272,6 +271,7 @@ public static class RenderHelper
         Vertex.FillAttributeDesctiption(attr, vertShader.attributeMask);
         PipelineVertexInputStateCreateInfo vertexInputInfo = new()
         {
+            SType = StructureType.PipelineVertexInputStateCreateInfo,
             VertexBindingDescriptionCount = 1,
             PVertexBindingDescriptions = &bind,
             VertexAttributeDescriptionCount = (uint)Vertex.AttributeDesctiption.Length,
@@ -280,30 +280,28 @@ public static class RenderHelper
 
         PipelineInputAssemblyStateCreateInfo inputAssembly = new()
         {
+            SType = StructureType.PipelineInputAssemblyStateCreateInfo,
             Topology = PrimitiveTopology.TriangleList,
             PrimitiveRestartEnable = false,
         };
 
-        Viewport viewport = new()
+        var dynamicStates = stackalloc[] { DynamicState.Viewport, DynamicState.Scissor };
+        PipelineDynamicStateCreateInfo dynamicState = new()
         {
-            Width = swapChainExtent.Width,
-            Height = swapChainExtent.Height,
-            MinDepth = 0,
-            MaxDepth = 1,
+            SType = StructureType.PipelineDynamicStateCreateInfo,
+            PDynamicStates = dynamicStates,
+            DynamicStateCount = 2,
         };
-
-        Rect2D scissor = new(extent: swapChainExtent);
-
         PipelineViewportStateCreateInfo viewportState = new()
         {
+            SType = StructureType.PipelineViewportStateCreateInfo,
             ViewportCount = 1,
-            PViewports = &viewport,
             ScissorCount = 1,
-            PScissors = &scissor,
         };
 
         PipelineRasterizationStateCreateInfo rasterizer = new()
         {
+            SType = StructureType.PipelineRasterizationStateCreateInfo,
             DepthClampEnable = false,
             RasterizerDiscardEnable = false,
             PolygonMode = PolygonMode.Fill,
@@ -315,6 +313,7 @@ public static class RenderHelper
 
         PipelineMultisampleStateCreateInfo multisampling = new()
         {
+            SType = StructureType.PipelineMultisampleStateCreateInfo,
             SampleShadingEnable = false,
             RasterizationSamples = SampleCountFlags.Count1Bit,
         };
@@ -327,13 +326,14 @@ public static class RenderHelper
 
         PipelineColorBlendStateCreateInfo colorBlending = new()
         {
+            SType = StructureType.PipelineColorBlendStateCreateInfo,
             LogicOpEnable = false,
             LogicOp = LogicOp.Copy,
             AttachmentCount = 1,
             PAttachments = &colorBlendAttachment,
         };
 
-        PipelineLayoutCreateInfo pipelineLayoutInfo = new();
+        PipelineLayoutCreateInfo pipelineLayoutInfo = new(StructureType.PipelineLayoutCreateInfo);
         _ = data.vk.CreatePipelineLayout(data.device, pipelineLayoutInfo, null, out var pipelineLayout);
 
         GraphicsPipelineCreateInfo pipelineInfo = new()
@@ -344,6 +344,7 @@ public static class RenderHelper
             PVertexInputState = &vertexInputInfo,
             PInputAssemblyState = &inputAssembly,
             PViewportState = &viewportState,
+            PDynamicState = &dynamicState,
             PRasterizationState = &rasterizer,
             PMultisampleState = &multisampling,
             PColorBlendState = &colorBlending,
@@ -366,6 +367,7 @@ public static class RenderHelper
             var attachment = swapChainImageViews[i];
             FramebufferCreateInfo framebufferInfo = new()
             {
+                SType = StructureType.FramebufferCreateInfo,
                 RenderPass = renderPass,
                 AttachmentCount = 1,
                 PAttachments = &attachment,
@@ -382,6 +384,7 @@ public static class RenderHelper
     {
         CommandPoolCreateInfo poolInfo = new()
         {
+            SType = StructureType.CommandPoolCreateInfo,
             QueueFamilyIndex = data.indiciesDetails.graphicsFamily,
             Flags = CommandPoolCreateFlags.ResetCommandBufferBit,
         };
@@ -395,6 +398,7 @@ public static class RenderHelper
         var commandBuffers = new CommandBuffer[buffersCount];
         CommandBufferAllocateInfo allocInfo = new()
         {
+            SType = StructureType.CommandBufferAllocateInfo,
             CommandPool = data.commandPool,
             Level = CommandBufferLevel.Primary,
             CommandBufferCount = (uint)buffersCount,
@@ -438,16 +442,17 @@ public static class RenderHelper
         return default;
     }
 
-    public static unsafe ImmutableArray<ImageView> CreateImageViews(Api api, Device device, ReadOnlySpan<Image> swapChainImages, Format swapchainImageFormat)
+    public static unsafe ImmutableArray<ImageView> CreateImageViews(Api api, Device device, ReadOnlySpan<Image> swapChainImages, Format imageFormat)
     {
         Span<ImageView> swapChainImageViews = stackalloc ImageView[swapChainImages.Length];
         for (int i = 0; i < swapChainImages.Length; i++)
         {
             ImageViewCreateInfo createInfo = new()
             {
+                SType = StructureType.ImageViewCreateInfo,
                 Image = swapChainImages[i],
                 ViewType = ImageViewType.Type2D,
-                Format = swapchainImageFormat,
+                Format = imageFormat,
                 Components = default,
                 SubresourceRange =
                 {
@@ -473,6 +478,7 @@ public static class RenderHelper
         float queuePriority = 1.0f;
         uniqueQueueFam[0] = new()
         {
+            SType = StructureType.DeviceQueueCreateInfo,
             QueueFamilyIndex = indices.graphicsFamily,
             QueueCount = 1,
             PQueuePriorities = &queuePriority
@@ -480,6 +486,7 @@ public static class RenderHelper
         if (both)
             uniqueQueueFam[1] = new()
             {
+                SType = StructureType.DeviceQueueCreateInfo,
                 QueueFamilyIndex = indices.presentFamily,
                 QueueCount = 1,
                 PQueuePriorities = &queuePriority
@@ -488,11 +495,10 @@ public static class RenderHelper
         PhysicalDeviceFeatures deviceFeatures = new();
         DeviceCreateInfo createInfo = new()
         {
+            SType = StructureType.DeviceCreateInfo,
             QueueCreateInfoCount = (uint)count,
             PQueueCreateInfos = uniqueQueueFam,
-
             PEnabledFeatures = &deviceFeatures,
-
             EnabledExtensionCount = (uint)deviceExtensions.Length,
             PpEnabledExtensionNames = (byte**)SilkMarshal.StringArrayToPtr(deviceExtensions),
             EnabledLayerCount = 0
@@ -505,74 +511,6 @@ public static class RenderHelper
         SilkMarshal.Free((nint)createInfo.PpEnabledExtensionNames);
         return (device, graphicsQueue, presentQueue);
     }
-
-
-    public static unsafe (SwapchainKHR sw, Image[] swImages, Format swImFormat, Extent2D extent)
-        CreateSwapChain(Api api, Window* window, Instance instance, Device device, PhysicalDevice physicalDevice, SurfaceKHR surface)
-    {
-        api.vk.TryGetInstanceExtension(instance, out KhrSurface khrsf);
-        var swapChainSupport = new SwapChainSupportDetails(physicalDevice, surface, khrsf);
-
-        var surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.Formats);
-        var presentMode = ChoosePresentMode(swapChainSupport.PresentModes);
-        var extent = ChooseSwapExtent(api, window, swapChainSupport.Capabilities);
-
-        var imageCount = swapChainSupport.Capabilities.MinImageCount + 1;
-        if (swapChainSupport.Capabilities.MaxImageCount > 0 && imageCount > swapChainSupport.Capabilities.MaxImageCount)
-        {
-            imageCount = swapChainSupport.Capabilities.MaxImageCount;
-        }
-
-        SwapchainCreateInfoKHR creatInfo = new()
-        {
-            Surface = surface,
-
-            MinImageCount = imageCount,
-            ImageFormat = surfaceFormat.Format,
-            ImageColorSpace = surfaceFormat.ColorSpace,
-            ImageExtent = extent,
-            ImageArrayLayers = 1,
-            ImageUsage = ImageUsageFlags.ColorAttachmentBit,
-        };
-
-        var indices = new QueueFamilyIndiciesDetails(api.vk, surface, physicalDevice, khrsf);
-        var queueFamilyIndices = stackalloc[] { indices.graphicsFamily, indices.presentFamily };
-
-        if (indices.graphicsFamily != indices.presentFamily)
-        {
-            creatInfo = creatInfo with
-            {
-                ImageSharingMode = SharingMode.Concurrent,
-                QueueFamilyIndexCount = 2,
-                PQueueFamilyIndices = queueFamilyIndices,
-            };
-        }
-        else
-        {
-            creatInfo.ImageSharingMode = SharingMode.Exclusive;
-        }
-
-        creatInfo = creatInfo with
-        {
-            PreTransform = swapChainSupport.Capabilities.CurrentTransform,
-            CompositeAlpha = CompositeAlphaFlagsKHR.OpaqueBitKhr,
-            PresentMode = presentMode,
-            Clipped = true,
-
-            OldSwapchain = default
-        };
-
-        _ = api.vk.TryGetDeviceExtension<KhrSwapchain>(instance, device, out var khrsw);
-        _ = khrsw.CreateSwapchain(device, creatInfo, null, out var sw);
-
-        khrsw.GetSwapchainImages(device, sw, ref imageCount, null);
-        var swImages = new Image[imageCount];
-        fixed (Image* swapChainImagesPtr = swImages)
-            khrsw.GetSwapchainImages(device, sw, ref imageCount, swapChainImagesPtr);
-
-        return (sw, swImages, surfaceFormat.Format, extent);
-    }
-
 
     public static SurfaceFormatKHR ChooseSwapSurfaceFormat(ImmutableArray<SurfaceFormatKHR> formats)
     {
