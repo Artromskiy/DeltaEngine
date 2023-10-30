@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 
 namespace DeltaEngine.Rendering;
 
-public class RenderBase
+public class RenderBase : IDisposable
 {
     public Vk vk;
     public readonly Instance instance;
@@ -59,6 +59,14 @@ public class RenderBase
         indiciesDetails = new QueueFamilyIndiciesDetails(vk, surface, gpu, khrsf);
         format = RenderHelper.ChooseSwapSurfaceFormat(swapChainSupport.Formats);
         commandPool = RenderHelper.CreateCommandPool(this);
+    }
+
+    public unsafe void Dispose()
+    {
+        vk.DestroyCommandPool(device, commandPool, null);
+        vk.DestroyDevice(device, null);
+        khrsf.DestroySurface(instance, surface, null);
+        vk.DestroyInstance(instance, null);
     }
 
     public void UpdateSupportDetails()

@@ -71,10 +71,7 @@ public static class RenderHelper
 
         SemaphoreCreateInfo semaphoreInfo = new();
 
-        FenceCreateInfo fenceInfo = new()
-        {
-            Flags = FenceCreateFlags.SignaledBit,
-        };
+        FenceCreateInfo fenceInfo = new(StructureType.FenceCreateInfo, null, FenceCreateFlags.SignaledBit);
 
         for (var i = 0; i < swapChainImagesCount; i++)
         {
@@ -407,6 +404,24 @@ public static class RenderHelper
         return commandBuffers;
     }
 
+    public static unsafe DescriptorSetLayout CreateDescriptorSet(RenderBase data)
+    {
+        DescriptorSetLayoutBinding binding = new()
+        {
+            Binding = 0,
+            DescriptorCount = 1,
+            DescriptorType = DescriptorType.StorageBuffer,
+            StageFlags = ShaderStageFlags.VertexBit,
+        };
+        DescriptorSetLayoutCreateInfo createInfo = new()
+        {
+            SType = StructureType.DescriptorSetLayoutCreateInfo,
+            PBindings = &binding,
+            BindingCount = 1,
+        };
+        _ = data.vk.CreateDescriptorSetLayout(data.device, &createInfo, null, out DescriptorSetLayout setLayout);
+        return setLayout;
+    }
 
 
     public static unsafe PhysicalDevice PickPhysicalDevice(Vk vk, Instance instance, SurfaceKHR surface, KhrSurface khrsf, string[] neededExtensions)
@@ -416,14 +431,11 @@ public static class RenderHelper
         _ = devicedCount != 0;
         Span<PhysicalDevice> devices = stackalloc PhysicalDevice[(int)devicedCount];
         vk.EnumeratePhysicalDevices(instance, &devicedCount, devices);
-        PhysicalDevice physicalDevice = default;
         foreach (var device in devices)
-        {
             if (IsDeviceSuitable(vk, device, surface, khrsf, neededExtensions))
                 return device;
-        }
-        _ = physicalDevice.Handle != 0;
-        return physicalDevice;
+        _ = false;
+        return default;
     }
 
     public static unsafe ImmutableArray<ImageView> CreateImageViews(Api api, Device device, ReadOnlySpan<Image> swapChainImages, Format swapchainImageFormat)
