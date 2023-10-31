@@ -3,7 +3,7 @@ using Silk.NET.SPIRV.Cross;
 using Silk.NET.Vulkan;
 using System;
 using System.IO;
-using static DeltaEngine.DebugHelper;
+
 
 namespace DeltaEngine.Rendering;
 

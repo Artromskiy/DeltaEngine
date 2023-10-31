@@ -32,7 +32,7 @@ public readonly struct Vertex
         InputRate = VertexInputRate.Vertex,
         Stride = (uint)vertexAttributeMask.GetVertexSize()
     };
-    
+
 
     public static unsafe void FillAttributeDesctiption(VertexInputAttributeDescription* ptr, VertexAttribute vertexAttributeMask)
     {

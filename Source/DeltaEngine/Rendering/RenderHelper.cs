@@ -2,7 +2,6 @@
 using Silk.NET.Core.Native;
 using Silk.NET.SDL;
 using Silk.NET.Vulkan;
-using Silk.NET.Vulkan.Extensions.EXT;
 using Silk.NET.Vulkan.Extensions.KHR;
 using System;
 using System.Collections.Generic;
@@ -10,7 +9,7 @@ using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using static DeltaEngine.DebugHelper;
+
 using Buffer = Silk.NET.Vulkan.Buffer;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 
@@ -46,7 +45,7 @@ public static class RenderHelper
         };
         InstanceCreateInfo createInfo = new()
         {
-            SType  = StructureType.InstanceCreateInfo,
+            SType = StructureType.InstanceCreateInfo,
             PApplicationInfo = &appInfo,
             EnabledExtensionCount = (uint)extensions.Length,
             PpEnabledExtensionNames = (byte**)SilkMarshal.StringArrayToPtr(extensions),
@@ -255,7 +254,7 @@ public static class RenderHelper
         return i;
     }
 
-    public static unsafe (Pipeline pipeline, PipelineLayout layout) CreateGraphicsPipeline(RenderBase data, Extent2D swapChainExtent, RenderPass renderPass)
+    public static unsafe (Pipeline pipeline, PipelineLayout layout) CreateGraphicsPipeline(RenderBase data, RenderPass renderPass, DescriptorSetLayout[] setLayouts)
     {
         using var vertShader = new Shader(data, ShaderStageFlags.VertexBit, "shaders/vert.spv");
         using var fragShader = new Shader(data, ShaderStageFlags.FragmentBit, "shaders/frag.spv");
@@ -275,7 +274,7 @@ public static class RenderHelper
             VertexBindingDescriptionCount = 1,
             PVertexBindingDescriptions = &bind,
             VertexAttributeDescriptionCount = (uint)Vertex.AttributeDesctiption.Length,
-            PVertexAttributeDescriptions = attr
+            PVertexAttributeDescriptions = attr,
         };
 
         PipelineInputAssemblyStateCreateInfo inputAssembly = new()
@@ -332,8 +331,14 @@ public static class RenderHelper
             AttachmentCount = 1,
             PAttachments = &colorBlendAttachment,
         };
-
-        PipelineLayoutCreateInfo pipelineLayoutInfo = new(StructureType.PipelineLayoutCreateInfo);
+        var layouts = stackalloc DescriptorSetLayout[setLayouts.Length];
+        setLayouts.CopyTo(layouts);
+        PipelineLayoutCreateInfo pipelineLayoutInfo = new()
+        {
+            SType = StructureType.PipelineLayoutCreateInfo,
+            SetLayoutCount = (uint)setLayouts.Length,
+            PSetLayouts = layouts,
+        };
         _ = data.vk.CreatePipelineLayout(data.device, pipelineLayoutInfo, null, out var pipelineLayout);
 
         GraphicsPipelineCreateInfo pipelineInfo = new()

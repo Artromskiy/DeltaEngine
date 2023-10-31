@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace DeltaEngine.Rendering;
 
-public class RenderBase : IDisposable
+public sealed class RenderBase : IDisposable
 {
     public Vk vk;
     public readonly Instance instance;

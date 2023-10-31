@@ -1,6 +1,4 @@
-﻿using DeltaEngine;
-
-namespace DeltaEditor
+﻿namespace DeltaEditor
 {
     public partial class App : Application
     {

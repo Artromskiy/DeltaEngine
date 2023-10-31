@@ -1,6 +1,5 @@
 ﻿using Silk.NET.Vulkan;
 using System;
-using static DeltaEngine.DebugHelper;
 using Buffer = Silk.NET.Vulkan.Buffer;
 
 namespace DeltaEngine.Rendering;
@@ -112,7 +111,6 @@ internal class Frame : IDisposable
             PClearValues = &clearColor,
             RenderArea = new Rect2D(extent: _swapChain.extent)
         };
-
         Viewport viewport = new()
         {
             Width = _swapChain.extent.Width,
@@ -120,7 +118,6 @@ internal class Frame : IDisposable
             MinDepth = 0.0f,
             MaxDepth = 1.0f
         };
-
         Rect2D scissor = new(extent: _swapChain.extent);
 
         _ = _rendererData.vk.BeginCommandBuffer(commandBuffer, &beginInfo);

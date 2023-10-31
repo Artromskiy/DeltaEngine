@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 
 namespace DeltaEngine;
 
@@ -47,5 +48,14 @@ internal static class SpanExtensions
     {
         ReadOnlySpan<T> ro = span;
         return Find(ro, match);
+    }
+
+    public static unsafe void CopyTo<T>(this T[] sourceArray, T* destinationStackAlloc) where T : unmanaged
+    {
+        if (sourceArray == null || sourceArray.Length == 0)
+            return;
+        var bytesSize = Buffer.ByteLength(sourceArray);
+        fixed (T* ptr = sourceArray)
+            Buffer.MemoryCopy(ptr, destinationStackAlloc, bytesSize, bytesSize);
     }
 }

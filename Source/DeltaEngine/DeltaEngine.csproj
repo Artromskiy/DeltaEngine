@@ -32,5 +32,11 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  
+  <ItemGroup>
+    <Using Include="DeltaEngine.DebugHelper">
+      <Static>True</Static>
+    </Using>
+  </ItemGroup>
 
 </Project>

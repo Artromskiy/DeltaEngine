@@ -50,7 +50,7 @@ public static class VertexAttributeExtensions
         int size = 0;
         var attributes = VertexAttributes;
         for (int i = 0; i < attributes.Length; i++)
-            size += vertexAttributeMask.HasFlag(attributes[i]) ? 1: 0;
+            size += vertexAttributeMask.HasFlag(attributes[i]) ? 1 : 0;
         return size;
     }
     public static int GetAttributeSize(this VertexAttribute attribute) => VertexAttributeSizes[BitOperations.Log2((uint)attribute)];

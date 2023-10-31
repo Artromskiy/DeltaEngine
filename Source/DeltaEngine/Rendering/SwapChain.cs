@@ -50,7 +50,7 @@ internal class SwapChain : IDisposable
             ImageSharingMode = sameFamily ? SharingMode.Exclusive : SharingMode.Concurrent,
             QueueFamilyIndexCount = sameFamily ? 0u : 2u,
             PQueueFamilyIndices = sameFamily ? null : queueFamilyIndices,
-            PreTransform =  swSupport.Capabilities.CurrentTransform,
+            PreTransform = swSupport.Capabilities.CurrentTransform,
             CompositeAlpha = CompositeAlphaFlagsKHR.OpaqueBitKhr,
             PresentMode = presentMode,
             Clipped = true,
