@@ -1,44 +1,29 @@
 ﻿using Silk.NET.SPIRV;
 using Silk.NET.SPIRV.Cross;
-using Silk.NET.Vulkan;
 using System;
+using System.Collections.Immutable;
 using System.IO;
 
-
 namespace DeltaEngine.Rendering;
-
-public readonly struct Shader : IDisposable
+internal struct Shader
 {
-    public readonly ShaderModule module;
-    public readonly ShaderStageFlags stage;
+    public VertexAttribute vertexMask;
+    public string vert;
+    public string frag;
 
-    public readonly VertexAttribute attributeMask;
+    public readonly ImmutableArray<byte> vertBytes;
+    public readonly ImmutableArray<byte> fragBytes;
 
-    private readonly Vk _vk;
-    private readonly Device _device;
-
-    public unsafe Shader(RenderBase data, ShaderStageFlags stage, byte[] shaderCode)
+    public Shader(string fragPath, string vertPath)
     {
-        _vk = data.vk;
-        _device = data.device;
-        this.stage = stage;
-        if (stage == ShaderStageFlags.VertexBit)
-            attributeMask = GetInputAttributes(shaderCode);
-
-        fixed (byte* code = shaderCode)
-        {
-            ShaderModuleCreateInfo createInfo = new()
-            {
-                SType = StructureType.ShaderModuleCreateInfo,
-                CodeSize = (nuint)shaderCode.Length,
-                PCode = (uint*)code,
-            };
-            _ = _vk.CreateShaderModule(_device, createInfo, null, out module);
-        }
+        frag = fragPath;
+        vert = vertPath;
+        vertBytes = ImmutableArray.Create(File.ReadAllBytes(vert));
+        fragBytes = ImmutableArray.Create(File.ReadAllBytes(frag));
+        vertexMask = GetInputAttributes(vertBytes.AsSpan());
     }
 
-    public Shader(RenderBase data, ShaderStageFlags stage, string path) : this(data, stage, File.ReadAllBytes(path)) { }
-    private unsafe VertexAttribute GetInputAttributes(byte[] shaderCode)
+    private readonly unsafe VertexAttribute GetInputAttributes(ReadOnlySpan<byte> shaderCode)
     {
         Context* context = default;
         ParsedIr* ir = default;
@@ -53,14 +38,12 @@ public readonly struct Shader : IDisposable
         using Cross api = Cross.GetApi();
         api.ContextCreate(&context);
 
-        uint[] decoded = new uint[shaderCode.Length / 4];
-        System.Buffer.BlockCopy(shaderCode, 0, decoded, 0, shaderCode.Length);
-        fixed (uint* decodedPtr = decoded)
+        fixed (byte* decodedPtr = shaderCode)
         {
-            api.ContextParseSpirv(context, decodedPtr, (uint)decoded.Length, &ir);
+            api.ContextParseSpirv(context, (uint)decodedPtr, (uint)shaderCode.Length / 4, &ir);
             api.ContextCreateCompiler(context, Backend.None, ir, CaptureMode.TakeOwnership, &compiler);
             api.CompilerGetActiveInterfaceVariables(compiler, &set);
-            api.CompilerCreateShaderResources(compiler, &resources);
+            api.CompilerCreateShaderResourcesForActiveVariables(compiler, &resources, &set);
             api.ResourcesGetResourceListForType(resources, ResourceType.StageInput, &list, &count);
             for (i = 0; i < count; i++)
             {
@@ -72,10 +55,5 @@ public readonly struct Shader : IDisposable
         }
         api.ContextDestroy(context);
         return res;
-    }
-
-    public unsafe void Dispose()
-    {
-        _vk.DestroyShaderModule(_device, module, null);
     }
 }

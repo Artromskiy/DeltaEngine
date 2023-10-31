@@ -1,19 +1,22 @@
-﻿using Silk.NET.Core.Native;
-using Silk.NET.Vulkan;
+﻿using Silk.NET.Vulkan;
+using System;
+using System.Runtime.InteropServices;
 
 namespace DeltaEngine.Rendering;
 
 public ref struct ShaderModuleGroupCreator
 {
     private const string entryName = "main";
-    private readonly nint namePtr;
+    private static readonly nint namePtr;
 
-    public unsafe ShaderModuleGroupCreator()
+    static ShaderModuleGroupCreator()
     {
-        namePtr = SilkMarshal.StringToPtr(entryName);
+        namePtr = Marshal.StringToHGlobalAnsi(entryName);
+        AppDomain.CurrentDomain.ProcessExit += (_, _)=> Dispose();
     }
+    private static void Dispose()=> Marshal.FreeHGlobal(namePtr);
 
-    public unsafe PipelineShaderStageCreateInfo Create(Shader shader)
+    public static unsafe PipelineShaderStageCreateInfo Create(PipelineShader shader)
     {
         return new()
         {
@@ -24,8 +27,4 @@ public ref struct ShaderModuleGroupCreator
         };
     }
 
-    public readonly void Dispose()
-    {
-        SilkMarshal.Free(namePtr);
-    }
 }

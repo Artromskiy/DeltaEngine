@@ -1,7 +1,7 @@
 ﻿using DeltaEngine;
 using System.Diagnostics;
 
-var eng = new Engine();
+using var eng = new Engine();
 eng.Run();
 Stopwatch sw = new();
 

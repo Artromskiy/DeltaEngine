@@ -17,7 +17,7 @@ internal static unsafe class DebugHelper
 
 #if DEBUG
     /// <summary>
-    /// Deletion sumbol used to simplify debug
+    /// Discard symbol used to simplify debug
     /// It will do nothing if assignment is going under release mode
     /// </summary>
     internal static ResultStruct _

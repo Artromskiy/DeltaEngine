@@ -1,5 +1,7 @@
 ﻿using Silk.NET.Vulkan;
 using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using Buffer = Silk.NET.Vulkan.Buffer;
 
 namespace DeltaEngine.Rendering;
@@ -95,6 +97,19 @@ internal class Frame : IDisposable
         res = _swapChain.khrSw.QueuePresent(_rendererData.presentQueue, presentInfo);
         resize = res == Result.SuboptimalKhr || res == Result.ErrorOutOfDateKhr;
     }
+    internal unsafe void Draw(RenderData[] data)
+    {
+        Dictionary<(Shader, Material, Mesh, bool), List<Transform>> subdivs = new();
+        foreach (var item in data)
+        {
+            var key = (item.material.shader, item.material, item.meshVarinat.mesh, item.isStatic);
+            if (!subdivs.TryGetValue(key, out var list))
+                subdivs[key] = list = new();
+            list.Add(item.transform);
+        }
+    }
+
+
 
 
     private unsafe void RecordCommandBuffer(CommandBuffer commandBuffer, uint imageIndex, RenderPass renderPass, Pipeline graphicsPipeline, Buffer vbo, Buffer ibo, uint indices)

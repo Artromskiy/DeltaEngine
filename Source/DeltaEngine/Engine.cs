@@ -18,7 +18,7 @@ public sealed class Engine : IDisposable
 
     public void Draw()
     {
-        _renderer?.SendDrawEvent();
+        _renderer?.SubmitDraw();
     }
 
     public void Dispose()

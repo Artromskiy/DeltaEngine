@@ -256,13 +256,13 @@ public static class RenderHelper
 
     public static unsafe (Pipeline pipeline, PipelineLayout layout) CreateGraphicsPipeline(RenderBase data, RenderPass renderPass, DescriptorSetLayout[] setLayouts)
     {
-        using var vertShader = new Shader(data, ShaderStageFlags.VertexBit, "shaders/vert.spv");
-        using var fragShader = new Shader(data, ShaderStageFlags.FragmentBit, "shaders/frag.spv");
-        using var groupCreator = new ShaderModuleGroupCreator();
+        using var vertShader = new PipelineShader(data, ShaderStageFlags.VertexBit, "shaders/vert.spv");
+        using var fragShader = new PipelineShader(data, ShaderStageFlags.FragmentBit, "shaders/frag.spv");
+        var groupCreator = new ShaderModuleGroupCreator();
         var stages = stackalloc PipelineShaderStageCreateInfo[2]
         {
-            groupCreator.Create(vertShader),
-            groupCreator.Create(fragShader)
+            ShaderModuleGroupCreator.Create(vertShader),
+            ShaderModuleGroupCreator.Create(fragShader)
         };
 
         var bind = Vertex.GetBindingDescription(vertShader.attributeMask);

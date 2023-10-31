@@ -88,7 +88,12 @@ public sealed unsafe class Renderer : IDisposable
             Draw();
     }
 
-    public void SendDrawEvent()
+    public void SubmitDraw()
+    {
+        _drawEvent.Set();
+    }
+
+    internal void SubmitDraw(RenderData[] toRender)
     {
         _drawEvent.Set();
     }
