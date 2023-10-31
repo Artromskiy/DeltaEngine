@@ -266,14 +266,15 @@ public static class RenderHelper
         };
 
         var bind = Vertex.GetBindingDescription(vertShader.attributeMask);
-        var attr = stackalloc VertexInputAttributeDescription[vertShader.attributeMask.GetAttributesCount()];
+        var attribCount = vertShader.attributeMask.GetAttributesCount();
+        var attr = stackalloc VertexInputAttributeDescription[attribCount];
         Vertex.FillAttributeDesctiption(attr, vertShader.attributeMask);
         PipelineVertexInputStateCreateInfo vertexInputInfo = new()
         {
             SType = StructureType.PipelineVertexInputStateCreateInfo,
             VertexBindingDescriptionCount = 1,
             PVertexBindingDescriptions = &bind,
-            VertexAttributeDescriptionCount = (uint)Vertex.AttributeDesctiption.Length,
+            VertexAttributeDescriptionCount = (uint)attribCount,
             PVertexAttributeDescriptions = attr,
         };
 
