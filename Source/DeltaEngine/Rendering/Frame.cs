@@ -1,7 +1,6 @@
 ﻿using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using Buffer = Silk.NET.Vulkan.Buffer;
 
 namespace DeltaEngine.Rendering;
@@ -97,15 +96,62 @@ internal class Frame : IDisposable
         res = _swapChain.khrSw.QueuePresent(_rendererData.presentQueue, presentInfo);
         resize = res == Result.SuboptimalKhr || res == Result.ErrorOutOfDateKhr;
     }
+
+    /// <summary>
+    /// Draft drawing method
+    /// </summary>
+    /// <param name="data"></param>
     internal unsafe void Draw(RenderData[] data)
     {
-        Dictionary<(Shader, Material, Mesh, bool), List<Transform>> subdivs = new();
-        foreach (var item in data)
+        var shaderGroups = data.GetGroup(x => x.material.shader);
+        foreach (var shaderGroup in shaderGroups)
         {
-            var key = (item.material.shader, item.material, item.meshVarinat.mesh, item.isStatic);
-            if (!subdivs.TryGetValue(key, out var list))
-                subdivs[key] = list = new();
-            list.Add(item.transform);
+            Console.WriteLine("Binding pipeline bound to shader");
+            var materialGroups = shaderGroup.Value.GetGroup(x => x.material);
+            foreach (var materialGroup in materialGroups)
+            {
+                Console.WriteLine("Binding material data to pipeline");
+
+                Console.WriteLine("Grouping meshes with same material");
+
+                var meshGroups = materialGroup.Value.GetGroup(x => x.mesh);
+
+                List<RenderData> staticBatchGroup = new();
+                List<RenderData> dynamicBatchGroup = new();
+
+                Console.WriteLine("Instancing draw stage begin");
+                foreach (var meshGroup in meshGroups)
+                {
+                    var instancingGroups = meshGroup.Value.GetGroup(x => x.isStatic);
+
+                    if (instancingGroups.TryGetValue(true, out var staticInstancingObjects))
+                    {
+                        if (staticInstancingObjects.Count > 1)
+                            Console.WriteLine("Static objects with Instancing drawing");
+                        else
+                            staticBatchGroup.Add(staticInstancingObjects[0]);
+                    }
+                    if (instancingGroups.TryGetValue(false, out var dynamicInstancingObjects))
+                    {
+                        if (dynamicInstancingObjects.Count > 1)
+                            Console.WriteLine("Dynamic objects with Instancing drawing");
+                        else
+                            dynamicBatchGroup.Add(dynamicInstancingObjects[0]);
+                    }
+                }
+                Console.WriteLine("Instancing draw stage end");
+
+                Console.WriteLine("Batching draw stage begin");
+
+                Console.WriteLine("Grouping remaining meshes into one array");
+
+                if (staticBatchGroup.Count > 0)
+                    Console.WriteLine("Static objects with Batching drawing");
+                if (dynamicBatchGroup.Count > 0)
+                    Console.WriteLine("Dynamic objects with Batching drawing");
+
+                Console.WriteLine("Batching draw stage end");
+            }
         }
     }
 

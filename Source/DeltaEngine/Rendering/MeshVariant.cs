@@ -2,7 +2,7 @@
 internal readonly struct MeshVariant
 {
     public readonly Mesh mesh;
-    private readonly VertexAttribute vertexMask;
+    public readonly VertexAttribute vertexMask;
 
     public MeshVariant(Mesh mesh, VertexAttribute vertexMask)
     {

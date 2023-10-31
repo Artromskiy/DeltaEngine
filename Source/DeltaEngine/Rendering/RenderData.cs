@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace DeltaEngine.Rendering;
-public class RenderData
+﻿namespace DeltaEngine.Rendering;
+internal class RenderData
 {
     public Transform transform;
-    public MeshVariant mesh;
+    public Mesh mesh;
     public Material material;
     public bool isStatic;
 }
