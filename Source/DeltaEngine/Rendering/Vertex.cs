@@ -30,22 +30,19 @@ public readonly struct Vertex
         int index = 0;
         int offset = 0;
         var attributes = VertexAttributeExtensions.VertexAttributes;
-        for (int i = 0; i < attributes.Length; i++)
+        foreach (var attrib in vertexAttributeMask.Iterate())
         {
-            var item = attributes[i];
-            if (vertexAttributeMask.HasFlag(item))
+
+            (var location, var size) = attrib.GetLocationAndSize();
+            var format = size == 4 * 3 ? Format.R32G32B32Sfloat : Format.R32G32Sfloat;
+            ptr[index++] = new()
             {
-                var size = item.GetAttributeSize();
-                var format = size == 4 * 3 ? Format.R32G32B32Sfloat : Format.R32G32Sfloat;
-                ptr[index++] = new()
-                {
-                    Binding = 0,
-                    Format = format,
-                    Location = (uint)i,
-                    Offset = (uint)offset,
-                };
-                offset += size;
-            }
+                Binding = 0,
+                Format = format,
+                Location = (uint)location,
+                Offset = (uint)offset,
+            };
+            offset += size;
         }
     }
 }

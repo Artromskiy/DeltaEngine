@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Numerics;
 
@@ -37,6 +39,33 @@ public static class VertexAttributeExtensions
 
     private static ImmutableArray<VertexAttribute>? _vertexAttributes;
     public static ImmutableArray<VertexAttribute> VertexAttributes => _vertexAttributes ??= ImmutableArray.Create(Enum.GetValues<VertexAttribute>());
+
+    public static IterateVertexAttributeMask Iterate(this VertexAttribute vertexAttributeMask) => new(vertexAttributeMask);
+
+    public struct IterateVertexAttributeMask : IEnumerator<VertexAttribute>, IEnumerable<VertexAttribute>
+    {
+        private readonly VertexAttribute _vertexAttributeMask;
+        private int _position;
+        public readonly void Dispose() { }
+        public void Reset() => _position = -1;
+        public bool MoveNext()
+        {
+            while (_position < VertexAttributes.Length || _vertexAttributeMask.HasFlag(Current))
+                _position++;
+            return _position < VertexAttributes.Length;
+        }
+        public readonly VertexAttribute Current => VertexAttributes[_position];
+        public readonly IEnumerator<VertexAttribute> GetEnumerator() => this;
+        readonly object IEnumerator.Current => Current;
+        readonly IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+        public IterateVertexAttributeMask(VertexAttribute vertexAttributeMask)
+        {
+            _position = -1;
+            _vertexAttributeMask = vertexAttributeMask;
+        }
+    }
+
     public static int GetVertexSize(this VertexAttribute vertexAttributeMask)
     {
         int size = 0;
@@ -53,5 +82,12 @@ public static class VertexAttributeExtensions
             size += vertexAttributeMask.HasFlag(attributes[i]) ? 1 : 0;
         return size;
     }
-    public static int GetAttributeSize(this VertexAttribute attribute) => VertexAttributeSizes[BitOperations.Log2((uint)attribute)];
+
+    public static (int location, int size) GetLocationAndSize(this VertexAttribute attribute)
+    {
+        int location = BitOperations.Log2((uint)attribute);
+        return (location, VertexAttributeSizes[location]);
+    }
+    public static int GetAttributeLocation(this VertexAttribute attribute) => GetLocationAndSize(attribute).location;
+    public static int GetAttributeSize(this VertexAttribute attribute) => GetLocationAndSize(attribute).size;
 }

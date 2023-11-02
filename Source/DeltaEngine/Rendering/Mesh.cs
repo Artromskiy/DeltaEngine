@@ -1,8 +1,10 @@
-﻿namespace DeltaEngine.Rendering;
+﻿using System;
+using System.Collections.Generic;
+
+namespace DeltaEngine.Rendering;
 internal struct Mesh
 {
-    public Mesh(string modelPath)
-    {
+    private readonly Guid _guid;
 
-    }
+
 }
