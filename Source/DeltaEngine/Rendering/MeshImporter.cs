@@ -62,8 +62,8 @@ internal class MeshImporter : IDisposable
         int innerOffset = 0;
         foreach (var attrib in vertexMask.Iterate())
         {
-            ref var attribArray = ref MemoryMarshal.GetArrayDataReference(meshData.verticesData[attrib]);
-            int attribSize = attrib.GetAttributeSize();
+            ref var attribArray = ref MemoryMarshal.GetArrayDataReference(meshData.verticesData[attrib.value]);
+            int attribSize = attrib.size;
             for (int i = 0; i < vertexSize; i++)
             {
                 ref var source = ref Unsafe.Add(ref attribArray, (attribSize * i) + innerOffset);

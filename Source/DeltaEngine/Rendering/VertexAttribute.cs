@@ -40,9 +40,23 @@ public static class VertexAttributeExtensions
     private static ImmutableArray<VertexAttribute>? _vertexAttributes;
     public static ImmutableArray<VertexAttribute> VertexAttributes => _vertexAttributes ??= ImmutableArray.Create(Enum.GetValues<VertexAttribute>());
 
+    public struct VertexAttributeMaskElement
+    {
+        public VertexAttribute value;
+        public int location;
+        public int size;
+
+        public VertexAttributeMaskElement(VertexAttribute value, int location, int size)
+        {
+            this.value = value;
+            this.location = location;
+            this.size = size;
+        }
+    }
+
     public static IterateVertexAttributeMask Iterate(this VertexAttribute vertexAttributeMask) => new(vertexAttributeMask);
 
-    public struct IterateVertexAttributeMask : IEnumerator<VertexAttribute>, IEnumerable<VertexAttribute>
+    public struct IterateVertexAttributeMask : IEnumerator<VertexAttributeMaskElement>, IEnumerable<VertexAttributeMaskElement>
     {
         private readonly VertexAttribute _vertexAttributeMask;
         private int _position;
@@ -50,12 +64,13 @@ public static class VertexAttributeExtensions
         public void Reset() => _position = -1;
         public bool MoveNext()
         {
-            while (_position < VertexAttributes.Length || _vertexAttributeMask.HasFlag(Current))
+            _position++;
+            while (_position < VertexAttributes.Length && !_vertexAttributeMask.HasFlag(Current.value))
                 _position++;
             return _position < VertexAttributes.Length;
         }
-        public readonly VertexAttribute Current => VertexAttributes[_position];
-        public readonly IEnumerator<VertexAttribute> GetEnumerator() => this;
+        public readonly VertexAttributeMaskElement Current => new(VertexAttributes[_position], _position, VertexAttributeSizes[_position]);
+        public readonly IEnumerator<VertexAttributeMaskElement> GetEnumerator() => this;
         readonly object IEnumerator.Current => Current;
         readonly IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 

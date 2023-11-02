@@ -15,8 +15,7 @@ public readonly struct Vertex
         this.color = color;
     }
 
-    private static int? size;
-    public static int Size => size ??= Marshal.SizeOf<Vertex>();
+    public static int Size => 5 * 4;
     public static VertexInputBindingDescription GetBindingDescription(VertexAttribute vertexAttributeMask) => new()
     {
         Binding = 0,
@@ -32,17 +31,15 @@ public readonly struct Vertex
         var attributes = VertexAttributeExtensions.VertexAttributes;
         foreach (var attrib in vertexAttributeMask.Iterate())
         {
-
-            (var location, var size) = attrib.GetLocationAndSize();
-            var format = size == 4 * 3 ? Format.R32G32B32Sfloat : Format.R32G32Sfloat;
+            var format = attrib.size == 4 * 3 ? Format.R32G32B32Sfloat : Format.R32G32Sfloat;
             ptr[index++] = new()
             {
                 Binding = 0,
                 Format = format,
-                Location = (uint)location,
+                Location = (uint)attrib.location,
                 Offset = (uint)offset,
             };
-            offset += size;
+            offset += attrib.size;
         }
     }
 }
