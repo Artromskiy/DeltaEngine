@@ -31,7 +31,7 @@ public readonly struct Vertex
         var attributes = VertexAttributeExtensions.VertexAttributes;
         foreach (var attrib in vertexAttributeMask.Iterate())
         {
-            var format = attrib.size == 4 * 3 ? Format.R32G32B32Sfloat : attrib.size == 4*4? Format.R32G32B32A32Sfloat: Format.R32G32Sfloat;
+            var format = attrib.size == 4 * 3 ? Format.R32G32B32Sfloat : attrib.size == 4 * 4 ? Format.R32G32B32A32Sfloat : Format.R32G32Sfloat;
             ptr[index++] = new()
             {
                 Binding = 0,

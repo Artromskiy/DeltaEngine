@@ -1,10 +1,10 @@
-﻿using System;
+﻿using DeltaEngine.Rendering;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json;
-using DeltaEngine.Rendering;
 
 namespace DeltaEngine.Files;
 internal class MeshCollection
@@ -52,7 +52,7 @@ internal class MeshCollection
             int attribSize = attrib.size;
             for (int i = 0; i < vertexSize; i++)
             {
-                ref var source = ref Unsafe.Add(ref attribArray, attribSize * i + innerOffset);
+                ref var source = ref Unsafe.Add(ref attribArray, (attribSize * i) + innerOffset);
                 ref var destination = ref Unsafe.Add(ref resultRef, i * vertexSize);
                 Unsafe.CopyBlockUnaligned(ref source, ref destination, (uint)attribSize);
             }

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Immutable;
-using DeltaEngine.Rendering;
+﻿using DeltaEngine.Rendering;
 
 namespace DeltaEngine.Files;
 internal readonly struct MeshVariant

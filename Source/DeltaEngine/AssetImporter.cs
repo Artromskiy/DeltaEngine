@@ -16,7 +16,7 @@ internal class AssetImporter
 
     public static AssetImporter Instance { get; private set; }
 
-    private string _currentFolder;
+    private readonly string _currentFolder;
 
     static AssetImporter()
     {
@@ -68,7 +68,7 @@ internal class AssetImporter
 
         using FileStream metaStream = File.Create($"{path}{MetaEnding}");
         JsonSerializer.Serialize(metaStream, meta);
-        
+
         _assetPaths.Add(guid, path);
         _pathToGuid.Add(path, guid);
         return guid;

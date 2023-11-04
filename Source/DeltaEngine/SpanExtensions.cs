@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace DeltaEngine;
@@ -62,7 +61,7 @@ internal static class SpanExtensions
             Buffer.MemoryCopy(ptr, destinationStackAlloc, bytesSize, bytesSize);
     }
 
-    public static unsafe UInt128 CheckSum<T>(this Span<T> span) where T: unmanaged
+    public static unsafe UInt128 CheckSum<T>(this Span<T> span) where T : unmanaged
     {
         var bytes = MemoryMarshal.Cast<T, byte>(span);
         UInt128 checkSum = 0;
