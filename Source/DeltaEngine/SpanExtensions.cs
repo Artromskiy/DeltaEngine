@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Numerics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace DeltaEngine;
 
@@ -59,6 +62,21 @@ internal static class SpanExtensions
             Buffer.MemoryCopy(ptr, destinationStackAlloc, bytesSize, bytesSize);
     }
 
+    public static unsafe UInt128 CheckSum<T>(this Span<T> span) where T: unmanaged
+    {
+        var bytes = MemoryMarshal.Cast<T, byte>(span);
+        UInt128 checkSum = 0;
+        int size = 16;
+        var count = bytes.Length / size;
+        fixed (byte* ptr = bytes)
+            for (int i = 0; i < count; i++)
+            {
+                int index = i * size;
+                checkSum += (UInt128)new BigInteger(bytes[index..size]);
+            }
+        checkSum += (UInt128)new BigInteger(bytes[(count * size)..]);
+        return checkSum;
+    }
 
     public static Dictionary<TKey, List<TValue>> GetGroup<TKey, TValue>(this TValue[] values, Func<TValue, TKey> keySelector) where TKey : notnull
     {

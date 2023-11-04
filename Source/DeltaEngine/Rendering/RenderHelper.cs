@@ -258,7 +258,7 @@ public static class RenderHelper
     {
         using var vertShader = new PipelineShader(data, ShaderStageFlags.VertexBit, "shaders/vert.spv");
         using var fragShader = new PipelineShader(data, ShaderStageFlags.FragmentBit, "shaders/frag.spv");
-        var groupCreator = new ShaderModuleGroupCreator();
+        //var groupCreator = new ShaderModuleGroupCreator();
         var stages = stackalloc PipelineShaderStageCreateInfo[2]
         {
             ShaderModuleGroupCreator.Create(vertShader),
@@ -360,7 +360,6 @@ public static class RenderHelper
             BasePipelineHandle = default,
         };
         _ = data.vk.CreateGraphicsPipelines(data.device, default, 1, pipelineInfo, null, out var graphicsPipeline);
-
         return (graphicsPipeline, pipelineLayout);
     }
 

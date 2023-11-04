@@ -7,15 +7,15 @@ namespace DeltaEngine.Rendering;
 public readonly struct Vertex
 {
     public readonly Vector2 pos;
-    public readonly Vector3 color;
+    public readonly Vector4 color;
 
     public Vertex(Vector2 position, Vector3 color)
     {
         pos = position;
-        this.color = color;
+        this.color = new(color, 1);
     }
 
-    public static int Size => 5 * 4;
+    public static int Size => 6 * 4;
     public static VertexInputBindingDescription GetBindingDescription(VertexAttribute vertexAttributeMask) => new()
     {
         Binding = 0,
@@ -31,7 +31,7 @@ public readonly struct Vertex
         var attributes = VertexAttributeExtensions.VertexAttributes;
         foreach (var attrib in vertexAttributeMask.Iterate())
         {
-            var format = attrib.size == 4 * 3 ? Format.R32G32B32Sfloat : Format.R32G32Sfloat;
+            var format = attrib.size == 4 * 3 ? Format.R32G32B32Sfloat : attrib.size == 4*4? Format.R32G32B32A32Sfloat: Format.R32G32Sfloat;
             ptr[index++] = new()
             {
                 Binding = 0,

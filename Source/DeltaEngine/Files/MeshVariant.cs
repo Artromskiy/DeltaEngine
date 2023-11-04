@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Immutable;
+using DeltaEngine.Rendering;
 
-namespace DeltaEngine.Rendering;
+namespace DeltaEngine.Files;
 internal readonly struct MeshVariant
 {
     public readonly Mesh mesh;

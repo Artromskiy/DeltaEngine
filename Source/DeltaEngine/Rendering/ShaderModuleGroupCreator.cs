@@ -12,9 +12,9 @@ public ref struct ShaderModuleGroupCreator
     static ShaderModuleGroupCreator()
     {
         namePtr = Marshal.StringToHGlobalAnsi(entryName);
-        AppDomain.CurrentDomain.ProcessExit += (_, _)=> Dispose();
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => Dispose();
     }
-    private static void Dispose()=> Marshal.FreeHGlobal(namePtr);
+    private static void Dispose() => Marshal.FreeHGlobal(namePtr);
 
     public static unsafe PipelineShaderStageCreateInfo Create(PipelineShader shader)
     {

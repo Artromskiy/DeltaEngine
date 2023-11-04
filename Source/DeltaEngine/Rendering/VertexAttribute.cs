@@ -29,7 +29,7 @@ public static class VertexAttributeExtensions
     {
         4 * 3,  // position3
         4 * 2,  // position2
-        4 * 3,  // color
+        4 * 4,  // color
         4 * 2,  // uv
         4 * 3,  // normal
         4 * 3,  // binormal
@@ -92,9 +92,8 @@ public static class VertexAttributeExtensions
     public static int GetAttributesCount(this VertexAttribute vertexAttributeMask)
     {
         int size = 0;
-        var attributes = VertexAttributes;
-        for (int i = 0; i < attributes.Length; i++)
-            size += vertexAttributeMask.HasFlag(attributes[i]) ? 1 : 0;
+        foreach (var _ in vertexAttributeMask.Iterate())
+            size += 1;
         return size;
     }
 
@@ -103,6 +102,6 @@ public static class VertexAttributeExtensions
         int location = BitOperations.Log2((uint)attribute);
         return (location, VertexAttributeSizes[location]);
     }
-    public static int GetAttributeLocation(this VertexAttribute attribute) => GetLocationAndSize(attribute).location;
-    public static int GetAttributeSize(this VertexAttribute attribute) => GetLocationAndSize(attribute).size;
+    public static int Location(this VertexAttribute attribute) => BitOperations.Log2((uint)attribute);
+    public static int Size(this VertexAttribute attribute) => VertexAttributeSizes[Location(attribute)];
 }
