@@ -162,7 +162,7 @@ public static class RenderHelper
         return nondispatchable.ToSurface();
     }
 
-    public static unsafe (Buffer buffer, DeviceMemory memory) CreateBuffer(RenderBase data, ulong size, BufferUsageFlags bufferUsageFlags, MemoryPropertyFlags memoryPropertyFlags)
+    public static unsafe (Buffer buffer, DeviceMemory memory) CreateBufferAndMemory(RenderBase data, ulong size, BufferUsageFlags bufferUsageFlags, MemoryPropertyFlags memoryPropertyFlags)
     {
         BufferCreateInfo createInfo = new()
         {
@@ -188,7 +188,7 @@ public static class RenderHelper
     public static unsafe (Buffer, DeviceMemory) CreateVertexBuffer(RenderBase data, Vertex[] vertices)
     {
         var size = (uint)(Vertex.Size * vertices.Length);
-        var res = CreateBuffer(data, size, BufferUsageFlags.VertexBufferBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit);
+        var res = CreateBufferAndMemory(data, size, BufferUsageFlags.VertexBufferBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit);
 
         void* datap;
         data.vk.MapMemory(data.device, res.memory, 0, size, 0, &datap);
@@ -204,7 +204,7 @@ public static class RenderHelper
     public static unsafe (Buffer, DeviceMemory) CreateIndexBuffer(RenderBase data, uint[] indices)
     {
         uint size = (uint)(sizeof(uint) * indices.Length);
-        var res = CreateBuffer(data, size, BufferUsageFlags.IndexBufferBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit);
+        var res = CreateBufferAndMemory(data, size, BufferUsageFlags.IndexBufferBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit);
 
         void* datap;
         data.vk.MapMemory(data.device, res.memory, 0, size, 0, &datap);
