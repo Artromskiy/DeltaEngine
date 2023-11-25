@@ -4,27 +4,25 @@ using System.Runtime.InteropServices;
 
 namespace DeltaEngine.Rendering;
 
-public ref struct ShaderModuleGroupCreator
+public static class ShaderModuleGroupCreator
 {
-    private const string entryName = "main";
+    private const string ShaderEntryName = "main";
     private static readonly nint namePtr;
 
     static ShaderModuleGroupCreator()
     {
-        namePtr = Marshal.StringToHGlobalAnsi(entryName);
+        namePtr = Marshal.StringToHGlobalAnsi(ShaderEntryName);
         AppDomain.CurrentDomain.ProcessExit += (_, _) => Dispose();
     }
+    
     private static void Dispose() => Marshal.FreeHGlobal(namePtr);
 
-    public static unsafe PipelineShaderStageCreateInfo Create(PipelineShader shader)
+    public static unsafe PipelineShaderStageCreateInfo Create(PipelineShader shader) => new()
     {
-        return new()
-        {
-            SType = StructureType.PipelineShaderStageCreateInfo,
-            Module = shader.module,
-            PName = (byte*)namePtr,
-            Stage = shader.stage,
-        };
-    }
-
+        SType = StructureType.PipelineShaderStageCreateInfo,
+        Module = shader.module,
+        PName = (byte*)namePtr,
+        Stage = shader.stage,
+    };
 }
+

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Text.Json;
 
 namespace DeltaEngine.Files;
@@ -10,7 +11,6 @@ internal class AssetImporter
     private readonly string ResourcesFolder;
     private readonly Dictionary<Guid, string> _assetPaths = new();
     private readonly Dictionary<string, Guid> _pathToGuid = new();
-    //private readonly Dictionary<Guid, MetaEnding> _metas = new();
     private const string MetaEnding = ".meta";
     private const string MetaSearch = "*.meta";
 
@@ -26,10 +26,9 @@ internal class AssetImporter
     public AssetImporter(string path)
     {
         ProjectFolder = path;
-        ResourcesFolder = $"{path}/Resources";
+        ResourcesFolder = $"{path}{Path.DirectorySeparatorChar}Resources";
         _currentFolder = ResourcesFolder;
         Directory.CreateDirectory(ResourcesFolder);
-
 
         HashSet<string> noValidMeta = new();
         HashSet<string> noValidSource = new();
@@ -56,7 +55,7 @@ internal class AssetImporter
 
     public Guid CreateAsset<T>(string name, T asset)
     {
-        string path = Path.Combine(_currentFolder, name);
+        string path = GetNextAvailableFilename(Path.Combine(_currentFolder, name));
         if (_pathToGuid.ContainsKey(path))
             return Guid.Empty;
 
@@ -75,4 +74,23 @@ internal class AssetImporter
     }
 
     public string GetPath(Guid guid) => _assetPaths[guid];
+
+    public static string GetNextAvailableFilename(string filename)
+    {
+        if (!File.Exists(filename))
+            return filename;
+
+        string alternateFilename;
+        int fileNameIndex = 1;
+        var filenameSpan = filename.AsSpan();
+        var directory = Path.GetDirectoryName(filenameSpan);
+        var plainName = Path.GetFileNameWithoutExtension(filenameSpan);
+        var extension = Path.GetExtension(filenameSpan);
+        StringBuilder sb = new();
+        do
+            alternateFilename = sb.Clear().Append(directory).Append(Path.DirectorySeparatorChar).Append(plainName).Append(fileNameIndex++).Append(extension).ToString();
+        while (File.Exists(alternateFilename));
+
+        return alternateFilename;
+    }
 }

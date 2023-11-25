@@ -14,10 +14,9 @@ internal class ModelImporter : IAssetImporter, IDisposable
     public ImmutableHashSet<string> FileFormats { get; } = ImmutableHashSet.Create("fbx");
     public void Dispose() => _assimp.Dispose();
 
-
     public unsafe void Import(string path)
     {
-        var fileName = Path.GetFileName(path);
+        var fileName = Path.GetFileNameWithoutExtension(path);
         Scene* scene = _assimp.ImportFile(path, (uint)importMode);
         List<(MeshData meshData, string name)> meshDatas = new();
         ProcessScene(scene->MRootNode, scene, meshDatas);
