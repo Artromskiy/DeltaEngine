@@ -58,9 +58,9 @@ public sealed unsafe class Renderer : IDisposable
         new (new(0.0f, -0.5f),   b),
         new (new(0.6f, 0.5f),    g),
         new (new(-0.6f, 0.5f),   r),
-        new (new(0.0f, -0.3f),   r),
-        new (new(0.4f, 0.4f),    b),
-        new (new(-0.4f, 0.4f),   g),
+        new (new(0.0f, -0.25f),   r),
+        new (new(0.35f, 0.35f),    b),
+        new (new(-0.35f, 0.35f),   g),
     };
     private readonly uint[] deltaLetterIndices =
     {
