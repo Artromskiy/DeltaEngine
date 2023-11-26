@@ -2,6 +2,7 @@
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
 using System;
+using System.Numerics;
 using System.Threading;
 
 using Buffer = Silk.NET.Vulkan.Buffer;
@@ -48,16 +49,27 @@ public sealed unsafe class Renderer : IDisposable
 
     private readonly SurfaceFormatKHR targetFormat = new(Format.B8G8R8A8Srgb, ColorSpaceKHR.SpaceAdobergbLinearExt);
 
-    private readonly Vertex[] triangleVertices =
+    private static readonly Vector3 r = new(1.0f, 0.0f, 0.0f);
+    private static readonly Vector3 g = new(0.0f, 1.0f, 0.0f);
+    private static readonly Vector3 b = new(0.0f, 0.0f, 1.0f);
+
+    private readonly Vertex[] deltaLetterVertices =
     {
-        new (new(0, -0.5f), new(1.0f, 1.0f, 1.0f)),
-        new (new(0.5f, 0), new(0.0f, 0.0f, 1.0f)),
-        new (new(0, 0.5f), new(0.0f, 1.0f, 0.0f)),
-        new (new(-0.5f, 0f), new(1.0f, 0.0f, 0.0f)),
+        new (new(0.0f, -0.5f),   b),
+        new (new(0.6f, 0.5f),    g),
+        new (new(-0.6f, 0.5f),   r),
+        new (new(0.0f, -0.3f),   r),
+        new (new(0.4f, 0.4f),    b),
+        new (new(-0.4f, 0.4f),   g),
     };
-    private readonly uint[] indices =
+    private readonly uint[] deltaLetterIndices =
     {
-        0, 1, 2, 2, 3, 0
+        0,1,3,
+        1,2,4,
+        2,0,5,
+        3,1,4,
+        4,2,5,
+        5,0,3
     };
 
     public unsafe Renderer(string appName)
@@ -71,8 +83,8 @@ public sealed unsafe class Renderer : IDisposable
         swapChain = new SwapChain(_api, _rendererData, renderPass, GetSdlWindowSize(), 3, _rendererData.format);
         //var p = RenderHelper.CreateDescriptorSet(_rendererData);
         (graphicsPipeline, pipelineLayout) = RenderHelper.CreateGraphicsPipeline(_rendererData, renderPass, Array.Empty<DescriptorSetLayout>());
-        (_vertexBuffer, _vertexBufferMemory) = RenderHelper.CreateVertexBuffer(_rendererData, triangleVertices);
-        (_indexBuffer, _indexBufferMemory) = RenderHelper.CreateIndexBuffer(_rendererData, indices);
+        (_vertexBuffer, _vertexBufferMemory) = RenderHelper.CreateVertexBuffer(_rendererData, deltaLetterVertices);
+        (_indexBuffer, _indexBufferMemory) = RenderHelper.CreateIndexBuffer(_rendererData, deltaLetterIndices);
 
         _frames = new Frame[swapChain.imageCount];
         for (int i = 0; i < swapChain.imageCount; i++)
@@ -106,7 +118,6 @@ public sealed unsafe class Renderer : IDisposable
 
     public unsafe void Dispose()
     {
-
         foreach (var frame in _frames)
             frame.Dispose();
         _rendererData.vk.DestroyCommandPool(_rendererData.device, _rendererData.commandPool, null);
@@ -137,7 +148,7 @@ public sealed unsafe class Renderer : IDisposable
 
     private unsafe void Draw()
     {
-        _frames[currentFrame].Draw(renderPass, graphicsPipeline, _vertexBuffer, _indexBuffer, (uint)indices.Length, out var resize);
+        _frames[currentFrame].Draw(renderPass, graphicsPipeline, _vertexBuffer, _indexBuffer, (uint)deltaLetterIndices.Length, out var resize);
         if (resize)
         {
             OnResize();

@@ -12,8 +12,9 @@ internal readonly struct MeshVariant
         this.vertexMask = vertexMask;
     }
 
-    public byte[] GetVertices()
+    public MeshVariant(Mesh mesh, ShaderData shader)
     {
-        return null;
+        this.mesh = mesh;
+        vertexMask = shader.vertexMask;
     }
 }

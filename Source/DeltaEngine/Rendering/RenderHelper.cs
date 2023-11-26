@@ -24,7 +24,7 @@ public static class RenderHelper
         | WindowFlags.Shown
         | WindowFlags.Resizable
         | WindowFlags.AllowHighdpi
-        | WindowFlags.Borderless
+   //     | WindowFlags.Borderless
    //            | WindowFlags.FullscreenDesktop
    );
 

@@ -89,6 +89,7 @@ public static class VertexAttributeExtensions
             size += vertexAttributeMask.HasFlag(attributes[i]) ? VertexAttributeSizes[i] : 0;
         return size;
     }
+
     public static int GetAttributesCount(this VertexAttribute vertexAttributeMask)
     {
         int size = 0;
@@ -102,6 +103,7 @@ public static class VertexAttributeExtensions
         int location = BitOperations.Log2((uint)attribute);
         return (location, VertexAttributeSizes[location]);
     }
+
     public static int Location(this VertexAttribute attribute) => BitOperations.Log2((uint)attribute);
     public static int Size(this VertexAttribute attribute) => VertexAttributeSizes[Location(attribute)];
 }

@@ -49,6 +49,11 @@ internal class Frame : IDisposable
         _rendererData.vk.DestroySemaphore(_rendererData.device, renderFinished, null);
         _rendererData.vk.DestroyFence(_rendererData.device, queueSubmited, null);
     }
+    public unsafe void Draw(RenderPass renderPass, Material material, Buffer vbo, Buffer ibo, uint indices, out bool resize)
+    {
+        resize = false;
+    }
+
 
     public unsafe void Draw(RenderPass renderPass, Pipeline graphicsPipeline, Buffer vbo, Buffer ibo, uint indices, out bool resize)
     {
@@ -154,9 +159,6 @@ internal class Frame : IDisposable
             }
         }
     }
-
-
-
 
     private unsafe void RecordCommandBuffer(CommandBuffer commandBuffer, uint imageIndex, RenderPass renderPass, Pipeline graphicsPipeline, Buffer vbo, Buffer ibo, uint indices)
     {
