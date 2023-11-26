@@ -19,5 +19,6 @@ This will be enough to create games. AAA graphics or cool shaders and particles 
 
 I want this project to use the latest versions of C# and .NET. I want to use Vulkan as graphics backend
 
-Here's vulkan square :)
-![image](https://github.com/Artromskiy/DeltaEngine/assets/47901401/de0fba8d-b884-4b8e-b58f-6bcaabaa8671)
+Here's fourth letter :)
+
+![image](https://github.com/Artromskiy/DeltaEngine/assets/47901401/442aabe0-061f-4497-aec7-f45e5c2b7bb1)
