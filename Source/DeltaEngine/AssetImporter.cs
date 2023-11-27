@@ -14,6 +14,8 @@ internal class AssetImporter
     private const string MetaEnding = ".meta";
     private const string MetaSearch = "*.meta";
 
+    private readonly Dictionary<Type, IAssetCollection<object>> _assetCollections = new();
+
     public static AssetImporter Instance { get; private set; }
 
     private readonly string _currentFolder;
@@ -29,17 +31,7 @@ internal class AssetImporter
         ResourcesFolder = $"{path}{Path.DirectorySeparatorChar}Resources";
         _currentFolder = ResourcesFolder;
         Directory.CreateDirectory(ResourcesFolder);
-
-        HashSet<string> noValidMeta = new();
-        HashSet<string> noValidSource = new();
         HashSet<string> allFiles = new(Directory.GetFiles(ProjectFolder, "*", SearchOption.AllDirectories));
-        //foreach (var file in allFiles)
-        //{
-        //    bool isMeta = file.EndsWith(MetaEnding);
-        //    bool valid = isMeta ? allFiles.Contains(file[..MetaEnding.Length]) : allFiles.Contains(file + MetaEnding);
-        //    if (!valid)
-        //        (isMeta ? noValidSource : noValidMeta).Add(file);
-        //}
         foreach (var item in allFiles)
         {
             if (item.EndsWith(MetaEnding))
@@ -71,6 +63,12 @@ internal class AssetImporter
         _assetPaths.Add(guid, path);
         _pathToGuid.Add(path, guid);
         return guid;
+    }
+
+    public T GetAsset<T>(GuidAsset<T> asset)
+    {
+        var collection = _assetCollections[typeof(T)];
+        return (T)collection.LoadAsset(asset.guid);
     }
 
     public string GetPath(Guid guid) => _assetPaths[guid];

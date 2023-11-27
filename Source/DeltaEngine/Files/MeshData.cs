@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Immutable;
 using System.Text.Json.Serialization;
 
 namespace DeltaEngine.Files;
@@ -8,24 +9,17 @@ internal class MeshData
     [JsonInclude]
     public readonly int vertexCount;
     [JsonInclude]
-    public readonly byte[][] verticesData;
+    public readonly ImmutableArray<ImmutableArray<byte>> verticesData;
     [JsonInclude]
-    public readonly uint[] indices = Array.Empty<uint>();
+    public readonly ImmutableArray<uint> indices;
 
     public MeshData(uint[] indices, byte[][] vertices, int vertexCount)
     {
         this.vertexCount = vertexCount;
-        this.indices = (uint[])indices.Clone();
-        verticesData = (byte[][])vertices.Clone();
-    }
-
-    public UInt128 CheckSum()
-    {
-        UInt128 checkSum = 0;
-        for (int i = 0; i < verticesData.GetLength(0); i++)
-            checkSum += verticesData[i].AsSpan().CheckSum();
-        checkSum += indices.AsSpan().CheckSum();
-        checkSum += (uint)vertexCount;
-        return checkSum;
+        this.indices = ImmutableArray.Create(indices);
+        var builder = ImmutableArray.CreateBuilder<ImmutableArray<byte>>();
+        for (int i = 0; i < vertices.GetLength(0); i++)
+            builder.Add(ImmutableArray.Create(vertices[i]));
+        verticesData = builder.ToImmutable();
     }
 }

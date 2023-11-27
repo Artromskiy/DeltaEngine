@@ -7,12 +7,23 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 
 namespace DeltaEngine.Files;
-internal class MeshCollection
+internal class MeshCollection : IAssetCollection<MeshData>
 {
     private readonly Dictionary<Guid, Dictionary<VertexAttribute, WeakReference<byte[]?>>> _meshMapVariants = new();
     private readonly Dictionary<Guid, WeakReference<MeshData?>> _meshDataMap = new();
 
+    //private readonly ConditionalWeakTable<Guid, MeshData> _runtimeMeshDataMap = new();
+
     public unsafe MeshData GetMeshData(Guid guid)
+    {
+        if (!_meshDataMap.TryGetValue(guid, out var reference))
+            _meshDataMap[guid] = reference = new(null);
+        if (!reference.TryGetTarget(out var meshData))
+            reference.SetTarget(meshData = LoadMesh(guid));
+        return meshData;
+    }
+
+    public MeshData LoadAsset(Guid guid)
     {
         if (!_meshDataMap.TryGetValue(guid, out var reference))
             _meshDataMap[guid] = reference = new(null);
@@ -48,7 +59,7 @@ internal class MeshCollection
         int innerOffset = 0;
         foreach (var attrib in vertexMask.Iterate())
         {
-            ref var attribArray = ref MemoryMarshal.GetArrayDataReference(meshData.verticesData[attrib.location]);
+            ref var attribArray = ref MemoryMarshal.GetReference(meshData.verticesData[attrib.location].AsSpan());
             int attribSize = attrib.size;
             for (int i = 0; i < vertexSize; i++)
             {

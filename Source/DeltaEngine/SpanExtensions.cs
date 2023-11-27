@@ -67,12 +67,11 @@ internal static class SpanExtensions
         UInt128 checkSum = 0;
         int size = 16;
         var count = bytes.Length / size;
-        fixed (byte* ptr = bytes)
-            for (int i = 0; i < count; i++)
-            {
-                int index = i * size;
-                checkSum += (UInt128)new BigInteger(bytes[index..size]);
-            }
+        for (int i = 0; i < count; i++)
+        {
+            int index = i * size;
+            checkSum += (UInt128)new BigInteger(bytes[index..size]);
+        }
         checkSum += (UInt128)new BigInteger(bytes[(count * size)..]);
         return checkSum;
     }

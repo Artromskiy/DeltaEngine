@@ -1,4 +1,5 @@
-﻿using Silk.NET.Vulkan;
+﻿using DeltaEngine.Files;
+using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;
 using Buffer = Silk.NET.Vulkan.Buffer;
@@ -49,7 +50,8 @@ internal class Frame : IDisposable
         _rendererData.vk.DestroySemaphore(_rendererData.device, renderFinished, null);
         _rendererData.vk.DestroyFence(_rendererData.device, queueSubmited, null);
     }
-    public unsafe void Draw(RenderPass renderPass, Material material, Buffer vbo, Buffer ibo, uint indices, out bool resize)
+
+    public unsafe void Draw(RenderPass renderPass, GuidAsset<MaterialData> material, Buffer vbo, Buffer ibo, uint indices, out bool resize)
     {
         resize = false;
     }
@@ -108,7 +110,7 @@ internal class Frame : IDisposable
     /// <param name="data"></param>
     internal unsafe void Draw(RenderData[] data)
     {
-        var shaderGroups = data.GetGroup(x => x.material.shader);
+        var shaderGroups = data.GetGroup(x => x.material.Asset.shader.Asset);
         foreach (var shaderGroup in shaderGroups)
         {
             Console.WriteLine("Binding pipeline bound to shader");
@@ -164,7 +166,7 @@ internal class Frame : IDisposable
     {
         CommandBufferBeginInfo beginInfo = new(StructureType.CommandBufferBeginInfo);
         ClearValue clearColor = new(new ClearColorValue(0.05f, 0.05f, 0.05f, 1));
-
+        Rect2D renderRect = new(null, _swapChain.extent);
         RenderPassBeginInfo renderPassInfo = new()
         {
             SType = StructureType.RenderPassBeginInfo,
@@ -172,7 +174,7 @@ internal class Frame : IDisposable
             Framebuffer = _swapChain.frameBuffers[(int)imageIndex],
             ClearValueCount = 1,
             PClearValues = &clearColor,
-            RenderArea = new Rect2D(extent: _swapChain.extent)
+            RenderArea = renderRect
         };
         Viewport viewport = new()
         {
@@ -181,14 +183,12 @@ internal class Frame : IDisposable
             MinDepth = 0.0f,
             MaxDepth = 1.0f
         };
-        Rect2D scissor = new(extent: _swapChain.extent);
-
         _ = _rendererData.vk.BeginCommandBuffer(commandBuffer, &beginInfo);
 
         _rendererData.vk.CmdBeginRenderPass(commandBuffer, &renderPassInfo, SubpassContents.Inline);
         _rendererData.vk.CmdBindPipeline(commandBuffer, PipelineBindPoint.Graphics, graphicsPipeline);
         _rendererData.vk.CmdSetViewport(commandBuffer, 0, 1, &viewport);
-        _rendererData.vk.CmdSetScissor(commandBuffer, 0, 1, &scissor);
+        _rendererData.vk.CmdSetScissor(commandBuffer, 0, 1, &renderRect);
 
         var buffer = stackalloc Buffer[] { vbo };
         ulong offsets = 0;

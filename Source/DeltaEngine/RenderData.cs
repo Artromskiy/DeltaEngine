@@ -6,7 +6,7 @@ namespace DeltaEngine;
 internal class RenderData
 {
     public Transform transform;
-    public Mesh mesh;
-    public Material material;
+    public GuidAsset<MeshData> mesh;
+    public GuidAsset<MaterialData> material;
     public bool isStatic;
 }

@@ -133,9 +133,11 @@ public sealed unsafe class Renderer : IDisposable
         _api.sdl.Dispose();
     }
 
+    Silk.NET.SDL.Event emptySdlEvent = new();
     public unsafe void Run()
     {
-        _api.sdl.PollEvent((Silk.NET.SDL.Event*)null);
+        //_api.sdl.PollEvent(ref emptySdlEvent);
+        _api.sdl.PumpEvents();
     }
 
     private unsafe (int w, int h) GetSdlWindowSize()
