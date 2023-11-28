@@ -17,6 +17,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeltaEditor", "..\DeltaEdit
 		{92016076-A270-4DBD-90FF-F23AD7187207} = {92016076-A270-4DBD-90FF-F23AD7187207}
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesignDrivedBenchmarks", "..\DesignDrivedBenchmarks\DesignDrivedBenchmarks.csproj", "{D27D4D28-1416-4877-B0B1-922AC73953E1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -37,6 +39,10 @@ Global
 		{18AFA44F-39A9-49BB-880F-69F26BEF3F6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{18AFA44F-39A9-49BB-880F-69F26BEF3F6E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{18AFA44F-39A9-49BB-880F-69F26BEF3F6E}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{D27D4D28-1416-4877-B0B1-922AC73953E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D27D4D28-1416-4877-B0B1-922AC73953E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D27D4D28-1416-4877-B0B1-922AC73953E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D27D4D28-1416-4877-B0B1-922AC73953E1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,10 +1,10 @@
 ﻿using DeltaEngine;
 using System.Diagnostics;
 
+
 using var eng = new Engine();
 eng.Run();
 Stopwatch sw = new();
-
 while (true)
 {
     Thread.Yield();

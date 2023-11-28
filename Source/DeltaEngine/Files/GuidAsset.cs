@@ -1,6 +1,7 @@
 ﻿using System;
 
 namespace DeltaEngine.Files;
+
 public readonly struct GuidAsset<T>
 {
     public readonly Guid guid;
