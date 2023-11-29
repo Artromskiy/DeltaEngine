@@ -5,7 +5,8 @@ using System.Text;
 using System.Text.Json;
 
 namespace DeltaEngine.Files;
-internal class AssetImporter
+
+public class AssetImporter
 {
     private readonly string ProjectFolder;
     private readonly string ResourcesFolder;
@@ -14,19 +15,19 @@ internal class AssetImporter
     private const string MetaEnding = ".meta";
     private const string MetaSearch = "*.meta";
 
-    private readonly Dictionary<Type, IAssetCollection<object>> _assetCollections = new();
+    private readonly Dictionary<Type, IAssetCollection<IAsset>> _assetCollections = new();
+    private readonly RuntimeAssetCollection _runtimeAssetCollection = new();
 
-    public static AssetImporter Instance { get; private set; }
+    private static AssetImporter? _instance;
+    public static AssetImporter Instance => _instance!;
 
     private readonly string _currentFolder;
 
-    static AssetImporter()
-    {
-        Instance = new(Directory.GetCurrentDirectory());
-    }
 
+    public AssetImporter() : this(Directory.GetCurrentDirectory()) { }
     public AssetImporter(string path)
     {
+        _instance = this;
         ProjectFolder = path;
         ResourcesFolder = $"{path}{Path.DirectorySeparatorChar}Resources";
         _currentFolder = ResourcesFolder;
@@ -45,11 +46,11 @@ internal class AssetImporter
         }
     }
 
-    public Guid CreateAsset<T>(string name, T asset)
+    public GuidAsset<T> CreateAsset<T>(string name, T asset) where T : IAsset
     {
         string path = GetNextAvailableFilename(Path.Combine(_currentFolder, name));
         if (_pathToGuid.ContainsKey(path))
-            return Guid.Empty;
+            return new GuidAsset<T>();
 
         var guid = Guid.NewGuid();
         var meta = new Meta(guid);
@@ -62,13 +63,19 @@ internal class AssetImporter
 
         _assetPaths.Add(guid, path);
         _pathToGuid.Add(path, guid);
-        return guid;
+        return new GuidAsset<T>(guid);
     }
 
-    public T GetAsset<T>(GuidAsset<T> asset)
+    public GuidAsset<T> CreateRuntimeAsset<T>(T asset) where T : IAsset
     {
-        var collection = _assetCollections[typeof(T)];
-        return (T)collection.LoadAsset(asset.guid);
+        return _runtimeAssetCollection.CreateAsset(asset);
+    }
+
+    public T GetAsset<T>(GuidAsset<T> asset) where T : IAsset
+    {
+        if (asset._runtimeRef != null)
+            return _runtimeAssetCollection.LoadAsset(asset);
+        return (T)_assetCollections[typeof(T)].LoadAsset(asset.guid);
     }
 
     public string GetPath(Guid guid) => _assetPaths[guid];

@@ -1,10 +1,12 @@
-﻿using Silk.NET.SPIRV;
+﻿using DeltaEngine.Files;
+using Silk.NET.SPIRV;
 using Silk.NET.SPIRV.Cross;
 using System;
 using System.Collections.Immutable;
 
 namespace DeltaEngine.Rendering;
-internal class ShaderData
+
+public class ShaderData: IAsset
 {
     public readonly VertexAttribute vertexMask;
     public readonly ImmutableArray<byte> vertBytes;
@@ -15,6 +17,11 @@ internal class ShaderData
         vertBytes = ImmutableArray.Create(vert);
         fragBytes = ImmutableArray.Create(frag);
         vertexMask = GetInputAttributes(vertBytes.AsSpan());
+    }
+    private ShaderData() { }
+    public static ShaderData DummyShaderData()
+    {
+        return new ShaderData();
     }
 
     private unsafe VertexAttribute GetInputAttributes(ReadOnlySpan<byte> shaderCode)

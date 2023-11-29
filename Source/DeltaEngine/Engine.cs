@@ -7,6 +7,7 @@ namespace DeltaEngine;
 public sealed class Engine : IDisposable
 {
     private readonly Renderer _renderer;
+    private readonly AssetImporter _assetImporter = new();
     public Engine()
     {
         using ModelImporter mi = new();

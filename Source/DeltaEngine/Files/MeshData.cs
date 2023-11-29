@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Text.Json.Serialization;
 
 namespace DeltaEngine.Files;
 
-internal class MeshData
+public class MeshData : IAsset
 {
     [JsonInclude]
     public readonly int vertexCount;

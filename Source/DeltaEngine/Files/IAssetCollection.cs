@@ -1,7 +1,7 @@
 ﻿using System;
 
 namespace DeltaEngine.Files;
-internal interface IAssetCollection<T>
+internal interface IAssetCollection<T> where T: IAsset
 {
     public T LoadAsset(Guid guid);
 }

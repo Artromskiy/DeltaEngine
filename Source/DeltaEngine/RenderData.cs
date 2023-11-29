@@ -3,7 +3,7 @@ using DeltaEngine.Rendering;
 
 namespace DeltaEngine;
 
-internal class RenderData
+public struct RenderData
 {
     public Transform transform;
     public GuidAsset<MeshData> mesh;

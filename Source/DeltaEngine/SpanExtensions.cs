@@ -88,6 +88,22 @@ internal static class SpanExtensions
         }
         return groups;
     }
+    public static List<List<TValue>> GetGroupList<TKey, TValue>(this TValue[] values, Func<TValue, TKey> keySelector) where TKey : notnull
+    {
+        Dictionary<TKey, List<TValue>> groups = new();
+        foreach (var item in values)
+        {
+            var key = keySelector(item);
+            if (!groups.TryGetValue(key, out var list))
+                groups[key] = list = new();
+            list.Add(item);
+        }
+        List<List<TValue>> result = new();
+        foreach (var item in groups)
+            result.Add(item.Value);
+        return result;
+    }
+
 
     public static Dictionary<TKey, List<TValue>> GetGroup<TKey, TValue>(this List<TValue> values, Func<TValue, TKey> keySelector) where TKey : notnull
     {
