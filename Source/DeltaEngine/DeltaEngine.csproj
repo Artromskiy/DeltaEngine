@@ -12,6 +12,11 @@
     <PublishAot>true</PublishAot>
     <IncludeSymbols>true</IncludeSymbols>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+    <Configurations>Debug;Release;DebugPerf</Configurations>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>$(DefineConstants);ASSERT</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

@@ -8,6 +8,7 @@
     <PublishAot>true</PublishAot>
     <StripSymbols>true</StripSymbols>
     <RunAOTCompilation>true</RunAOTCompilation>
+    <Configurations>Debug;Release;DebugPerf</Configurations>
   </PropertyGroup>
 
   <ItemGroup>

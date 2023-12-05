@@ -8,5 +8,8 @@ public struct Transform
     public Vector3 position;
     public Vector3 scale;
 
-    public readonly Matrix4x4 ModelMatrix => Matrix4x4.CreateTranslation(position) * Matrix4x4.CreateFromQuaternion(rotation) * Matrix4x4.CreateScale(scale);
+    internal int id;
+    internal int parent;
+
+    public readonly Matrix4x4 LocalMatrix => Matrix4x4.CreateTranslation(position) * Matrix4x4.CreateFromQuaternion(rotation) * Matrix4x4.CreateScale(scale);
 }

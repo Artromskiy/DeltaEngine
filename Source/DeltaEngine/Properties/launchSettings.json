@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "DeltaEngine": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

@@ -1,4 +1,5 @@
 ﻿using DeltaEngine;
+using DeltaEngine.ECS;
 using DeltaEngine.Files;
 using DeltaEngine.Rendering;
 using System.Diagnostics;
@@ -15,7 +16,8 @@ Stopwatch sw = new();
 //int materials = 15;
 //int meshes = 25;
 
-int entitties = 1000000;
+
+int entitties = 1_000_000;
 
 int shaders = 300;
 int materials = 1000;
@@ -33,37 +35,85 @@ for (int i = 0; i < shaders; i++)
     shaderDatas[i] = AssetImporter.Instance.CreateRuntimeAsset(ShaderData.DummyShaderData());
 for (int i = 0; i < materials; i++)
     materialDatas[i] = AssetImporter.Instance.CreateRuntimeAsset(new MaterialData(i < shaders ? shaderDatas[i] : shaderDatas[Random.Shared.Next(0, shaders)]));
+
+
 for (int i = 0; i < entitties; i++)
+{
     datas[i] = new RenderData()
     {
+        id = i,
         isStatic = i % 2 == 0,
         material = i < materials ? materialDatas[i] : materialDatas[Random.Shared.Next(0, materials)],
         mesh = i < meshes ? meshDatas[i] : meshDatas[Random.Shared.Next(0, meshes)]
     };
+}
+var batcher = new Batcher(datas);
 
 sw.Restart();
 Batcher.IterateWithCopy(datas);
 sw.Stop();
 Console.WriteLine(sw.ElapsedTicks);
+
+sw.Restart();
+batcher.Draw2();
+sw.Stop();
+Console.WriteLine(sw.ElapsedTicks);
+
+sw.Restart();
+Batcher.Draw3(datas);
+sw.Stop();
+Console.WriteLine(sw.ElapsedTicks);
+
 //Console.WriteLine((int)(10000000f / sw.ElapsedTicks)); // FPS of main thread
 Console.ReadLine();
 
 while (true)
 {
-    Thread.Yield();
+    for (int i = 0; i < entitties; i++)
+        datas[i].transformDirty = false;
+
+    for (int i = 0; i < entitties; i++)
+        datas[i].transformDirty = true;
+    Shuffle(datas);
+
+    Console.WriteLine("Iterate all");
     sw.Restart();
     Batcher.IterateWithCopy(datas);
     sw.Stop();
     Console.WriteLine(sw.ElapsedTicks);
-    Console.WriteLine($"fps: {(int)(10000000f / sw.ElapsedTicks)}"); // FPS of main thread
+
+    //sw.Restart();
+    //batcher.Draw2();
+    //sw.Stop();
+    //Console.WriteLine(sw.ElapsedTicks);
+
+    sw.Restart();
+    Batcher.Draw3(datas);
+    sw.Stop();
+    Console.WriteLine(sw.ElapsedTicks);
+
+    //Console.WriteLine((int)(10000000f / sw.ElapsedTicks)); // FPS of main thread
+
+    Console.WriteLine();
 }
+
 
 while (true)
 {
     Thread.Yield();
     sw.Restart();
-    eng.Run();
-    eng.Draw();
+    //  eng.Run();
+    //  eng.Draw();
     sw.Stop();
     //Console.WriteLine((int)(10000000f / sw.ElapsedTicks)); // FPS of main thread
+}
+
+static void Shuffle<T>(T[] array)
+{
+    int n = array.Length;
+    while (n > 1)
+    {
+        int k = Random.Shared.Next(n--);
+        (array[k], array[n]) = (array[n], array[k]);
+    }
 }

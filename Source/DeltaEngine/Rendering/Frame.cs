@@ -1,4 +1,5 @@
-﻿using DeltaEngine.Files;
+﻿using DeltaEngine.ECS;
+using DeltaEngine.Files;
 using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;
@@ -150,7 +151,7 @@ internal class Frame : IDisposable
 
                 Console.WriteLine("Batching draw stage begin");
 
-                Console.WriteLine("Grouping remaining meshes into one array");
+                Console.WriteLine("Grouping remaining meshes into one _left");
 
                 if (staticBatchGroup.Count > 0)
                     Console.WriteLine("Static objects with Batching drawing");

@@ -1,6 +1,5 @@
 ﻿using Silk.NET.SDL;
 using Silk.NET.Vulkan;
-using System.Diagnostics;
 
 namespace DeltaEngine;
 
@@ -15,7 +14,7 @@ namespace DeltaEngine;
 internal static unsafe class DebugHelper
 {
 
-#if DEBUG
+#if ASSERT
     /// <summary>
     /// Discard symbol used to simplify debug
     /// It will do nothing if assignment is going under release mode

@@ -1,12 +1,14 @@
-﻿using DeltaEngine.Files;
+﻿using CommunityToolkit.HighPerformance.Helpers;
+using DeltaEngine.ECS;
+using DeltaEngine.Files;
 using System;
 using System.Collections.Generic;
-using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace DeltaEngine.Rendering;
 
-public static class Batcher
+public class Batcher
 {
     private static bool log = false;
 
@@ -22,27 +24,119 @@ public static class Batcher
     private const string dynamicBatching = "Dynamic objects with Batching drawing";
     private const string batchingEnd = "Batching draw stage end";
 
+    private readonly SortedSet<RenderData> set;
+
+    private readonly HashSet<int> _usedEntities;
+
+
+    // The better solution is to use compute shader
+    // which will automatically take array of transform and indicies
+    // and then assign it's non empty values to new array
+    // Also if group contains just one instance object (because of unique mesh)
+    // we need to somehow fallback to batching. The question is HOW?
+    // If transform is static and mesh is small and unique
+    // we can create batching buffer per material
+
+    private readonly Dictionary<GuidAsset<MaterialData>, MeshGroups> _renderGroups = new(); // for render data updates
+    private readonly SortedDictionary<GuidAsset<MaterialData>, MeshGroups> _sortedRenderGroups = new(); // for rendering iteration
+
+
+    private class MaterialDataCmparer : IComparer<GuidAsset<MaterialData>>
+    {
+        public int Compare(GuidAsset<MaterialData> x, GuidAsset<MaterialData> other)
+        {
+            var matDiff = x.guid.CompareTo(other.guid);
+            if (matDiff == 0)
+                return 0;
+            var shaderDiff = x.Asset.shader.guid.CompareTo(other.Asset.shader.guid);
+            if (shaderDiff != 0)
+                return shaderDiff;
+            return matDiff;
+        }
+    }
+
+    public Batcher(RenderData[] prepared)
+    {
+        _usedEntities = new();
+        set = new SortedSet<RenderData>(prepared);
+        _renderGroups = new();
+        _sortedRenderGroups = new(new MaterialDataCmparer());
+        foreach (ref var data in new Span<RenderData>(prepared))
+            Add(ref data);
+    }
+
+    private void Add(ref RenderData data)
+    {
+        Debug.Assert(_usedEntities.Add(data.id));
+        if (!_renderGroups.TryGetValue(data.material, out var renderGroup))
+        {
+            _renderGroups[data.material] = renderGroup = new();
+            _sortedRenderGroups.Add(data.material, renderGroup);
+        }
+        renderGroup.Add(ref data);
+    }
+
+    private void Remove(ref RenderData data)
+    {
+        Debug.Assert(_usedEntities.Remove(data.id));
+        _renderGroups[data.material].Remove(ref data);
+    }
+
+    public void Change(ref RenderData oldOne, ref RenderData newOne)
+    {
+        Remove(ref oldOne);
+        Add(ref newOne);
+    }
+
     public static RenderData IterateWithCopy(RenderData[] data)
     {
-        var vectorSize = Unsafe.SizeOf<Vector3>(); // 12
-        var quatSize = Unsafe.SizeOf<Quaternion>(); // 16
-        var guiadSize = Unsafe.SizeOf<Guid>(); // 16
-        var transformSize = Unsafe.SizeOf<Transform>(); // 40
-        var guiadAssetSize = Unsafe.SizeOf<GuidAsset<MeshData>>(); // 24
-        var booleanSize = Unsafe.SizeOf<bool>(); // 1
-        var renderDataSize = Unsafe.SizeOf<RenderData>(); // 96
         RenderData def = default;
-        ref RenderData copyTo = ref def;
-        for (int i = 0; i < data.Length; i++)
-            copyTo = ref data[i];
-        return copyTo;
+        foreach (var item in data)
+            def = item;
+        return def;
     }
+
+    public static void Draw3(RenderData[] data)
+    {
+        Console.WriteLine("ForEach");
+        Parallel.ForEach(data, item =>
+        {
+            if (item.transformDirty)
+                item.bindedGroup.Update(item.renderGroupId, item.transform);
+        });
+    }
+
+    public void Draw2()
+    {
+        int materialSwitches = 0;
+        int shaderSwitches = 0;
+        var currentShader = Guid.Empty;
+        var currentMaterial = Guid.Empty;
+        foreach (var item in set)
+        {
+            var shader = item.material.Asset.shader.guid;
+            var material = item.material.guid;
+            if (shader != currentShader)
+            {
+                Log(bindingPipeline);
+                currentShader = shader;
+                shaderSwitches++;
+            }
+            if (material != currentMaterial)
+            {
+                Log(bindingMaterial);
+                currentMaterial = material;
+                materialSwitches++;
+            }
+        }
+    }
+
 
     /// <summary>
     /// Draft drawing method
     /// </summary>
     /// <param name="data"></param>
-    public static void Draw2(RenderData[] data, bool summaryLog, bool fullLog = false)
+    public static void DrawOld(RenderData[] data, bool summaryLog, bool fullLog = false)
     {
         log = fullLog;
 
@@ -153,6 +247,7 @@ public static class Batcher
             Console.WriteLine($"dynamicBatched: {dynamicBatched}");
         }
     }
+
 
     private static void Log(string text)
     {

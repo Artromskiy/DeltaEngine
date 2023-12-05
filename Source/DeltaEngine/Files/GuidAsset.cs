@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
 
 namespace DeltaEngine.Files;
 
-public readonly struct GuidAsset<T> where T: IAsset
+public readonly struct GuidAsset<T> where T : IAsset
 {
     public readonly Guid guid;
     internal readonly object? _runtimeRef;
