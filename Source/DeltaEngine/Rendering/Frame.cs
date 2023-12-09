@@ -11,6 +11,10 @@ internal class Frame : IDisposable
     private readonly RenderBase _rendererData;
     private SwapChain _swapChain;
 
+    private Buffer _transformsBuffer;
+    private Buffer _renderBuffer;
+    private Buffer _parentBuffer;
+
     private Semaphore imageAvailable;
     private Semaphore renderFinished;
     private Fence queueSubmited;

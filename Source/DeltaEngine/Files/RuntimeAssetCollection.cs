@@ -1,24 +1,48 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
 
 namespace DeltaEngine.Files;
 
 internal class RuntimeAssetCollection
 {
-    private readonly ConditionalWeakTable<object, IAsset> _runtimeAssetCollection = new();
+    private readonly Dictionary<Guid, string> _assetPaths = [];
+    private readonly Dictionary<string, Guid> _pathToGuid = [];
+    private readonly string _currentFolder;
+    private const string MetaEnding = ".meta";
 
-    public T LoadAsset<T>(GuidAsset<T> guid) where T : IAsset
+
+    public RuntimeAssetCollection()
     {
-        Debug.Assert(guid._runtimeRef != null);
-        _runtimeAssetCollection.TryGetValue(guid._runtimeRef, out var result);
-        Debug.Assert(result != default);
-        return (T)result;
+        _currentFolder = Directory.CreateTempSubdirectory().FullName;
     }
+
     public GuidAsset<T> CreateAsset<T>(T asset) where T : IAsset
     {
-        var guidAsset = new GuidAsset<T>(Guid.NewGuid(), true);
-        _runtimeAssetCollection.Add(guidAsset._runtimeRef!, asset);
-        return guidAsset;
+        var guid = Guid.NewGuid();
+
+        string path = AssetImporter.GetNextAvailableFilename(Path.Combine(_currentFolder, guid.ToString()));
+        if (_pathToGuid.ContainsKey(path))
+            return new GuidAsset<T>();
+
+        var meta = new Meta(guid);
+
+        using FileStream fileStream = File.Create(path);
+        JsonSerializer.Serialize<T>(fileStream, asset);
+
+        using FileStream metaStream = File.Create($"{path}{MetaEnding}");
+        JsonSerializer.Serialize(metaStream, meta);
+
+        _assetPaths.Add(guid, path);
+        _pathToGuid.Add(path, guid);
+        return new GuidAsset<T>(guid);
+    }
+
+    public string GetPath(Guid guid)
+    {
+        if (!_assetPaths.TryGetValue(guid, out string? result))
+            result = string.Empty;
+        return result;
     }
 }

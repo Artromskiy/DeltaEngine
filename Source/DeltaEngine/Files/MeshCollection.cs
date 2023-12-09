@@ -12,8 +12,6 @@ internal class MeshCollection : IAssetCollection<MeshData>
     private readonly Dictionary<Guid, Dictionary<VertexAttribute, WeakReference<byte[]?>>> _meshMapVariants = new();
     private readonly Dictionary<Guid, WeakReference<MeshData?>> _meshDataMap = new();
 
-    //private readonly ConditionalWeakTable<Guid, MeshData> _runtimeMeshDataMap = new();
-
     public unsafe MeshData GetMeshData(Guid guid)
     {
         if (!_meshDataMap.TryGetValue(guid, out var reference))
@@ -23,12 +21,12 @@ internal class MeshCollection : IAssetCollection<MeshData>
         return meshData;
     }
 
-    public MeshData LoadAsset(Guid guid)
+    public MeshData LoadAsset(GuidAsset<MeshData> asset)
     {
-        if (!_meshDataMap.TryGetValue(guid, out var reference))
-            _meshDataMap[guid] = reference = new(null);
+        if (!_meshDataMap.TryGetValue(asset.guid, out var reference))
+            _meshDataMap[asset.guid] = reference = new(null);
         if (!reference.TryGetTarget(out var meshData))
-            reference.SetTarget(meshData = LoadMesh(guid));
+            reference.SetTarget(meshData = LoadMesh(asset.guid));
         return meshData;
     }
 

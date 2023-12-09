@@ -41,7 +41,7 @@ public sealed class RenderBase : IDisposable
         bool validationSupported = CheckValidationLayerSupport();
         bool debugUtilsSupported = vk.IsInstanceExtensionPresent(ExtDebugUtils.ExtensionName);
         var sdlExtensions = RenderHelper.GetRequiredVulkanExtensions(api.sdl, window);
-        var layers = validationSupported ? validationLayers : Array.Empty<string>();
+        var layers = validationSupported ? validationLayers : [];
         var instanceExtensions = new string[debugUtilsSupported ? sdlExtensions.Length + 1 : sdlExtensions.Length];
         Array.Copy(sdlExtensions, instanceExtensions, sdlExtensions.Length);
         instanceExtensions[^1] = debugUtilsSupported ? ExtDebugUtils.ExtensionName : instanceExtensions[^1];

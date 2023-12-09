@@ -1,31 +1,35 @@
-﻿using DeltaEngine.Rendering;
-using System.Collections.Generic;
+﻿using Arch.Core;
+using Arch.Core.Extensions;
 using System.Numerics;
 
 namespace DeltaEngine.ECS;
-internal class TransformSystem
-{
-    private readonly StackList<Transform> _transforms = new();
-    private readonly StackList<HashSet<int>> _childs = new();
 
-    public void Add(ref Transform transform)
+internal class TransformSystem : ComponentRegistry<Transform>
+{
+    public TransformSystem(World world) : base(world)
     {
-        transform.parent = -1;
-        transform.id = _transforms.Next();
-        _transforms.Add(transform);
-        _childs.Add(null!);
+
     }
 
-    public Matrix4x4 GetWorld(ref Transform transform)
+    public static Transform GetWorld(Entity entity)
     {
-        int parentId = transform.parent;
+        ref var transform = ref entity.TryGetRef<Transform>(out bool hasTransform);
+        if (!hasTransform)
+            return default;
+        bool hasParent = entity.GetParent(out var parent);
+        if (!hasParent)
+            return transform;
+
         var local = transform.LocalMatrix;
-        while (parentId != -1)
+        while (hasParent)
         {
-            var parent = _transforms[parentId];
-            local *= parent.LocalMatrix;
-            parentId = parent.id;
+            transform = ref parent.TryGetRef<Transform>(out hasTransform);
+            if (hasTransform)
+                local *= transform.LocalMatrix;
+            hasParent = parent.GetParent(out parent);
         }
-        return local;
+        Transform result = new();
+        var decomposed = Matrix4x4.Decompose(local, out result.scale, out result.rotation, out result.position);
+        return result;
     }
 }

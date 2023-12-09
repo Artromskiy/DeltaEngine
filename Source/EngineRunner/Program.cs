@@ -1,20 +1,13 @@
-﻿using DeltaEngine;
+﻿using Arch.Core;
+using DeltaEngine;
 using DeltaEngine.ECS;
 using DeltaEngine.Files;
 using DeltaEngine.Rendering;
 using System.Diagnostics;
 
-
 using var eng = new Engine();
 //eng.Run();
 Stopwatch sw = new();
-
-
-//int entitties = 500;
-//
-//int shaders = 5;
-//int materials = 15;
-//int meshes = 25;
 
 
 int entitties = 1_000_000;
@@ -23,6 +16,7 @@ int shaders = 300;
 int materials = 1000;
 int meshes = 1000;
 
+
 RenderData[] datas = new RenderData[entitties];
 
 GuidAsset<MeshData>[] meshDatas = new GuidAsset<MeshData>[meshes];
@@ -30,71 +24,30 @@ GuidAsset<ShaderData>[] shaderDatas = new GuidAsset<ShaderData>[shaders];
 GuidAsset<MaterialData>[] materialDatas = new GuidAsset<MaterialData>[materials];
 
 for (int i = 0; i < meshes; i++)
-    meshDatas[i] = AssetImporter.Instance.CreateRuntimeAsset(new MeshData(Array.Empty<uint>(), Array.Empty<byte[]>(), 0));
+    meshDatas[i] = AssetImporter.Instance.CreateRuntimeAsset(new MeshData([], [], 0));
 for (int i = 0; i < shaders; i++)
     shaderDatas[i] = AssetImporter.Instance.CreateRuntimeAsset(ShaderData.DummyShaderData());
 for (int i = 0; i < materials; i++)
     materialDatas[i] = AssetImporter.Instance.CreateRuntimeAsset(new MaterialData(i < shaders ? shaderDatas[i] : shaderDatas[Random.Shared.Next(0, shaders)]));
 
 
+var world = World.Create();
 for (int i = 0; i < entitties; i++)
 {
-    datas[i] = new RenderData()
-    {
-        id = i,
-        isStatic = i % 2 == 0,
-        material = i < materials ? materialDatas[i] : materialDatas[Random.Shared.Next(0, materials)],
-        mesh = i < meshes ? meshDatas[i] : meshDatas[Random.Shared.Next(0, meshes)]
-    };
+    var entity = world.Create
+        (
+            new Transform() { isStatic = i % 2 == 0 },
+            i < materials ? materialDatas[i] : materialDatas[Random.Shared.Next(0, materials)],
+            i < meshes ? meshDatas[i] : meshDatas[Random.Shared.Next(0, meshes)]
+        );
 }
-var batcher = new Batcher(datas);
 
-sw.Restart();
-Batcher.IterateWithCopy(datas);
-sw.Stop();
-Console.WriteLine(sw.ElapsedTicks);
-
-sw.Restart();
-batcher.Draw2();
-sw.Stop();
-Console.WriteLine(sw.ElapsedTicks);
-
-sw.Restart();
-Batcher.Draw3(datas);
-sw.Stop();
-Console.WriteLine(sw.ElapsedTicks);
-
-//Console.WriteLine((int)(10000000f / sw.ElapsedTicks)); // FPS of main thread
 Console.ReadLine();
 
 while (true)
 {
-    for (int i = 0; i < entitties; i++)
-        datas[i].transformDirty = false;
+    Thread.Yield();
 
-    for (int i = 0; i < entitties; i++)
-        datas[i].transformDirty = true;
-    Shuffle(datas);
-
-    Console.WriteLine("Iterate all");
-    sw.Restart();
-    Batcher.IterateWithCopy(datas);
-    sw.Stop();
-    Console.WriteLine(sw.ElapsedTicks);
-
-    //sw.Restart();
-    //batcher.Draw2();
-    //sw.Stop();
-    //Console.WriteLine(sw.ElapsedTicks);
-
-    sw.Restart();
-    Batcher.Draw3(datas);
-    sw.Stop();
-    Console.WriteLine(sw.ElapsedTicks);
-
-    //Console.WriteLine((int)(10000000f / sw.ElapsedTicks)); // FPS of main thread
-
-    Console.WriteLine();
 }
 
 

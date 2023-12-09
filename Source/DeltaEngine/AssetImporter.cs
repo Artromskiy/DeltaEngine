@@ -10,12 +10,14 @@ public class AssetImporter
 {
     private readonly string ProjectFolder;
     private readonly string ResourcesFolder;
-    private readonly Dictionary<Guid, string> _assetPaths = new();
-    private readonly Dictionary<string, Guid> _pathToGuid = new();
+
+    private readonly Dictionary<Guid, string> _assetPaths = [];
+    private readonly Dictionary<string, Guid> _pathToGuid = [];
+
     private const string MetaEnding = ".meta";
     private const string MetaSearch = "*.meta";
 
-    private readonly Dictionary<Type, IAssetCollection<IAsset>> _assetCollections = new();
+    private readonly Dictionary<Type, IAssetCollection<IAsset>> _assetCollections = [];
     private readonly RuntimeAssetCollection _runtimeAssetCollection = new();
 
     private static AssetImporter? _instance;
@@ -73,12 +75,16 @@ public class AssetImporter
 
     public T GetAsset<T>(GuidAsset<T> asset) where T : IAsset
     {
-        if (asset._runtimeRef != null)
-            return _runtimeAssetCollection.LoadAsset(asset);
-        return (T)_assetCollections[typeof(T)].LoadAsset(asset.guid);
+        return ((IAssetCollection<T>)_assetCollections[typeof(T)]).LoadAsset(asset);
     }
 
-    public string GetPath(Guid guid) => _assetPaths[guid];
+    public string GetPath(Guid guid)
+    {
+        if (!_assetPaths.TryGetValue(guid, out string? result))
+            return _runtimeAssetCollection.GetPath(guid);
+        return result;
+
+    }
 
     public static string GetNextAvailableFilename(string filename)
     {

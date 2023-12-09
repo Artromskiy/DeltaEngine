@@ -1,15 +1,28 @@
-﻿using System.Numerics;
+﻿using Arch.Core;
+using System.Numerics;
 
 namespace DeltaEngine;
 
 public struct Transform
 {
-    public Quaternion rotation;
+    /// <summary>
+    /// Local position
+    /// </summary>
     public Vector3 position;
+    /// <summary>
+    /// Local rotation
+    /// </summary>
+    public Quaternion rotation;
+    /// <summary>
+    /// Local scale
+    /// </summary>
     public Vector3 scale;
-
-    internal int id;
-    internal int parent;
-
+    
+    public bool isStatic;
     public readonly Matrix4x4 LocalMatrix => Matrix4x4.CreateTranslation(position) * Matrix4x4.CreateFromQuaternion(rotation) * Matrix4x4.CreateScale(scale);
+}
+
+internal struct ChildOf
+{
+    public EntityReference parent;
 }

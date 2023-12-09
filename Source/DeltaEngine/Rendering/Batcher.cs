@@ -35,7 +35,7 @@ public class Batcher
     // Also if group contains just one instance object (because of unique mesh)
     // we need to somehow fallback to batching. The question is HOW?
     // If transform is static and mesh is small and unique
-    // we can create batching buffer per material
+    // we can create batching _buffer per material
 
     private readonly Dictionary<GuidAsset<MaterialData>, MeshGroups> _renderGroups = new(); // for render data updates
     private readonly SortedDictionary<GuidAsset<MaterialData>, MeshGroups> _sortedRenderGroups = new(); // for rendering iteration
@@ -99,11 +99,11 @@ public class Batcher
     public static void Draw3(RenderData[] data)
     {
         Console.WriteLine("ForEach");
-        Parallel.ForEach(data, item =>
-        {
-            if (item.transformDirty)
-                item.bindedGroup.Update(item.renderGroupId, item.transform);
-        });
+        //Parallel.ForEach(data, item =>
+        //{
+        //    if (item.transformDirty)
+        //        item.bindedGroup.Update(item.renderGroupId, item.transform);
+        //});
     }
 
     public void Draw2()

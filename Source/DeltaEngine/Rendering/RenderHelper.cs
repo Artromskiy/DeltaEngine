@@ -244,14 +244,14 @@ public static class RenderHelper
         data.vk.EndCommandBuffer(cmdbuffer);
     }
 
-    public static int FindMemoryType(RenderBase data, int typeFilter, MemoryPropertyFlags properties)
+    public static uint FindMemoryType(RenderBase data, int typeFilter, MemoryPropertyFlags properties)
     {
         int i = 0;
         for (; i < data.gpuMemory.memoryProperties.MemoryTypeCount; i++)
-            if (Convert.ToBoolean(typeFilter & (1 << i)) && (data.gpuMemory.memoryProperties.MemoryTypes[i].PropertyFlags & properties) == properties)
-                return i;
+            if (Convert.ToBoolean(typeFilter & (1 << i)) && (data.gpuMemory.memoryProperties.MemoryTypes[i].PropertyFlags & properties) == properties) // some mask magic
+                return (uint)i;
         _ = false;
-        return i;
+        return (uint)i;
     }
 
     public static unsafe (Pipeline pipeline, PipelineLayout layout) CreateGraphicsPipeline(RenderBase data, RenderPass renderPass, DescriptorSetLayout[] setLayouts)
@@ -411,6 +411,20 @@ public static class RenderHelper
         fixed (CommandBuffer* commandBuffersPtr = commandBuffers)
             _ = data.vk.AllocateCommandBuffers(data.device, allocInfo, commandBuffersPtr);
         return commandBuffers;
+    }
+
+    internal static unsafe CommandBuffer CreateCommandBuffer(RenderBase data)
+    {
+        CommandBufferAllocateInfo allocInfo = new()
+        {
+            SType = StructureType.CommandBufferAllocateInfo,
+            CommandPool = data.commandPool,
+            Level = CommandBufferLevel.Primary,
+            CommandBufferCount = 1,
+        };
+        CommandBuffer commandBuffer;
+        _ = data.vk.AllocateCommandBuffers(data.device, allocInfo, &commandBuffer);
+        return commandBuffer;
     }
 
     public static unsafe DescriptorSetLayout CreateDescriptorSet(RenderBase data)

@@ -1,4 +1,4 @@
-﻿using DeltaEngine.Rendering;
+﻿using DeltaEngine.Collections;
 
 namespace DeltaEngine.ECS;
 public struct BatchGroup
