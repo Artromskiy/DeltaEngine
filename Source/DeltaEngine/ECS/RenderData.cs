@@ -10,8 +10,6 @@ public struct RenderData : IComparable<RenderData>
     public int id;
     public Transform transform;
 
-    public MeshRenderer meshRenderer;
-
     public GuidAsset<MeshData> mesh;
     public GuidAsset<MaterialData> material;
 

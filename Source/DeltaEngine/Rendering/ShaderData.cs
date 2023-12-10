@@ -6,7 +6,7 @@ using System.Collections.Immutable;
 
 namespace DeltaEngine.Rendering;
 
-public class ShaderData: IAsset
+public class ShaderData : IAsset
 {
     public readonly VertexAttribute vertexMask;
     public readonly ImmutableArray<byte> vertBytes;

@@ -12,11 +12,19 @@
     <PublishAot>true</PublishAot>
     <IncludeSymbols>true</IncludeSymbols>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
-    <Configurations>Debug;Release;DebugPerf</Configurations>
+    <Configurations>Debug;Release;DebugPerf;Perf</Configurations>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>$(DefineConstants);ASSERT</DefineConstants>
+    <Deterministic>True</Deterministic>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Perf|AnyCPU'">
+    <DefineConstants>$(DefineConstants);RELEASE</DefineConstants>
+    <DefineTrace>false</DefineTrace>
+    <Deterministic>True</Deterministic>
+    <Optimize>True</Optimize>
   </PropertyGroup>
 
   <ItemGroup>
@@ -45,6 +53,11 @@
     <Using Include="DeltaEngine.DebugHelper">
       <Static>True</Static>
     </Using>
+
+    <Using Include="DeltaEngine.Attributes">
+      <Static>True</Static>
+    </Using>
+
   </ItemGroup>
 
 </Project>

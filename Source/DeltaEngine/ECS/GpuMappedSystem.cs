@@ -1,12 +1,15 @@
 ﻿using Arch.Core;
-using Arch.Core.Extensions;
 using DeltaEngine.Collections;
 using DeltaEngine.Rendering;
 using System;
+using System.Diagnostics;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace DeltaEngine.ECS;
-internal class GpuMappedSystem<T,K> : StorageDynamicArray<K> where K : unmanaged
+internal class GpuMappedSystem<T, K> : StorageDynamicArray<K>
+    where K : unmanaged
+    where T : IDirty<T>
 {
     private readonly World _world;
     private readonly IGpuMapper<T, K> _mapper;
@@ -19,7 +22,7 @@ internal class GpuMappedSystem<T,K> : StorageDynamicArray<K> where K : unmanaged
     private uint[] _stack;
     private uint _stackSize;
 
-    public GpuMappedSystem(World world, IGpuMapper<T,K> mapper, RenderBase renderData) : base(renderData, 1)
+    public GpuMappedSystem(World world, IGpuMapper<T, K> mapper, RenderBase renderData) : base(renderData, 1)
     {
         _lastFree = 1;
         _taken = [true];
@@ -30,80 +33,51 @@ internal class GpuMappedSystem<T,K> : StorageDynamicArray<K> where K : unmanaged
         _world = world;
 
         var all = new QueryDescription().WithAll<T>();
+        uint count = (uint)_world.CountEntities(all);
+        uint newLength = BitOperations.RoundUpToPowerOf2(count);
+        Resize(newLength);
+
         var withId = new QueryDescription().WithAll<T, VersId<T>>();
         _world.Add<VersId<T>>(all);
-        _world.Query(withId, (ref T component, ref VersId <T> x) =>
+        _world.Query(withId, (ref T component, ref VersId<T> x) =>
         {
-            x = Next();
-            Add(component);
+            x = Add(component);
         });
-        _world.SubscribeComponentAdded<T>(OnComponentAdded);
-        _world.SubscribeComponentRemoved<T>(OnComponentRemoved);
-        _world.SubscribeComponentSet<T>(OnComponentChanged);
     }
 
-    public void UpdateDirtyValues()
+    [MethodImpl(Inl)]
+    public void UpdateDirty()
     {
-        var onlyDirty = new QueryDescription().WithAll<DirtyFlag<T>>();
-        var query = new QueryDescription().WithAll<T, VersId<T>, DirtyFlag<T>>();
-        _world.ParallelQuery(query, (ref T component, ref VersId<T> vers) =>
+        var queryDesc = new QueryDescription().WithAll<T, VersId<T>>();
+        InlineUpdater updater = new(GetWriter(), _mapper);
+        _world.InlineQuery<InlineUpdater, T, VersId<T>>(queryDesc, ref updater);
+    }
+
+    private readonly struct InlineUpdater(Writer writer, IGpuMapper<T, K> mapper) : IForEach<T, VersId<T>>
+    {
+        private readonly Writer _writer = writer;
+        private readonly IGpuMapper<T, K> _mapper = mapper;
+
+        [MethodImpl(Inl)]
+        public void Update(ref T component, ref VersId<T> vers)
         {
-            Update(vers, component);
-        });
-        _world.Remove<DirtyFlag<T>>(onlyDirty);
-    }
-
-    private void OnComponentAdded(in Entity entity, ref T component)
-    {
-        var nextId = Next();
-        _world.Add(entity, in nextId);
-        Add(component);
-    }
-
-    private void OnComponentRemoved(in Entity entity, ref T component)
-    {
-        ref var verId = ref entity.TryGetRef<VersId<T>>(out var has);
-        Debug.Assert(has);
-        RemoveAt(verId.id);
-        _world.Remove<VersId<T>>(entity);
-        _world.Remove<DirtyFlag<T>>(entity);
-    }
-
-    private void OnComponentChanged(in Entity entity, ref T component)
-    {
-        _world.AddOrGet<DirtyFlag<T>>(entity);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void Update(VersId<T> versId, T item)
-    {
-        CheckIndex(versId.id);
-        CheckVersion(versId);
-        this[versId.id] = _mapper.Map(item);
-    }
-
-    private VersId<T> Add(T item)
-    {
-        uint index;
-        if (_stackSize > 0)
-            index = PopStack();
-        else
-        {
-            if (_lastFree == Length)
-                Grow();
-            index = _lastFree++;
+            if (component.IsDirty)
+                _writer[vers.id] = _mapper.Map(ref component);
         }
-        _taken[index] = true;
-        this[index] = _mapper.Map(item);
-        return new(index, _count[index]);
     }
 
 
-    private void Grow()
-    {
-        uint newSize = Length == 0 ? 1 : Length * 2;
+    [MethodImpl(Inl)]
+    private void Grow() => Resize(Length * 2);
 
-        Resize(newSize);
+    [MethodImpl(NoInl)]
+    private new void Resize(uint length)
+    {
+        var oldSize = Length;
+        uint newSize = length;
+        Debug.Assert(oldSize <= newSize);
+
+        base.Resize(newSize);
 
         uint[] newStack = new uint[newSize];
         uint[] newCount = new uint[newSize];
@@ -118,6 +92,31 @@ internal class GpuMappedSystem<T,K> : StorageDynamicArray<K> where K : unmanaged
         _stack = newStack;
     }
 
+    [MethodImpl(Inl)]
+    private VersId<T> Add(T item)
+    {
+        uint index;
+        if (_stackSize > 0)
+            index = PopStack();
+        else
+        {
+            if (_lastFree == Length)
+                Grow();
+            index = _lastFree++;
+        }
+        _taken[index] = true;
+        this[index] = _mapper.Map(ref item);
+        return new(index, _count[index]);
+    }
+
+    [MethodImpl(Inl)]
+    private void Update(ref VersId<T> versId, ref T item)
+    {
+        CheckIndex(versId.id);
+        CheckVersion(versId);
+        this[versId.id] = _mapper.Map(ref item);
+    }
+
     private void RemoveAt(uint index)
     {
         CheckIndex(index);
@@ -127,40 +126,35 @@ internal class GpuMappedSystem<T,K> : StorageDynamicArray<K> where K : unmanaged
         PushStack(index);
     }
 
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private VersId<T> Next()
-    {
-        var index = _stackSize > 0 ? PeekStack() : _lastFree;
-        return new(index, _count[index]);
-    }
-
+    [MethodImpl(Inl)]
     private uint PopStack()
     {
         Debug.Assert(_stackSize > 0);
         return _stack[--_stackSize];
     }
 
+    [MethodImpl(Inl)]
     private uint PeekStack()
     {
         Debug.Assert(_stackSize > 0);
         return _stack[_stackSize - 1];
     }
 
+    [MethodImpl(Inl)]
     private void PushStack(uint index)
     {
         Debug.Assert(_stackSize < (uint)_stack.Length);
         _stack[_stackSize++] = index;
-        VersId<T> v = new(0, 0);
     }
 
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Inl)]
     private void CheckIndex(uint index)
     {
         if (index < 1 || index >= _lastFree || !_taken[index])
             Thrower.ThrowOnGet(index);
     }
+
+    [MethodImpl(Inl)]
     private void CheckVersion(VersId<T> versId)
     {
         if (_count[versId.id] != versId.version)

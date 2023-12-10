@@ -13,7 +13,6 @@ namespace DeltaEngine;
 /// </summary>
 internal static unsafe class DebugHelper
 {
-
 #if ASSERT
     /// <summary>
     /// Discard symbol used to simplify debug

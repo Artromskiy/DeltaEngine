@@ -21,7 +21,7 @@ internal class ModelImporter : IAssetImporter, IDisposable
         List<(MeshData meshData, string name)> meshDatas = new();
         ProcessScene(scene->MRootNode, scene, meshDatas);
         foreach (var (meshData, name) in meshDatas)
-            AssetImporter.Instance.CreateAsset($"{fileName}.{name}.mesh", meshData);
+            AssetImporter.Instance.CreateAsset($"{fileName}.{name}.Mesh", meshData);
     }
 
     private unsafe void ProcessScene(Node* node, Scene* scene, List<(MeshData meshData, string name)> meshDatas)

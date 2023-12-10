@@ -1,5 +1,4 @@
 ﻿using Arch.Core;
-using Arch.Core.Extensions;
 using DeltaEngine.Collections;
 
 namespace DeltaEngine.ECS;
@@ -18,28 +17,5 @@ internal class ComponentRegistry<T>
             x = _components.Next();
             _components.Add(component);
         });
-        _world.SubscribeComponentAdded<T>(OnComponentAdded);
-        _world.SubscribeComponentRemoved<T>(OnComponentRemoved);
-        _world.SubscribeComponentSet<T>(OnComponentChanged);
-    }
-
-    private void OnComponentAdded(in Entity entity, ref T component)
-    {
-        var nextId = _components.Next();
-        entity.Add(nextId);
-        _components.Add(component);
-    }
-
-    private void OnComponentRemoved(in Entity entity, ref T component)
-    {
-        ref var id = ref entity.TryGetRef<VersId<T>>(out var has);
-        Debug.Assert(has);
-        _components.RemoveAt(id.id);
-        entity.Remove<VersId<Transform>>();
-    }
-
-    private static void OnComponentChanged(in Entity entity, ref T component)
-    {
-        entity.AddOrGet<DirtyFlag<T>>();
     }
 }

@@ -118,13 +118,13 @@ internal class Frame : IDisposable
         var shaderGroups = data.GetGroup(x => x.material.Asset.shader.Asset);
         foreach (var shaderGroup in shaderGroups)
         {
-            Console.WriteLine("Binding pipeline bound to shader");
+            Console.WriteLine("Binding pipeline bound to Shader");
             var materialGroups = shaderGroup.Value.GetGroup(x => x.material);
             foreach (var materialGroup in materialGroups)
             {
-                Console.WriteLine("Binding material data to pipeline");
+                Console.WriteLine("Binding Material data to pipeline");
 
-                Console.WriteLine("Grouping meshes with same material");
+                Console.WriteLine("Grouping meshes with same Material");
 
                 var meshGroups = materialGroup.Value.GetGroup(x => x.mesh);
 

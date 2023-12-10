@@ -28,6 +28,7 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
 
     protected T this[uint index]
     {
+        [MethodImpl(Inl)]
         set
         {
             Debug.Assert(index > 0 && index < _length);
@@ -36,6 +37,32 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
         }
     }
 
+    protected Writer GetWriter() => new(_length, _pData);
+
+    /// <summary>
+    /// Fastest way to write directly to gpu memory
+    /// </summary>
+    /// <param name="length"></param>
+    /// <param name="pData"></param>
+    protected readonly struct Writer(uint length, nint pData)
+    {
+        private readonly uint _length = length;
+        private readonly nint _pData = pData;
+        private static readonly uint sizeOf = (uint)sizeof(T);
+
+        public readonly ref T this[uint index]
+        {
+            [MethodImpl(Inl)]
+            get
+            {
+                Debug.Assert(index > 0 && index < _length);
+                nint destination = _pData + (nint)(index * sizeOf);
+                return ref Unsafe.AsRef<T>(destination.ToPointer());
+            }
+        }
+    }
+
+    [MethodImpl(Inl)]
     protected void Resize(uint length)
     {
         _length = length;

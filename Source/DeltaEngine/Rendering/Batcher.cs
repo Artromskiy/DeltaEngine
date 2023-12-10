@@ -12,9 +12,9 @@ public class Batcher
 {
     private static bool log = false;
 
-    private const string bindingPipeline = "Binding pipeline bound to shader";
-    private const string bindingMaterial = "Binding material data to pipeline";
-    private const string groupByMaterial = "Grouping meshes with same material";
+    private const string bindingPipeline = "Binding pipeline bound to Shader";
+    private const string bindingMaterial = "Binding Material data to pipeline";
+    private const string groupByMaterial = "Grouping meshes with same Material";
     private const string instancingBegin = "Instancing draw stage begin";
     private const string staticInstancing = "Static objects with Instancing drawing";
     private const string dynamicInstancing = "Dynamic objects with Instancing drawing";
@@ -29,13 +29,13 @@ public class Batcher
     private readonly HashSet<int> _usedEntities;
 
 
-    // The better solution is to use compute shader
+    // The better solution is to use compute Shader
     // which will automatically take array of transform and indicies
     // and then assign it's non empty values to new array
-    // Also if group contains just one instance object (because of unique mesh)
+    // Also if group contains just one instance object (because of unique Mesh)
     // we need to somehow fallback to batching. The question is HOW?
-    // If transform is static and mesh is small and unique
-    // we can create batching _buffer per material
+    // If transform is static and Mesh is small and unique
+    // we can create batching _buffer per Material
 
     private readonly Dictionary<GuidAsset<MaterialData>, MeshGroups> _renderGroups = new(); // for render data updates
     private readonly SortedDictionary<GuidAsset<MaterialData>, MeshGroups> _sortedRenderGroups = new(); // for rendering iteration

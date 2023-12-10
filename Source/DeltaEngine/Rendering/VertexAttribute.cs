@@ -8,7 +8,7 @@ namespace DeltaEngine.Rendering;
 
 /// <summary>
 /// Vertex Attribute enum
-/// enum order number must match layout location in shader
+/// enum order number must match layout location in Shader
 /// </summary>
 [Flags]
 public enum VertexAttribute : int

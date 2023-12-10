@@ -29,7 +29,10 @@ internal class TransformSystem : ComponentRegistry<Transform>
             hasParent = parent.GetParent(out parent);
         }
         Transform result = new();
-        var decomposed = Matrix4x4.Decompose(local, out result.scale, out result.rotation, out result.position);
+        var decomposed = Matrix4x4.Decompose(local, out var scale, out var rotation, out var position);
+        result.Scale = scale;
+        result.Rotation = rotation;
+        result.Position = position;
         return result;
     }
 }
