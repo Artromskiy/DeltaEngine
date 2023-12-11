@@ -2,7 +2,6 @@
 using DeltaEngine.Collections;
 using DeltaEngine.Rendering;
 using System;
-using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 

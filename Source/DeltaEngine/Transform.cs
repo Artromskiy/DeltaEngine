@@ -10,6 +10,8 @@ public struct Transform : IDirty<Transform>
     private Vector3 _position;
     private Quaternion _rotation;
     private Vector3 _scale;
+
+
     /// <summary>
     /// Local Position
     /// </summary>

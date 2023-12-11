@@ -14,7 +14,7 @@ public static class ShaderModuleGroupCreator
         namePtr = Marshal.StringToHGlobalAnsi(ShaderEntryName);
         AppDomain.CurrentDomain.ProcessExit += (_, _) => Dispose();
     }
-    
+
     private static void Dispose() => Marshal.FreeHGlobal(namePtr);
 
     public static unsafe PipelineShaderStageCreateInfo Create(PipelineShader shader) => new()

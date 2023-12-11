@@ -82,7 +82,7 @@ public class StackList<T>
     public unsafe void CopyTo(nint ptr)
     {
         ref byte bufferData = ref MemoryMarshal.GetArrayDataReference((Array)_items);
-        Unsafe.CopyBlockUnaligned(ref Unsafe.AsRef<byte>(ptr.ToPointer()), ref bufferData, (uint)_size);
+        Unsafe.CopyBlockUnaligned(ref Unsafe.AsRef<byte>(ptr.ToPointer()), ref bufferData, _size);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

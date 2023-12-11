@@ -24,7 +24,7 @@ public static class RenderHelper
         | WindowFlags.Shown
         | WindowFlags.Resizable
         | WindowFlags.AllowHighdpi
-   //     | WindowFlags.Borderless
+        | WindowFlags.Borderless
    //            | WindowFlags.FullscreenDesktop
    );
 
@@ -178,7 +178,7 @@ public static class RenderHelper
         {
             SType = StructureType.MemoryAllocateInfo,
             AllocationSize = reqs.Size,
-            MemoryTypeIndex = (uint)FindMemoryType(data, (int)reqs.MemoryTypeBits, memoryPropertyFlags)
+            MemoryTypeIndex = FindMemoryType(data, (int)reqs.MemoryTypeBits, memoryPropertyFlags)
         };
         _ = data.vk.AllocateMemory(data.device, allocateInfo, null, out var memory);
         _ = data.vk.BindBufferMemory(data.device, buffer, memory, 0);
@@ -397,6 +397,24 @@ public static class RenderHelper
         return commandPool;
     }
 
+    public static unsafe DescriptorPool CreateDescriptorPool(RenderBase data, int descriptorPoolSozeCount)
+    {
+        DescriptorPoolSize poolSize = new()
+        {
+            DescriptorCount = (uint)descriptorPoolSozeCount,
+            Type = DescriptorType.StorageBuffer
+        };
+        DescriptorPoolCreateInfo poolInfo = new()
+        {
+            SType = StructureType.DescriptorPoolCreateInfo,
+            PoolSizeCount = 1,
+            PPoolSizes = &poolSize,
+            MaxSets = (uint)descriptorPoolSozeCount,
+        };
+        _ = data.vk.CreateDescriptorPool(data.device, poolInfo, null, out var result);
+        return result;
+    }
+
 
     internal static unsafe CommandBuffer[] CreateCommandBuffers(RenderBase data, int buffersCount)
     {
@@ -427,7 +445,7 @@ public static class RenderHelper
         return commandBuffer;
     }
 
-    public static unsafe DescriptorSetLayout CreateDescriptorSet(RenderBase data)
+    public static unsafe DescriptorSetLayout CreateDescriptorSetLayout(RenderBase data)
     {
         DescriptorSetLayoutBinding binding = new()
         {
@@ -446,6 +464,24 @@ public static class RenderHelper
         return setLayout;
     }
 
+    public static unsafe DescriptorSetLayout CreateDescriptorSetLayoutSBO(RenderBase data)
+    {
+        DescriptorSetLayoutBinding binding = new()
+        {
+            Binding = 0,
+            DescriptorCount = 1,
+            DescriptorType = DescriptorType.StorageBuffer,
+            StageFlags = ShaderStageFlags.VertexBit,
+        };
+        DescriptorSetLayoutCreateInfo createInfo = new()
+        {
+            SType = StructureType.DescriptorSetLayoutCreateInfo,
+            PBindings = &binding,
+            BindingCount = 1,
+        };
+        _ = data.vk.CreateDescriptorSetLayout(data.device, &createInfo, null, out DescriptorSetLayout setLayout);
+        return setLayout;
+    }
 
     public static unsafe PhysicalDevice PickPhysicalDevice(Vk vk, Instance instance, SurfaceKHR surface, KhrSurface khrsf, string[] neededExtensions)
     {

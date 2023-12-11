@@ -1,5 +1,4 @@
 ﻿using Arch.Core;
-using DeltaEngine.Collections;
 using DeltaEngine.ECS;
 using DeltaEngine.Rendering;
 using System;
@@ -12,15 +11,14 @@ internal class Scene
     private readonly GpuMappedSystem<Transform, TRSData> _transformSystem;
     private readonly Renderer _renderer;
     private readonly World _sceneWorld;
-
+    private readonly JobScheduler.JobScheduler _jobScheduler;
     public Scene(World world, Renderer renderer)
     {
         _sceneWorld = world;
-        new JobScheduler.JobScheduler("WorkerThread");
+        _jobScheduler = new JobScheduler.JobScheduler("WorkerThread");
         _sceneWorld.Add<MoveTo>(new QueryDescription().WithAll<Transform>());
         _renderer = renderer;
         _transformSystem = new GpuMappedSystem<Transform, TRSData>(_sceneWorld, new TransformMapper(), _renderer._rendererData);
-        Dirt<Transform>();
     }
 
     public struct MoveTo
@@ -34,17 +32,25 @@ internal class Scene
     [MethodImpl(Inl)]
     public void Run()
     {
-        //var query = new QueryDescription().WithAll<Transform, MoveTo>();
-        //_sceneWorld.InlineQuery<MoveTransforms, Transform, MoveTo>(query);
-        //Dirt<Transform>();
+        _renderer.SubmitDraw();
+        var query = new QueryDescription().WithAll<Transform, MoveTo>();
+        MoveTransforms move = new();
+        _sceneWorld.InlineParallelQuery<MoveTransforms, Transform, MoveTo>(query, ref move);
         _transformSystem.UpdateDirty();
-        //Clear<Transform>();
+        Clear<Transform>();
     }
 
     private struct MoveTransforms : IForEach<Transform, MoveTo>
     {
+        [MethodImpl(Inl)]
         public readonly void Update(ref Transform t, ref MoveTo m)
         {
+            t.Position = Vector3.Lerp(t.Position, m.position, m.percent);
+            t.Scale = Vector3.Lerp(t.Scale, m.scale, m.percent);
+            t.Rotation = Quaternion.Slerp(t.Rotation, m.rotation, m.percent);
+            m.percent += 16f / 1000f;
+            m.percent = Math.Clamp(m.percent, 0f, 1f);
+
             if (m.percent == 1)
             {
                 m.position = new Vector3((Random.Shared.NextSingle() - 0.5f) * 100);
@@ -52,11 +58,6 @@ internal class Scene
                 m.rotation = Quaternion.CreateFromYawPitchRoll(Random.Shared.NextSingle() * MathF.PI, Random.Shared.NextSingle() * MathF.PI, Random.Shared.NextSingle() * MathF.PI);
                 m.percent = 0;
             }
-            t.Position = Vector3.Lerp(t.Position, m.position, m.percent);
-            t.Scale = Vector3.Lerp(t.Scale, m.scale, m.percent);
-            t.Rotation = Quaternion.Slerp(t.Rotation, m.rotation, m.percent);
-            m.percent += 16f / 1000f;
-            m.percent = Math.Clamp(m.percent, 0f, 1f);
         }
     }
 
@@ -90,7 +91,7 @@ internal class Scene
     private struct TransformMapper : IGpuMapper<Transform, TRSData>
     {
         [MethodImpl(Inl)]
-        public readonly TRSData Map(ref Transform from) => new() 
+        public readonly TRSData Map(ref Transform from) => new()
         {
             position = new(from.Position, 0),
             rotation = from.Rotation,

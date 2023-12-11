@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using DeltaEngine.Collections;
+﻿using DeltaEngine.Collections;
 using DeltaEngine.ECS;
+using System;
+using System.Collections.Generic;
 
 namespace DeltaEngine.Rendering;
 

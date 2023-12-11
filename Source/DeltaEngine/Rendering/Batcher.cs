@@ -1,10 +1,7 @@
-﻿using CommunityToolkit.HighPerformance.Helpers;
-using DeltaEngine.ECS;
+﻿using DeltaEngine.ECS;
 using DeltaEngine.Files;
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 
 namespace DeltaEngine.Rendering;
 

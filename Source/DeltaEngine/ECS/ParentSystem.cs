@@ -54,7 +54,7 @@ internal class ParentSystem
             Stack<Entity> _toDig = [];
             foreach (var child in childs)
                 _toDig.Push(child);
-            while(_toDig.Count > 0)
+            while (_toDig.Count > 0)
             {
                 var child = _toDig.Pop();
                 if (_world.Has(child, parentType)) // node is type of parent, dependency from other childs reference to it and not changed

@@ -36,10 +36,7 @@ public sealed unsafe class Renderer : IDisposable
 
     private Frame[] _frames;
 
-    private readonly string[] deviceExtensions = new[]
-    {
-        KhrSwapchain.ExtensionName,
-    };
+    private readonly string[] deviceExtensions = [KhrSwapchain.ExtensionName];
 
     private readonly Buffer _vertexBuffer;
     private readonly DeviceMemory _vertexBufferMemory;
@@ -82,7 +79,7 @@ public sealed unsafe class Renderer : IDisposable
         var count = _rendererData.vk.GetPhysicalDeviceProperties(_rendererData.gpu).Limits.MaxVertexInputAttributes;
         renderPass = RenderHelper.CreateRenderPass(_api, _rendererData.device, _rendererData.format.Format);
         swapChain = new SwapChain(_api, _rendererData, renderPass, GetSdlWindowSize(), 3, _rendererData.format);
-        //var p = RenderHelper.CreateDescriptorSet(_rendererData);
+        //var p = RenderHelper.CreateDescriptorSetLayout(_rendererData);
         (graphicsPipeline, pipelineLayout) = RenderHelper.CreateGraphicsPipeline(_rendererData, renderPass, []);
         (_vertexBuffer, _vertexBufferMemory) = RenderHelper.CreateVertexBuffer(_rendererData, deltaLetterVertices);
         (_indexBuffer, _indexBufferMemory) = RenderHelper.CreateIndexBuffer(_rendererData, deltaLetterIndices);
@@ -134,7 +131,7 @@ public sealed unsafe class Renderer : IDisposable
         _api.sdl.Dispose();
     }
 
-    Silk.NET.SDL.Event emptySdlEvent = new();
+    private Silk.NET.SDL.Event emptySdlEvent = new();
     public unsafe void Run()
     {
         //_api.sdl.PollEvent(ref emptySdlEvent);

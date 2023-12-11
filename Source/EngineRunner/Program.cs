@@ -17,7 +17,7 @@ while (true)
     sw.Stop();
     ms += sw.ElapsedTicks;
     c++;
-    if(c == 100)
+    if (c == 100)
     {
         ms /= 100;
         Console.WriteLine((int)(10000000f / ms)); // FPS of main thread
