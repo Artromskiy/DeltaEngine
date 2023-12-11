@@ -29,6 +29,8 @@ public sealed unsafe class Renderer : IDisposable
 
     private SwapChain swapChain;
 
+    DescriptorSetLayout descriptorSetLayout;
+
     private RenderPass renderPass;
     private PipelineLayout pipelineLayout;
 
@@ -44,6 +46,8 @@ public sealed unsafe class Renderer : IDisposable
 
     private readonly Buffer _indexBuffer;
     private readonly DeviceMemory _indexBufferMemory;
+
+    private Buffer matrices;
 
     private readonly SurfaceFormatKHR targetFormat = new(Format.B8G8R8A8Srgb, ColorSpaceKHR.SpaceAdobergbLinearExt);
 
@@ -79,14 +83,14 @@ public sealed unsafe class Renderer : IDisposable
         var count = _rendererData.vk.GetPhysicalDeviceProperties(_rendererData.gpu).Limits.MaxVertexInputAttributes;
         renderPass = RenderHelper.CreateRenderPass(_api, _rendererData.device, _rendererData.format.Format);
         swapChain = new SwapChain(_api, _rendererData, renderPass, GetSdlWindowSize(), 3, _rendererData.format);
-        //var p = RenderHelper.CreateDescriptorSetLayout(_rendererData);
-        (graphicsPipeline, pipelineLayout) = RenderHelper.CreateGraphicsPipeline(_rendererData, renderPass, []);
+        descriptorSetLayout = RenderHelper.CreateDescriptorSetLayout(_rendererData);
+        (graphicsPipeline, pipelineLayout) = RenderHelper.CreateGraphicsPipeline(_rendererData, renderPass, [descriptorSetLayout]);
         (_vertexBuffer, _vertexBufferMemory) = RenderHelper.CreateVertexBuffer(_rendererData, deltaLetterVertices);
         (_indexBuffer, _indexBufferMemory) = RenderHelper.CreateIndexBuffer(_rendererData, deltaLetterIndices);
 
         _frames = new Frame[swapChain.imageCount];
         for (int i = 0; i < swapChain.imageCount; i++)
-            _frames[i] = new Frame(_rendererData, swapChain);
+            _frames[i] = new Frame(_rendererData, swapChain, descriptorSetLayout);
 
         (_drawThread = new Thread(new ThreadStart(DrawLoop))).Start();
         _drawThread.Name = RendererName;
@@ -103,8 +107,9 @@ public sealed unsafe class Renderer : IDisposable
         _drawEvent.Set();
     }
 
-    internal void SubmitDraw(RenderData[] toRender)
+    public void SubmitDraw(Buffer matr)
     {
+        matrices = matr;
         _drawEvent.Set();
     }
 
@@ -148,7 +153,7 @@ public sealed unsafe class Renderer : IDisposable
 
     private unsafe void Draw()
     {
-        _frames[currentFrame].Draw(renderPass, graphicsPipeline, _vertexBuffer, _indexBuffer, (uint)deltaLetterIndices.Length, out var resize);
+        _frames[currentFrame].Draw(renderPass, graphicsPipeline, pipelineLayout, _vertexBuffer, _indexBuffer, matrices, (uint)deltaLetterIndices.Length, out var resize);
         if (resize)
         {
             OnResize();
@@ -169,7 +174,7 @@ public sealed unsafe class Renderer : IDisposable
                 frame.Dispose();
             _frames = new Frame[swapChain.imageCount];
             for (int i = 0; i < swapChain.imageCount; i++)
-                _frames[i] = new Frame(_rendererData, swapChain);
+                _frames[i] = new Frame(_rendererData, swapChain, descriptorSetLayout);
             return;
         }
         foreach (var frame in _frames)

@@ -32,12 +32,14 @@ internal class Scene
     [MethodImpl(Inl)]
     public void Run()
     {
-        _renderer.SubmitDraw();
         var query = new QueryDescription().WithAll<Transform, MoveTo>();
         MoveTransforms move = new();
         _sceneWorld.InlineParallelQuery<MoveTransforms, Transform, MoveTo>(query, ref move);
         _transformSystem.UpdateDirty();
         Clear<Transform>();
+        _renderer.Run();
+        _renderer.SubmitDraw(_transformSystem.GetB());
+        _renderer._rendererData.vk.DeviceWaitIdle(_renderer._rendererData.device);
     }
 
     private struct MoveTransforms : IForEach<Transform, MoveTo>
@@ -53,12 +55,19 @@ internal class Scene
 
             if (m.percent == 1)
             {
-                m.position = new Vector3((Random.Shared.NextSingle() - 0.5f) * 100);
+                m.position = rndVector();
                 m.scale = new Vector3(Random.Shared.NextSingle() * 10f);
                 m.rotation = Quaternion.CreateFromYawPitchRoll(Random.Shared.NextSingle() * MathF.PI, Random.Shared.NextSingle() * MathF.PI, Random.Shared.NextSingle() * MathF.PI);
                 m.percent = 0;
             }
         }
+    }
+
+    private static Vector3 rndVector()
+    {
+        var rnd = Random.Shared;
+        var position = new Vector3(rnd.NextSingle() - 0.5f, rnd.NextSingle() - 0.5f, rnd.NextSingle() - 0.5f) * 100;
+        return Vector3.Normalize(position);
     }
 
     [MethodImpl(Inl)]

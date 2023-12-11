@@ -36,7 +36,7 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
             Unsafe.WriteUnaligned(Unsafe.AsPointer(ref destination), value);
         }
     }
-
+    protected Buffer GetBuffer() => _buffer;
     protected Writer GetWriter() => new(_length, _pData);
 
     /// <summary>

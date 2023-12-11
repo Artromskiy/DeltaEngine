@@ -333,7 +333,8 @@ public static class RenderHelper
             PAttachments = &colorBlendAttachment,
         };
         var layouts = stackalloc DescriptorSetLayout[setLayouts.Length];
-        setLayouts.CopyTo(layouts);
+        for (int i = 0; i < setLayouts.Length; i++)
+            layouts[i] = setLayouts[i];
         PipelineLayoutCreateInfo pipelineLayoutInfo = new()
         {
             SType = StructureType.PipelineLayoutCreateInfo,
@@ -397,11 +398,12 @@ public static class RenderHelper
         return commandPool;
     }
 
-    public static unsafe DescriptorPool CreateDescriptorPool(RenderBase data, int descriptorPoolSozeCount)
+    public static unsafe DescriptorPool CreateDescriptorPool(RenderBase data)
     {
+        uint descriptorCount = 10;
         DescriptorPoolSize poolSize = new()
         {
-            DescriptorCount = (uint)descriptorPoolSozeCount,
+            DescriptorCount = descriptorCount,
             Type = DescriptorType.StorageBuffer
         };
         DescriptorPoolCreateInfo poolInfo = new()
@@ -409,12 +411,44 @@ public static class RenderHelper
             SType = StructureType.DescriptorPoolCreateInfo,
             PoolSizeCount = 1,
             PPoolSizes = &poolSize,
-            MaxSets = (uint)descriptorPoolSozeCount,
+            MaxSets = descriptorCount,
         };
         _ = data.vk.CreateDescriptorPool(data.device, poolInfo, null, out var result);
         return result;
     }
 
+    public static unsafe DescriptorSet CreateDescriptorSet(RenderBase data, DescriptorSetLayout descriptorSetLayout)
+    {
+        DescriptorSetAllocateInfo allocateInfo = new()
+        {
+            SType = StructureType.DescriptorSetAllocateInfo,
+            DescriptorPool = data.descriptorPool,
+            DescriptorSetCount = 1,
+            PSetLayouts = &descriptorSetLayout,
+        };
+        _ = data.vk.AllocateDescriptorSets(data.device, allocateInfo, out var result);
+        return result;
+    }
+
+    public static unsafe void BindBuffersToDescriptorSet(RenderBase data, DescriptorSet descriptorSet, Buffer buffer, uint binding, DescriptorType bufferUsage)
+    {
+        DescriptorBufferInfo bufferInfo = new()
+        {
+            Buffer = buffer,
+            Range = Vk.WholeSize,
+        };
+        WriteDescriptorSet descriptorWrite = new()
+        {
+            SType = StructureType.WriteDescriptorSet,
+            DescriptorType = bufferUsage,
+            DstSet = descriptorSet,
+            DstBinding = binding,
+            DstArrayElement = 0,
+            DescriptorCount = 1,
+            PBufferInfo = &bufferInfo,
+        };
+        data.vk.UpdateDescriptorSets(data.device, 1, descriptorWrite, 0, null);
+    }
 
     internal static unsafe CommandBuffer[] CreateCommandBuffers(RenderBase data, int buffersCount)
     {
@@ -457,8 +491,8 @@ public static class RenderHelper
         DescriptorSetLayoutCreateInfo createInfo = new()
         {
             SType = StructureType.DescriptorSetLayoutCreateInfo,
-            PBindings = &binding,
             BindingCount = 1,
+            PBindings = &binding,
         };
         _ = data.vk.CreateDescriptorSetLayout(data.device, &createInfo, null, out DescriptorSetLayout setLayout);
         return setLayout;

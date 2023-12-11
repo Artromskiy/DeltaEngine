@@ -13,7 +13,7 @@ public sealed class Engine : IDisposable
     private readonly AssetImporter _assetImporter = new();
     private readonly Scene _scene;
 
-    private readonly int N = 100000;
+    private readonly int N = 100;
 
     public Engine()
     {

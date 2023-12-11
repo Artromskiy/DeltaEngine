@@ -27,6 +27,7 @@ public sealed class RenderBase : IDisposable
     public readonly Queue presentQueue;
 
     public readonly CommandPool commandPool;
+    public readonly DescriptorPool descriptorPool;
 
     private static readonly string[] validationLayers = new[]
     {
@@ -63,7 +64,9 @@ public sealed class RenderBase : IDisposable
         swapChainSupport = new SwapChainSupportDetails(gpu, surface, khrsf);
         indiciesDetails = new QueueFamilyIndiciesDetails(vk, surface, gpu, khrsf);
         format = RenderHelper.ChooseSwapSurfaceFormat(swapChainSupport.Formats, targetFormat);
+
         commandPool = RenderHelper.CreateCommandPool(this);
+        descriptorPool = RenderHelper.CreateDescriptorPool(this);
     }
 
     public unsafe void Dispose()

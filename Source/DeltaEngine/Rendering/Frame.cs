@@ -11,28 +11,26 @@ internal class Frame : IDisposable
     private readonly RenderBase _rendererData;
     private SwapChain _swapChain;
 
-    private Buffer _transformsBuffer;
-    private Buffer _renderBuffer;
-    private Buffer _parentBuffer;
-
     private Semaphore imageAvailable;
     private Semaphore renderFinished;
     private Fence queueSubmited;
 
     private CommandBuffer commandBuffer;
+    private DescriptorSet matrices;
 
     public void UpdateSwapChain(SwapChain swapChain)
     {
         _swapChain = swapChain;
     }
 
-    public unsafe Frame(RenderBase renderBase, SwapChain swapChain)
+    public unsafe Frame(RenderBase renderBase, SwapChain swapChain, DescriptorSetLayout descriptorSetLayout)
     {
         _rendererData = renderBase;
         _swapChain = swapChain;
 
         FenceCreateInfo fenceInfo = new(StructureType.FenceCreateInfo, null, FenceCreateFlags.SignaledBit);
         SemaphoreCreateInfo semaphoreInfo = new(StructureType.SemaphoreCreateInfo);
+        matrices = RenderHelper.CreateDescriptorSet(renderBase, descriptorSetLayout);
 
         CommandBufferAllocateInfo allocInfo = new()
         {
@@ -62,7 +60,7 @@ internal class Frame : IDisposable
     }
 
 
-    public unsafe void Draw(RenderPass renderPass, Pipeline graphicsPipeline, Buffer vbo, Buffer ibo, uint indices, out bool resize)
+    public unsafe void Draw(RenderPass renderPass, Pipeline graphicsPipeline, PipelineLayout layout, Buffer vbo, Buffer ibo, Buffer matrices, uint indices, out bool resize)
     {
         _rendererData.vk.WaitForFences(_rendererData.device, 1, queueSubmited, true, ulong.MaxValue);
         var imageAvailable = stackalloc[] { this.imageAvailable };
@@ -77,7 +75,8 @@ internal class Frame : IDisposable
         _rendererData.vk.ResetFences(_rendererData.device, 1, queueSubmited);
         _rendererData.vk.ResetCommandBuffer(commandBuffer, 0);
 
-        RecordCommandBuffer(commandBuffer, imageIndex, renderPass, graphicsPipeline, vbo, ibo, indices);
+        RenderHelper.BindBuffersToDescriptorSet(_rendererData, this.matrices, matrices, 0, DescriptorType.StorageBuffer);
+        RecordCommandBuffer(commandBuffer, imageIndex, renderPass, graphicsPipeline, layout, vbo, ibo, indices);
 
         var waitStages = stackalloc[] { PipelineStageFlags.ColorAttachmentOutputBit };
         var renderFinished = stackalloc[] { this.renderFinished };
@@ -167,7 +166,7 @@ internal class Frame : IDisposable
         }
     }
 
-    private unsafe void RecordCommandBuffer(CommandBuffer commandBuffer, uint imageIndex, RenderPass renderPass, Pipeline graphicsPipeline, Buffer vbo, Buffer ibo, uint indices)
+    private unsafe void RecordCommandBuffer(CommandBuffer commandBuffer, uint imageIndex, RenderPass renderPass, Pipeline graphicsPipeline, PipelineLayout layout, Buffer vbo, Buffer ibo, uint indices)
     {
         CommandBufferBeginInfo beginInfo = new(StructureType.CommandBufferBeginInfo);
         ClearValue clearColor = new(new ClearColorValue(0.05f, 0.05f, 0.05f, 1));
@@ -200,7 +199,10 @@ internal class Frame : IDisposable
 
         _rendererData.vk.CmdBindVertexBuffers(commandBuffer, 0, 1, buffer, &offsets);
         _rendererData.vk.CmdBindIndexBuffer(commandBuffer, ibo, 0, IndexType.Uint32);
-        _rendererData.vk.CmdDrawIndexed(commandBuffer, indices, 1, 0, 0, 0);
+        var matrices = this.matrices;
+        _rendererData.vk.CmdBindDescriptorSets(commandBuffer, PipelineBindPoint.Graphics, layout, 0, 1, &matrices, 0, 0);
+
+        _rendererData.vk.CmdDrawIndexed(commandBuffer, indices, 100, 0, 0, 0);
         _rendererData.vk.CmdEndRenderPass(commandBuffer);
 
         _ = _rendererData.vk.EndCommandBuffer(commandBuffer);

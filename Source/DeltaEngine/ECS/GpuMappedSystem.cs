@@ -43,6 +43,7 @@ internal class GpuMappedSystem<T, K> : StorageDynamicArray<K>
             x = Add(component);
         });
     }
+    public Silk.NET.Vulkan.Buffer GetB() => base.GetBuffer();
 
     [MethodImpl(Inl)]
     public void UpdateDirty()
