@@ -1,5 +1,4 @@
 ﻿using DeltaEngine.ECS;
-using DeltaEngine.Files;
 using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;
@@ -11,22 +10,33 @@ internal class Frame : IDisposable
     private readonly RenderBase _rendererData;
     private SwapChain _swapChain;
 
+    private RenderPass _renderPass;
+
     private Semaphore imageAvailable;
     private Semaphore renderFinished;
-    private Fence queueSubmited;
+    private Fence renderFinishedFence;
 
     private CommandBuffer commandBuffer;
     private DescriptorSet matrices;
+
+    private readonly DynamicBuffer _matricesDynamicBuffer;
+    private Semaphore _syncSemaphore;
+    private Buffer _vertexBuffer;
+    private Buffer _indexBuffer;
+    private uint _indicesLength;
+    private uint _instances;
 
     public void UpdateSwapChain(SwapChain swapChain)
     {
         _swapChain = swapChain;
     }
 
-    public unsafe Frame(RenderBase renderBase, SwapChain swapChain, DescriptorSetLayout descriptorSetLayout)
+    public unsafe Frame(RenderBase renderBase, SwapChain swapChain, RenderPass renderPass, DescriptorSetLayout descriptorSetLayout)
     {
         _rendererData = renderBase;
         _swapChain = swapChain;
+        _renderPass = renderPass;
+        _matricesDynamicBuffer = new(renderBase, 1);
 
         FenceCreateInfo fenceInfo = new(StructureType.FenceCreateInfo, null, FenceCreateFlags.SignaledBit);
         SemaphoreCreateInfo semaphoreInfo = new(StructureType.SemaphoreCreateInfo);
@@ -43,7 +53,7 @@ internal class Frame : IDisposable
         _ = _rendererData.vk.AllocateCommandBuffers(_rendererData.device, allocInfo, out commandBuffer);
         _ = _rendererData.vk.CreateSemaphore(_rendererData.device, semaphoreInfo, null, out imageAvailable);
         _ = _rendererData.vk.CreateSemaphore(_rendererData.device, semaphoreInfo, null, out renderFinished);
-        _ = _rendererData.vk.CreateFence(_rendererData.device, fenceInfo, null, out queueSubmited);
+        _ = _rendererData.vk.CreateFence(_rendererData.device, fenceInfo, null, out renderFinishedFence);
     }
 
     public unsafe void Dispose()
@@ -51,126 +61,95 @@ internal class Frame : IDisposable
         _rendererData.vk.FreeCommandBuffers(_rendererData.device, _rendererData.commandPool, new Span<CommandBuffer>(ref commandBuffer));
         _rendererData.vk.DestroySemaphore(_rendererData.device, imageAvailable, null);
         _rendererData.vk.DestroySemaphore(_rendererData.device, renderFinished, null);
-        _rendererData.vk.DestroyFence(_rendererData.device, queueSubmited, null);
+        _rendererData.vk.DestroyFence(_rendererData.device, renderFinishedFence, null);
     }
 
-    public unsafe void Draw(RenderPass renderPass, GuidAsset<MaterialData> material, Buffer vbo, Buffer ibo, uint indices, out bool resize)
+    public void Sync()
     {
-        resize = false;
+        _rendererData.vk.WaitForFences(_rendererData.device, 1, renderFinishedFence, true, ulong.MaxValue);
     }
 
-
-    public unsafe void Draw(RenderPass renderPass, Pipeline graphicsPipeline, PipelineLayout layout, Buffer vbo, Buffer ibo, Buffer matrices, uint indices, out bool resize)
+    public DynamicBuffer GetTRSBuffer() => _matricesDynamicBuffer;
+    public void SetBuffers(Buffer vbo, Buffer ibo, uint indices)
     {
-        _rendererData.vk.WaitForFences(_rendererData.device, 1, queueSubmited, true, ulong.MaxValue);
-        var imageAvailable = stackalloc[] { this.imageAvailable };
+        _vertexBuffer = vbo;
+        _indexBuffer = ibo;
+        _indicesLength = indices;
+    }
+
+    public void SetInstanceCount(uint instances)
+    {
+        _instances = instances;
+    }
+
+    public void AddSemaphore(Semaphore semaphore)
+    {
+        _syncSemaphore = semaphore;
+    }
+
+    public unsafe void Draw(Pipeline graphicsPipeline, PipelineLayout layout, out bool resize)
+    {
+        _rendererData.vk.WaitForFences(_rendererData.device, 1, renderFinishedFence, true, ulong.MaxValue);
+        var imageAvailable = this.imageAvailable;
         uint imageIndex = 0;
-        var res = _swapChain.khrSw.AcquireNextImage(_rendererData.device, _swapChain.swapChain, ulong.MaxValue, *imageAvailable, default, &imageIndex);
+        var res = _swapChain.khrSw.AcquireNextImage(_rendererData.device, _swapChain.swapChain, ulong.MaxValue, imageAvailable, default, &imageIndex);
 
         resize = res == Result.SuboptimalKhr || res == Result.ErrorOutOfDateKhr;
 
         if (resize)
             return;
 
-        _rendererData.vk.ResetFences(_rendererData.device, 1, queueSubmited);
+        _rendererData.vk.ResetFences(_rendererData.device, 1, renderFinishedFence);
         _rendererData.vk.ResetCommandBuffer(commandBuffer, 0);
 
-        RenderHelper.BindBuffersToDescriptorSet(_rendererData, this.matrices, matrices, 0, DescriptorType.StorageBuffer);
-        RecordCommandBuffer(commandBuffer, imageIndex, renderPass, graphicsPipeline, layout, vbo, ibo, indices);
+        if(_matricesDynamicBuffer.ChangedBuffer)
+            RenderHelper.BindBuffersToDescriptorSet(_rendererData, matrices, _matricesDynamicBuffer.GetBuffer(), 0, DescriptorType.StorageBuffer);
 
-        var waitStages = stackalloc[] { PipelineStageFlags.ColorAttachmentOutputBit };
-        var renderFinished = stackalloc[] { this.renderFinished };
+        RecordCommandBuffer(commandBuffer, imageIndex, graphicsPipeline, layout, _vertexBuffer, _indexBuffer, _indicesLength);
+
+        var waitStages = stackalloc PipelineStageFlags[] { PipelineStageFlags.ColorAttachmentOutputBit, PipelineStageFlags.ColorAttachmentOutputBit };
 
         var buffer = commandBuffer;
+        var syncSemaphore = _syncSemaphore;
+
+        var waitBeforeRender = stackalloc Semaphore[2] { imageAvailable, syncSemaphore };
+        var renderFinished = this.renderFinished;
+
         SubmitInfo submitInfo = new()
         {
             SType = StructureType.SubmitInfo,
-            WaitSemaphoreCount = 1,
-            PWaitSemaphores = imageAvailable,
+            WaitSemaphoreCount = 2,
+            PWaitSemaphores = waitBeforeRender,
             PWaitDstStageMask = waitStages,
             CommandBufferCount = 1,
             PCommandBuffers = &buffer,
             SignalSemaphoreCount = 1,
-            PSignalSemaphores = renderFinished,
+            PSignalSemaphores = &renderFinished,
         };
-        _ = _rendererData.vk.QueueSubmit(_rendererData.graphicsQueue, 1, submitInfo, queueSubmited);
-        var swapChains = stackalloc[] { _swapChain.swapChain };
+        _ = _rendererData.vk.QueueSubmit(_rendererData.graphicsQueue, 1, submitInfo, renderFinishedFence);
+        var swapChain = _swapChain.swapChain;
         PresentInfoKHR presentInfo = new()
         {
             SType = StructureType.PresentInfoKhr,
             WaitSemaphoreCount = 1,
-            PWaitSemaphores = renderFinished,
+            PWaitSemaphores = &renderFinished,
             SwapchainCount = 1,
-            PSwapchains = swapChains,
+            PSwapchains = &swapChain,
             PImageIndices = &imageIndex
         };
         res = _swapChain.khrSw.QueuePresent(_rendererData.presentQueue, presentInfo);
         resize = res == Result.SuboptimalKhr || res == Result.ErrorOutOfDateKhr;
+        if (!resize)
+            _ = res;
+        //Console.WriteLine("Draw" + Random.Shared.Next());
     }
 
-    /// <summary>
-    /// Draft drawing method
-    /// </summary>
-    /// <param name="data"></param>
-    internal unsafe void Draw(RenderData[] data)
-    {
-        var shaderGroups = data.GetGroup(x => x.material.Asset.shader.Asset);
-        foreach (var shaderGroup in shaderGroups)
-        {
-            Console.WriteLine("Binding pipeline bound to Shader");
-            var materialGroups = shaderGroup.Value.GetGroup(x => x.material);
-            foreach (var materialGroup in materialGroups)
-            {
-                Console.WriteLine("Binding Material data to pipeline");
-
-                Console.WriteLine("Grouping meshes with same Material");
-
-                var meshGroups = materialGroup.Value.GetGroup(x => x.mesh);
-
-                List<RenderData> staticBatchGroup = new();
-                List<RenderData> dynamicBatchGroup = new();
-
-                Console.WriteLine("Instancing draw stage begin");
-                foreach (var meshGroup in meshGroups)
-                {
-                    var instancingGroups = meshGroup.Value.GetGroup(x => x.isStatic);
-
-                    if (instancingGroups.TryGetValue(true, out var staticInstancingObjects))
-                    {
-                        if (staticInstancingObjects.Count > 1)
-                            Console.WriteLine("Static objects with Instancing drawing");
-                        else
-                            staticBatchGroup.Add(staticInstancingObjects[0]);
-                    }
-                    if (instancingGroups.TryGetValue(false, out var dynamicInstancingObjects))
-                    {
-                        if (dynamicInstancingObjects.Count > 1)
-                            Console.WriteLine("Dynamic objects with Instancing drawing");
-                        else
-                            dynamicBatchGroup.Add(dynamicInstancingObjects[0]);
-                    }
-                }
-                Console.WriteLine("Instancing draw stage end");
-
-                Console.WriteLine("Batching draw stage begin");
-
-                Console.WriteLine("Grouping remaining meshes into one _left");
-
-                if (staticBatchGroup.Count > 0)
-                    Console.WriteLine("Static objects with Batching drawing");
-                if (dynamicBatchGroup.Count > 0)
-                    Console.WriteLine("Dynamic objects with Batching drawing");
-
-                Console.WriteLine("Batching draw stage end");
-            }
-        }
-    }
-
-    private unsafe void RecordCommandBuffer(CommandBuffer commandBuffer, uint imageIndex, RenderPass renderPass, Pipeline graphicsPipeline, PipelineLayout layout, Buffer vbo, Buffer ibo, uint indices)
+    private unsafe void RecordCommandBuffer(CommandBuffer commandBuffer, uint imageIndex, Pipeline graphicsPipeline, PipelineLayout layout, Buffer vbo, Buffer ibo, uint indices)
     {
         CommandBufferBeginInfo beginInfo = new(StructureType.CommandBufferBeginInfo);
         ClearValue clearColor = new(new ClearColorValue(0.05f, 0.05f, 0.05f, 1));
         Rect2D renderRect = new(null, _swapChain.extent);
+        var renderPass = _renderPass;
         RenderPassBeginInfo renderPassInfo = new()
         {
             SType = StructureType.RenderPassBeginInfo,
@@ -202,7 +181,7 @@ internal class Frame : IDisposable
         var matrices = this.matrices;
         _rendererData.vk.CmdBindDescriptorSets(commandBuffer, PipelineBindPoint.Graphics, layout, 0, 1, &matrices, 0, 0);
 
-        _rendererData.vk.CmdDrawIndexed(commandBuffer, indices, 100, 0, 0, 0);
+        _rendererData.vk.CmdDrawIndexed(commandBuffer, indices, _instances, 0, 0, 0);
         _rendererData.vk.CmdEndRenderPass(commandBuffer);
 
         _ = _rendererData.vk.EndCommandBuffer(commandBuffer);

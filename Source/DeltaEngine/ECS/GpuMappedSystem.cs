@@ -6,12 +6,13 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace DeltaEngine.ECS;
-internal class GpuMappedSystem<T, K> : StorageDynamicArray<K>
+internal class GpuMappedSystem<N, T, K> : StorageDynamicArray<K>
     where K : unmanaged
     where T : IDirty<T>
+    where N: struct, IGpuMapper<T,K>
 {
     private readonly World _world;
-    private readonly IGpuMapper<T, K> _mapper;
+    private readonly N _mapper;
 
     private bool[] _taken;
     private uint[] _count;
@@ -21,14 +22,20 @@ internal class GpuMappedSystem<T, K> : StorageDynamicArray<K>
     private uint[] _stack;
     private uint _stackSize;
 
-    public GpuMappedSystem(World world, IGpuMapper<T, K> mapper, RenderBase renderData) : base(renderData, 1)
+    public int Count { get; private set; }
+
+    private readonly QueryDescription _all = new QueryDescription().WithAll<T>();
+    private readonly QueryDescription _withId = new QueryDescription().WithAll<T, VersId<T>>();
+
+    public GpuMappedSystem(World world, RenderBase renderData) : base(renderData, 1)
     {
+        _mapper = new();
+
         _lastFree = 1;
         _taken = [true];
         _count = [0];
         _stack = [];
 
-        _mapper = mapper;
         _world = world;
 
         var all = new QueryDescription().WithAll<T>();
@@ -36,27 +43,24 @@ internal class GpuMappedSystem<T, K> : StorageDynamicArray<K>
         uint newLength = BitOperations.RoundUpToPowerOf2(count);
         Resize(newLength);
 
-        var withId = new QueryDescription().WithAll<T, VersId<T>>();
         _world.Add<VersId<T>>(all);
-        _world.Query(withId, (ref T component, ref VersId<T> x) =>
+        _world.Query(_withId, (ref T component, ref VersId<T> x) =>
         {
             x = Add(component);
         });
     }
-    public Silk.NET.Vulkan.Buffer GetB() => base.GetBuffer();
 
     [MethodImpl(Inl)]
     public void UpdateDirty()
     {
-        var queryDesc = new QueryDescription().WithAll<T, VersId<T>>();
-        InlineUpdater updater = new(GetWriter(), _mapper);
-        _world.InlineQuery<InlineUpdater, T, VersId<T>>(queryDesc, ref updater);
+        InlineUpdater updater = new(GetWriter());
+        _world.InlineQuery<InlineUpdater, T, VersId<T>>(_withId, ref updater);
     }
 
-    private readonly struct InlineUpdater(Writer writer, IGpuMapper<T, K> mapper) : IForEach<T, VersId<T>>
+    private readonly struct InlineUpdater(Writer writer) : IForEach<T, VersId<T>>
     {
         private readonly Writer _writer = writer;
-        private readonly IGpuMapper<T, K> _mapper = mapper;
+        private readonly N _mapper = new();
 
         [MethodImpl(Inl)]
         public void Update(ref T component, ref VersId<T> vers)
@@ -65,7 +69,6 @@ internal class GpuMappedSystem<T, K> : StorageDynamicArray<K>
                 _writer[vers.id] = _mapper.Map(ref component);
         }
     }
-
 
     [MethodImpl(Inl)]
     private void Grow() => Resize(Length * 2);
@@ -106,6 +109,7 @@ internal class GpuMappedSystem<T, K> : StorageDynamicArray<K>
         }
         _taken[index] = true;
         this[index] = _mapper.Map(ref item);
+        Count++;
         return new(index, _count[index]);
     }
 
@@ -124,6 +128,7 @@ internal class GpuMappedSystem<T, K> : StorageDynamicArray<K>
         _taken[index] = false;
         _count[index]++;
         PushStack(index);
+        Count--;
     }
 
     [MethodImpl(Inl)]

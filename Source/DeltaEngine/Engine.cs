@@ -3,6 +3,7 @@ using DeltaEngine.Files;
 using DeltaEngine.Rendering;
 using DeltaEngine.Scenes;
 using System;
+using System.Diagnostics;
 using System.Numerics;
 
 namespace DeltaEngine;
@@ -13,14 +14,16 @@ public sealed class Engine : IDisposable
     private readonly AssetImporter _assetImporter = new();
     private readonly Scene _scene;
 
-    private readonly int N = 100;
+    private readonly int N = 400000;
 
     public Engine()
     {
-        using ModelImporter mi = new();
+        //using ModelImporter mi = new();
         //mi.Import("C:\\Users\\FLOW\\Downloads\\Ships_parts_test (1).fbx");
-        _renderer = new Renderer("Delta Engine");
-        _scene = new Scene(InitWorld(), _renderer);
+
+        var world = InitWorld();
+        _renderer = new Renderer(world, "Delta Engine");
+        _scene = new Scene(world, _renderer);
     }
 
     private World InitWorld()
@@ -31,15 +34,28 @@ public sealed class Engine : IDisposable
         return world;
     }
 
-    public void Run()
+    private float deltaTime;
+    private readonly Stopwatch sw = new();
+
+
+    public TimeSpan GetUpdateRendererMetric => _renderer.GetUpdateMetric;
+    public TimeSpan GetCopyRendererMetric => _renderer.GetCopyMetric;
+    public TimeSpan GetCopySetupRendererMetric => _renderer.GetCopySetupMetric;
+    public TimeSpan GetSyncRendererMetric => _renderer.GetSyncMetric;
+    public TimeSpan GetSceneMetric => _scene.GetSceneMetric;
+    public void ClearRendererMetrics()
     {
-        _scene.Run();
-        //_renderer?.Run();
+        _renderer.ClearCounters();
+        _scene.ClearSceneMetric();
     }
 
-    public void Draw()
+
+    public void Run()
     {
-        //_renderer?.SubmitDraw();
+        sw.Restart();
+        _scene.Run(deltaTime);
+        sw.Stop();
+        deltaTime = (float)sw.Elapsed.TotalSeconds;
     }
 
     public void Dispose()

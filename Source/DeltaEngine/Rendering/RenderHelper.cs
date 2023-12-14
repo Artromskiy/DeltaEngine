@@ -1,4 +1,5 @@
-﻿using Silk.NET.Core;
+﻿using DeltaEngine.ECS;
+using Silk.NET.Core;
 using Silk.NET.Core.Native;
 using Silk.NET.SDL;
 using Silk.NET.Vulkan;
@@ -80,6 +81,52 @@ public static class RenderHelper
             _ = api.vk.CreateFence(device, fenceInfo, null, out inFlightFences[i]);
         }
         return (imageAvailableSemaphores, renderFinishedSemaphores, inFlightFences);
+    }
+
+    public static unsafe Fence CreateFence(RenderBase data, bool signaled)
+    {
+        FenceCreateFlags flag = signaled ? FenceCreateFlags.SignaledBit : FenceCreateFlags.None;
+        FenceCreateInfo fenceCreate = new(StructureType.FenceCreateInfo, null, flag);
+        _ = data.vk.CreateFence(data.device, fenceCreate, null, out var result);
+        return result;
+    }
+
+    public static unsafe Semaphore CreateSemaphore(RenderBase data)
+    {
+        SemaphoreCreateInfo semaphoreCreate = new(StructureType.SemaphoreCreateInfo, null);
+        _ = data.vk.CreateSemaphore(data.device, semaphoreCreate, null, out var result);
+        return result;
+    }
+
+    internal static unsafe void CopyBuffer<T>(this RenderBase data, StorageDynamicArray<T> source, DynamicBuffer destination,
+        Fence fence, Semaphore semaphore, CommandBuffer cmdBuffer) where T: unmanaged
+    {
+        destination.EnsureSize(source.Size);
+        data.CopyBuffer(source.GetBuffer(), source.Size, destination.GetBuffer(), destination.Size, fence, semaphore, cmdBuffer);
+    }
+
+    public static unsafe void CopyBuffer(this RenderBase data, Buffer source, ulong sourceSize, Buffer destination, ulong destinationSize, Fence fence, Semaphore semaphore, CommandBuffer cmdBuffer)
+    {
+        Vk vk = data.vk;
+        vk.ResetFences(data.device, 1, in fence);
+        CommandBufferBeginInfo beginInfo = new()
+        {
+            SType = StructureType.CommandBufferBeginInfo,
+            Flags = CommandBufferUsageFlags.OneTimeSubmitBit
+        };
+        _ = vk.BeginCommandBuffer(cmdBuffer, &beginInfo);
+        BufferCopy copy = new(0, 0, Math.Min(sourceSize, destinationSize));
+        vk.CmdCopyBuffer(cmdBuffer, source, destination, 1, &copy);
+        _ = vk.EndCommandBuffer(cmdBuffer);
+        SubmitInfo submitInfo = new()
+        {
+            SType = StructureType.SubmitInfo,
+            CommandBufferCount = 1,
+            PCommandBuffers = &cmdBuffer,
+            SignalSemaphoreCount = 1,
+            PSignalSemaphores = &semaphore,
+        };
+        _ = vk.QueueSubmit(data.graphicsQueue, 1, &submitInfo, fence);
     }
 
     public static unsafe RenderPass CreateRenderPass(Api api, Device device, Format swapChainImageFormat)
@@ -465,7 +512,7 @@ public static class RenderHelper
         return commandBuffers;
     }
 
-    internal static unsafe CommandBuffer CreateCommandBuffer(RenderBase data)
+    internal static unsafe CommandBuffer CreateCommandBuffer(this RenderBase data)
     {
         CommandBufferAllocateInfo allocInfo = new()
         {
@@ -644,6 +691,7 @@ public static class RenderHelper
             Height = Math.Clamp((uint)height, capabilities.MinImageExtent.Height, capabilities.MaxImageExtent.Height)
         };
     }
+
 
     private static unsafe bool IsDeviceSuitable(Vk vk, PhysicalDevice device, SurfaceKHR surface, KhrSurface khrsf, string[] neededExtensions)
     {

@@ -17,14 +17,26 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>$(DefineConstants);ASSERT</DefineConstants>
-    <Deterministic>True</Deterministic>
+    <DebugType>portable</DebugType>
+    <GenerateAssemblyInfo>True</GenerateAssemblyInfo>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Perf|AnyCPU'">
-    <DefineConstants>$(DefineConstants);RELEASE</DefineConstants>
     <DefineTrace>false</DefineTrace>
-    <Deterministic>True</Deterministic>
     <Optimize>True</Optimize>
+    <DebugType>portable</DebugType>
+    <GenerateAssemblyInfo>True</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugPerf|AnyCPU'">
+    <Optimize>False</Optimize>
+    <DebugType>portable</DebugType>
+    <GenerateAssemblyInfo>True</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DebugType>portable</DebugType>
+    <GenerateAssemblyInfo>True</GenerateAssemblyInfo>
   </PropertyGroup>
 
   <ItemGroup>
@@ -41,6 +53,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="ECS\Components\Base\" />
     <Folder Include="shaders\" />
   </ItemGroup>
   <ItemGroup>

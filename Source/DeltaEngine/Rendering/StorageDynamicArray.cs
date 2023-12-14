@@ -14,6 +14,7 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
     private ulong _size;
 
     protected uint Length => _length;
+    public ulong Size => _size;
 
     private readonly RenderBase _renderBase;
 
@@ -36,7 +37,7 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
             Unsafe.WriteUnaligned(Unsafe.AsPointer(ref destination), value);
         }
     }
-    protected Buffer GetBuffer() => _buffer;
+    internal Buffer GetBuffer() => _buffer;
     protected Writer GetWriter() => new(_length, _pData);
 
     /// <summary>
@@ -110,7 +111,7 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
         };
         _ = _renderBase.vk.CreateBuffer(_renderBase.device, createInfo, null, out buffer);
         var reqs = _renderBase.vk.GetBufferMemoryRequirements(_renderBase.device, buffer);
-        var memProps = MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit;
+        var memProps = MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit | MemoryPropertyFlags.HostCachedBit;
         uint memType = RenderHelper.FindMemoryType(_renderBase, (int)reqs.MemoryTypeBits, memProps);
         MemoryAllocateInfo allocateInfo = new()
         {

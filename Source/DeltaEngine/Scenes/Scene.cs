@@ -2,72 +2,89 @@
 using DeltaEngine.ECS;
 using DeltaEngine.Rendering;
 using System;
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace DeltaEngine.Scenes;
 internal class Scene
 {
-    private readonly GpuMappedSystem<Transform, TRSData> _transformSystem;
     private readonly Renderer _renderer;
     private readonly World _sceneWorld;
-    private readonly JobScheduler.JobScheduler _jobScheduler;
+    private readonly JobScheduler.JobScheduler? _jobScheduler;
     public Scene(World world, Renderer renderer)
     {
         _sceneWorld = world;
-        _jobScheduler = new JobScheduler.JobScheduler("WorkerThread");
-        _sceneWorld.Add<MoveTo>(new QueryDescription().WithAll<Transform>());
+        //_jobScheduler = new JobScheduler.JobScheduler("WorkerThread");
+        _sceneWorld.Add<MoveToTarget>(new QueryDescription().WithAll<Transform>());
         _renderer = renderer;
-        _transformSystem = new GpuMappedSystem<Transform, TRSData>(_sceneWorld, new TransformMapper(), _renderer._rendererData);
+        _sceneWorld.Query(new QueryDescription().WithAll<Transform>(), (ref Transform t) => t.Scale = new(0.1f));
+        _sceneWorld.Query(new QueryDescription().WithAll<Transform>(), (ref Transform t) => t.Position = RndVector());
     }
 
-    public struct MoveTo
+    private readonly Stopwatch _sceneSw = new();
+    public TimeSpan GetSceneMetric => _sceneSw.Elapsed;
+    public void ClearSceneMetric() => _sceneSw.Reset();
+
+    public struct MoveToTarget
     {
         public Vector3 position;
-        public Quaternion rotation;
         public Vector3 scale;
         public float percent;
     }
 
-    [MethodImpl(Inl)]
-    public void Run()
+    [MethodImpl(NoInl)]
+    public void Run(float deltaTime)
     {
-        var query = new QueryDescription().WithAll<Transform, MoveTo>();
-        MoveTransforms move = new();
-        _sceneWorld.InlineParallelQuery<MoveTransforms, Transform, MoveTo>(query, ref move);
-        _transformSystem.UpdateDirty();
-        Clear<Transform>();
-        _renderer.Run();
-        _renderer.SubmitDraw(_transformSystem.GetB());
-        _renderer._rendererData.vk.DeviceWaitIdle(_renderer._rendererData.device);
+        _renderer.Sync();
+        var t1 = Task.Run(_renderer.Run);
+        //var t2 = Task.Run(() =>
+        //{
+            _sceneSw.Start();
+            var query = new QueryDescription().WithAll<Transform, MoveToTarget>();
+            MoveTransforms move = new(deltaTime);
+            _sceneWorld.InlineQuery<MoveTransforms, Transform, MoveToTarget>(query, ref move);
+            _sceneSw.Stop();
+        //});
+        t1.Wait();
+        //Task.WaitAll(t1, t2);
     }
 
-    private struct MoveTransforms : IForEach<Transform, MoveTo>
+    private readonly struct MoveTransforms(float deltaTime) : IForEach<Transform, MoveToTarget>
     {
-        [MethodImpl(Inl)]
-        public readonly void Update(ref Transform t, ref MoveTo m)
-        {
-            t.Position = Vector3.Lerp(t.Position, m.position, m.percent);
-            t.Scale = Vector3.Lerp(t.Scale, m.scale, m.percent);
-            t.Rotation = Quaternion.Slerp(t.Rotation, m.rotation, m.percent);
-            m.percent += 16f / 1000f;
-            m.percent = Math.Clamp(m.percent, 0f, 1f);
+        private readonly float deltaTime = deltaTime;
 
-            if (m.percent == 1)
-            {
-                m.position = rndVector();
-                m.scale = new Vector3(Random.Shared.NextSingle() * 10f);
-                m.rotation = Quaternion.CreateFromYawPitchRoll(Random.Shared.NextSingle() * MathF.PI, Random.Shared.NextSingle() * MathF.PI, Random.Shared.NextSingle() * MathF.PI);
-                m.percent = 0;
-            }
+        [MethodImpl(Inl)]
+        public readonly void Update(ref Transform t, ref MoveToTarget m)
+        {
+            //t.Position = Vector3.Lerp(t.Position, m.position, m.percent);
+            //t.Scale = MoveTo(t.Scale, m.scale, deltaTime * 0.1f);
+            m.percent += deltaTime * 0.4f;
+            m.percent = Math.Clamp(m.percent, 0f, 1f);
+            //if (m.percent == 1)
+            //{
+            //    m.position = RndVector();
+            //    m.percent = 0;
+            //}
+            //if (t.Scale == m.scale)
+            //    m.scale = new Vector3(Random.Shared.NextSingle() * 0.1f);
         }
     }
 
-    private static Vector3 rndVector()
+    [MethodImpl(Inl)]
+    public static Vector3 MoveTo(Vector3 src, Vector3 trg, float t)
+    {
+        var delta = trg - src;
+        float d = delta.LengthSquared();
+        return d <= t * t ? trg : src + (delta / MathF.Sqrt(d) * t);
+    }
+
+    private static Vector3 RndVector()
     {
         var rnd = Random.Shared;
-        var position = new Vector3(rnd.NextSingle() - 0.5f, rnd.NextSingle() - 0.5f, rnd.NextSingle() - 0.5f) * 100;
-        return Vector3.Normalize(position);
+        var position = new Vector3(rnd.NextSingle() - 0.5f, rnd.NextSingle() - 0.5f, rnd.NextSingle() - 0.5f) * 2;
+        return position;
     }
 
     [MethodImpl(Inl)]
@@ -94,24 +111,5 @@ internal class Scene
     {
         [MethodImpl(Inl)]
         public readonly void Update(ref T component) => component.IsDirty = true;
-    }
-
-
-    private struct TransformMapper : IGpuMapper<Transform, TRSData>
-    {
-        [MethodImpl(Inl)]
-        public readonly TRSData Map(ref Transform from) => new()
-        {
-            position = new(from.Position, 0),
-            rotation = from.Rotation,
-            scale = new(from.Scale, 0),
-        };
-    }
-
-    private struct TRSData
-    {
-        public Vector4 position;
-        public Quaternion rotation;
-        public Vector4 scale;
     }
 }

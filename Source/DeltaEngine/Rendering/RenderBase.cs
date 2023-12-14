@@ -9,7 +9,7 @@ namespace DeltaEngine.Rendering;
 
 public sealed class RenderBase : IDisposable
 {
-    public Vk vk;
+    public readonly Vk vk;
     public readonly Instance instance;
     public readonly SurfaceKHR surface;
     public readonly PhysicalDevice gpu;

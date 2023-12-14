@@ -1,55 +1,16 @@
-﻿using DeltaEngine.ECS;
-using Silk.NET.SDL;
+﻿using Arch.Core;
+using DeltaEngine.ECS;
 using Silk.NET.Vulkan;
-using Silk.NET.Vulkan.Extensions.KHR;
 using System;
+using System.Diagnostics;
 using System.Numerics;
-using System.Threading;
-
+using System.Runtime.CompilerServices;
 using Buffer = Silk.NET.Vulkan.Buffer;
-using Thread = System.Threading.Thread;
+using Semaphore = Silk.NET.Vulkan.Semaphore;
 
 namespace DeltaEngine.Rendering;
-
-public sealed unsafe class Renderer : IDisposable
+internal class Renderer : BaseRenderer
 {
-    private readonly Api _api;
-
-    private readonly Window* _window;
-
-    internal readonly RenderBase _rendererData;
-
-    private readonly AutoResetEvent _drawEvent = new(false);
-    private readonly Thread _drawThread;
-
-    private const string RendererName = "Delta Renderer";
-    private readonly string _appName;
-
-    private Pipeline graphicsPipeline;
-
-    private SwapChain swapChain;
-
-    DescriptorSetLayout descriptorSetLayout;
-
-    private RenderPass renderPass;
-    private PipelineLayout pipelineLayout;
-
-    private int currentFrame = 0;
-
-    private Frame[] _frames;
-
-    private readonly string[] deviceExtensions = [KhrSwapchain.ExtensionName];
-
-    private readonly Buffer _vertexBuffer;
-    private readonly DeviceMemory _vertexBufferMemory;
-
-
-    private readonly Buffer _indexBuffer;
-    private readonly DeviceMemory _indexBufferMemory;
-
-    private Buffer matrices;
-
-    private readonly SurfaceFormatKHR targetFormat = new(Format.B8G8R8A8Srgb, ColorSpaceKHR.SpaceAdobergbLinearExt);
 
     private static readonly Vector3 r = new(1.0f, 0.0f, 0.0f);
     private static readonly Vector3 g = new(0.0f, 1.0f, 0.0f);
@@ -74,110 +35,97 @@ public sealed unsafe class Renderer : IDisposable
         5,0,3
     };
 
-    public unsafe Renderer(string appName)
+    private readonly Buffer _vertexBuffer;
+    private readonly DeviceMemory _vertexBufferMemory;
+    private readonly Buffer _indexBuffer;
+    private readonly DeviceMemory _indexBufferMemory;
+
+    private readonly World _world;
+    private readonly GpuMappedSystem<TransformMapper, Transform, TRSData> _transformSystem;
+
+    private readonly Fence _TRSCopyFence;
+    private readonly Semaphore _TRSCopySemaphore;
+
+    private CommandBuffer _TRSCopyCmdBuffer;
+
+    public Renderer(World world, string appName) : base(appName)
     {
-        _appName = appName;
-        _api = new();
-        _window = RenderHelper.CreateWindow(_api.sdl, _appName);
-        _rendererData = new RenderBase(_api, _window, deviceExtensions, _appName, RendererName, targetFormat);
-        var count = _rendererData.vk.GetPhysicalDeviceProperties(_rendererData.gpu).Limits.MaxVertexInputAttributes;
-        renderPass = RenderHelper.CreateRenderPass(_api, _rendererData.device, _rendererData.format.Format);
-        swapChain = new SwapChain(_api, _rendererData, renderPass, GetSdlWindowSize(), 3, _rendererData.format);
-        descriptorSetLayout = RenderHelper.CreateDescriptorSetLayout(_rendererData);
-        (graphicsPipeline, pipelineLayout) = RenderHelper.CreateGraphicsPipeline(_rendererData, renderPass, [descriptorSetLayout]);
+        _world = world;
+        _transformSystem = new GpuMappedSystem<TransformMapper, Transform, TRSData>(_world, _rendererData);
         (_vertexBuffer, _vertexBufferMemory) = RenderHelper.CreateVertexBuffer(_rendererData, deltaLetterVertices);
         (_indexBuffer, _indexBufferMemory) = RenderHelper.CreateIndexBuffer(_rendererData, deltaLetterIndices);
-
-        _frames = new Frame[swapChain.imageCount];
-        for (int i = 0; i < swapChain.imageCount; i++)
-            _frames[i] = new Frame(_rendererData, swapChain, descriptorSetLayout);
-
-        (_drawThread = new Thread(new ThreadStart(DrawLoop))).Start();
-        _drawThread.Name = RendererName;
+        _TRSCopyFence = RenderHelper.CreateFence(_rendererData, false);
+        _TRSCopySemaphore = RenderHelper.CreateSemaphore(_rendererData);
     }
 
-    private void DrawLoop()
+    private readonly Stopwatch _updateDirty = new();
+    private readonly Stopwatch _copyBufferSetup = new();
+    private readonly Stopwatch _copyBuffer = new();
+    private readonly Stopwatch _waitSync = new();
+
+    public TimeSpan GetSyncMetric => _waitSync.Elapsed;
+    public TimeSpan GetUpdateMetric => _updateDirty.Elapsed;
+    public TimeSpan GetCopySetupMetric => _copyBufferSetup.Elapsed;
+    public TimeSpan GetCopyMetric => _copyBuffer.Elapsed;
+
+    public void ClearCounters()
     {
-        while (_drawEvent.WaitOne())
-            Draw();
+        _updateDirty.Reset();
+        _copyBuffer.Reset();
+        _copyBufferSetup.Reset();
+        _waitSync.Reset();
     }
 
-    public void SubmitDraw()
+    public override void Sync()
     {
-        _drawEvent.Set();
+        _waitSync.Start();
+        base.Sync();
+        SyncCurrentFrame();
+        _waitSync.Stop();
+
+        var fence = _TRSCopyFence;
+
+        _copyBuffer.Start();
+        _rendererData.vk.WaitForFences(_rendererData.device, 1, in fence, true, ulong.MaxValue);
+        _rendererData.vk.FreeCommandBuffers(_rendererData.device, _rendererData.commandPool, 1, in _TRSCopyCmdBuffer);
+        _copyBuffer.Stop();
+
+        _updateDirty.Start();
+        _transformSystem.UpdateDirty();
+        _updateDirty.Stop();
+
+        _copyBufferSetup.Start();
+        _TRSCopyCmdBuffer = _rendererData.CreateCommandBuffer();
+        var frameTRS = GetTRSBuffer();
+        _rendererData.CopyBuffer(_transformSystem, frameTRS, _TRSCopyFence, _TRSCopySemaphore, _TRSCopyCmdBuffer);
+        _copyBufferSetup.Stop();
+
+        AddSemaphore(_TRSCopySemaphore);
+        SetBuffers(_vertexBuffer, _indexBuffer, (uint)deltaLetterIndices.Length);
+        SetInstanceCount((uint)_transformSystem.Count);
     }
 
-    public void SubmitDraw(Buffer matr)
+    public override void Run()
     {
-        matrices = matr;
-        _drawEvent.Set();
+        BeginFrameDraw();
     }
 
-    public unsafe void SetWindowPositionAndSize((int x, int y, int w, int h) rect)
+    private struct TRSData
     {
-        _api.sdl.SetWindowPosition(_window, rect.x, rect.y);
-        _api.sdl.SetWindowSize(_window, rect.w, rect.h);
+        public Vector4 position;
+        public Quaternion rotation;
+        public Vector4 scale;
     }
 
-    public unsafe void Dispose()
+
+    private struct TransformMapper : IGpuMapper<Transform, TRSData>
     {
-        foreach (var frame in _frames)
-            frame.Dispose();
-        _rendererData.vk.DestroyCommandPool(_rendererData.device, _rendererData.commandPool, null);
-        _rendererData.vk.DestroyPipeline(_rendererData.device, graphicsPipeline, null);
-        _rendererData.vk.DestroyPipelineLayout(_rendererData.device, pipelineLayout, null);
-        _rendererData.vk.DestroyRenderPass(_rendererData.device, renderPass, null);
-
-        swapChain.Dispose();
-        _rendererData.Dispose();
-        _rendererData.vk.Dispose();
-
-        _api.sdl.DestroyWindow(_window);
-        _api.sdl.Dispose();
-    }
-
-    private Silk.NET.SDL.Event emptySdlEvent = new();
-    public unsafe void Run()
-    {
-        //_api.sdl.PollEvent(ref emptySdlEvent);
-        _api.sdl.PumpEvents();
-    }
-
-    private unsafe (int w, int h) GetSdlWindowSize()
-    {
-        int w, h;
-        w = h = 0;
-        _api.sdl.VulkanGetDrawableSize(_window, ref w, ref h);
-        return (w, h);
-    }
-
-    private unsafe void Draw()
-    {
-        _frames[currentFrame].Draw(renderPass, graphicsPipeline, pipelineLayout, _vertexBuffer, _indexBuffer, matrices, (uint)deltaLetterIndices.Length, out var resize);
-        if (resize)
+        [MethodImpl(Inl)]
+        public readonly TRSData Map(ref Transform from) => new()
         {
-            OnResize();
-            return;
-        }
-        currentFrame = (currentFrame + 1) % _frames.Length;
-    }
-
-    private void OnResize()
-    {
-        swapChain.Dispose();
-        _rendererData.UpdateSupportDetails();
-        swapChain = new SwapChain(_api, _rendererData, renderPass, GetSdlWindowSize(), 3, _rendererData.format);
-
-        if (swapChain.imageCount != _frames.Length)
-        {
-            foreach (var frame in _frames)
-                frame.Dispose();
-            _frames = new Frame[swapChain.imageCount];
-            for (int i = 0; i < swapChain.imageCount; i++)
-                _frames[i] = new Frame(_rendererData, swapChain, descriptorSetLayout);
-            return;
-        }
-        foreach (var frame in _frames)
-            frame.UpdateSwapChain(swapChain);
+            position = new(from.Position, 0),
+            rotation = from.Rotation,
+            scale = new(from.Scale, 0),
+        };
     }
 }
