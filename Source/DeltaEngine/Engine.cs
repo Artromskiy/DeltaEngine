@@ -14,7 +14,10 @@ public sealed class Engine : IDisposable
     private readonly AssetImporter _assetImporter = new();
     private readonly Scene _scene;
 
-    private readonly int N = 1000000;
+    /// <summary>
+    /// Mobiles seems to feel good with that count of triangles
+    /// </summary>
+    private readonly int N = 100_000;
 
     public Engine()
     {

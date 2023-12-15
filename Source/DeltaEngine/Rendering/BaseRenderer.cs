@@ -2,13 +2,13 @@
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
 using System;
-
+using System.Diagnostics;
 using Buffer = Silk.NET.Vulkan.Buffer;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 
 namespace DeltaEngine.Rendering;
 
-public unsafe class BaseRenderer : IDisposable
+public abstract unsafe class BaseRenderer : IDisposable
 {
     private readonly Api _api;
 
@@ -37,6 +37,12 @@ public unsafe class BaseRenderer : IDisposable
 
     private Silk.NET.SDL.Event emptySdlEvent = new();
     private const uint Buffering = 3;
+    private const bool allowSkipRender = true;
+
+    public virtual void ClearCounters()
+    {
+        _waitSync.Reset();
+    }
 
     public unsafe BaseRenderer(string appName)
     {
@@ -55,16 +61,42 @@ public unsafe class BaseRenderer : IDisposable
             _frames[i] = new Frame(_rendererData, swapChain, renderPass, descriptorSetLayout);
     }
 
-    public virtual void Sync()
+    public TimeSpan GetSyncMetric => _waitSync.Elapsed;
+    private readonly Stopwatch _waitSync = new();
+    private bool syncState = true;
+
+
+
+    public void Sync()
     {
+        _api.sdl.PumpEvents();
+        _currentFrame = (_currentFrame + 1) % _frames.Length;
+        syncState = _frames[_currentFrame].Synced();
+
+        if (!syncState && allowSkipRender)
+            return;
+
+        _waitSync.Start();
         _frames[_currentFrame].Sync();
+        _waitSync.Stop();
+
+        SyncChild();
     }
 
-    protected void PollEvents()=> _api.sdl.PumpEvents();
-    protected void NextImage() => _currentFrame = (_currentFrame + 1) % _frames.Length;
+    public abstract void SyncChild();
 
+    public void Run()
+    {
+        if (!syncState)
+            return;
 
-    public virtual void Run() { }
+        _frames[_currentFrame].Draw(graphicsPipeline, pipelineLayout, out var resize);
+        if (resize)
+        {
+            OnResize();
+            return;
+        }
+    }
 
     internal DynamicBuffer GetTRSBuffer()
     {
@@ -84,16 +116,6 @@ public unsafe class BaseRenderer : IDisposable
     protected void AddSemaphore(Semaphore semaphore)
     {
         _frames[_currentFrame].AddSemaphore(semaphore);
-    }
-
-    protected void BeginFrameDraw()
-    {
-        _frames[_currentFrame].Draw(graphicsPipeline, pipelineLayout, out var resize);
-        if (resize)
-        {
-            OnResize();
-            return;
-        }
     }
 
     public TimeSpan GetAcquireMetric()

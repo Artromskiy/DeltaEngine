@@ -62,30 +62,21 @@ internal class Renderer : BaseRenderer
     private readonly Stopwatch _updateDirty = new();
     private readonly Stopwatch _copyBufferSetup = new();
     private readonly Stopwatch _copyBuffer = new();
-    private readonly Stopwatch _waitSync = new();
 
-    public TimeSpan GetSyncMetric => _waitSync.Elapsed;
     public TimeSpan GetUpdateMetric => _updateDirty.Elapsed;
     public TimeSpan GetCopySetupMetric => _copyBufferSetup.Elapsed;
     public TimeSpan GetCopyMetric => _copyBuffer.Elapsed;
 
-    public void ClearCounters()
+    public override void ClearCounters()
     {
         _updateDirty.Reset();
         _copyBuffer.Reset();
         _copyBufferSetup.Reset();
-        _waitSync.Reset();
         ClearAcquireMetric();
     }
 
-    public override void Sync()
+    public override sealed void SyncChild()
     {
-        NextImage();
-        PollEvents();
-        _waitSync.Start();
-        base.Sync();
-        _waitSync.Stop();
-
         var fence = _TRSCopyFence;
 
         _copyBuffer.Start();
@@ -107,10 +98,6 @@ internal class Renderer : BaseRenderer
         SetInstanceCount((uint)_transformSystem.Count);
     }
 
-    public override void Run()
-    {
-        BeginFrameDraw();
-    }
 
     private struct TRSData
     {

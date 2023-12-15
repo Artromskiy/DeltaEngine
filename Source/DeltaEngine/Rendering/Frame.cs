@@ -68,6 +68,8 @@ internal class Frame : IDisposable
         _rendererData.vk.WaitForFences(_rendererData.deviceQueues.device, 1, renderFinishedFence, true, ulong.MaxValue);
     }
 
+    public bool Synced() => _rendererData.vk.GetFenceStatus(_rendererData.deviceQueues.device, renderFinishedFence) == Result.Success;
+
     public DynamicBuffer GetTRSBuffer() => _matricesDynamicBuffer;
     public void SetBuffers(Buffer vbo, Buffer ibo, uint indices)
     {
