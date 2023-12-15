@@ -1,7 +1,6 @@
-﻿using DeltaEngine.ECS;
-using Silk.NET.Vulkan;
+﻿using Silk.NET.Vulkan;
 using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using Buffer = Silk.NET.Vulkan.Buffer;
 
 namespace DeltaEngine.Rendering;
@@ -45,28 +44,28 @@ internal class Frame : IDisposable
         CommandBufferAllocateInfo allocInfo = new()
         {
             SType = StructureType.CommandBufferAllocateInfo,
-            CommandPool = _rendererData.commandPool,
+            CommandPool = _rendererData.deviceQueues.graphicsCmdPool,
             Level = CommandBufferLevel.Primary,
             CommandBufferCount = 1,
         };
 
-        _ = _rendererData.vk.AllocateCommandBuffers(_rendererData.device, allocInfo, out commandBuffer);
-        _ = _rendererData.vk.CreateSemaphore(_rendererData.device, semaphoreInfo, null, out imageAvailable);
-        _ = _rendererData.vk.CreateSemaphore(_rendererData.device, semaphoreInfo, null, out renderFinished);
-        _ = _rendererData.vk.CreateFence(_rendererData.device, fenceInfo, null, out renderFinishedFence);
+        _ = _rendererData.vk.AllocateCommandBuffers(_rendererData.deviceQueues.device, allocInfo, out commandBuffer);
+        _ = _rendererData.vk.CreateSemaphore(_rendererData.deviceQueues.device, semaphoreInfo, null, out imageAvailable);
+        _ = _rendererData.vk.CreateSemaphore(_rendererData.deviceQueues.device, semaphoreInfo, null, out renderFinished);
+        _ = _rendererData.vk.CreateFence(_rendererData.deviceQueues.device, fenceInfo, null, out renderFinishedFence);
     }
 
     public unsafe void Dispose()
     {
-        _rendererData.vk.FreeCommandBuffers(_rendererData.device, _rendererData.commandPool, new Span<CommandBuffer>(ref commandBuffer));
-        _rendererData.vk.DestroySemaphore(_rendererData.device, imageAvailable, null);
-        _rendererData.vk.DestroySemaphore(_rendererData.device, renderFinished, null);
-        _rendererData.vk.DestroyFence(_rendererData.device, renderFinishedFence, null);
+        _rendererData.vk.FreeCommandBuffers(_rendererData.deviceQueues.device, _rendererData.deviceQueues.graphicsCmdPool, 1, in commandBuffer);
+        _rendererData.vk.DestroySemaphore(_rendererData.deviceQueues.device, imageAvailable, null);
+        _rendererData.vk.DestroySemaphore(_rendererData.deviceQueues.device, renderFinished, null);
+        _rendererData.vk.DestroyFence(_rendererData.deviceQueues.device, renderFinishedFence, null);
     }
 
     public void Sync()
     {
-        _rendererData.vk.WaitForFences(_rendererData.device, 1, renderFinishedFence, true, ulong.MaxValue);
+        _rendererData.vk.WaitForFences(_rendererData.deviceQueues.device, 1, renderFinishedFence, true, ulong.MaxValue);
     }
 
     public DynamicBuffer GetTRSBuffer() => _matricesDynamicBuffer;
@@ -87,31 +86,43 @@ internal class Frame : IDisposable
         _syncSemaphore = semaphore;
     }
 
+    private readonly Stopwatch _acquire = new();
+
+    public TimeSpan AcquireMetric => _acquire.Elapsed;
+
+    public void ClearMetrics() => _acquire.Reset();
+
     public unsafe void Draw(Pipeline graphicsPipeline, PipelineLayout layout, out bool resize)
     {
-        _rendererData.vk.WaitForFences(_rendererData.device, 1, renderFinishedFence, true, ulong.MaxValue);
+        _rendererData.vk.WaitForFences(_rendererData.deviceQueues.device, 1, renderFinishedFence, true, ulong.MaxValue);
+
         var imageAvailable = this.imageAvailable;
         uint imageIndex = 0;
-        var res = _swapChain.khrSw.AcquireNextImage(_rendererData.device, _swapChain.swapChain, ulong.MaxValue, imageAvailable, default, &imageIndex);
+        
+        _acquire.Start();
+        var res = _swapChain.khrSw.AcquireNextImage(_rendererData.deviceQueues.device, _swapChain.swapChain, ulong.MaxValue, imageAvailable, default, &imageIndex);
+        _acquire.Stop();
 
         resize = res == Result.SuboptimalKhr || res == Result.ErrorOutOfDateKhr;
-
         if (resize)
             return;
 
-        _rendererData.vk.ResetFences(_rendererData.device, 1, renderFinishedFence);
+        _rendererData.vk.ResetFences(_rendererData.deviceQueues.device, 1, renderFinishedFence);
         _rendererData.vk.ResetCommandBuffer(commandBuffer, 0);
 
-        if(_matricesDynamicBuffer.ChangedBuffer)
+        if (_matricesDynamicBuffer.ChangedBuffer)
+        {
             RenderHelper.BindBuffersToDescriptorSet(_rendererData, matrices, _matricesDynamicBuffer.GetBuffer(), 0, DescriptorType.StorageBuffer);
+            _matricesDynamicBuffer.ChangedBuffer = false;
+        }
 
         RecordCommandBuffer(commandBuffer, imageIndex, graphicsPipeline, layout, _vertexBuffer, _indexBuffer, _indicesLength);
 
-        var waitStages = stackalloc PipelineStageFlags[] { PipelineStageFlags.ColorAttachmentOutputBit, PipelineStageFlags.ColorAttachmentOutputBit };
 
         var buffer = commandBuffer;
         var syncSemaphore = _syncSemaphore;
 
+        var waitStages = stackalloc PipelineStageFlags[] { PipelineStageFlags.ColorAttachmentOutputBit, PipelineStageFlags.TransferBit };
         var waitBeforeRender = stackalloc Semaphore[2] { imageAvailable, syncSemaphore };
         var renderFinished = this.renderFinished;
 
@@ -126,7 +137,7 @@ internal class Frame : IDisposable
             SignalSemaphoreCount = 1,
             PSignalSemaphores = &renderFinished,
         };
-        _ = _rendererData.vk.QueueSubmit(_rendererData.graphicsQueue, 1, submitInfo, renderFinishedFence);
+        _ = _rendererData.vk.QueueSubmit(_rendererData.deviceQueues.graphicsQueue, 1, submitInfo, renderFinishedFence);
         var swapChain = _swapChain.swapChain;
         PresentInfoKHR presentInfo = new()
         {
@@ -137,11 +148,10 @@ internal class Frame : IDisposable
             PSwapchains = &swapChain,
             PImageIndices = &imageIndex
         };
-        res = _swapChain.khrSw.QueuePresent(_rendererData.presentQueue, presentInfo);
+        res = _swapChain.khrSw.QueuePresent(_rendererData.deviceQueues.presentQueue, presentInfo);
         resize = res == Result.SuboptimalKhr || res == Result.ErrorOutOfDateKhr;
         if (!resize)
             _ = res;
-        //Console.WriteLine("Draw" + Random.Shared.Next());
     }
 
     private unsafe void RecordCommandBuffer(CommandBuffer commandBuffer, uint imageIndex, Pipeline graphicsPipeline, PipelineLayout layout, Buffer vbo, Buffer ibo, uint indices)

@@ -10,6 +10,7 @@
 
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <PublishAot>true</PublishAot>
+    <StripSymbols>true</StripSymbols>
     <IncludeSymbols>true</IncludeSymbols>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
     <Configurations>Debug;Release;DebugPerf;Perf</Configurations>
@@ -53,7 +54,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="ECS\Components\Base\" />
     <Folder Include="shaders\" />
   </ItemGroup>
   <ItemGroup>

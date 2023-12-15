@@ -13,20 +13,16 @@ public sealed class RenderBase : IDisposable
     public readonly Instance instance;
     public readonly SurfaceKHR surface;
     public readonly PhysicalDevice gpu;
-    public readonly Device device;
 
     public readonly KhrSurface khrsf;
 
     public readonly SurfaceFormatKHR format;
 
     public SwapChainSupportDetails swapChainSupport;
-    public readonly QueueFamilyIndiciesDetails indiciesDetails;
     public readonly MemoryDetails gpuMemory;
 
-    public readonly Queue graphicsQueue;
-    public readonly Queue presentQueue;
+    public readonly DeviceQueues deviceQueues;
 
-    public readonly CommandPool commandPool;
     public readonly DescriptorPool descriptorPool;
 
     private static readonly string[] validationLayers = new[]
@@ -59,20 +55,18 @@ public sealed class RenderBase : IDisposable
 
         gpuMemory = new MemoryDetails(vk, gpu);
 
-        (device, graphicsQueue, presentQueue) = RenderHelper.CreateLogicalDevice(vk, gpu, surface, khrsf, deviceExtensions);
+        deviceQueues = RenderHelper.CreateLogicalDevice(vk, gpu, surface, khrsf, deviceExtensions);
 
         swapChainSupport = new SwapChainSupportDetails(gpu, surface, khrsf);
-        indiciesDetails = new QueueFamilyIndiciesDetails(vk, surface, gpu, khrsf);
+
         format = RenderHelper.ChooseSwapSurfaceFormat(swapChainSupport.Formats, targetFormat);
 
-        commandPool = RenderHelper.CreateCommandPool(this);
         descriptorPool = RenderHelper.CreateDescriptorPool(this);
     }
 
     public unsafe void Dispose()
     {
-        vk.DestroyCommandPool(device, commandPool, null);
-        vk.DestroyDevice(device, null);
+        vk.DestroyDevice(deviceQueues.device, null);
         khrsf.DestroySurface(instance, surface, null);
         vk.DestroyInstance(instance, null);
     }

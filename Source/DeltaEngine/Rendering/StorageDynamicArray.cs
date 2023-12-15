@@ -10,6 +10,9 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
     private Buffer _buffer;
     private DeviceMemory _memory;
 
+    private Fence _fence;
+    private CommandBuffer _cmdBuffer;
+
     private uint _length;
     private ulong _size;
 
@@ -24,6 +27,8 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
         _length = length;
         ulong size = (ulong)(sizeof(T) * length);
         CreateBuffer(ref size, out _buffer, out _memory, out _pData);
+        _fence = RenderHelper.CreateFence(_renderBase, false);
+        _cmdBuffer = RenderHelper.CreateCommandBuffer(_renderBase, _renderBase.deviceQueues.transferCmdPool);
         _size = size;
     }
 
@@ -75,23 +80,24 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
             SType = StructureType.CommandBufferBeginInfo,
             Flags = CommandBufferUsageFlags.OneTimeSubmitBit
         };
-        var commandBuffer = RenderHelper.CreateCommandBuffer(_renderBase);
-        _renderBase.vk.BeginCommandBuffer(commandBuffer, &beginInfo);
+        var cmdBuffer = _cmdBuffer;
+        _renderBase.vk.BeginCommandBuffer(cmdBuffer, &beginInfo);
         var copy = new BufferCopy(0, 0, Math.Min(_size, newSize));
-        _renderBase.vk.CmdCopyBuffer(commandBuffer, _buffer, newBuffer, 1, &copy);
-        _renderBase.vk.EndCommandBuffer(commandBuffer);
+        _renderBase.vk.CmdCopyBuffer(cmdBuffer, _buffer, newBuffer, 1, &copy);
+        _renderBase.vk.EndCommandBuffer(cmdBuffer);
         SubmitInfo submitInfo = new()
         {
             SType = StructureType.SubmitInfo,
             CommandBufferCount = 1,
-            PCommandBuffers = &commandBuffer
+            PCommandBuffers = &cmdBuffer
         };
-        _renderBase.vk.QueueSubmit(_renderBase.graphicsQueue, 1, &submitInfo, default);
-        _renderBase.vk.QueueWaitIdle(_renderBase.graphicsQueue);
-        _renderBase.vk.FreeCommandBuffers(_renderBase.device, _renderBase.commandPool, 1, &commandBuffer);
-        _renderBase.vk.DestroyBuffer(_renderBase.device, _buffer, null);
-        _renderBase.vk.UnmapMemory(_renderBase.device, _memory);
-        _renderBase.vk.FreeMemory(_renderBase.device, _memory, null);
+        _ = _renderBase.vk.QueueSubmit(_renderBase.deviceQueues.transferQueue, 1, &submitInfo, _fence);
+        _ = _renderBase.vk.WaitForFences(_renderBase.deviceQueues.device, 1, _fence, true, ulong.MaxValue);
+        _ = _renderBase.vk.ResetCommandBuffer(cmdBuffer, 0);
+        _ = _renderBase.vk.ResetFences(_renderBase.deviceQueues.device, 1, _fence);
+        _renderBase.vk.DestroyBuffer(_renderBase.deviceQueues.device, _buffer, null);
+        _renderBase.vk.UnmapMemory(_renderBase.deviceQueues.device, _memory);
+        _renderBase.vk.FreeMemory(_renderBase.deviceQueues.device, _memory, null);
         _memory = newMemory;
         _buffer = newBuffer;
         _size = newSize;
@@ -109,9 +115,9 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
             SharingMode = SharingMode.Exclusive,
             Flags = default,
         };
-        _ = _renderBase.vk.CreateBuffer(_renderBase.device, createInfo, null, out buffer);
-        var reqs = _renderBase.vk.GetBufferMemoryRequirements(_renderBase.device, buffer);
-        var memProps = MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit | MemoryPropertyFlags.HostCachedBit;
+        _ = _renderBase.vk.CreateBuffer(_renderBase.deviceQueues.device, createInfo, null, out buffer);
+        var reqs = _renderBase.vk.GetBufferMemoryRequirements(_renderBase.deviceQueues.device, buffer);
+        var memProps = MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit;
         uint memType = RenderHelper.FindMemoryType(_renderBase, (int)reqs.MemoryTypeBits, memProps);
         MemoryAllocateInfo allocateInfo = new()
         {
@@ -120,20 +126,20 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
             MemoryTypeIndex = memType
         };
         size = reqs.Size;
-        _ = _renderBase.vk.AllocateMemory(_renderBase.device, allocateInfo, null, out memory);
-        _ = _renderBase.vk.BindBufferMemory(_renderBase.device, buffer, memory, 0);
+        _ = _renderBase.vk.AllocateMemory(_renderBase.deviceQueues.device, allocateInfo, null, out memory);
+        _ = _renderBase.vk.BindBufferMemory(_renderBase.deviceQueues.device, buffer, memory, 0);
 
         void* pdata = default;
 
-        _renderBase.vk.MapMemory(_renderBase.device, memory, 0, reqs.Size, 0, &pdata);
+        _renderBase.vk.MapMemory(_renderBase.deviceQueues.device, memory, 0, reqs.Size, 0, &pdata);
 
         data = new(pdata);
     }
 
     public void Dispose()
     {
-        _renderBase.vk.DestroyBuffer(_renderBase.device, _buffer, null);
-        _renderBase.vk.UnmapMemory(_renderBase.device, _memory);
-        _renderBase.vk.FreeMemory(_renderBase.device, _memory, null);
+        _renderBase.vk.DestroyBuffer(_renderBase.deviceQueues.device, _buffer, null);
+        _renderBase.vk.UnmapMemory(_renderBase.deviceQueues.device, _memory);
+        _renderBase.vk.FreeMemory(_renderBase.deviceQueues.device, _memory, null);
     }
 }

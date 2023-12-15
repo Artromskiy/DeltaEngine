@@ -45,7 +45,7 @@ public unsafe class BaseRenderer : IDisposable
         _window = RenderHelper.CreateWindow(_api.sdl, _appName);
         _rendererData = new RenderBase(_api, _window, deviceExtensions, _appName, RendererName, targetFormat);
         var count = _rendererData.vk.GetPhysicalDeviceProperties(_rendererData.gpu).Limits.MaxVertexInputAttributes;
-        renderPass = RenderHelper.CreateRenderPass(_api, _rendererData.device, _rendererData.format.Format);
+        renderPass = RenderHelper.CreateRenderPass(_api, _rendererData.deviceQueues.device, _rendererData.format.Format);
         swapChain = new SwapChain(_api, _rendererData, renderPass, GetSdlWindowSize(), Buffering, _rendererData.format);
         descriptorSetLayout = RenderHelper.CreateDescriptorSetLayout(_rendererData);
         (graphicsPipeline, pipelineLayout) = RenderHelper.CreateGraphicsPipeline(_rendererData, renderPass, [descriptorSetLayout]);
@@ -57,15 +57,14 @@ public unsafe class BaseRenderer : IDisposable
 
     public virtual void Sync()
     {
-        _api.sdl.PumpEvents();
-        _currentFrame = (_currentFrame + 1) % _frames.Length;
-    }
-    public virtual void Run() { }
-
-    protected void SyncCurrentFrame()
-    {
         _frames[_currentFrame].Sync();
     }
+
+    protected void PollEvents()=> _api.sdl.PumpEvents();
+    protected void NextImage() => _currentFrame = (_currentFrame + 1) % _frames.Length;
+
+
+    public virtual void Run() { }
 
     internal DynamicBuffer GetTRSBuffer()
     {
@@ -97,14 +96,27 @@ public unsafe class BaseRenderer : IDisposable
         }
     }
 
+    public TimeSpan GetAcquireMetric()
+    {
+        TimeSpan res = TimeSpan.Zero;
+        for (int i = 0; i < _frames.Length; i++)
+            res += _frames[i].AcquireMetric;
+        return res;
+    }
+
+    protected void ClearAcquireMetric()
+    {
+        for (int i = 0; i < _frames.Length; i++)
+            _frames[i].ClearMetrics();
+    }
+
     public unsafe void Dispose()
     {
         foreach (var frame in _frames)
             frame.Dispose();
-        _rendererData.vk.DestroyCommandPool(_rendererData.device, _rendererData.commandPool, null);
-        _rendererData.vk.DestroyPipeline(_rendererData.device, graphicsPipeline, null);
-        _rendererData.vk.DestroyPipelineLayout(_rendererData.device, pipelineLayout, null);
-        _rendererData.vk.DestroyRenderPass(_rendererData.device, renderPass, null);
+        _rendererData.vk.DestroyPipeline(_rendererData.deviceQueues.device, graphicsPipeline, null);
+        _rendererData.vk.DestroyPipelineLayout(_rendererData.deviceQueues.device, pipelineLayout, null);
+        _rendererData.vk.DestroyRenderPass(_rendererData.deviceQueues.device, renderPass, null);
 
         swapChain.Dispose();
         _rendererData.Dispose();

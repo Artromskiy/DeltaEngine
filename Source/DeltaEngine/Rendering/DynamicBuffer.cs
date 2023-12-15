@@ -11,7 +11,9 @@ internal class DynamicBuffer
     private Buffer _buffer;
     private DeviceMemory _memory;
     private readonly RenderBase _renderBase;
+
     private Fence _copyFence;
+    private CommandBuffer _cmdBuffer;
 
     public bool ChangedBuffer { get; set; } = true;
 
@@ -24,6 +26,7 @@ internal class DynamicBuffer
         _size = sizeBytes;
         CreateBuffer(ref _size, out _buffer, out _memory);
         _copyFence = RenderHelper.CreateFence(_renderBase, false);
+        _cmdBuffer = RenderHelper.CreateCommandBuffer(_renderBase, _renderBase.deviceQueues.transferCmdPool);
     }
 
     public Buffer GetBuffer() => _buffer;
@@ -39,8 +42,8 @@ internal class DynamicBuffer
             SharingMode = SharingMode.Exclusive,
             Flags = default,
         };
-        _ = _renderBase.vk.CreateBuffer(_renderBase.device, createInfo, null, out buffer);
-        var reqs = _renderBase.vk.GetBufferMemoryRequirements(_renderBase.device, buffer);
+        _ = _renderBase.vk.CreateBuffer(_renderBase.deviceQueues.device, createInfo, null, out buffer);
+        var reqs = _renderBase.vk.GetBufferMemoryRequirements(_renderBase.deviceQueues.device, buffer);
         var memProps = MemoryPropertyFlags.DeviceLocalBit;
         uint memType = RenderHelper.FindMemoryType(_renderBase, (int)reqs.MemoryTypeBits, memProps);
         MemoryAllocateInfo allocateInfo = new()
@@ -50,8 +53,8 @@ internal class DynamicBuffer
             MemoryTypeIndex = memType
         };
         size = reqs.Size;
-        _ = _renderBase.vk.AllocateMemory(_renderBase.device, allocateInfo, null, out memory);
-        _ = _renderBase.vk.BindBufferMemory(_renderBase.device, buffer, memory, 0);
+        _ = _renderBase.vk.AllocateMemory(_renderBase.deviceQueues.device, allocateInfo, null, out memory);
+        _ = _renderBase.vk.BindBufferMemory(_renderBase.deviceQueues.device, buffer, memory, 0);
     }
 
     [MethodImpl(Inl)]
@@ -74,8 +77,8 @@ internal class DynamicBuffer
     {
         ulong newSize = BitOperations.RoundUpToPowerOf2(size);
         CreateBuffer(ref newSize, out var newBuffer, out var newMemory);
-        _renderBase.vk.DestroyBuffer(_renderBase.device, _buffer, null);
-        _renderBase.vk.FreeMemory(_renderBase.device, _memory, null);
+        _renderBase.vk.DestroyBuffer(_renderBase.deviceQueues.device, _buffer, null);
+        _renderBase.vk.FreeMemory(_renderBase.deviceQueues.device, _memory, null);
         _memory = newMemory;
         _buffer = newBuffer;
         _size = newSize;
@@ -87,31 +90,31 @@ internal class DynamicBuffer
     {
         Vk vk = _renderBase.vk;
 
-        CommandBuffer commandBuffer = RenderHelper.CreateCommandBuffer(_renderBase);
+        CommandBuffer cmdBuffer = _cmdBuffer;
         CommandBufferBeginInfo beginInfo = new()
         {
             SType = StructureType.CommandBufferBeginInfo,
             Flags = CommandBufferUsageFlags.OneTimeSubmitBit
         };
-        _ = vk.BeginCommandBuffer(commandBuffer, &beginInfo);
+        _ = vk.BeginCommandBuffer(cmdBuffer, &beginInfo);
         BufferCopy copy = new(0, 0, Math.Min(sourceSize, destinationSize));
-        vk.CmdCopyBuffer(commandBuffer, source, destionation, 1, &copy);
-        _ = vk.EndCommandBuffer(commandBuffer);
+        vk.CmdCopyBuffer(cmdBuffer, source, destionation, 1, &copy);
+        _ = vk.EndCommandBuffer(cmdBuffer);
         SubmitInfo submitInfo = new()
         {
             SType = StructureType.SubmitInfo,
             CommandBufferCount = 1,
-            PCommandBuffers = &commandBuffer
+            PCommandBuffers = &cmdBuffer
         };
         var fence = _copyFence;
-        var res = vk.QueueSubmit(_renderBase.graphicsQueue, 1, &submitInfo, fence);
+        var res = vk.QueueSubmit(_renderBase.deviceQueues.graphicsQueue, 1, &submitInfo, fence);
         _ = res;
         if (res != Result.Success)
             Console.WriteLine("here");
         if (res == Result.Success)
-            _ = vk.WaitForFences(_renderBase.device, 1, &fence, true, ulong.MaxValue);
+            _ = vk.WaitForFences(_renderBase.deviceQueues.device, 1, &fence, true, ulong.MaxValue);
 
-        vk.ResetFences(_renderBase.device, 1, &fence);
-        vk.FreeCommandBuffers(_renderBase.device, _renderBase.commandPool, 1, &commandBuffer);
+        vk.ResetFences(_renderBase.deviceQueues.device, 1, &fence);
+        vk.ResetCommandBuffer(cmdBuffer, 0);
     }
 }

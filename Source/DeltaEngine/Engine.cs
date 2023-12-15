@@ -14,7 +14,7 @@ public sealed class Engine : IDisposable
     private readonly AssetImporter _assetImporter = new();
     private readonly Scene _scene;
 
-    private readonly int N = 400000;
+    private readonly int N = 1000000;
 
     public Engine()
     {
@@ -42,6 +42,7 @@ public sealed class Engine : IDisposable
     public TimeSpan GetCopyRendererMetric => _renderer.GetCopyMetric;
     public TimeSpan GetCopySetupRendererMetric => _renderer.GetCopySetupMetric;
     public TimeSpan GetSyncRendererMetric => _renderer.GetSyncMetric;
+    public TimeSpan GetAcquireFrameRendererMetric => _renderer.GetAcquireMetric();
     public TimeSpan GetSceneMetric => _scene.GetSceneMetric;
     public void ClearRendererMetrics()
     {

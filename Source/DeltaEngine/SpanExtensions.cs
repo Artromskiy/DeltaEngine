@@ -36,6 +36,16 @@ internal static class SpanExtensions
         return default;
     }
 
+    public static int FindIndex<T>(this ReadOnlySpan<T> span, Predicate<T> match) where T : struct
+    {
+        for (int i = 0; i < span.Length; i++)
+        {
+            if (match(span[i]))
+                return i;
+        }
+        return -1;
+    }
+
     public static bool Exist<T>(this Span<T> span, Predicate<T> match) where T : struct
     {
         ReadOnlySpan<T> ro = span;
@@ -51,6 +61,12 @@ internal static class SpanExtensions
     {
         ReadOnlySpan<T> ro = span;
         return Find(ro, match);
+    }
+
+    public static int FindIndex<T>(this Span<T> span, Predicate<T> match) where T : struct
+    {
+        ReadOnlySpan<T> ro = span;
+        return FindIndex(ro, match);
     }
 
     public static unsafe void CopyTo<T>(this T[] sourceArray, T* destinationStackAlloc) where T : unmanaged

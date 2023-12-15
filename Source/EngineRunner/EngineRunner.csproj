@@ -1,13 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
     <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PublishAot>true</PublishAot>
     <StripSymbols>true</StripSymbols>
-    <RunAOTCompilation>true</RunAOTCompilation>
     <Configurations>Debug;Release;DebugPerf;Perf</Configurations>
   </PropertyGroup>
 

@@ -54,7 +54,7 @@ internal class GpuMappedSystem<N, T, K> : StorageDynamicArray<K>
     public void UpdateDirty()
     {
         InlineUpdater updater = new(GetWriter());
-        _world.InlineQuery<InlineUpdater, T, VersId<T>>(_withId, ref updater);
+        _world.InlineParallelQuery<InlineUpdater, T, VersId<T>>(_withId, ref updater);
     }
 
     private readonly struct InlineUpdater(Writer writer) : IForEach<T, VersId<T>>

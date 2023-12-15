@@ -54,6 +54,7 @@ internal class Renderer : BaseRenderer
         _transformSystem = new GpuMappedSystem<TransformMapper, Transform, TRSData>(_world, _rendererData);
         (_vertexBuffer, _vertexBufferMemory) = RenderHelper.CreateVertexBuffer(_rendererData, deltaLetterVertices);
         (_indexBuffer, _indexBufferMemory) = RenderHelper.CreateIndexBuffer(_rendererData, deltaLetterIndices);
+        _TRSCopyCmdBuffer = RenderHelper.CreateCommandBuffer(_rendererData, _rendererData.deviceQueues.transferCmdPool);
         _TRSCopyFence = RenderHelper.CreateFence(_rendererData, false);
         _TRSCopySemaphore = RenderHelper.CreateSemaphore(_rendererData);
     }
@@ -74,20 +75,22 @@ internal class Renderer : BaseRenderer
         _copyBuffer.Reset();
         _copyBufferSetup.Reset();
         _waitSync.Reset();
+        ClearAcquireMetric();
     }
 
     public override void Sync()
     {
+        NextImage();
+        PollEvents();
         _waitSync.Start();
         base.Sync();
-        SyncCurrentFrame();
         _waitSync.Stop();
 
         var fence = _TRSCopyFence;
 
         _copyBuffer.Start();
-        _rendererData.vk.WaitForFences(_rendererData.device, 1, in fence, true, ulong.MaxValue);
-        _rendererData.vk.FreeCommandBuffers(_rendererData.device, _rendererData.commandPool, 1, in _TRSCopyCmdBuffer);
+        _rendererData.vk.WaitForFences(_rendererData.deviceQueues.device, 1, in fence, true, ulong.MaxValue);
+        _rendererData.vk.ResetCommandBuffer(_TRSCopyCmdBuffer, 0);
         _copyBuffer.Stop();
 
         _updateDirty.Start();
@@ -95,7 +98,6 @@ internal class Renderer : BaseRenderer
         _updateDirty.Stop();
 
         _copyBufferSetup.Start();
-        _TRSCopyCmdBuffer = _rendererData.CreateCommandBuffer();
         var frameTRS = GetTRSBuffer();
         _rendererData.CopyBuffer(_transformSystem, frameTRS, _TRSCopyFence, _TRSCopySemaphore, _TRSCopyCmdBuffer);
         _copyBufferSetup.Stop();

@@ -16,7 +16,7 @@ internal class Scene
     public Scene(World world, Renderer renderer)
     {
         _sceneWorld = world;
-        //_jobScheduler = new JobScheduler.JobScheduler("WorkerThread");
+        _jobScheduler = new JobScheduler.JobScheduler("WorkerThread");
         _sceneWorld.Add<MoveToTarget>(new QueryDescription().WithAll<Transform>());
         _renderer = renderer;
         _sceneWorld.Query(new QueryDescription().WithAll<Transform>(), (ref Transform t) => t.Scale = new(0.1f));
@@ -39,16 +39,16 @@ internal class Scene
     {
         _renderer.Sync();
         var t1 = Task.Run(_renderer.Run);
-        //var t2 = Task.Run(() =>
-        //{
+        var t2 = Task.Run(() =>
+        {
             _sceneSw.Start();
             var query = new QueryDescription().WithAll<Transform, MoveToTarget>();
             MoveTransforms move = new(deltaTime);
-            _sceneWorld.InlineQuery<MoveTransforms, Transform, MoveToTarget>(query, ref move);
+            _sceneWorld.InlineParallelQuery<MoveTransforms, Transform, MoveToTarget>(query, ref move);
             _sceneSw.Stop();
-        //});
+        });
         t1.Wait();
-        //Task.WaitAll(t1, t2);
+        Task.WaitAll(t1, t2);
     }
 
     private readonly struct MoveTransforms(float deltaTime) : IForEach<Transform, MoveToTarget>
@@ -58,17 +58,17 @@ internal class Scene
         [MethodImpl(Inl)]
         public readonly void Update(ref Transform t, ref MoveToTarget m)
         {
-            //t.Position = Vector3.Lerp(t.Position, m.position, m.percent);
-            //t.Scale = MoveTo(t.Scale, m.scale, deltaTime * 0.1f);
+            t.Position = Vector3.Lerp(t.Position, m.position, m.percent);
+            t.Scale = MoveTo(t.Scale, m.scale, deltaTime * 0.1f);
             m.percent += deltaTime * 0.4f;
             m.percent = Math.Clamp(m.percent, 0f, 1f);
-            //if (m.percent == 1)
-            //{
-            //    m.position = RndVector();
-            //    m.percent = 0;
-            //}
-            //if (t.Scale == m.scale)
-            //    m.scale = new Vector3(Random.Shared.NextSingle() * 0.1f);
+            if (m.percent == 1)
+            {
+                m.position = RndVector();
+                m.percent = 0;
+            }
+            if (t.Scale == m.scale)
+                m.scale = new Vector3(Random.Shared.NextSingle() * 0.01f);
         }
     }
 

@@ -24,11 +24,13 @@ while (true)
         var cp = eng.GetCopyRendererMetric / c;
         var cs = eng.GetCopySetupRendererMetric / c;
         var csn = eng.GetSceneMetric / c;
+        var acq = eng.GetAcquireFrameRendererMetric/ c;
         Console.WriteLine($"sync: {sy.TotalMilliseconds}"); // FPS of main thread
         Console.WriteLine($"updt: {up.TotalMilliseconds}"); // FPS of main thread
         Console.WriteLine($"copy: {cp.TotalMilliseconds}"); // FPS of main thread
         Console.WriteLine($"cpys: {cs.TotalMilliseconds}"); // FPS of main thread
         Console.WriteLine($"scen: {csn.TotalMilliseconds}"); // FPS of main thread
+        Console.WriteLine($"acqu: {acq.TotalMilliseconds}"); // FPS of main thread
         Console.WriteLine((int)(10000000f / ms)); // FPS of main thread
         eng.ClearRendererMetrics();
         ms = 0;
