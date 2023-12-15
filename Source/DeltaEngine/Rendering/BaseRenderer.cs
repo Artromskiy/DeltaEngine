@@ -36,13 +36,11 @@ public abstract unsafe class BaseRenderer : IDisposable
     private readonly SurfaceFormatKHR targetFormat = new(Format.B8G8R8A8Srgb, ColorSpaceKHR.SpaceAdobergbLinearExt);
 
     private Silk.NET.SDL.Event emptySdlEvent = new();
-    private const uint Buffering = 3;
-    private const bool allowSkipRender = true;
 
-    public virtual void ClearCounters()
-    {
-        _waitSync.Reset();
-    }
+    private const uint Buffering = 3;
+    private const bool CanSkipRender = true;
+
+    private bool _skippedFrame = true;
 
     public unsafe BaseRenderer(string appName)
     {
@@ -61,41 +59,64 @@ public abstract unsafe class BaseRenderer : IDisposable
             _frames[i] = new Frame(_rendererData, swapChain, renderPass, descriptorSetLayout);
     }
 
-    public TimeSpan GetSyncMetric => _waitSync.Elapsed;
     private readonly Stopwatch _waitSync = new();
-    private bool syncState = true;
 
-
+    public virtual void ClearCounters()
+    {
+        _waitSync.Reset();
+        for (int i = 0; i < _frames.Length; i++)
+            _frames[i].ClearMetrics();
+    }
+    public TimeSpan GetSyncMetric => _waitSync.Elapsed;
+    public TimeSpan GetAcquireMetric()
+    {
+        TimeSpan res = TimeSpan.Zero;
+        for (int i = 0; i < _frames.Length; i++)
+            res += _frames[i].AcquireMetric;
+        return res;
+    }
 
     public void Sync()
     {
         _api.sdl.PumpEvents();
-        _currentFrame = (_currentFrame + 1) % _frames.Length;
-        syncState = _frames[_currentFrame].Synced();
+        if (!_skippedFrame)
+            _currentFrame = (_currentFrame + 1) % _frames.Length;
 
-        if (!syncState && allowSkipRender)
+        PreSync();
+
+        _skippedFrame = false;
+
+        if (CanSkipRender && !_frames[_currentFrame].Synced())
+        {
+            _skippedFrame = true;
             return;
+        }
 
         _waitSync.Start();
         _frames[_currentFrame].Sync();
         _waitSync.Stop();
 
-        SyncChild();
+        PostSync();
     }
 
-    public abstract void SyncChild();
+    /// <summary>
+    /// Use for updating data from global graphics buffers to appropriate buffer asyncronously
+    /// </summary>
+    public abstract void PostSync();
+
+    /// <summary>
+    /// Use for updating data from game context to global graphics buffers
+    /// </summary>
+    public abstract void PreSync();
 
     public void Run()
     {
-        if (!syncState)
+        if (_skippedFrame)
             return;
 
         _frames[_currentFrame].Draw(graphicsPipeline, pipelineLayout, out var resize);
         if (resize)
-        {
             OnResize();
-            return;
-        }
     }
 
     internal DynamicBuffer GetTRSBuffer()
@@ -103,9 +124,9 @@ public abstract unsafe class BaseRenderer : IDisposable
         return _frames[_currentFrame].GetTRSBuffer();
     }
 
-    protected void SetBuffers(Buffer vbo, Buffer ibo, uint indicesLength)
+    protected void SetBuffers(Buffer vbo, Buffer ibo, uint indicesCount, uint verticesCount)
     {
-        _frames[_currentFrame].SetBuffers(vbo, ibo, indicesLength);
+        _frames[_currentFrame].SetBuffers(vbo, ibo, indicesCount, verticesCount);
     }
 
     protected void SetInstanceCount(uint instances)
@@ -116,20 +137,6 @@ public abstract unsafe class BaseRenderer : IDisposable
     protected void AddSemaphore(Semaphore semaphore)
     {
         _frames[_currentFrame].AddSemaphore(semaphore);
-    }
-
-    public TimeSpan GetAcquireMetric()
-    {
-        TimeSpan res = TimeSpan.Zero;
-        for (int i = 0; i < _frames.Length; i++)
-            res += _frames[i].AcquireMetric;
-        return res;
-    }
-
-    protected void ClearAcquireMetric()
-    {
-        for (int i = 0; i < _frames.Length; i++)
-            _frames[i].ClearMetrics();
     }
 
     public unsafe void Dispose()

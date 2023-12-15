@@ -17,6 +17,7 @@ public sealed class Engine : IDisposable
     /// <summary>
     /// Mobiles seems to feel good with that count of triangles
     /// </summary>
+    //private readonly int N = 1_000_000;
     private readonly int N = 100_000;
 
     public Engine()
@@ -47,6 +48,7 @@ public sealed class Engine : IDisposable
     public TimeSpan GetSyncRendererMetric => _renderer.GetSyncMetric;
     public TimeSpan GetAcquireFrameRendererMetric => _renderer.GetAcquireMetric();
     public TimeSpan GetSceneMetric => _scene.GetSceneMetric;
+
     public void ClearRendererMetrics()
     {
         _renderer.ClearCounters();

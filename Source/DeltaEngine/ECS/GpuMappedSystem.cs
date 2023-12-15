@@ -15,7 +15,7 @@ internal class GpuMappedSystem<N, T, K> : StorageDynamicArray<K>
     private readonly N _mapper;
 
     private bool[] _taken;
-    private uint[] _count;
+    private uint[] _versn;
 
     private uint _lastFree;
 
@@ -31,9 +31,9 @@ internal class GpuMappedSystem<N, T, K> : StorageDynamicArray<K>
     {
         _mapper = new();
 
-        _lastFree = 1;
-        _taken = [true];
-        _count = [0];
+        _lastFree = 0;
+        _taken = [false];
+        _versn = [0];
         _stack = [];
 
         _world = world;
@@ -87,11 +87,11 @@ internal class GpuMappedSystem<N, T, K> : StorageDynamicArray<K>
         bool[] newTaken = new bool[newSize];
 
         _taken.CopyTo(newTaken, 0);
-        _count.CopyTo(newCount, 0);
+        _versn.CopyTo(newCount, 0);
         _stack.CopyTo(newStack, 0);
 
         _taken = newTaken;
-        _count = newCount;
+        _versn = newCount;
         _stack = newStack;
     }
 
@@ -110,15 +110,7 @@ internal class GpuMappedSystem<N, T, K> : StorageDynamicArray<K>
         _taken[index] = true;
         this[index] = _mapper.Map(ref item);
         Count++;
-        return new(index, _count[index]);
-    }
-
-    [MethodImpl(Inl)]
-    private void Update(ref VersId<T> versId, ref T item)
-    {
-        CheckIndex(versId.id);
-        CheckVersion(versId);
-        this[versId.id] = _mapper.Map(ref item);
+        return new(index, _versn[index]);
     }
 
     private void RemoveAt(uint index)
@@ -126,7 +118,7 @@ internal class GpuMappedSystem<N, T, K> : StorageDynamicArray<K>
         CheckIndex(index);
         this[index] = default;
         _taken[index] = false;
-        _count[index]++;
+        _versn[index]++;
         PushStack(index);
         Count--;
     }
@@ -148,21 +140,20 @@ internal class GpuMappedSystem<N, T, K> : StorageDynamicArray<K>
     [MethodImpl(Inl)]
     private void PushStack(uint index)
     {
-        Debug.Assert(_stackSize < (uint)_stack.Length);
         _stack[_stackSize++] = index;
     }
 
     [MethodImpl(Inl)]
     private void CheckIndex(uint index)
     {
-        if (index < 1 || index >= _lastFree || !_taken[index])
+        if (index >= _lastFree || !_taken[index])
             Thrower.ThrowOnGet(index);
     }
 
     [MethodImpl(Inl)]
     private void CheckVersion(VersId<T> versId)
     {
-        if (_count[versId.id] != versId.version)
+        if (_versn[versId.id] != versId.version)
             Thrower.ThrowOnVersion(versId.version);
     }
 

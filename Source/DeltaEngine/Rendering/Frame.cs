@@ -23,6 +23,7 @@ internal class Frame : IDisposable
     private Buffer _vertexBuffer;
     private Buffer _indexBuffer;
     private uint _indicesLength;
+    private uint _verticesLength;
     private uint _instances;
 
     public void UpdateSwapChain(SwapChain swapChain)
@@ -71,11 +72,12 @@ internal class Frame : IDisposable
     public bool Synced() => _rendererData.vk.GetFenceStatus(_rendererData.deviceQueues.device, renderFinishedFence) == Result.Success;
 
     public DynamicBuffer GetTRSBuffer() => _matricesDynamicBuffer;
-    public void SetBuffers(Buffer vbo, Buffer ibo, uint indices)
+    public void SetBuffers(Buffer vbo, Buffer ibo, uint indices, uint vertices)
     {
         _vertexBuffer = vbo;
         _indexBuffer = ibo;
         _indicesLength = indices;
+        _verticesLength = vertices;
     }
 
     public void SetInstanceCount(uint instances)
@@ -89,9 +91,7 @@ internal class Frame : IDisposable
     }
 
     private readonly Stopwatch _acquire = new();
-
     public TimeSpan AcquireMetric => _acquire.Elapsed;
-
     public void ClearMetrics() => _acquire.Reset();
 
     public unsafe void Draw(Pipeline graphicsPipeline, PipelineLayout layout, out bool resize)
@@ -124,7 +124,7 @@ internal class Frame : IDisposable
         var buffer = commandBuffer;
         var syncSemaphore = _syncSemaphore;
 
-        var waitStages = stackalloc PipelineStageFlags[] { PipelineStageFlags.ColorAttachmentOutputBit, PipelineStageFlags.TransferBit };
+        var waitStages = stackalloc PipelineStageFlags[] { PipelineStageFlags.ColorAttachmentOutputBit, PipelineStageFlags.ColorAttachmentOutputBit };
         var waitBeforeRender = stackalloc Semaphore[2] { imageAvailable, syncSemaphore };
         var renderFinished = this.renderFinished;
 
@@ -189,11 +189,12 @@ internal class Frame : IDisposable
         ulong offsets = 0;
 
         _rendererData.vk.CmdBindVertexBuffers(commandBuffer, 0, 1, buffer, &offsets);
-        _rendererData.vk.CmdBindIndexBuffer(commandBuffer, ibo, 0, IndexType.Uint32);
+        //_rendererData.vk.CmdBindIndexBuffer(commandBuffer, ibo, 0, IndexType.Uint32);
         var matrices = this.matrices;
         _rendererData.vk.CmdBindDescriptorSets(commandBuffer, PipelineBindPoint.Graphics, layout, 0, 1, &matrices, 0, 0);
 
-        _rendererData.vk.CmdDrawIndexed(commandBuffer, indices, _instances, 0, 0, 0);
+        //_rendererData.vk.CmdDrawIndexed(commandBuffer, _indicesLength, _instances, 0, 0, 0);
+        _rendererData.vk.CmdDraw(commandBuffer, _verticesLength, _instances, 0, 0);
         _rendererData.vk.CmdEndRenderPass(commandBuffer);
 
         _ = _rendererData.vk.EndCommandBuffer(commandBuffer);

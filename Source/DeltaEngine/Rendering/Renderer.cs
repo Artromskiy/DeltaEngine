@@ -16,6 +16,8 @@ internal class Renderer : BaseRenderer
     private static readonly Vector3 g = new(0.0f, 1.0f, 0.0f);
     private static readonly Vector3 b = new(0.0f, 0.0f, 1.0f);
 
+    private readonly Vertex[] deltaLetterVerticesUnindexed = [];
+
     private readonly Vertex[] deltaLetterVertices =
     {
         new (new(0.0f, -0.5f),   b),
@@ -52,8 +54,12 @@ internal class Renderer : BaseRenderer
     {
         _world = world;
         _transformSystem = new GpuMappedSystem<TransformMapper, Transform, TRSData>(_world, _rendererData);
-        (_vertexBuffer, _vertexBufferMemory) = RenderHelper.CreateVertexBuffer(_rendererData, deltaLetterVertices);
-        (_indexBuffer, _indexBufferMemory) = RenderHelper.CreateIndexBuffer(_rendererData, deltaLetterIndices);
+        deltaLetterVerticesUnindexed = new Vertex[deltaLetterIndices.Length];
+        for (int i = 0; i < deltaLetterIndices.Length; i++)
+            deltaLetterVerticesUnindexed[i] = deltaLetterVertices[deltaLetterIndices[i]];
+
+        (_vertexBuffer, _vertexBufferMemory) = RenderHelper.CreateVertexBuffer(_rendererData, deltaLetterVerticesUnindexed);
+        //(_indexBuffer, _indexBufferMemory) = RenderHelper.CreateIndexBuffer(_rendererData, deltaLetterIndices);
         _TRSCopyCmdBuffer = RenderHelper.CreateCommandBuffer(_rendererData, _rendererData.deviceQueues.transferCmdPool);
         _TRSCopyFence = RenderHelper.CreateFence(_rendererData, false);
         _TRSCopySemaphore = RenderHelper.CreateSemaphore(_rendererData);
@@ -69,32 +75,32 @@ internal class Renderer : BaseRenderer
 
     public override void ClearCounters()
     {
+        base.ClearCounters();
         _updateDirty.Reset();
         _copyBuffer.Reset();
         _copyBufferSetup.Reset();
-        ClearAcquireMetric();
     }
 
-    public override sealed void SyncChild()
+    public override void PreSync()
     {
-        var fence = _TRSCopyFence;
-
         _copyBuffer.Start();
-        _rendererData.vk.WaitForFences(_rendererData.deviceQueues.device, 1, in fence, true, ulong.MaxValue);
+        _rendererData.vk.WaitForFences(_rendererData.deviceQueues.device, 1, _TRSCopyFence, true, ulong.MaxValue);
         _rendererData.vk.ResetCommandBuffer(_TRSCopyCmdBuffer, 0);
         _copyBuffer.Stop();
 
         _updateDirty.Start();
         _transformSystem.UpdateDirty();
         _updateDirty.Stop();
+    }
 
+    public sealed override void PostSync()
+    {
         _copyBufferSetup.Start();
-        var frameTRS = GetTRSBuffer();
-        _rendererData.CopyBuffer(_transformSystem, frameTRS, _TRSCopyFence, _TRSCopySemaphore, _TRSCopyCmdBuffer);
+        _rendererData.CopyBuffer(_transformSystem, GetTRSBuffer(), _TRSCopyFence, _TRSCopySemaphore, _TRSCopyCmdBuffer);
         _copyBufferSetup.Stop();
 
         AddSemaphore(_TRSCopySemaphore);
-        SetBuffers(_vertexBuffer, _indexBuffer, (uint)deltaLetterIndices.Length);
+        SetBuffers(_vertexBuffer, _indexBuffer, (uint)deltaLetterIndices.Length, (uint)deltaLetterVerticesUnindexed.Length);
         SetInstanceCount((uint)_transformSystem.Count);
     }
 

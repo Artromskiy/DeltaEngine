@@ -37,7 +37,7 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
         [MethodImpl(Inl)]
         set
         {
-            Debug.Assert(index > 0 && index < _length);
+            Debug.Assert(index >= 0 && index < _length);
             ref var destination = ref Unsafe.Add(ref Unsafe.AsRef<T>(_pData.ToPointer()), index);
             Unsafe.WriteUnaligned(Unsafe.AsPointer(ref destination), value);
         }
@@ -61,7 +61,7 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
             [MethodImpl(Inl)]
             get
             {
-                Debug.Assert(index > 0 && index < _length);
+                Debug.Assert(index >= 0 && index < _length);
                 nint destination = _pData + (nint)(index * sizeOf);
                 return ref Unsafe.AsRef<T>(destination.ToPointer());
             }

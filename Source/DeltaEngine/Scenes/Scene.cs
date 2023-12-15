@@ -29,9 +29,11 @@ internal class Scene
 
     public struct MoveToTarget
     {
-        public Vector3 position;
-        public Vector3 scale;
+        public Vector3 start;
+        public Vector3 target;
         public float percent;
+        public float startScale;
+        public float targetScale;
     }
 
     [MethodImpl(NoInl)]
@@ -39,17 +41,16 @@ internal class Scene
     {
         _renderer.Sync();
         var t1 = Task.Run(_renderer.Run);
-        var t2 = Task.Run(() =>
-        {
-            _sceneSw.Start();
-            var query = new QueryDescription().WithAll<Transform, MoveToTarget>();
-            MoveTransforms move = new(deltaTime);
-            _sceneWorld.InlineParallelQuery<MoveTransforms, Transform, MoveToTarget>(query, ref move);
-            _sceneSw.Stop();
-        });
+
+        _sceneSw.Start();
+        var query = new QueryDescription().WithAll<Transform, MoveToTarget>();
+        MoveTransforms move = new(deltaTime);
+        _sceneWorld.InlineParallelQuery<MoveTransforms, Transform, MoveToTarget>(query, ref move);
+        _sceneSw.Stop();
+        
         t1.Wait();
-        Task.WaitAll(t1, t2);
     }
+
 
     private readonly struct MoveTransforms(float deltaTime) : IForEach<Transform, MoveToTarget>
     {
@@ -58,18 +59,29 @@ internal class Scene
         [MethodImpl(Inl)]
         public readonly void Update(ref Transform t, ref MoveToTarget m)
         {
-            t.Position = Vector3.Lerp(t.Position, m.position, m.percent);
-            t.Scale = MoveTo(t.Scale, m.scale, deltaTime * 0.1f);
-            m.percent += deltaTime * 0.4f;
+            var percent = InOutCubic(m.percent);
+            t.Position = Vector3.Lerp(m.start, m.target, percent);
+            t.Scale = new(float.Lerp(m.startScale, m.targetScale, percent));
+            m.percent += deltaTime * 0.2f;
             m.percent = Math.Clamp(m.percent, 0f, 1f);
             if (m.percent == 1)
             {
-                m.position = RndVector();
+                m.start = m.target;
+                m.target = RndVector();
+                m.startScale = m.targetScale;
+                m.targetScale = Random.Shared.NextSingle() * 0.1f;
                 m.percent = 0;
             }
-            if (t.Scale == m.scale)
-                m.scale = new Vector3(Random.Shared.NextSingle() * 0.01f);
         }
+    }
+
+    [MethodImpl(Inl)]
+    public static float InCubic(float t) => t * t * t;
+    [MethodImpl(Inl)]
+    public static float InOutCubic(float t)
+    {
+        if (t < 0.5) return InCubic(t * 2) / 2;
+        return 1 - InCubic((1 - t) * 2) / 2;
     }
 
     [MethodImpl(Inl)]
@@ -82,8 +94,8 @@ internal class Scene
 
     private static Vector3 RndVector()
     {
-        var rnd = Random.Shared;
-        var position = new Vector3(rnd.NextSingle() - 0.5f, rnd.NextSingle() - 0.5f, rnd.NextSingle() - 0.5f) * 2;
+        Random rnd = Random.Shared;
+        var position = new Vector3(rnd.NextSingle() - 0.5f, rnd.NextSingle() - 0.5f, rnd.NextSingle() * 0.5f) * 2;
         return position;
     }
 
