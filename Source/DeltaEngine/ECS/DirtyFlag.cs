@@ -14,8 +14,13 @@ internal static class DirtyExtensions
     [MethodImpl(Inl)]
     internal static void Set<T, D>(this ref D dirty, ref T property, ref T value) where D : struct, IDirty
     {
-        dirty.IsDirty = true;
         property = value;
+        dirty.IsDirty = true;
+    }
+    internal static void Set<T, D>(this ref D dirty, ref T property, T value) where D : struct, IDirty
+    {
+        property = value;
+        dirty.IsDirty = true;
     }
     [MethodImpl(Inl)]
     internal static void Clear<D>(this ref D dirty) where D : struct, IDirty => dirty.IsDirty = false;

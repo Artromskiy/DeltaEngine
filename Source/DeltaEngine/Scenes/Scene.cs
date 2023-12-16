@@ -17,7 +17,19 @@ internal class Scene
     {
         _sceneWorld = world;
         _jobScheduler = new JobScheduler.JobScheduler("WorkerThread");
-        _sceneWorld.Add<MoveToTarget>(new QueryDescription().WithAll<Transform>());
+        int count = _sceneWorld.CountEntities(new QueryDescription().WithAll<Transform>());
+        _sceneWorld.Query(new QueryDescription().WithAll<Transform>(), (Entity e) =>
+        {
+            if (count <= 0)
+                return;
+            count--;
+            _sceneWorld.Add(e, new MoveToTarget()
+            {
+                percent = 1,
+                target = RndVector(),
+                targetScale = 0.1f
+            });
+        });
         _renderer = renderer;
         _sceneWorld.Query(new QueryDescription().WithAll<Transform>(), (ref Transform t) => t.Scale = new(0.1f));
         _sceneWorld.Query(new QueryDescription().WithAll<Transform>(), (ref Transform t) => t.Position = RndVector());
@@ -40,15 +52,18 @@ internal class Scene
     public void Run(float deltaTime)
     {
         _renderer.Sync();
+        var clearer = new Clearer<IDirty>();
+        _sceneWorld.InlineParallelQuery<Clearer<IDirty>, IDirty>(new QueryDescription().WithAll<IDirty>(), ref clearer);
         var t1 = Task.Run(_renderer.Run);
-
-        _sceneSw.Start();
-        var query = new QueryDescription().WithAll<Transform, MoveToTarget>();
-        MoveTransforms move = new(deltaTime);
-        _sceneWorld.InlineParallelQuery<MoveTransforms, Transform, MoveToTarget>(query, ref move);
-        _sceneSw.Stop();
-        
-        t1.Wait();
+        var t2 = Task.Run(() =>
+        {
+            _sceneSw.Start();
+            var query = new QueryDescription().WithAll<Transform, MoveToTarget>();
+            MoveTransforms move = new(deltaTime);
+            _sceneWorld.InlineParallelQuery<MoveTransforms, Transform, MoveToTarget>(query, ref move);
+            _sceneSw.Stop();
+        });
+        Task.WaitAll(t1, t2);
     }
 
 
@@ -59,10 +74,10 @@ internal class Scene
         [MethodImpl(Inl)]
         public readonly void Update(ref Transform t, ref MoveToTarget m)
         {
-            var percent = InOutCubic(m.percent);
+            var percent = 1 - InCubic(1 - m.percent);
             t.Position = Vector3.Lerp(m.start, m.target, percent);
             t.Scale = new(float.Lerp(m.startScale, m.targetScale, percent));
-            m.percent += deltaTime * 0.2f;
+            m.percent += deltaTime * 0.5f;
             m.percent = Math.Clamp(m.percent, 0f, 1f);
             if (m.percent == 1)
             {
@@ -77,12 +92,6 @@ internal class Scene
 
     [MethodImpl(Inl)]
     public static float InCubic(float t) => t * t * t;
-    [MethodImpl(Inl)]
-    public static float InOutCubic(float t)
-    {
-        if (t < 0.5) return InCubic(t * 2) / 2;
-        return 1 - InCubic((1 - t) * 2) / 2;
-    }
 
     [MethodImpl(Inl)]
     public static Vector3 MoveTo(Vector3 src, Vector3 trg, float t)
@@ -95,7 +104,9 @@ internal class Scene
     private static Vector3 RndVector()
     {
         Random rnd = Random.Shared;
-        var position = new Vector3(rnd.NextSingle() - 0.5f, rnd.NextSingle() - 0.5f, rnd.NextSingle() * 0.5f) * 2;
+        var xy = new Vector2(rnd.NextSingle() - 0.5f, rnd.NextSingle() - 0.5f);
+        xy = Vector2.Normalize(xy) * 0.5f;
+        var position = new Vector3(xy.X, xy.Y, rnd.NextSingle() * 0.5f) * 2;
         return position;
     }
 

@@ -115,12 +115,12 @@ internal class Renderer : BaseRenderer
 
     private struct TransformMapper : IGpuMapper<Transform, TRSData>
     {
-        [MethodImpl(Inl)]
-        public readonly TRSData Map(ref Transform from) => new()
+        [MethodImpl(Inl | MethodImplOptions.AggressiveOptimization)]
+        public readonly TRSData Map(scoped ref Transform from) => new()
         {
-            position = new(from.Position, 0),
-            rotation = from.Rotation,
-            scale = new(from.Scale, 0),
+            position = from._position,
+            rotation = from._rotation,
+            scale = from._scale
         };
     }
 }

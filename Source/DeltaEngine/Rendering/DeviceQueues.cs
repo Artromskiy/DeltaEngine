@@ -66,9 +66,9 @@ public readonly struct DeviceQueues
             vk.CreateCommandPool(device, cmdPoolInfo, null, out cmdPools[i]);
         }
 
-        graphicsCmdPool = cmdPools[uniqueFamilyIndices.FindIndex(x=>x.queueFamily == indices.graphicsFamily)];
-        presentCmdPool = cmdPools[uniqueFamilyIndices.FindIndex(x=>x.queueFamily == indices.presentFamily)];
-        computeCmdPool = cmdPools[uniqueFamilyIndices.FindIndex(x=>x.queueFamily == indices.computeFamily)];
+        graphicsCmdPool = cmdPools[uniqueFamilyIndices.FindIndex(x => x.queueFamily == indices.graphicsFamily)];
+        presentCmdPool = cmdPools[uniqueFamilyIndices.FindIndex(x => x.queueFamily == indices.presentFamily)];
+        computeCmdPool = cmdPools[uniqueFamilyIndices.FindIndex(x => x.queueFamily == indices.computeFamily)];
         transferCmdPool = cmdPools[uniqueFamilyIndices.FindIndex(x => x.queueFamily == indices.transferFamily)];
 
         SilkMarshal.Free((nint)createInfo.PpEnabledExtensionNames);

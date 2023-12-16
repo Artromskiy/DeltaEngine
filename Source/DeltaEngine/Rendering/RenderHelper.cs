@@ -92,7 +92,7 @@ public static class RenderHelper
 
     public static unsafe Semaphore CreateSemaphore(RenderBase data)
     {
-        SemaphoreCreateInfo semaphoreCreate = new(StructureType.SemaphoreCreateInfo, null);
+        SemaphoreCreateInfo semaphoreCreate = new(StructureType.SemaphoreCreateInfo);
         _ = data.vk.CreateSemaphore(data.deviceQueues.device, semaphoreCreate, null, out var result);
         return result;
     }
@@ -102,6 +102,12 @@ public static class RenderHelper
     {
         destination.EnsureSize(source.Size);
         data.CopyBuffer(source.GetBuffer(), source.Size, destination.GetBuffer(), destination.Size, fence, semaphore, cmdBuffer);
+    }
+    internal static unsafe void CopyBuffer<T>(this RenderBase data, StorageDynamicArray<T> source, DynamicBuffer destination,
+        Fence fence, CommandBuffer cmdBuffer) where T : unmanaged
+    {
+        destination.EnsureSize(source.Size);
+        data.CopyBuffer(source.GetBuffer(), source.Size, destination.GetBuffer(), destination.Size, fence, cmdBuffer);
     }
 
     public static unsafe void CopyBuffer(this RenderBase data, Buffer source, ulong sourceSize, Buffer destination, ulong destinationSize, Fence fence, Semaphore semaphore, CommandBuffer cmdBuffer)
@@ -124,6 +130,27 @@ public static class RenderHelper
             PCommandBuffers = &cmdBuffer,
             SignalSemaphoreCount = 1,
             PSignalSemaphores = &semaphore,
+        };
+        _ = vk.QueueSubmit(data.deviceQueues.transferQueue, 1, &submitInfo, fence);
+    }
+    public static unsafe void CopyBuffer(this RenderBase data, Buffer source, ulong sourceSize, Buffer destination, ulong destinationSize, Fence fence, CommandBuffer cmdBuffer)
+    {
+        Vk vk = data.vk;
+        vk.ResetFences(data.deviceQueues.device, 1, in fence);
+        CommandBufferBeginInfo beginInfo = new()
+        {
+            SType = StructureType.CommandBufferBeginInfo,
+            Flags = CommandBufferUsageFlags.OneTimeSubmitBit
+        };
+        _ = vk.BeginCommandBuffer(cmdBuffer, &beginInfo);
+        BufferCopy copy = new(0, 0, Math.Min(sourceSize, destinationSize));
+        vk.CmdCopyBuffer(cmdBuffer, source, destination, 1, &copy);
+        _ = vk.EndCommandBuffer(cmdBuffer);
+        SubmitInfo submitInfo = new()
+        {
+            SType = StructureType.SubmitInfo,
+            CommandBufferCount = 1,
+            PCommandBuffers = &cmdBuffer,
         };
         _ = vk.QueueSubmit(data.deviceQueues.transferQueue, 1, &submitInfo, fence);
     }

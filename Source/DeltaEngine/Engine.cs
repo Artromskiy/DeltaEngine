@@ -17,8 +17,11 @@ public sealed class Engine : IDisposable
     /// <summary>
     /// Mobiles seems to feel good with that count of triangles
     /// </summary>
-    //private readonly int N = 1_000_000;
-    private readonly int N = 100_000;
+    private readonly int N = 1_000_000;
+    //private readonly int N = 100_000;
+    //private readonly int N = 10_000;
+    //private readonly int N = 1_000;
+    //private readonly int N = 10;
 
     public Engine()
     {

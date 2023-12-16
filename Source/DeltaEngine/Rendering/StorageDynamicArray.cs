@@ -54,7 +54,6 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
     {
         private readonly uint _length = length;
         private readonly nint _pData = pData;
-        private static readonly uint sizeOf = (uint)sizeof(T);
 
         public readonly ref T this[uint index]
         {
@@ -62,10 +61,20 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
             get
             {
                 Debug.Assert(index >= 0 && index < _length);
-                nint destination = _pData + (nint)(index * sizeOf);
-                return ref Unsafe.AsRef<T>(destination.ToPointer());
+                return ref Unsafe.Add(ref Unsafe.AsRef<T>((void*)_pData), index); ;
             }
         }
+    }
+
+    protected void Flush()
+    {
+        var memRng = new MappedMemoryRange()
+        {
+            SType = StructureType.MappedMemoryRange,
+            Memory = _memory,
+            Size = _size
+        };
+        _renderBase.vk.FlushMappedMemoryRanges(_renderBase.deviceQueues.device, 1, memRng);
     }
 
     [MethodImpl(Inl)]
@@ -106,7 +115,7 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
 
     private void CreateBuffer(ref ulong size, out Buffer buffer, out DeviceMemory memory, out nint data)
     {
-        var usage = BufferUsageFlags.StorageBufferBit | BufferUsageFlags.TransferDstBit | BufferUsageFlags.TransferSrcBit;
+        var usage = BufferUsageFlags.TransferDstBit | BufferUsageFlags.TransferSrcBit;
         BufferCreateInfo createInfo = new()
         {
             SType = StructureType.BufferCreateInfo,
@@ -117,7 +126,7 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
         };
         _ = _renderBase.vk.CreateBuffer(_renderBase.deviceQueues.device, createInfo, null, out buffer);
         var reqs = _renderBase.vk.GetBufferMemoryRequirements(_renderBase.deviceQueues.device, buffer);
-        var memProps = MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit;
+        var memProps = MemoryPropertyFlags.HostVisibleBit;// | MemoryPropertyFlags.HostCachedBit;
         uint memType = RenderHelper.FindMemoryType(_renderBase, (int)reqs.MemoryTypeBits, memProps);
         MemoryAllocateInfo allocateInfo = new()
         {

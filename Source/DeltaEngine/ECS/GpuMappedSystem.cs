@@ -9,7 +9,7 @@ namespace DeltaEngine.ECS;
 internal class GpuMappedSystem<N, T, K> : StorageDynamicArray<K>
     where K : unmanaged
     where T : IDirty<T>
-    where N: struct, IGpuMapper<T,K>
+    where N : struct, IGpuMapper<T, K>
 {
     private readonly World _world;
     private readonly N _mapper;
@@ -55,19 +55,7 @@ internal class GpuMappedSystem<N, T, K> : StorageDynamicArray<K>
     {
         InlineUpdater updater = new(GetWriter());
         _world.InlineParallelQuery<InlineUpdater, T, VersId<T>>(_withId, ref updater);
-    }
-
-    private readonly struct InlineUpdater(Writer writer) : IForEach<T, VersId<T>>
-    {
-        private readonly Writer _writer = writer;
-        private readonly N _mapper = new();
-
-        [MethodImpl(Inl)]
-        public void Update(ref T component, ref VersId<T> vers)
-        {
-            if (component.IsDirty)
-                _writer[vers.id] = _mapper.Map(ref component);
-        }
+        Flush();
     }
 
     [MethodImpl(Inl)]
@@ -162,5 +150,18 @@ internal class GpuMappedSystem<N, T, K> : StorageDynamicArray<K>
     {
         public static void ThrowOnGet(uint index) => throw new ArgumentException($"Attempt to get not persistent item by index {index}");
         public static void ThrowOnVersion(uint version) => throw new ArgumentException($"Attempt to get not persistent item by version {version}");
+    }
+
+    private readonly struct InlineUpdater(Writer writer) : IForEach<T, VersId<T>>
+    {
+        private readonly Writer _writer = writer;
+        private readonly N _mapper = new();
+
+        [MethodImpl(Inl)]
+        public void Update(ref T component, ref VersId<T> vers)
+        {
+            if (component.IsDirty)
+                _writer[vers.id] = _mapper.Map(ref component);
+        }
     }
 }

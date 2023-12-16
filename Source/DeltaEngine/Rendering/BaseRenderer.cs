@@ -38,7 +38,9 @@ public abstract unsafe class BaseRenderer : IDisposable
     private Silk.NET.SDL.Event emptySdlEvent = new();
 
     private const uint Buffering = 3;
-    private const bool CanSkipRender = true;
+
+    private const bool CanSkipRender = false;
+    private const bool RenderLessMode = true;
 
     private bool _skippedFrame = true;
 
@@ -84,13 +86,10 @@ public abstract unsafe class BaseRenderer : IDisposable
 
         PreSync();
 
-        _skippedFrame = false;
+        _skippedFrame = RenderLessMode || (CanSkipRender && !_frames[_currentFrame].Synced());
 
-        if (CanSkipRender && !_frames[_currentFrame].Synced())
-        {
-            _skippedFrame = true;
+        if (_skippedFrame)
             return;
-        }
 
         _waitSync.Start();
         _frames[_currentFrame].Sync();

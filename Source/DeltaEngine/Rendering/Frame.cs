@@ -100,7 +100,7 @@ internal class Frame : IDisposable
 
         var imageAvailable = this.imageAvailable;
         uint imageIndex = 0;
-        
+
         _acquire.Start();
         var res = _swapChain.khrSw.AcquireNextImage(_rendererData.deviceQueues.device, _swapChain.swapChain, ulong.MaxValue, imageAvailable, default, &imageIndex);
         _acquire.Stop();
