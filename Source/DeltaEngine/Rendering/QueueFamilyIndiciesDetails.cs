@@ -54,7 +54,7 @@ public readonly struct QueueFamilyIndiciesDetails
                 graphicsIndex = i;
                 graphicsQueueNum = bookedFamilies[i]++;
             }
-            if (bookedFamilies[i] < props.QueueCount && presentSupport && presentIndex < 0)
+            if (bookedFamilies[i] < props.QueueCount && i!= graphicsIndex && presentSupport && presentIndex < 0)
             {
                 presentIndex = i;
                 presentQueueNum = bookedFamilies[i]++;

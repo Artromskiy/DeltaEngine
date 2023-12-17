@@ -1,5 +1,6 @@
 ﻿using Silk.NET.Vulkan;
 using System;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using Buffer = Silk.NET.Vulkan.Buffer;
 
@@ -13,6 +14,8 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
     private Fence _fence;
     private CommandBuffer _cmdBuffer;
 
+    private bool _needsToFlush;
+
     private uint _length;
     private ulong _size;
 
@@ -24,8 +27,9 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
     public unsafe StorageDynamicArray(RenderBase renderBase, uint length)
     {
         _renderBase = renderBase;
-        _length = length;
-        ulong size = (ulong)(sizeof(T) * length);
+        _length = Math.Max(1, BitOperations.RoundUpToPowerOf2(length));
+
+        ulong size = (ulong)(sizeof(T) * _length);
         CreateBuffer(ref size, out _buffer, out _memory, out _pData);
         _fence = RenderHelper.CreateFence(_renderBase, false);
         _cmdBuffer = RenderHelper.CreateCommandBuffer(_renderBase, _renderBase.deviceQueues.transferCmdPool);
@@ -61,13 +65,15 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
             get
             {
                 Debug.Assert(index >= 0 && index < _length);
-                return ref Unsafe.Add(ref Unsafe.AsRef<T>((void*)_pData), index); ;
+                return ref Unsafe.Add(ref Unsafe.AsRef<T>((void*)_pData), index);
             }
         }
     }
 
     protected void Flush()
     {
+        if (!_needsToFlush)
+            return;
         var memRng = new MappedMemoryRange()
         {
             SType = StructureType.MappedMemoryRange,
@@ -91,8 +97,7 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
         };
         var cmdBuffer = _cmdBuffer;
         _renderBase.vk.BeginCommandBuffer(cmdBuffer, &beginInfo);
-        var copy = new BufferCopy(0, 0, Math.Min(_size, newSize));
-        _renderBase.vk.CmdCopyBuffer(cmdBuffer, _buffer, newBuffer, 1, &copy);
+        _renderBase.vk.CmdCopyBuffer(cmdBuffer, _buffer, newBuffer, 1, new BufferCopy(0, 0, Math.Min(_size, newSize)));
         _renderBase.vk.EndCommandBuffer(cmdBuffer);
         SubmitInfo submitInfo = new()
         {
@@ -126,8 +131,8 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
         };
         _ = _renderBase.vk.CreateBuffer(_renderBase.deviceQueues.device, createInfo, null, out buffer);
         var reqs = _renderBase.vk.GetBufferMemoryRequirements(_renderBase.deviceQueues.device, buffer);
-        var memProps = MemoryPropertyFlags.HostVisibleBit;// | MemoryPropertyFlags.HostCachedBit;
-        uint memType = RenderHelper.FindMemoryType(_renderBase, (int)reqs.MemoryTypeBits, memProps);
+        var memProps = MemoryPropertyFlags.HostVisibleBit;
+        uint memType = RenderHelper.FindMemoryType(_renderBase, (int)reqs.MemoryTypeBits, memProps, out var memPropsFound);
         MemoryAllocateInfo allocateInfo = new()
         {
             SType = StructureType.MemoryAllocateInfo,
@@ -136,6 +141,17 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
         };
         size = reqs.Size;
         _ = _renderBase.vk.AllocateMemory(_renderBase.deviceQueues.device, allocateInfo, null, out memory);
+        createInfo = new()
+        {
+            SType = StructureType.BufferCreateInfo,
+            Size = size,
+            Usage = usage,
+            SharingMode = SharingMode.Exclusive,
+            Flags = default,
+        };
+        _needsToFlush = !memPropsFound.HasFlag(MemoryPropertyFlags.HostCoherentBit);
+        _renderBase.vk.DestroyBuffer(_renderBase.deviceQueues.device, buffer, null);
+        _ = _renderBase.vk.CreateBuffer(_renderBase.deviceQueues.device, createInfo, null, out buffer);
         _ = _renderBase.vk.BindBufferMemory(_renderBase.deviceQueues.device, buffer, memory, 0);
 
         void* pdata = default;

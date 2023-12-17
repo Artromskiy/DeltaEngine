@@ -4,13 +4,8 @@ using System.Numerics;
 
 namespace DeltaEngine.ECS;
 
-internal class TransformSystem : ComponentRegistry<Transform>
+internal class TransformSystem
 {
-    public TransformSystem(World world) : base(world)
-    {
-
-    }
-
     public static Transform GetWorld(Entity entity)
     {
         ref var transform = ref entity.TryGetRef<Transform>(out bool hasTransform);

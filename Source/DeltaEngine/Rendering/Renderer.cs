@@ -4,14 +4,14 @@ using Silk.NET.Vulkan;
 using System;
 using System.Diagnostics;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using Buffer = Silk.NET.Vulkan.Buffer;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
+using static DeltaEngine.Rendering.ComponentMappers;
+
 
 namespace DeltaEngine.Rendering;
 internal class Renderer : BaseRenderer
 {
-
     private static readonly Vector3 r = new(1.0f, 0.0f, 0.0f);
     private static readonly Vector3 g = new(0.0f, 1.0f, 0.0f);
     private static readonly Vector3 b = new(0.0f, 0.0f, 1.0f);
@@ -43,7 +43,8 @@ internal class Renderer : BaseRenderer
     private readonly DeviceMemory _indexBufferMemory;
 
     private readonly World _world;
-    private readonly GpuMappedSystem<TransformMapper, Transform, TRSData> _transformSystem;
+    private readonly GpuMappedSystem<TransformMapper, Transform, TrsData> _TrsDatas;
+    private readonly GpuMappedSystem<RenderMapper, Render, RendData> _RendDatas;
 
     private readonly Fence _TRSCopyFence;
     private readonly Semaphore _TRSCopySemaphore;
@@ -53,15 +54,19 @@ internal class Renderer : BaseRenderer
     public Renderer(World world, string appName) : base(appName)
     {
         _world = world;
-        _transformSystem = new GpuMappedSystem<TransformMapper, Transform, TRSData>(_world, _rendererData);
+        _TrsDatas = new GpuMappedSystem<TransformMapper, Transform, TrsData>(_world, _rendererData);
+        _RendDatas = new GpuMappedSystem<RenderMapper, Render, RendData>(_world, _rendererData);
+
+
         deltaLetterVerticesUnindexed = new Vertex[deltaLetterIndices.Length];
         for (int i = 0; i < deltaLetterIndices.Length; i++)
             deltaLetterVerticesUnindexed[i] = deltaLetterVertices[deltaLetterIndices[i]];
 
-        (_vertexBuffer, _vertexBufferMemory) = RenderHelper.CreateVertexBuffer(_rendererData, deltaLetterVerticesUnindexed);
-        //(_indexBuffer, _indexBufferMemory) = RenderHelper.CreateIndexBuffer(_rendererData, deltaLetterIndices);
+        (_vertexBuffer, _vertexBufferMemory) = RenderHelper.CreateVertexBuffer(_rendererData, deltaLetterVertices);
+        (_indexBuffer, _indexBufferMemory) = RenderHelper.CreateIndexBuffer(_rendererData, deltaLetterIndices);
+
         _TRSCopyCmdBuffer = RenderHelper.CreateCommandBuffer(_rendererData, _rendererData.deviceQueues.transferCmdPool);
-        _TRSCopyFence = RenderHelper.CreateFence(_rendererData, false);
+        _TRSCopyFence = RenderHelper.CreateFence(_rendererData, true);
         _TRSCopySemaphore = RenderHelper.CreateSemaphore(_rendererData);
     }
 
@@ -89,38 +94,18 @@ internal class Renderer : BaseRenderer
         _copyBuffer.Stop();
 
         _updateDirty.Start();
-        _transformSystem.UpdateDirty();
+        _TrsDatas.UpdateDirty();
         _updateDirty.Stop();
     }
 
     public sealed override void PostSync()
     {
         _copyBufferSetup.Start();
-        _rendererData.CopyBuffer(_transformSystem, GetTRSBuffer(), _TRSCopyFence, _TRSCopySemaphore, _TRSCopyCmdBuffer);
+        _rendererData.CopyBuffer(_TrsDatas, GetTRSBuffer(), _TRSCopyFence, _TRSCopySemaphore, _TRSCopyCmdBuffer);
         _copyBufferSetup.Stop();
 
         AddSemaphore(_TRSCopySemaphore);
         SetBuffers(_vertexBuffer, _indexBuffer, (uint)deltaLetterIndices.Length, (uint)deltaLetterVerticesUnindexed.Length);
-        SetInstanceCount((uint)_transformSystem.Count);
-    }
-
-
-    private struct TRSData
-    {
-        public Vector4 position;
-        public Quaternion rotation;
-        public Vector4 scale;
-    }
-
-
-    private struct TransformMapper : IGpuMapper<Transform, TRSData>
-    {
-        [MethodImpl(Inl | MethodImplOptions.AggressiveOptimization)]
-        public readonly TRSData Map(scoped ref Transform from) => new()
-        {
-            position = from._position,
-            rotation = from._rotation,
-            scale = from._scale
-        };
+        SetInstanceCount((uint)_TrsDatas.Count);
     }
 }

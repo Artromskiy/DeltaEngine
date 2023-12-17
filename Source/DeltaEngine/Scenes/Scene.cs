@@ -1,23 +1,25 @@
-﻿using Arch.Core;
+﻿using Arch.CommandBuffer;
+using Arch.Core;
 using DeltaEngine.ECS;
 using DeltaEngine.Rendering;
+using JobScheduler;
 using System;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 
 namespace DeltaEngine.Scenes;
 internal class Scene
 {
     private readonly Renderer _renderer;
     private readonly World _sceneWorld;
-    private readonly JobScheduler.JobScheduler? _jobScheduler;
+    private readonly JobScheduler.JobScheduler _jobScheduler;
     public Scene(World world, Renderer renderer)
     {
         _sceneWorld = world;
         _jobScheduler = new JobScheduler.JobScheduler("WorkerThread");
-        int count = _sceneWorld.CountEntities(new QueryDescription().WithAll<Transform>());
+        //var buffer = new Arch.CommandBuffer.CommandBuffer(_sceneWorld);
+        int count = _sceneWorld.CountEntities(new QueryDescription().WithAll<Transform>())/10;
         _sceneWorld.Query(new QueryDescription().WithAll<Transform>(), (Entity e) =>
         {
             if (count <= 0)
@@ -52,20 +54,37 @@ internal class Scene
     public void Run(float deltaTime)
     {
         _renderer.Sync();
-        var clearer = new Clearer<IDirty>();
-        _sceneWorld.InlineParallelQuery<Clearer<IDirty>, IDirty>(new QueryDescription().WithAll<IDirty>(), ref clearer);
-        var t1 = Task.Run(_renderer.Run);
-        var t2 = Task.Run(() =>
-        {
-            _sceneSw.Start();
-            var query = new QueryDescription().WithAll<Transform, MoveToTarget>();
-            MoveTransforms move = new(deltaTime);
-            _sceneWorld.InlineParallelQuery<MoveTransforms, Transform, MoveToTarget>(query, ref move);
-            _sceneSw.Stop();
-        });
-        Task.WaitAll(t1, t2);
+
+        CommandBuffer v = new(_sceneWorld);
+
+        var dirty = _sceneWorld.CountEntities(new QueryDescription().WithAll<DirtyFlag<Transform>>());
+        _sceneWorld.Remove<DirtyFlag<Transform>>(new QueryDescription().WithAll<DirtyFlag<Transform>>());
+        dirty = _sceneWorld.CountEntities(new QueryDescription().WithAll<DirtyFlag<Transform>>());
+
+        _sceneSw.Start();
+        var move = new MoveAllTransforms(_sceneWorld, deltaTime);
+        move.Execute();
+        _sceneSw.Stop();
+        _renderer.Execute();
+        //var h1 = _jobScheduler.Schedule(move);
+        //var h2 = _jobScheduler.Schedule(_renderer);
+        //_jobScheduler.Flush();
+
+        //h1.Complete();
+        //h2.Complete();
     }
 
+    private readonly struct MoveAllTransforms(World world, float deltaTime) : IJob
+    {
+        private readonly World _sceneWorld = world;
+        private readonly float _deltaTime = deltaTime;
+        public readonly void Execute()
+        {
+            var query = new QueryDescription().WithAll<Transform, MoveToTarget>();
+            MoveTransforms move = new(_deltaTime);
+            _sceneWorld.InlineDirtyParallelQuery<MoveTransforms, Transform, MoveToTarget>(query, ref move);
+        }
+    }
 
     private readonly struct MoveTransforms(float deltaTime) : IForEach<Transform, MoveToTarget>
     {
@@ -74,9 +93,10 @@ internal class Scene
         [MethodImpl(Inl)]
         public readonly void Update(ref Transform t, ref MoveToTarget m)
         {
-            var percent = 1 - InCubic(1 - m.percent);
-            t.Position = Vector3.Lerp(m.start, m.target, percent);
-            t.Scale = new(float.Lerp(m.startScale, m.targetScale, percent));
+            var tpercent = 1 - InCubic(1 - m.percent);
+            var spercent = InCubic(m.percent);
+            t.Position = Vector3.Lerp(m.start, m.target, tpercent);
+            t.Scale = new(float.Lerp(m.startScale, m.targetScale, spercent));
             m.percent += deltaTime * 0.5f;
             m.percent = Math.Clamp(m.percent, 0f, 1f);
             if (m.percent == 1)
@@ -105,34 +125,8 @@ internal class Scene
     {
         Random rnd = Random.Shared;
         var xy = new Vector2(rnd.NextSingle() - 0.5f, rnd.NextSingle() - 0.5f);
-        xy = Vector2.Normalize(xy) * 0.5f;
+        xy = xy.Length() > 0.5f ? Vector2.Normalize(xy) * 0.5f : xy;
         var position = new Vector3(xy.X, xy.Y, rnd.NextSingle() * 0.5f) * 2;
         return position;
-    }
-
-    [MethodImpl(Inl)]
-    private void Clear<T>() where T : IDirty
-    {
-        var queryDesc = new QueryDescription().WithAll<T>();
-        Clearer<T> clearer = new();
-        _sceneWorld.InlineParallelQuery<Clearer<T>, T>(queryDesc, ref clearer);
-    }
-    [MethodImpl(Inl)]
-    private void Dirt<T>() where T : IDirty
-    {
-        var queryDesc = new QueryDescription().WithAll<T>();
-        Dirter<T> dirter = new();
-        _sceneWorld.InlineParallelQuery<Dirter<T>, T>(queryDesc, ref dirter);
-    }
-
-    private readonly struct Clearer<T> : IForEach<T> where T : IDirty
-    {
-        [MethodImpl(Inl)]
-        public readonly void Update(ref T component) => component.IsDirty = false;
-    }
-    private readonly struct Dirter<T> : IForEach<T> where T : IDirty
-    {
-        [MethodImpl(Inl)]
-        public readonly void Update(ref T component) => component.IsDirty = true;
     }
 }

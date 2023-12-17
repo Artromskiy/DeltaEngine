@@ -2,17 +2,17 @@
 using DeltaEngine.Collections;
 using DeltaEngine.Rendering;
 using System;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace DeltaEngine.ECS;
-internal class GpuMappedSystem<N, T, K> : StorageDynamicArray<K>
-    where K : unmanaged
-    where T : IDirty<T>
-    where N : struct, IGpuMapper<T, K>
+internal class GpuMappedSystem<M, C, G> : StorageDynamicArray<G>
+    where M : struct, IGpuMapper<C, G> // Mapper
+    where G : unmanaged                // GpuStruct
+    where C : IDirty                // Component
 {
+    private static readonly M _mapper = new();
+    
     private readonly World _world;
-    private readonly N _mapper;
 
     private bool[] _taken;
     private uint[] _versn;
@@ -24,37 +24,50 @@ internal class GpuMappedSystem<N, T, K> : StorageDynamicArray<K>
 
     public int Count { get; private set; }
 
-    private readonly QueryDescription _all = new QueryDescription().WithAll<T>();
-    private readonly QueryDescription _withId = new QueryDescription().WithAll<T, VersId<T>>();
+    private static readonly QueryDescription _all = new QueryDescription().WithAll<C>();
+    private static readonly QueryDescription _withId = new QueryDescription().WithAll<C, VersId<C>>();
+    private static readonly QueryDescription _withIdDirty = new QueryDescription().WithAll<C, VersId<C>, DirtyFlag<C>>();
 
-    public GpuMappedSystem(World world, RenderBase renderData) : base(renderData, 1)
+    public GpuMappedSystem(World world, RenderBase renderData) : base(renderData, (uint)world.CountEntities(_all))
     {
-        _mapper = new();
-
-        _lastFree = 0;
-        _taken = [false];
-        _versn = [0];
-        _stack = [];
+        _taken = new bool[Length];
+        _versn = new uint[Length];
+        _stack = new uint[Length];
 
         _world = world;
 
-        var all = new QueryDescription().WithAll<T>();
-        uint count = (uint)_world.CountEntities(all);
-        uint newLength = BitOperations.RoundUpToPowerOf2(count);
-        Resize(newLength);
+        Count = _world.CountEntities(_all);
+        _world.Add<VersId<C>>(_all);
+        InlineCreator creator = new(GetWriter());
+        _world.InlineQuery<InlineCreator, C, VersId<C>>(_withId, ref creator);
+        Array.Fill(_taken, true, 0, Count);
+        _lastFree = (uint)Count;
+    }
 
-        _world.Add<VersId<T>>(all);
-        _world.Query(_withId, (ref T component, ref VersId<T> x) =>
+    public double GetFragmentationMetric()
+    {
+        int quality = 0;
+        int freeSize = 0;
+        int regionSize = 0;
+        for (int i = 0; i < _lastFree; i++)
         {
-            x = Add(component);
-        });
+            if (!_taken[i])
+                regionSize++;
+            if (_taken[i] && regionSize > 0)
+            {
+                quality += regionSize * regionSize;
+                freeSize += regionSize;
+            }
+        }
+        double qualityPercent = Math.Sqrt(quality) / freeSize;
+        return 1 - (qualityPercent * qualityPercent);
     }
 
     [MethodImpl(Inl)]
     public void UpdateDirty()
     {
         InlineUpdater updater = new(GetWriter());
-        _world.InlineParallelQuery<InlineUpdater, T, VersId<T>>(_withId, ref updater);
+        _world.InlineParallelQuery<InlineUpdater, C, VersId<C>>(_withIdDirty, ref updater);
         Flush();
     }
 
@@ -84,7 +97,7 @@ internal class GpuMappedSystem<N, T, K> : StorageDynamicArray<K>
     }
 
     [MethodImpl(Inl)]
-    private VersId<T> Add(T item)
+    private VersId<C> Add(C item)
     {
         uint index;
         if (_stackSize > 0)
@@ -139,7 +152,7 @@ internal class GpuMappedSystem<N, T, K> : StorageDynamicArray<K>
     }
 
     [MethodImpl(Inl)]
-    private void CheckVersion(VersId<T> versId)
+    private void CheckVersion(VersId<C> versId)
     {
         if (_versn[versId.id] != versId.version)
             Thrower.ThrowOnVersion(versId.version);
@@ -152,16 +165,22 @@ internal class GpuMappedSystem<N, T, K> : StorageDynamicArray<K>
         public static void ThrowOnVersion(uint version) => throw new ArgumentException($"Attempt to get not persistent item by version {version}");
     }
 
-    private readonly struct InlineUpdater(Writer writer) : IForEach<T, VersId<T>>
+    private struct InlineCreator(Writer writer) : IForEach<C, VersId<C>>
     {
-        private readonly Writer _writer = writer;
-        private readonly N _mapper = new();
-
-        [MethodImpl(Inl)]
-        public void Update(ref T component, ref VersId<T> vers)
+        private uint index;
+        public void Update(ref C cmp, ref VersId<C> vers)
         {
-            if (component.IsDirty)
-                _writer[vers.id] = _mapper.Map(ref component);
+            writer[index] = _mapper.Map(ref cmp);
+            vers = new(index++, 0);
+        }
+    }
+
+    private readonly struct InlineUpdater(Writer writer) : IForEach<C, VersId<C>>
+    {
+        [MethodImpl(Inl)]
+        public readonly void Update(ref C cmp, ref VersId<C> vers)
+        {
+            writer[vers.id] = _mapper.Map(ref cmp);
         }
     }
 }

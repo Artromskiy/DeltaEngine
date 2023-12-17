@@ -17,10 +17,14 @@ public sealed class Engine : IDisposable
     /// <summary>
     /// Mobiles seems to feel good with that count of triangles
     /// </summary>
-    private readonly int N = 1_000_000;
-    //private readonly int N = 100_000;
+    //private readonly int N = 1_000_000;
+    //private readonly int N = 500_000;
+    //private readonly int N = 300_000;
+    //private readonly int N = 200_000;
+    private readonly int N = 100_000;
     //private readonly int N = 10_000;
     //private readonly int N = 1_000;
+    //private readonly int N = 100;
     //private readonly int N = 10;
 
     public Engine()
@@ -50,7 +54,11 @@ public sealed class Engine : IDisposable
     public TimeSpan GetCopySetupRendererMetric => _renderer.GetCopySetupMetric;
     public TimeSpan GetSyncRendererMetric => _renderer.GetSyncMetric;
     public TimeSpan GetAcquireFrameRendererMetric => _renderer.GetAcquireMetric();
+    public TimeSpan GetRecordDrawRenderMetric => _renderer.GetRecordDrawMetric();
+    public TimeSpan GetSubmitDrawRenderMetric => _renderer.GetSubmitDrawMetric();
+    public TimeSpan GetSubmitPresentRenderMetric => _renderer.GetSubmitPresentMetric();
     public TimeSpan GetSceneMetric => _scene.GetSceneMetric;
+    public double GetRenderSkipPercent => _renderer.SkippedPercent;
 
     public void ClearRendererMetrics()
     {

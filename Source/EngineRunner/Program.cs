@@ -18,7 +18,7 @@ try
         sw.Stop();
         ms += sw.ElapsedTicks;
         c++;
-        if (c == 10)
+        if (c == 100)
         {
             ms /= c;
             var sy = eng.GetSyncRendererMetric / c;
@@ -27,6 +27,10 @@ try
             var cs = eng.GetCopySetupRendererMetric / c;
             var csn = eng.GetSceneMetric / c;
             var acq = eng.GetAcquireFrameRendererMetric / c;
+            var rec = eng.GetRecordDrawRenderMetric / c;
+            var sud = eng.GetSubmitDrawRenderMetric / c;
+            var sup = eng.GetSubmitPresentRenderMetric / c;
+            var skp = eng.GetRenderSkipPercent;
             Console.WriteLine();
             Console.WriteLine($"updt: {up.TotalMilliseconds}"); // FPS of main thread
             Console.WriteLine($"sync: {sy.TotalMilliseconds}"); // FPS of main thread
@@ -34,8 +38,15 @@ try
             Console.WriteLine();
             Console.WriteLine($"copy: {cp.TotalMilliseconds}"); // FPS of main thread
             Console.WriteLine($"acqu: {acq.TotalMilliseconds}"); // FPS of main thread
+
+            Console.WriteLine($"recd: {rec.TotalMilliseconds}"); // FPS of main thread
+            Console.WriteLine($"subd: {sud.TotalMilliseconds}"); // FPS of main thread
+            Console.WriteLine($"subp: {sup.TotalMilliseconds}"); // FPS of main thread
+
             Console.WriteLine();
             Console.WriteLine($"scen: {csn.TotalMilliseconds}"); // FPS of main thread
+            Console.WriteLine($"skip: {(int)(skp * 100)}%"); // FPS of main thread
+
             Console.WriteLine((int)(10000000f / ms)); // FPS of main thread
             eng.ClearRendererMetrics();
             ms = 0;

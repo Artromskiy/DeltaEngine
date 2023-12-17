@@ -1,4 +1,5 @@
-﻿using Silk.NET.SDL;
+﻿using JobScheduler;
+using Silk.NET.SDL;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
 using System;
@@ -8,7 +9,7 @@ using Semaphore = Silk.NET.Vulkan.Semaphore;
 
 namespace DeltaEngine.Rendering;
 
-public abstract unsafe class BaseRenderer : IDisposable
+public abstract unsafe class BaseRenderer : IDisposable, IJob
 {
     private readonly Api _api;
 
@@ -39,7 +40,7 @@ public abstract unsafe class BaseRenderer : IDisposable
 
     private const uint Buffering = 3;
 
-    private const bool CanSkipRender = false;
+    private const bool CanSkipRender = true;
     private const bool RenderLessMode = true;
 
     private bool _skippedFrame = true;
@@ -50,7 +51,6 @@ public abstract unsafe class BaseRenderer : IDisposable
         _api = new();
         _window = RenderHelper.CreateWindow(_api.sdl, _appName);
         _rendererData = new RenderBase(_api, _window, deviceExtensions, _appName, RendererName, targetFormat);
-        var count = _rendererData.vk.GetPhysicalDeviceProperties(_rendererData.gpu).Limits.MaxVertexInputAttributes;
         renderPass = RenderHelper.CreateRenderPass(_api, _rendererData.deviceQueues.device, _rendererData.format.Format);
         swapChain = new SwapChain(_api, _rendererData, renderPass, GetSdlWindowSize(), Buffering, _rendererData.format);
         descriptorSetLayout = RenderHelper.CreateDescriptorSetLayout(_rendererData);
@@ -61,20 +61,46 @@ public abstract unsafe class BaseRenderer : IDisposable
             _frames[i] = new Frame(_rendererData, swapChain, renderPass, descriptorSetLayout);
     }
 
+    private ulong _framesCount;
+    private ulong _framesSkip;
     private readonly Stopwatch _waitSync = new();
+    public TimeSpan GetSyncMetric => _waitSync.Elapsed;
+    public double SkippedPercent => (double)_framesSkip / _framesCount;
 
     public virtual void ClearCounters()
     {
         _waitSync.Reset();
+        _framesCount = 0;
+        _framesSkip = 0;
         for (int i = 0; i < _frames.Length; i++)
             _frames[i].ClearMetrics();
     }
-    public TimeSpan GetSyncMetric => _waitSync.Elapsed;
     public TimeSpan GetAcquireMetric()
     {
         TimeSpan res = TimeSpan.Zero;
         for (int i = 0; i < _frames.Length; i++)
             res += _frames[i].AcquireMetric;
+        return res;
+    }
+    public TimeSpan GetRecordDrawMetric()
+    {
+        TimeSpan res = TimeSpan.Zero;
+        for (int i = 0; i < _frames.Length; i++)
+            res += _frames[i].RecordMetric;
+        return res;
+    }
+    public TimeSpan GetSubmitDrawMetric()
+    {
+        TimeSpan res = TimeSpan.Zero;
+        for (int i = 0; i < _frames.Length; i++)
+            res += _frames[i].SubmitDrawMetric;
+        return res;
+    }
+    public TimeSpan GetSubmitPresentMetric()
+    {
+        TimeSpan res = TimeSpan.Zero;
+        for (int i = 0; i < _frames.Length; i++)
+            res += _frames[i].SubmitPresentMetric;
         return res;
     }
 
@@ -108,10 +134,15 @@ public abstract unsafe class BaseRenderer : IDisposable
     /// </summary>
     public abstract void PreSync();
 
-    public void Run()
+    public void Execute()
     {
+        _framesCount++;
+
         if (_skippedFrame)
+        {
+            _framesSkip++;
             return;
+        }
 
         _frames[_currentFrame].Draw(graphicsPipeline, pipelineLayout, out var resize);
         if (resize)

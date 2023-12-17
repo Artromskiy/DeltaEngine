@@ -25,7 +25,8 @@ public static class RenderHelper
         | WindowFlags.Resizable
         | WindowFlags.AllowHighdpi
         | WindowFlags.Borderless
-   //            | WindowFlags.FullscreenDesktop
+        //| WindowFlags.AlwaysOnTop
+        //| WindowFlags.FullscreenDesktop
    );
 
     public static unsafe Window* CreateWindow(Sdl sdl, string title)
@@ -300,6 +301,20 @@ public static class RenderHelper
         return (uint)i;
     }
 
+    public static uint FindMemoryType(RenderBase data, int typeFilter, MemoryPropertyFlags properties, out MemoryPropertyFlags memoryFlagsHas)
+    {
+        memoryFlagsHas = MemoryPropertyFlags.None;
+        int i = 0;
+        for (; i < data.gpuMemory.memoryProperties.MemoryTypeCount; i++)
+            if (Convert.ToBoolean(typeFilter & (1 << i)) && (data.gpuMemory.memoryProperties.MemoryTypes[i].PropertyFlags & properties) == properties) // some mask magic
+            {
+                memoryFlagsHas = data.gpuMemory.memoryProperties.MemoryTypes[i].PropertyFlags;
+                return (uint)i;
+            }
+        _ = false;
+        return (uint)i;
+    }
+
     public static unsafe (Pipeline pipeline, PipelineLayout layout) CreateGraphicsPipeline(RenderBase data, RenderPass renderPass, DescriptorSetLayout[] setLayouts)
     {
         using var vertShader = new PipelineShader(data, ShaderStageFlags.VertexBit, "shaders/vert.spv");
@@ -553,12 +568,21 @@ public static class RenderHelper
         _ = vk.EnumeratePhysicalDevices(instance, &devicedCount, null);
         _ = devicedCount != 0;
         Span<PhysicalDevice> devices = stackalloc PhysicalDevice[(int)devicedCount];
+        PhysicalDevice selected = default;
+        bool discrete = false;
+        bool suitable = false;
         vk.EnumeratePhysicalDevices(instance, &devicedCount, devices);
         foreach (var device in devices)
-            if (IsDeviceSuitable(vk, device, surface, khrsf, neededExtensions))
+        {
+            vk.GetPhysicalDeviceProperties(device, out var props);
+            suitable = IsDeviceSuitable(vk, device, surface, khrsf, neededExtensions);
+            if (suitable)
+                selected = device;
+            discrete = props.DeviceType == PhysicalDeviceType.DiscreteGpu;
+            if (discrete && suitable)
                 return device;
-        _ = false;
-        return default;
+        }
+        return selected;
     }
 
     public static unsafe ImmutableArray<ImageView> CreateImageViews(Api api, Device device, ReadOnlySpan<Image> swapChainImages, Format imageFormat)

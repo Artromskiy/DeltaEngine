@@ -5,11 +5,16 @@ using System.Runtime.CompilerServices;
 
 namespace DeltaEngine;
 
-public struct Transform : IDirty<Transform>
+public struct Transform : IDirty
 {
     internal Vector4 _position;
-    internal Quaternion _rotation;
+    public Quaternion Rotation;
     internal Vector4 _scale;
+
+    static Transform()
+    {
+
+    }
 
     /// <summary>
     /// Local Position
@@ -19,17 +24,7 @@ public struct Transform : IDirty<Transform>
         [MethodImpl(Inl)]
         readonly get => new(_position.X, _position.Y, _position.Z);
         [MethodImpl(Inl)]
-        set => this.Set(ref _position, new(value, 0));
-    }
-    /// <summary>
-    /// Local Rotation
-    /// </summary>
-    public Quaternion Rotation
-    {
-        [MethodImpl(Inl)]
-        readonly get => _rotation;
-        [MethodImpl(Inl)]
-        set => this.Set(ref _rotation, ref value);
+        set => _position = new(value, 0);
     }
     /// <summary>
     /// Local Scale
@@ -39,7 +34,7 @@ public struct Transform : IDirty<Transform>
         [MethodImpl(Inl)]
         readonly get => new(_scale.X, _scale.Y, _scale.Z);
         [MethodImpl(Inl)]
-        set => this.Set(ref _scale, new(value, 0));
+        set => _scale = new(value, 0);
     }
 
     public readonly Matrix4x4 LocalMatrix
@@ -50,7 +45,6 @@ public struct Transform : IDirty<Transform>
         get => Matrix4x4.Transform(Matrix4x4.CreateScale(Scale), Rotation) * Matrix4x4.CreateTranslation(Position);
     }
 
-    bool IDirty.IsDirty { get; set; }
 }
 
 internal struct ChildOf

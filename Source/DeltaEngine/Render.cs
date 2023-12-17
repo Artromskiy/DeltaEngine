@@ -5,33 +5,27 @@ using System.Runtime.CompilerServices;
 
 namespace DeltaEngine;
 
-internal struct Render : IDirty<Render>
+internal struct Render : IDirty
 {
-    private GuidAsset<ShaderData> _shader;
-    public GuidAsset<MaterialData> _material;
-    public GuidAsset<MeshData> _mesh;
+    internal GuidAsset<ShaderData> _shader;
+    internal GuidAsset<MaterialData> _material;
+    public GuidAsset<MeshData> Mesh;
 
-    public GuidAsset<ShaderData> Shader
+    public readonly GuidAsset<ShaderData> Shader
     {
         [MethodImpl(Inl)]
-        readonly get => _shader;
-        [MethodImpl(Inl)]
-        set => this.Set(ref _shader, ref value);
+        get => _shader;
     }
+
     public GuidAsset<MaterialData> Material
     {
         [MethodImpl(Inl)]
         readonly get => _material;
         [MethodImpl(Inl)]
-        set => this.Set(ref _material, ref value);
+        set
+        {
+            _material = value;
+            _shader = value.Asset.shader;
+        }
     }
-    public GuidAsset<MeshData> Mesh
-    {
-        [MethodImpl(Inl)]
-        readonly get => _mesh;
-        [MethodImpl(Inl)]
-        set => this.Set(ref _mesh, ref value);
-    }
-
-    bool IDirty.IsDirty { get; set; }
 }

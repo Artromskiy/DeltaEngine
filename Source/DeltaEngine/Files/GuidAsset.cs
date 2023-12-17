@@ -8,7 +8,7 @@ public readonly struct GuidAsset<T> where T : IAsset
 
     public readonly T Asset => AssetImporter.Instance.GetAsset(this);
 
-    internal GuidAsset(Guid guid, bool runtime = false)
+    internal GuidAsset(Guid guid)
     {
         this.guid = guid;
     }
