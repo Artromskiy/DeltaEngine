@@ -1,0 +1,3 @@
+[submodule "Depend/Arch"]
+	path = Depend/Arch
+	url = https://github.com/genaray/Arch.git
