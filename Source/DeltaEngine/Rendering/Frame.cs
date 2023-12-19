@@ -16,9 +16,11 @@ internal class Frame : IDisposable
     private Fence renderFinishedFence;
 
     private CommandBuffer commandBuffer;
-    private DescriptorSet matrices;
+    private DescriptorSet _descriptorSet;
 
     private readonly DynamicBuffer _matricesDynamicBuffer;
+    private readonly DynamicBuffer _parentsDynamicBuffer;
+
     private Semaphore _syncSemaphore;
     private Buffer _vertexBuffer;
     private Buffer _indexBuffer;
@@ -37,41 +39,43 @@ internal class Frame : IDisposable
         _swapChain = swapChain;
         _renderPass = renderPass;
         _matricesDynamicBuffer = new(renderBase, 1);
+        _parentsDynamicBuffer = new(renderBase, 1);
 
         FenceCreateInfo fenceInfo = new(StructureType.FenceCreateInfo, null, FenceCreateFlags.SignaledBit);
         SemaphoreCreateInfo semaphoreInfo = new(StructureType.SemaphoreCreateInfo);
-        matrices = RenderHelper.CreateDescriptorSet(renderBase, descriptorSetLayout);
+        _descriptorSet = RenderHelper.CreateDescriptorSet(renderBase, descriptorSetLayout);
 
         CommandBufferAllocateInfo allocInfo = new()
         {
             SType = StructureType.CommandBufferAllocateInfo,
-            CommandPool = _rendererData.deviceQueues.graphicsCmdPool,
+            CommandPool = _rendererData.deviceQ.graphicsCmdPool,
             Level = CommandBufferLevel.Primary,
             CommandBufferCount = 1,
         };
 
-        _ = _rendererData.vk.AllocateCommandBuffers(_rendererData.deviceQueues.device, allocInfo, out commandBuffer);
-        _ = _rendererData.vk.CreateSemaphore(_rendererData.deviceQueues.device, semaphoreInfo, null, out imageAvailable);
-        _ = _rendererData.vk.CreateSemaphore(_rendererData.deviceQueues.device, semaphoreInfo, null, out renderFinished);
-        _ = _rendererData.vk.CreateFence(_rendererData.deviceQueues.device, fenceInfo, null, out renderFinishedFence);
+        _ = _rendererData.vk.AllocateCommandBuffers(_rendererData.deviceQ.device, allocInfo, out commandBuffer);
+        _ = _rendererData.vk.CreateSemaphore(_rendererData.deviceQ.device, semaphoreInfo, null, out imageAvailable);
+        _ = _rendererData.vk.CreateSemaphore(_rendererData.deviceQ.device, semaphoreInfo, null, out renderFinished);
+        _ = _rendererData.vk.CreateFence(_rendererData.deviceQ.device, fenceInfo, null, out renderFinishedFence);
     }
 
     public unsafe void Dispose()
     {
-        _rendererData.vk.FreeCommandBuffers(_rendererData.deviceQueues.device, _rendererData.deviceQueues.graphicsCmdPool, 1, in commandBuffer);
-        _rendererData.vk.DestroySemaphore(_rendererData.deviceQueues.device, imageAvailable, null);
-        _rendererData.vk.DestroySemaphore(_rendererData.deviceQueues.device, renderFinished, null);
-        _rendererData.vk.DestroyFence(_rendererData.deviceQueues.device, renderFinishedFence, null);
+        _rendererData.vk.FreeCommandBuffers(_rendererData.deviceQ.device, _rendererData.deviceQ.graphicsCmdPool, 1, in commandBuffer);
+        _rendererData.vk.DestroySemaphore(_rendererData.deviceQ.device, imageAvailable, null);
+        _rendererData.vk.DestroySemaphore(_rendererData.deviceQ.device, renderFinished, null);
+        _rendererData.vk.DestroyFence(_rendererData.deviceQ.device, renderFinishedFence, null);
     }
 
     public void Sync()
     {
-        _rendererData.vk.WaitForFences(_rendererData.deviceQueues.device, 1, renderFinishedFence, true, ulong.MaxValue);
+        _rendererData.vk.WaitForFences(_rendererData.deviceQ.device, 1, renderFinishedFence, true, ulong.MaxValue);
     }
 
-    public bool Synced() => _rendererData.vk.GetFenceStatus(_rendererData.deviceQueues.device, renderFinishedFence) == Result.Success;
+    public bool Synced() => _rendererData.vk.GetFenceStatus(_rendererData.deviceQ.device, renderFinishedFence) == Result.Success;
 
     public DynamicBuffer GetTRSBuffer() => _matricesDynamicBuffer;
+    public DynamicBuffer GEtParentsBuffer() => _parentsDynamicBuffer;
     public void SetBuffers(Buffer vbo, Buffer ibo, uint indices, uint vertices)
     {
         _vertexBuffer = vbo;
@@ -114,20 +118,25 @@ internal class Frame : IDisposable
         uint imageIndex = 0;
 
         _acquire.Start();
-        var res = _swapChain.khrSw.AcquireNextImage(_rendererData.deviceQueues.device, _swapChain.swapChain, ulong.MaxValue, imageAvailable, default, &imageIndex);
+        var res = _swapChain.khrSw.AcquireNextImage(_rendererData.deviceQ.device, _swapChain.swapChain, ulong.MaxValue, imageAvailable, default, &imageIndex);
         _acquire.Stop();
 
         resize = res == Result.SuboptimalKhr || res == Result.ErrorOutOfDateKhr;
         if (resize)
             return;
 
-        _rendererData.vk.ResetFences(_rendererData.deviceQueues.device, 1, renderFinishedFence);
+        _rendererData.vk.ResetFences(_rendererData.deviceQ.device, 1, renderFinishedFence);
         _rendererData.vk.ResetCommandBuffer(commandBuffer, 0);
 
         if (_matricesDynamicBuffer.ChangedBuffer)
         {
-            RenderHelper.BindBuffersToDescriptorSet(_rendererData, matrices, _matricesDynamicBuffer.GetBuffer(), 0, DescriptorType.StorageBuffer);
+            RenderHelper.BindBuffersToDescriptorSet(_rendererData, _descriptorSet, _matricesDynamicBuffer.GetBuffer(), 0, DescriptorType.StorageBuffer);
             _matricesDynamicBuffer.ChangedBuffer = false;
+        }
+        if(_parentsDynamicBuffer.ChangedBuffer)
+        {
+            RenderHelper.BindBuffersToDescriptorSet(_rendererData, _descriptorSet, _parentsDynamicBuffer.GetBuffer(), 1, DescriptorType.StorageBuffer);
+            _parentsDynamicBuffer.ChangedBuffer = false;
         }
         _recordRender.Start();
         RecordCommandBuffer(commandBuffer, imageIndex, graphicsPipeline, layout, _vertexBuffer, _indexBuffer, _indicesLength);
@@ -152,7 +161,7 @@ internal class Frame : IDisposable
             PSignalSemaphores = &renderFinished,
         };
         _submitRender.Start();
-        _ = _rendererData.vk.QueueSubmit(_rendererData.deviceQueues.graphicsQueue, 1, submitInfo, renderFinishedFence);
+        _ = _rendererData.vk.QueueSubmit(_rendererData.deviceQ.graphicsQueue, 1, submitInfo, renderFinishedFence);
         _submitRender.Stop();
         var swapChain = _swapChain.swapChain;
         PresentInfoKHR presentInfo = new()
@@ -165,7 +174,7 @@ internal class Frame : IDisposable
             PImageIndices = &imageIndex
         };
         _submitPresent.Start();
-        res = _swapChain.khrSw.QueuePresent(_rendererData.deviceQueues.presentQueue, presentInfo);
+        res = _swapChain.khrSw.QueuePresent(_rendererData.deviceQ.presentQueue, presentInfo);
         _submitRender.Stop();
         resize = res == Result.SuboptimalKhr || res == Result.ErrorOutOfDateKhr;
         if (!resize)
@@ -206,7 +215,7 @@ internal class Frame : IDisposable
 
         _rendererData.vk.CmdBindVertexBuffers(commandBuffer, 0, 1, buffer, &offsets);
         _rendererData.vk.CmdBindIndexBuffer(commandBuffer, ibo, 0, IndexType.Uint32);
-        var matrices = this.matrices;
+        var matrices = this._descriptorSet;
         _rendererData.vk.CmdBindDescriptorSets(commandBuffer, PipelineBindPoint.Graphics, layout, 0, 1, &matrices, 0, 0);
 
         _rendererData.vk.CmdDrawIndexed(commandBuffer, _indicesLength, _instances, 0, 0, 0);

@@ -19,7 +19,7 @@ internal class Scene
         _sceneWorld = world;
         _jobScheduler = new JobScheduler.JobScheduler("WorkerThread");
         //var buffer = new Arch.CommandBuffer.CommandBuffer(_sceneWorld);
-        int count = _sceneWorld.CountEntities(new QueryDescription().WithAll<Transform>())/10;
+        int count = _sceneWorld.CountEntities(new QueryDescription().WithAll<Transform>());
         _sceneWorld.Query(new QueryDescription().WithAll<Transform>(), (Entity e) =>
         {
             if (count <= 0)
@@ -35,6 +35,7 @@ internal class Scene
         _renderer = renderer;
         _sceneWorld.Query(new QueryDescription().WithAll<Transform>(), (ref Transform t) => t.Scale = new(0.1f));
         _sceneWorld.Query(new QueryDescription().WithAll<Transform>(), (ref Transform t) => t.Position = RndVector());
+        _sceneWorld.Add<DirtyFlag<Transform>>(new QueryDescription().WithAll<Transform>());
     }
 
     private readonly Stopwatch _sceneSw = new();
@@ -57,21 +58,18 @@ internal class Scene
 
         CommandBuffer v = new(_sceneWorld);
 
-        var dirty = _sceneWorld.CountEntities(new QueryDescription().WithAll<DirtyFlag<Transform>>());
         _sceneWorld.Remove<DirtyFlag<Transform>>(new QueryDescription().WithAll<DirtyFlag<Transform>>());
-        dirty = _sceneWorld.CountEntities(new QueryDescription().WithAll<DirtyFlag<Transform>>());
 
         _sceneSw.Start();
-        var move = new MoveAllTransforms(_sceneWorld, deltaTime);
-        move.Execute();
-        _sceneSw.Stop();
-        _renderer.Execute();
-        //var h1 = _jobScheduler.Schedule(move);
-        //var h2 = _jobScheduler.Schedule(_renderer);
-        //_jobScheduler.Flush();
+        
+        var h1 = _jobScheduler.Schedule(new MoveAllTransforms(_sceneWorld, deltaTime));
+        var h2 = _jobScheduler.Schedule(_renderer);
+        _jobScheduler.Flush();
 
-        //h1.Complete();
-        //h2.Complete();
+        h1.Complete();
+        h2.Complete();
+        
+        _sceneSw.Stop();
     }
 
     private readonly struct MoveAllTransforms(World world, float deltaTime) : IJob
@@ -124,9 +122,9 @@ internal class Scene
     private static Vector3 RndVector()
     {
         Random rnd = Random.Shared;
-        var xy = new Vector2(rnd.NextSingle() - 0.5f, rnd.NextSingle() - 0.5f);
-        xy = xy.Length() > 0.5f ? Vector2.Normalize(xy) * 0.5f : xy;
-        var position = new Vector3(xy.X, xy.Y, rnd.NextSingle() * 0.5f) * 2;
+        var xy = new Vector2(rnd.NextSingle() - 0.5f, rnd.NextSingle() - 0.5f) * 0.5f;
+        xy = xy.Length() > 0.25f ? Vector2.Normalize(xy) * 0.25f : xy;
+        var position = new Vector3(xy.X, xy.Y, 0) * 2;
         return position;
     }
 }

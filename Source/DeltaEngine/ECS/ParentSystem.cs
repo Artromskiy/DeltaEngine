@@ -88,7 +88,7 @@ internal static class ChildOfExtensions
         bool hasParent = parent.IsAlive();
         while (hasParent)
         {
-            if (parent.TryGet(out component))
+            if (parent.TryGet(out component!))
                 return true;
             childOf = parent.TryGetRef<ChildOf>(out hasParent);
             parent = hasParent ? childOf.parent : parent;

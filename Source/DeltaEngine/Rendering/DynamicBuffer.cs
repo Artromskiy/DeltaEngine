@@ -26,7 +26,7 @@ internal class DynamicBuffer
         _size = sizeBytes;
         CreateBuffer(ref _size, out _buffer, out _memory);
         _copyFence = RenderHelper.CreateFence(_renderBase, false);
-        _cmdBuffer = RenderHelper.CreateCommandBuffer(_renderBase, _renderBase.deviceQueues.transferCmdPool);
+        _cmdBuffer = RenderHelper.CreateCommandBuffer(_renderBase, _renderBase.deviceQ.transferCmdPool);
     }
 
     public Buffer GetBuffer() => _buffer;
@@ -42,8 +42,8 @@ internal class DynamicBuffer
             SharingMode = SharingMode.Exclusive,
             Flags = default,
         };
-        _ = _renderBase.vk.CreateBuffer(_renderBase.deviceQueues.device, createInfo, null, out buffer);
-        var reqs = _renderBase.vk.GetBufferMemoryRequirements(_renderBase.deviceQueues.device, buffer);
+        _ = _renderBase.vk.CreateBuffer(_renderBase.deviceQ.device, createInfo, null, out buffer);
+        var reqs = _renderBase.vk.GetBufferMemoryRequirements(_renderBase.deviceQ.device, buffer);
         var memProps = MemoryPropertyFlags.DeviceLocalBit;
         uint memType = RenderHelper.FindMemoryType(_renderBase, (int)reqs.MemoryTypeBits, memProps);
         MemoryAllocateInfo allocateInfo = new()
@@ -53,8 +53,8 @@ internal class DynamicBuffer
             MemoryTypeIndex = memType
         };
         size = reqs.Size;
-        _ = _renderBase.vk.AllocateMemory(_renderBase.deviceQueues.device, allocateInfo, null, out memory);
-        _ = _renderBase.vk.BindBufferMemory(_renderBase.deviceQueues.device, buffer, memory, 0);
+        _ = _renderBase.vk.AllocateMemory(_renderBase.deviceQ.device, allocateInfo, null, out memory);
+        _ = _renderBase.vk.BindBufferMemory(_renderBase.deviceQ.device, buffer, memory, 0);
     }
 
     [MethodImpl(Inl)]
@@ -77,8 +77,8 @@ internal class DynamicBuffer
     {
         ulong newSize = BitOperations.RoundUpToPowerOf2(size);
         CreateBuffer(ref newSize, out var newBuffer, out var newMemory);
-        _renderBase.vk.DestroyBuffer(_renderBase.deviceQueues.device, _buffer, null);
-        _renderBase.vk.FreeMemory(_renderBase.deviceQueues.device, _memory, null);
+        _renderBase.vk.DestroyBuffer(_renderBase.deviceQ.device, _buffer, null);
+        _renderBase.vk.FreeMemory(_renderBase.deviceQ.device, _memory, null);
         _memory = newMemory;
         _buffer = newBuffer;
         _size = newSize;
@@ -107,14 +107,14 @@ internal class DynamicBuffer
             PCommandBuffers = &cmdBuffer
         };
         var fence = _copyFence;
-        var res = vk.QueueSubmit(_renderBase.deviceQueues.graphicsQueue, 1, &submitInfo, fence);
+        var res = vk.QueueSubmit(_renderBase.deviceQ.graphicsQueue, 1, &submitInfo, fence);
         _ = res;
         if (res != Result.Success)
             Console.WriteLine("here");
         if (res == Result.Success)
-            _ = vk.WaitForFences(_renderBase.deviceQueues.device, 1, &fence, true, ulong.MaxValue);
+            _ = vk.WaitForFences(_renderBase.deviceQ.device, 1, &fence, true, ulong.MaxValue);
 
-        vk.ResetFences(_renderBase.deviceQueues.device, 1, &fence);
+        vk.ResetFences(_renderBase.deviceQ.device, 1, &fence);
         vk.ResetCommandBuffer(cmdBuffer, 0);
     }
 }

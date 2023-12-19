@@ -21,7 +21,7 @@ public sealed class RenderBase : IDisposable
     public SwapChainSupportDetails swapChainSupport;
     public readonly MemoryDetails gpuMemory;
 
-    public readonly DeviceQueues deviceQueues;
+    public readonly DeviceQueues deviceQ;
 
     public readonly DescriptorPool descriptorPool;
 
@@ -29,7 +29,6 @@ public sealed class RenderBase : IDisposable
     {
         "VK_LAYER_KHRONOS_validation"
     };
-
 
     public unsafe RenderBase(Api api, Window* window, string[] deviceExtensions, string appName, string rendererName, SurfaceFormatKHR targetFormat)
     {
@@ -55,7 +54,7 @@ public sealed class RenderBase : IDisposable
 
         gpuMemory = new MemoryDetails(vk, gpu);
 
-        deviceQueues = RenderHelper.CreateLogicalDevice(vk, gpu, surface, khrsf, deviceExtensions);
+        deviceQ = RenderHelper.CreateLogicalDevice(vk, gpu, surface, khrsf, deviceExtensions);
 
         swapChainSupport = new SwapChainSupportDetails(gpu, surface, khrsf);
 
@@ -66,9 +65,10 @@ public sealed class RenderBase : IDisposable
 
     public unsafe void Dispose()
     {
-        vk.DestroyDevice(deviceQueues.device, null);
+        vk.DestroyDevice(deviceQ.device, null);
         khrsf.DestroySurface(instance, surface, null);
         vk.DestroyInstance(instance, null);
+        vk.Dispose();
     }
 
     public void UpdateSupportDetails()

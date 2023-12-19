@@ -15,15 +15,12 @@ internal class GpuMappedChilds<C, P> : StorageDynamicArray<uint>
     public GpuMappedChilds(World world, RenderBase renderData) : base(renderData, (uint)world.CountEntities(_all))
     {
         _world = world;
-
         var writer = GetWriter();
-
         if (!_skipDirect) // Skip component self referencing
         {
             DirectInlineCreator directCreator = new(writer);
             _world.InlineQuery<DirectInlineCreator, VersId<C>, VersId<P>>(_direct, ref directCreator);
         }
-
         ChildedInlineCreator childedCreator = new(writer);
         _world.InlineQuery<ChildedInlineCreator, VersId<C>, ChildOf>(_childed, ref childedCreator);
     }
@@ -35,7 +32,6 @@ internal class GpuMappedChilds<C, P> : StorageDynamicArray<uint>
             writer[child.id] = parent.id;
         }
     }
-
     private readonly struct ChildedInlineCreator(Writer writer) : IForEach<VersId<C>, ChildOf>
     {
         public readonly void Update(ref VersId<C> child, ref ChildOf childOf)

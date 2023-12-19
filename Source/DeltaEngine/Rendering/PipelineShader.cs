@@ -20,7 +20,7 @@ public readonly struct PipelineShader : IDisposable
     public unsafe PipelineShader(RenderBase data, ShaderStageFlags stage, byte[] shaderCode)
     {
         _vk = data.vk;
-        _device = data.deviceQueues.device;
+        _device = data.deviceQ.device;
         this.stage = stage;
         if (stage == ShaderStageFlags.VertexBit)
             attributeMask = GetInputAttributes(shaderCode);

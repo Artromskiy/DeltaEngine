@@ -23,7 +23,7 @@ internal class SwapChain : IDisposable
     {
         this.data = data;
         var swSupport = data.swapChainSupport;
-        var indiciesDetails = data.deviceQueues.queueIndicesDetails;
+        var indiciesDetails = data.deviceQ.queueIndicesDetails;
 
         format = RenderHelper.ChooseSwapSurfaceFormat(swSupport.Formats, targetFormat);
         var presentMode = RenderHelper.ChoosePresentMode(swSupport.PresentModes);
@@ -58,26 +58,26 @@ internal class SwapChain : IDisposable
             OldSwapchain = default
         };
 
-        _ = api.vk.TryGetDeviceExtension(data.instance, data.deviceQueues.device, out khrSw);
-        _ = khrSw.CreateSwapchain(data.deviceQueues.device, creatInfo, null, out swapChain);
+        _ = api.vk.TryGetDeviceExtension(data.instance, data.deviceQ.device, out khrSw);
+        _ = khrSw.CreateSwapchain(data.deviceQ.device, creatInfo, null, out swapChain);
         uint imCount = (uint)imageCount;
-        _ = khrSw.GetSwapchainImages(data.deviceQueues.device, swapChain, &imCount, null);
+        _ = khrSw.GetSwapchainImages(data.deviceQ.device, swapChain, &imCount, null);
         Span<Image> imageSpan = stackalloc Image[(int)imCount];
-        _ = khrSw.GetSwapchainImages(data.deviceQueues.device, swapChain, &imCount, imageSpan);
+        _ = khrSw.GetSwapchainImages(data.deviceQ.device, swapChain, &imCount, imageSpan);
         images = ImmutableArray.Create(imageSpan);
-        imageViews = RenderHelper.CreateImageViews(api, data.deviceQueues.device, [.. images], format.Format);
-        frameBuffers = RenderHelper.CreateFramebuffers(api, data.deviceQueues.device, [.. imageViews], rp, extent);
+        imageViews = RenderHelper.CreateImageViews(api, data.deviceQ.device, [.. images], format.Format);
+        frameBuffers = RenderHelper.CreateFramebuffers(api, data.deviceQ.device, [.. imageViews], rp, extent);
     }
 
     public unsafe void Dispose()
     {
-        data.vk.DeviceWaitIdle(data.deviceQueues.device);
+        data.vk.DeviceWaitIdle(data.deviceQ.device);
 
         foreach (var framebuffer in frameBuffers)
-            data.vk.DestroyFramebuffer(data.deviceQueues.device, framebuffer, null);
+            data.vk.DestroyFramebuffer(data.deviceQ.device, framebuffer, null);
         foreach (var imageView in imageViews)
-            data.vk.DestroyImageView(data.deviceQueues.device, imageView, null);
+            data.vk.DestroyImageView(data.deviceQ.device, imageView, null);
 
-        khrSw.DestroySwapchain(data.deviceQueues.device, swapChain, null);
+        khrSw.DestroySwapchain(data.deviceQ.device, swapChain, null);
     }
 }

@@ -8,10 +8,10 @@ namespace DeltaEngine.ECS;
 internal class GpuMappedSystem<M, C, G> : StorageDynamicArray<G>
     where M : struct, IGpuMapper<C, G> // Mapper
     where G : unmanaged                // GpuStruct
-    where C : IDirty                // Component
+    where C : IDirty                   // Component
 {
     private static readonly M _mapper = new();
-    
+
     private readonly World _world;
 
     private bool[] _taken;
@@ -64,11 +64,14 @@ internal class GpuMappedSystem<M, C, G> : StorageDynamicArray<G>
     }
 
     [MethodImpl(Inl)]
-    public void UpdateDirty()
+    public (uint, uint) UpdateDirty()
     {
         InlineUpdater updater = new(GetWriter());
         _world.InlineParallelQuery<InlineUpdater, C, VersId<C>>(_withIdDirty, ref updater);
-        Flush();
+        InlineMinMax range = new();
+        _world.InlineQuery<InlineMinMax, VersId<C>>(_withIdDirty, ref range);
+        Flush(range.Min, range.Max);
+        return (range.Min, range.Max);
     }
 
     [MethodImpl(Inl)]
@@ -175,7 +178,7 @@ internal class GpuMappedSystem<M, C, G> : StorageDynamicArray<G>
         }
     }
 
-    private readonly struct InlineUpdater(Writer writer) : IForEach<C, VersId<C>>
+    private struct InlineUpdater(Writer writer) : IForEach<C, VersId<C>>
     {
         [MethodImpl(Inl)]
         public readonly void Update(ref C cmp, ref VersId<C> vers)
@@ -183,4 +186,23 @@ internal class GpuMappedSystem<M, C, G> : StorageDynamicArray<G>
             writer[vers.id] = _mapper.Map(ref cmp);
         }
     }
+    private struct InlineMinMax() : IForEach<VersId<C>>
+    {
+        private uint min = uint.MaxValue;
+        private uint max = 0;
+        public readonly uint Min => min;
+        public readonly uint Max => max;
+        public void Update(ref VersId<C> vers)
+        {
+            min = Math.Min(vers.id, min);
+            max = Math.Max(vers.id, max);
+        }
+    }
 }
+
+public readonly struct DirectMapper<C> : IGpuMapper<C, C> where C : unmanaged
+{
+    [MethodImpl(Inl)]
+    public readonly C Map(ref C value) => value;
+}
+internal class GpuMappedSystem<C>(World world, RenderBase renderData) : GpuMappedSystem<DirectMapper<C>, C, C>(world, renderData) where C : unmanaged, IDirty { }

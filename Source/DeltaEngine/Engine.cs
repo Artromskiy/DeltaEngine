@@ -1,4 +1,6 @@
 ﻿using Arch.Core;
+using Arch.Core.Extensions;
+using Arch.Core.Utils;
 using DeltaEngine.Files;
 using DeltaEngine.Rendering;
 using DeltaEngine.Scenes;
@@ -21,11 +23,11 @@ public sealed class Engine : IDisposable
     //private readonly int N = 500_000;
     //private readonly int N = 300_000;
     //private readonly int N = 200_000;
-    private readonly int N = 100_000;
+    //private readonly int N = 100_000;
     //private readonly int N = 10_000;
     //private readonly int N = 1_000;
     //private readonly int N = 100;
-    //private readonly int N = 10;
+    private readonly int N = 10;
 
     public Engine()
     {
@@ -40,8 +42,13 @@ public sealed class Engine : IDisposable
     private World InitWorld()
     {
         var world = World.Create();
+        world.Reserve([Component<Transform>.ComponentType, Component<ChildOf>.ComponentType], N);
         for (int i = 0; i < N; i++)
             world.Create(new Transform() { Scale = Vector3.One, Rotation = Quaternion.Identity });
+        var transforms = new Entity[N];
+        world.GetEntities(new QueryDescription().WithAll<Transform>(), transforms);
+        for (int i = 0; i < N / 2; i++)
+            transforms[i].Add(new ChildOf() { parent = world.Reference(transforms[i + N / 2]) });
         return world;
     }
 

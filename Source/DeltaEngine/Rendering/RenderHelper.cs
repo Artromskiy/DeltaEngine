@@ -87,15 +87,22 @@ public static class RenderHelper
     {
         FenceCreateFlags flag = signaled ? FenceCreateFlags.SignaledBit : FenceCreateFlags.None;
         FenceCreateInfo fenceCreate = new(StructureType.FenceCreateInfo, null, flag);
-        _ = data.vk.CreateFence(data.deviceQueues.device, fenceCreate, null, out var result);
+        _ = data.vk.CreateFence(data.deviceQ.device, fenceCreate, null, out var result);
         return result;
     }
 
     public static unsafe Semaphore CreateSemaphore(RenderBase data)
     {
         SemaphoreCreateInfo semaphoreCreate = new(StructureType.SemaphoreCreateInfo);
-        _ = data.vk.CreateSemaphore(data.deviceQueues.device, semaphoreCreate, null, out var result);
+        _ = data.vk.CreateSemaphore(data.deviceQ.device, semaphoreCreate, null, out var result);
         return result;
+    }
+
+    internal static unsafe void CopyBuffer<T>(this RenderBase data, StorageDynamicArray<T> source, DynamicBuffer destination,
+        CommandBuffer cmdBuffer) where T : unmanaged
+    {
+        destination.EnsureSize(source.Size);
+        data.CopyBuffer(source.GetBuffer(), source.Size, destination.GetBuffer(), destination.Size, cmdBuffer);
     }
 
     internal static unsafe void CopyBuffer<T>(this RenderBase data, StorageDynamicArray<T> source, DynamicBuffer destination,
@@ -114,7 +121,7 @@ public static class RenderHelper
     public static unsafe void CopyBuffer(this RenderBase data, Buffer source, ulong sourceSize, Buffer destination, ulong destinationSize, Fence fence, Semaphore semaphore, CommandBuffer cmdBuffer)
     {
         Vk vk = data.vk;
-        vk.ResetFences(data.deviceQueues.device, 1, in fence);
+        vk.ResetFences(data.deviceQ.device, 1, in fence);
         CommandBufferBeginInfo beginInfo = new()
         {
             SType = StructureType.CommandBufferBeginInfo,
@@ -132,12 +139,12 @@ public static class RenderHelper
             SignalSemaphoreCount = 1,
             PSignalSemaphores = &semaphore,
         };
-        _ = vk.QueueSubmit(data.deviceQueues.transferQueue, 1, &submitInfo, fence);
+        _ = vk.QueueSubmit(data.deviceQ.transferQueue, 1, &submitInfo, fence);
     }
     public static unsafe void CopyBuffer(this RenderBase data, Buffer source, ulong sourceSize, Buffer destination, ulong destinationSize, Fence fence, CommandBuffer cmdBuffer)
     {
         Vk vk = data.vk;
-        vk.ResetFences(data.deviceQueues.device, 1, in fence);
+        vk.ResetFences(data.deviceQ.device, 1, in fence);
         CommandBufferBeginInfo beginInfo = new()
         {
             SType = StructureType.CommandBufferBeginInfo,
@@ -153,7 +160,29 @@ public static class RenderHelper
             CommandBufferCount = 1,
             PCommandBuffers = &cmdBuffer,
         };
-        _ = vk.QueueSubmit(data.deviceQueues.transferQueue, 1, &submitInfo, fence);
+        _ = vk.QueueSubmit(data.deviceQ.transferQueue, 1, &submitInfo, fence);
+    }
+
+    public static unsafe void CopyBuffer(this RenderBase data, Buffer source, ulong sourceSize, Buffer destination, ulong destinationSize, CommandBuffer cmdBuffer)
+    {
+        Vk vk = data.vk;
+        CommandBufferBeginInfo beginInfo = new()
+        {
+            SType = StructureType.CommandBufferBeginInfo,
+            Flags = CommandBufferUsageFlags.OneTimeSubmitBit
+        };
+        _ = vk.BeginCommandBuffer(cmdBuffer, &beginInfo);
+        BufferCopy copy = new(0, 0, Math.Min(sourceSize, destinationSize));
+        vk.CmdCopyBuffer(cmdBuffer, source, destination, 1, &copy);
+        _ = vk.EndCommandBuffer(cmdBuffer);
+        SubmitInfo submitInfo = new()
+        {
+            SType = StructureType.SubmitInfo,
+            CommandBufferCount = 1,
+            PCommandBuffers = &cmdBuffer,
+        };
+        _ = vk.QueueSubmit(data.deviceQ.transferQueue, 1, &submitInfo, default);
+        vk.DeviceWaitIdle(data.deviceQ.device);
     }
 
     public static unsafe RenderPass CreateRenderPass(Api api, Device device, Format swapChainImageFormat)
@@ -246,16 +275,16 @@ public static class RenderHelper
             SharingMode = SharingMode.Exclusive,
             Flags = default,
         };
-        _ = data.vk.CreateBuffer(data.deviceQueues.device, createInfo, null, out var buffer);
-        var reqs = data.vk.GetBufferMemoryRequirements(data.deviceQueues.device, buffer);
+        _ = data.vk.CreateBuffer(data.deviceQ.device, createInfo, null, out var buffer);
+        var reqs = data.vk.GetBufferMemoryRequirements(data.deviceQ.device, buffer);
         MemoryAllocateInfo allocateInfo = new()
         {
             SType = StructureType.MemoryAllocateInfo,
             AllocationSize = reqs.Size,
             MemoryTypeIndex = FindMemoryType(data, (int)reqs.MemoryTypeBits, memoryPropertyFlags)
         };
-        _ = data.vk.AllocateMemory(data.deviceQueues.device, allocateInfo, null, out var memory);
-        _ = data.vk.BindBufferMemory(data.deviceQueues.device, buffer, memory, 0);
+        _ = data.vk.AllocateMemory(data.deviceQ.device, allocateInfo, null, out var memory);
+        _ = data.vk.BindBufferMemory(data.deviceQ.device, buffer, memory, 0);
         return (buffer, memory);
     }
 
@@ -265,13 +294,13 @@ public static class RenderHelper
         var res = CreateBufferAndMemory(data, size, BufferUsageFlags.VertexBufferBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit);
 
         void* datap;
-        data.vk.MapMemory(data.deviceQueues.device, res.memory, 0, size, 0, &datap);
+        data.vk.MapMemory(data.deviceQ.device, res.memory, 0, size, 0, &datap);
 
         Unsafe.CopyBlockUnaligned(ref Unsafe.AsRef<byte>(datap),
             ref Unsafe.As<Vertex, byte>(ref MemoryMarshal.GetArrayDataReference(vertices)),
             size);
 
-        data.vk.UnmapMemory(data.deviceQueues.device, res.memory);
+        data.vk.UnmapMemory(data.deviceQ.device, res.memory);
         return res;
     }
 
@@ -281,13 +310,13 @@ public static class RenderHelper
         var res = CreateBufferAndMemory(data, size, BufferUsageFlags.IndexBufferBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit);
 
         void* datap;
-        data.vk.MapMemory(data.deviceQueues.device, res.memory, 0, size, 0, &datap);
+        data.vk.MapMemory(data.deviceQ.device, res.memory, 0, size, 0, &datap);
 
         Unsafe.CopyBlockUnaligned(ref Unsafe.AsRef<byte>(datap),
             ref Unsafe.As<uint, byte>(ref MemoryMarshal.GetArrayDataReference(indices)),
             size);
 
-        data.vk.UnmapMemory(data.deviceQueues.device, res.memory);
+        data.vk.UnmapMemory(data.deviceQ.device, res.memory);
         return res;
     }
 
@@ -411,7 +440,7 @@ public static class RenderHelper
             SetLayoutCount = (uint)setLayouts.Length,
             PSetLayouts = layouts,
         };
-        _ = data.vk.CreatePipelineLayout(data.deviceQueues.device, pipelineLayoutInfo, null, out var pipelineLayout);
+        _ = data.vk.CreatePipelineLayout(data.deviceQ.device, pipelineLayoutInfo, null, out var pipelineLayout);
 
         GraphicsPipelineCreateInfo pipelineInfo = new()
         {
@@ -431,7 +460,7 @@ public static class RenderHelper
             Subpass = 0,
             BasePipelineHandle = default,
         };
-        _ = data.vk.CreateGraphicsPipelines(data.deviceQueues.device, default, 1, pipelineInfo, null, out var graphicsPipeline);
+        _ = data.vk.CreateGraphicsPipelines(data.deviceQ.device, default, 1, pipelineInfo, null, out var graphicsPipeline);
         return (graphicsPipeline, pipelineLayout);
     }
 
@@ -473,7 +502,7 @@ public static class RenderHelper
             PPoolSizes = &poolSize,
             MaxSets = descriptorCount,
         };
-        _ = data.vk.CreateDescriptorPool(data.deviceQueues.device, poolInfo, null, out var result);
+        _ = data.vk.CreateDescriptorPool(data.deviceQ.device, poolInfo, null, out var result);
         return result;
     }
 
@@ -486,7 +515,7 @@ public static class RenderHelper
             DescriptorSetCount = 1,
             PSetLayouts = &descriptorSetLayout,
         };
-        _ = data.vk.AllocateDescriptorSets(data.deviceQueues.device, allocateInfo, out var result);
+        _ = data.vk.AllocateDescriptorSets(data.deviceQ.device, allocateInfo, out var result);
         return result;
     }
 
@@ -507,7 +536,7 @@ public static class RenderHelper
             DescriptorCount = 1,
             PBufferInfo = &bufferInfo,
         };
-        data.vk.UpdateDescriptorSets(data.deviceQueues.device, 1, descriptorWrite, 0, null);
+        data.vk.UpdateDescriptorSets(data.deviceQ.device, 1, descriptorWrite, 0, null);
     }
 
     internal static unsafe CommandBuffer CreateCommandBuffer(this RenderBase data, CommandPool cmdPool)
@@ -520,26 +549,36 @@ public static class RenderHelper
             CommandBufferCount = 1,
         };
         CommandBuffer commandBuffer;
-        _ = data.vk.AllocateCommandBuffers(data.deviceQueues.device, allocInfo, &commandBuffer);
+        _ = data.vk.AllocateCommandBuffers(data.deviceQ.device, allocInfo, &commandBuffer);
         return commandBuffer;
     }
 
     public static unsafe DescriptorSetLayout CreateDescriptorSetLayout(RenderBase data)
     {
-        DescriptorSetLayoutBinding binding = new()
+        var bindings = stackalloc DescriptorSetLayoutBinding[]
         {
-            Binding = 0,
-            DescriptorCount = 1,
-            DescriptorType = DescriptorType.StorageBuffer,
-            StageFlags = ShaderStageFlags.VertexBit,
+            new()
+            {
+                Binding = 0,
+                DescriptorCount = 1,
+                DescriptorType = DescriptorType.StorageBuffer,
+                StageFlags = ShaderStageFlags.VertexBit,
+            },
+            new()
+            {
+                Binding = 1,
+                DescriptorCount = 1,
+                DescriptorType = DescriptorType.StorageBuffer,
+                StageFlags = ShaderStageFlags.VertexBit,
+            }
         };
         DescriptorSetLayoutCreateInfo createInfo = new()
         {
             SType = StructureType.DescriptorSetLayoutCreateInfo,
-            BindingCount = 1,
-            PBindings = &binding,
+            BindingCount = 2,
+            PBindings = bindings,
         };
-        _ = data.vk.CreateDescriptorSetLayout(data.deviceQueues.device, &createInfo, null, out DescriptorSetLayout setLayout);
+        _ = data.vk.CreateDescriptorSetLayout(data.deviceQ.device, &createInfo, null, out DescriptorSetLayout setLayout);
         return setLayout;
     }
 
@@ -558,7 +597,7 @@ public static class RenderHelper
             PBindings = &binding,
             BindingCount = 1,
         };
-        _ = data.vk.CreateDescriptorSetLayout(data.deviceQueues.device, &createInfo, null, out DescriptorSetLayout setLayout);
+        _ = data.vk.CreateDescriptorSetLayout(data.deviceQ.device, &createInfo, null, out DescriptorSetLayout setLayout);
         return setLayout;
     }
 

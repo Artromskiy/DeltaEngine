@@ -43,20 +43,24 @@ internal class Renderer : BaseRenderer
     private readonly DeviceMemory _indexBufferMemory;
 
     private readonly World _world;
-    private readonly GpuMappedSystem<TransformMapper, Transform, TrsData> _TrsDatas;
+    private readonly GpuMappedSystem<Transform> _TrsDatas;
+
+    private readonly GpuMappedChilds<Transform, Transform> _TrsToTrsHierarchy;
+
     private readonly GpuMappedSystem<RenderMapper, Render, RendData> _RendDatas;
 
     private readonly Fence _TRSCopyFence;
     private readonly Semaphore _TRSCopySemaphore;
 
     private CommandBuffer _TRSCopyCmdBuffer;
+    private CommandBuffer _TRSTRSCopyCmdBuffer;
 
     public Renderer(World world, string appName) : base(appName)
     {
         _world = world;
-        _TrsDatas = new GpuMappedSystem<TransformMapper, Transform, TrsData>(_world, _rendererData);
+        _TrsDatas = new GpuMappedSystem<Transform>(_world, _rendererData);
         _RendDatas = new GpuMappedSystem<RenderMapper, Render, RendData>(_world, _rendererData);
-
+        _TrsToTrsHierarchy = new GpuMappedChilds<Transform, Transform>(_world, _rendererData);
 
         deltaLetterVerticesUnindexed = new Vertex[deltaLetterIndices.Length];
         for (int i = 0; i < deltaLetterIndices.Length; i++)
@@ -65,7 +69,8 @@ internal class Renderer : BaseRenderer
         (_vertexBuffer, _vertexBufferMemory) = RenderHelper.CreateVertexBuffer(_rendererData, deltaLetterVertices);
         (_indexBuffer, _indexBufferMemory) = RenderHelper.CreateIndexBuffer(_rendererData, deltaLetterIndices);
 
-        _TRSCopyCmdBuffer = RenderHelper.CreateCommandBuffer(_rendererData, _rendererData.deviceQueues.transferCmdPool);
+        _TRSCopyCmdBuffer = RenderHelper.CreateCommandBuffer(_rendererData, _rendererData.deviceQ.transferCmdPool);
+        _TRSTRSCopyCmdBuffer = RenderHelper.CreateCommandBuffer(_rendererData, _rendererData.deviceQ.transferCmdPool);
         _TRSCopyFence = RenderHelper.CreateFence(_rendererData, true);
         _TRSCopySemaphore = RenderHelper.CreateSemaphore(_rendererData);
     }
@@ -89,19 +94,23 @@ internal class Renderer : BaseRenderer
     public override void PreSync()
     {
         _copyBuffer.Start();
-        _rendererData.vk.WaitForFences(_rendererData.deviceQueues.device, 1, _TRSCopyFence, true, ulong.MaxValue);
+        _rendererData.vk.WaitForFences(_rendererData.deviceQ.device, 1, _TRSCopyFence, true, ulong.MaxValue);
         _rendererData.vk.ResetCommandBuffer(_TRSCopyCmdBuffer, 0);
         _copyBuffer.Stop();
 
         _updateDirty.Start();
-        _TrsDatas.UpdateDirty();
+        var range = _TrsDatas.UpdateDirty(); // TODO use range to copy data to frame partially
+        //_RendDatas.UpdateDirty();
         _updateDirty.Stop();
     }
 
     public sealed override void PostSync()
     {
         _copyBufferSetup.Start();
+        // TODO use bulk copy command for all dirty buffers. Generally it should be up to frame or base renderer to collect changes and select needed data ranges to copy in appropriate frame buffers
         _rendererData.CopyBuffer(_TrsDatas, GetTRSBuffer(), _TRSCopyFence, _TRSCopySemaphore, _TRSCopyCmdBuffer);
+        _rendererData.CopyBuffer(_TrsToTrsHierarchy, GetParentsBuffer(), _TRSTRSCopyCmdBuffer);
+        _rendererData.vk.ResetCommandBuffer(_TRSTRSCopyCmdBuffer, 0);
         _copyBufferSetup.Stop();
 
         AddSemaphore(_TRSCopySemaphore);
