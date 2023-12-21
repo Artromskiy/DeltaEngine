@@ -1,9 +1,8 @@
-﻿using DeltaEngine.ECS;
+﻿using Delta.ECS;
 using System;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 
-namespace DeltaEngine.Rendering;
+namespace Delta.Rendering;
 internal static class ComponentMappers
 {
     internal struct TrsData
@@ -18,17 +17,6 @@ internal static class ComponentMappers
         public Guid shader;
         public Guid material;
         public Guid mesh;
-    }
-
-    internal struct TransformMapper : IGpuMapper<Transform, TrsData>
-    {
-        [MethodImpl(Inl)]
-        public readonly TrsData Map(scoped ref Transform from) => new()
-        {
-            position = from._position,
-            rotation = from.Rotation,
-            scale = from._scale
-        };
     }
 
     internal struct RenderMapper : IGpuMapper<Render, RendData>

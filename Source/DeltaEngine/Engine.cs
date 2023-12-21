@@ -1,14 +1,15 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
 using Arch.Core.Utils;
-using DeltaEngine.Files;
-using DeltaEngine.Rendering;
-using DeltaEngine.Scenes;
+using Delta.ECS;
+using Delta.Files;
+using Delta.Rendering;
+using Delta.Scenes;
 using System;
 using System.Diagnostics;
 using System.Numerics;
 
-namespace DeltaEngine;
+namespace Delta;
 
 public sealed class Engine : IDisposable
 {
@@ -35,6 +36,7 @@ public sealed class Engine : IDisposable
         //mi.Import("C:\\Users\\FLOW\\Downloads\\Ships_parts_test (1).fbx");
 
         var world = InitWorld();
+        new JobScheduler.JobScheduler("WorkerThread");
         _renderer = new Renderer(world, "Delta Engine");
         _scene = new Scene(world, _renderer);
     }
@@ -44,11 +46,11 @@ public sealed class Engine : IDisposable
         var world = World.Create();
         world.Reserve([Component<Transform>.ComponentType, Component<ChildOf>.ComponentType], N);
         for (int i = 0; i < N; i++)
-            world.Create(new Transform() { Scale = Vector3.One, Rotation = Quaternion.Identity });
+            world.Create(new Transform() { Scale = Vector3.One });
         var transforms = new Entity[N];
         world.GetEntities(new QueryDescription().WithAll<Transform>(), transforms);
         for (int i = 0; i < N / 2; i++)
-            transforms[i].Add(new ChildOf() { parent = world.Reference(transforms[i + N / 2]) });
+            transforms[i].Add(new ChildOf() { parent = world.Reference(transforms[i + (N / 2)]) });
         return world;
     }
 

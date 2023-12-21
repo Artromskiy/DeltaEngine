@@ -1,6 +1,6 @@
 ﻿using Silk.NET.Vulkan;
 
-namespace DeltaEngine.Rendering;
+namespace Delta.Rendering;
 public readonly struct MemoryDetails
 {
     public readonly PhysicalDeviceMemoryProperties memoryProperties;

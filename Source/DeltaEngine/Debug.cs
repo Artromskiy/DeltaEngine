@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
-namespace DeltaEngine;
+namespace Delta;
 internal static class Debug
 {
     [Conditional("ASSERT")]

@@ -1,5 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
-namespace DeltaEngine;
+namespace Delta;
 public static class Attributes
 {
     public const MethodImplOptions Inl = MethodImplOptions.AggressiveInlining;

@@ -1,10 +1,10 @@
 ﻿using Arch.Core;
-using DeltaEngine.Collections;
-using DeltaEngine.Rendering;
+using Delta.Rendering;
 using System;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
-namespace DeltaEngine.ECS;
+namespace Delta.ECS;
 internal class GpuMappedSystem<M, C, G> : StorageDynamicArray<G>
     where M : struct, IGpuMapper<C, G> // Mapper
     where G : unmanaged                // GpuStruct
@@ -31,6 +31,7 @@ internal class GpuMappedSystem<M, C, G> : StorageDynamicArray<G>
     public GpuMappedSystem(World world, RenderBase renderData) : base(renderData, (uint)world.CountEntities(_all))
     {
         _taken = new bool[Length];
+        _taken[0] = true;
         _versn = new uint[Length];
         _stack = new uint[Length];
 
@@ -40,8 +41,8 @@ internal class GpuMappedSystem<M, C, G> : StorageDynamicArray<G>
         _world.Add<VersId<C>>(_all);
         InlineCreator creator = new(GetWriter());
         _world.InlineQuery<InlineCreator, C, VersId<C>>(_withId, ref creator);
-        Array.Fill(_taken, true, 0, Count);
-        _lastFree = (uint)Count;
+        Array.Fill(_taken, true, 1, Count);
+        _lastFree = (uint)Count + 1;
     }
 
     public double GetFragmentationMetric()
@@ -70,8 +71,8 @@ internal class GpuMappedSystem<M, C, G> : StorageDynamicArray<G>
         _world.InlineParallelQuery<InlineUpdater, C, VersId<C>>(_withIdDirty, ref updater);
         InlineMinMax range = new();
         _world.InlineQuery<InlineMinMax, VersId<C>>(_withIdDirty, ref range);
-        Flush(range.Min, range.Max);
-        return (range.Min, range.Max);
+        Flush(0, 0);
+        return (0, 0);
     }
 
     [MethodImpl(Inl)]
@@ -144,21 +145,22 @@ internal class GpuMappedSystem<M, C, G> : StorageDynamicArray<G>
     [MethodImpl(Inl)]
     private void PushStack(uint index)
     {
+        Debug.Assert(index != 0 && index < Length);
         _stack[_stackSize++] = index;
     }
 
     [MethodImpl(Inl)]
     private void CheckIndex(uint index)
     {
-        if (index >= _lastFree || !_taken[index])
+        if (index == 0 || index >= _lastFree || !_taken[index])
             Thrower.ThrowOnGet(index);
     }
 
     [MethodImpl(Inl)]
     private void CheckVersion(VersId<C> versId)
     {
-        if (_versn[versId.id] != versId.version)
-            Thrower.ThrowOnVersion(versId.version);
+        if (_versn[versId.id] != versId.vs)
+            Thrower.ThrowOnVersion(versId.vs);
     }
 
 
@@ -170,11 +172,12 @@ internal class GpuMappedSystem<M, C, G> : StorageDynamicArray<G>
 
     private struct InlineCreator(Writer writer) : IForEach<C, VersId<C>>
     {
-        private uint index;
+        private uint index = 0;
         public void Update(ref C cmp, ref VersId<C> vers)
         {
+            var index = Interlocked.Increment(ref this.index);
             writer[index] = _mapper.Map(ref cmp);
-            vers = new(index++, 0);
+            vers = new(index, 0);
         }
     }
 
@@ -186,6 +189,7 @@ internal class GpuMappedSystem<M, C, G> : StorageDynamicArray<G>
             writer[vers.id] = _mapper.Map(ref cmp);
         }
     }
+
     private struct InlineMinMax() : IForEach<VersId<C>>
     {
         private uint min = uint.MaxValue;

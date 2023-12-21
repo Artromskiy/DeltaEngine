@@ -1,7 +1,7 @@
 ﻿using Silk.NET.SDL;
 using Silk.NET.Vulkan;
 
-namespace DeltaEngine;
+namespace Delta;
 
 /// <summary>
 /// Helps debuggins condition results

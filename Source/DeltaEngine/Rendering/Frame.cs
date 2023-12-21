@@ -3,7 +3,7 @@ using System;
 using System.Diagnostics;
 using Buffer = Silk.NET.Vulkan.Buffer;
 
-namespace DeltaEngine.Rendering;
+namespace Delta.Rendering;
 internal class Frame : IDisposable
 {
     private readonly RenderBase _rendererData;
@@ -133,7 +133,7 @@ internal class Frame : IDisposable
             RenderHelper.BindBuffersToDescriptorSet(_rendererData, _descriptorSet, _matricesDynamicBuffer.GetBuffer(), 0, DescriptorType.StorageBuffer);
             _matricesDynamicBuffer.ChangedBuffer = false;
         }
-        if(_parentsDynamicBuffer.ChangedBuffer)
+        if (_parentsDynamicBuffer.ChangedBuffer)
         {
             RenderHelper.BindBuffersToDescriptorSet(_rendererData, _descriptorSet, _parentsDynamicBuffer.GetBuffer(), 1, DescriptorType.StorageBuffer);
             _parentsDynamicBuffer.ChangedBuffer = false;
@@ -215,10 +215,10 @@ internal class Frame : IDisposable
 
         _rendererData.vk.CmdBindVertexBuffers(commandBuffer, 0, 1, buffer, &offsets);
         _rendererData.vk.CmdBindIndexBuffer(commandBuffer, ibo, 0, IndexType.Uint32);
-        var matrices = this._descriptorSet;
+        var matrices = _descriptorSet;
         _rendererData.vk.CmdBindDescriptorSets(commandBuffer, PipelineBindPoint.Graphics, layout, 0, 1, &matrices, 0, 0);
 
-        _rendererData.vk.CmdDrawIndexed(commandBuffer, _indicesLength, _instances, 0, 0, 0);
+        _rendererData.vk.CmdDrawIndexed(commandBuffer, _indicesLength, _instances, 0, 0, 1);
         //_rendererData.vk.CmdDraw(commandBuffer, _verticesLength, _instances, 0, 0);
         _rendererData.vk.CmdEndRenderPass(commandBuffer);
 

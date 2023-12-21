@@ -1,7 +1,7 @@
 ﻿using System.Collections.Immutable;
 using System.Text.Json.Serialization;
 
-namespace DeltaEngine.Files;
+namespace Delta.Files;
 
 public class MeshData : IAsset
 {

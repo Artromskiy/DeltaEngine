@@ -5,7 +5,7 @@ using Silk.NET.Vulkan.Extensions.KHR;
 using System;
 using System.Runtime.InteropServices;
 
-namespace DeltaEngine.Rendering;
+namespace Delta.Rendering;
 
 public sealed class RenderBase : IDisposable
 {
@@ -19,18 +19,20 @@ public sealed class RenderBase : IDisposable
     public readonly SurfaceFormatKHR format;
 
     public SwapChainSupportDetails swapChainSupport;
-    public readonly MemoryDetails gpuMemory;
+    public readonly PhysicalDeviceMemoryProperties memoryProperties;
 
     public readonly DeviceQueues deviceQ;
 
     public readonly DescriptorPool descriptorPool;
+
+    private const string RendererName = "Delta Renderer";
 
     private static readonly string[] validationLayers = new[]
     {
         "VK_LAYER_KHRONOS_validation"
     };
 
-    public unsafe RenderBase(Api api, Window* window, string[] deviceExtensions, string appName, string rendererName, SurfaceFormatKHR targetFormat)
+    public unsafe RenderBase(Api api, Window* window, string[] deviceExtensions, string appName, SurfaceFormatKHR targetFormat)
     {
         vk = api.vk;
 
@@ -46,13 +48,13 @@ public sealed class RenderBase : IDisposable
         if (debugUtilsSupported)
             PopulateDebugMessengerCreateInfo(ref debugCreateInfo);
 
-        instance = RenderHelper.CreateVkInstance(vk, appName, rendererName, instanceExtensions, layers, debugUtilsSupported ? &debugCreateInfo : null);
+        instance = RenderHelper.CreateVkInstance(vk, appName, RendererName, instanceExtensions, layers, debugUtilsSupported ? &debugCreateInfo : null);
         _ = vk.TryGetInstanceExtension(instance, out khrsf);
 
         surface = RenderHelper.CreateSurface(api.sdl, window, instance);
         gpu = RenderHelper.PickPhysicalDevice(vk, instance, surface, khrsf, deviceExtensions);
 
-        gpuMemory = new MemoryDetails(vk, gpu);
+        memoryProperties = vk.GetPhysicalDeviceMemoryProperties(gpu);
 
         deviceQ = RenderHelper.CreateLogicalDevice(vk, gpu, surface, khrsf, deviceExtensions);
 

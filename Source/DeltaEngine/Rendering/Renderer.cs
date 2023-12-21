@@ -1,15 +1,13 @@
 ﻿using Arch.Core;
-using DeltaEngine.ECS;
+using Delta.ECS;
 using Silk.NET.Vulkan;
-using System;
-using System.Diagnostics;
 using System.Numerics;
+using static Delta.Rendering.ComponentMappers;
 using Buffer = Silk.NET.Vulkan.Buffer;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
-using static DeltaEngine.Rendering.ComponentMappers;
 
 
-namespace DeltaEngine.Rendering;
+namespace Delta.Rendering;
 internal class Renderer : BaseRenderer
 {
     private static readonly Vector3 r = new(1.0f, 0.0f, 0.0f);
@@ -75,21 +73,6 @@ internal class Renderer : BaseRenderer
         _TRSCopySemaphore = RenderHelper.CreateSemaphore(_rendererData);
     }
 
-    private readonly Stopwatch _updateDirty = new();
-    private readonly Stopwatch _copyBufferSetup = new();
-    private readonly Stopwatch _copyBuffer = new();
-
-    public TimeSpan GetUpdateMetric => _updateDirty.Elapsed;
-    public TimeSpan GetCopySetupMetric => _copyBufferSetup.Elapsed;
-    public TimeSpan GetCopyMetric => _copyBuffer.Elapsed;
-
-    public override void ClearCounters()
-    {
-        base.ClearCounters();
-        _updateDirty.Reset();
-        _copyBuffer.Reset();
-        _copyBufferSetup.Reset();
-    }
 
     public override void PreSync()
     {

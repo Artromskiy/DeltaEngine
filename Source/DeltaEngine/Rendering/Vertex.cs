@@ -2,7 +2,7 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
 
-namespace DeltaEngine.Rendering;
+namespace Delta.Rendering;
 [StructLayout(LayoutKind.Sequential)]
 public readonly struct Vertex
 {

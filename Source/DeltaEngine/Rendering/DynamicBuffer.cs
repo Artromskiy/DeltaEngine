@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using Buffer = Silk.NET.Vulkan.Buffer;
 
 
-namespace DeltaEngine.Rendering;
+namespace Delta.Rendering;
 internal class DynamicBuffer
 {
     private Buffer _buffer;

@@ -1,6 +1,8 @@
 ﻿using System;
 
-namespace DeltaEngine.Files;
+namespace Delta.Files;
+
+public interface IAsset { }
 
 public readonly struct GuidAsset<T> where T : IAsset
 {

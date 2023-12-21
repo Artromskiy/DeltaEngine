@@ -3,7 +3,7 @@ using Silk.NET.Vulkan.Extensions.KHR;
 using System;
 using System.Collections.Immutable;
 
-namespace DeltaEngine.Rendering;
+namespace Delta.Rendering;
 internal class SwapChain : IDisposable
 {
     public readonly ImmutableArray<Image> images;
@@ -26,7 +26,7 @@ internal class SwapChain : IDisposable
         var indiciesDetails = data.deviceQ.queueIndicesDetails;
 
         format = RenderHelper.ChooseSwapSurfaceFormat(swSupport.Formats, targetFormat);
-        var presentMode = RenderHelper.ChoosePresentMode(swSupport.PresentModes);
+        var presentMode = swSupport.PresentModes.Contains(PresentModeKHR.ImmediateKhr) ? PresentModeKHR.ImmediateKhr : PresentModeKHR.FifoKhr;
         extent = RenderHelper.ChooseSwapExtent(size.w, size.h, swSupport.Capabilities);
 
         uint maxImageCount = swSupport.Capabilities.MaxImageCount;

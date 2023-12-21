@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace DeltaEngine.Rendering;
+namespace Delta.Rendering;
 public partial class BaseRenderer
 {
     private readonly Stopwatch _waitSync = new();
@@ -10,13 +10,28 @@ public partial class BaseRenderer
     public TimeSpan GetSyncMetric => _waitSync.Elapsed;
     public double SkippedPercent => (double)_framesSkip / _framesCount;
 
+
+    protected readonly Stopwatch _updateDirty = new();
+    protected readonly Stopwatch _copyBufferSetup = new();
+    protected readonly Stopwatch _copyBuffer = new();
+
+    public TimeSpan GetUpdateMetric => _updateDirty.Elapsed;
+    public TimeSpan GetCopySetupMetric => _copyBufferSetup.Elapsed;
+    public TimeSpan GetCopyMetric => _copyBuffer.Elapsed;
+
+
     public virtual void ClearCounters()
     {
+        _updateDirty.Reset();
+        _copyBuffer.Reset();
+        _copyBufferSetup.Reset();
+
         _waitSync.Reset();
         _framesCount = 0;
         _framesSkip = 0;
         foreach (var frame in _frames)
             frame.ClearMetrics();
+
     }
     public TimeSpan GetAcquireMetric()
     {

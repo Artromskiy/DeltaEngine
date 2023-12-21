@@ -1,11 +1,11 @@
-﻿using DeltaEngine.Rendering;
+﻿using Delta.Rendering;
 using Silk.NET.Assimp;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 
-namespace DeltaEngine.Files;
+namespace Delta.Files;
 
 internal class ModelImporter : IAssetImporter, IDisposable
 {

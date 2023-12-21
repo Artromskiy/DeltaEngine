@@ -1,6 +1,6 @@
 ﻿using System.Collections.Immutable;
 
-namespace DeltaEngine.Files;
+namespace Delta.Files;
 internal interface IAssetImporter
 {
     public ImmutableHashSet<string> FileFormats { get; }

@@ -1,4 +1,4 @@
-﻿using DeltaEngine;
+﻿using Delta;
 using System.Diagnostics;
 
 try
@@ -18,7 +18,7 @@ try
         sw.Stop();
         ms += sw.ElapsedTicks;
         c++;
-        if (c == 100)
+        if (c == 1000)
         {
             ms /= c;
             var sy = eng.GetSyncRendererMetric / c;

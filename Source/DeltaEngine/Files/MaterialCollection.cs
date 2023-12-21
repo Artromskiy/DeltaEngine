@@ -1,8 +1,8 @@
-﻿using DeltaEngine.Rendering;
+﻿using Delta.Rendering;
 using System;
 using System.Collections.Generic;
 
-namespace DeltaEngine.Files;
+namespace Delta.Files;
 
 internal class MaterialCollection
 {

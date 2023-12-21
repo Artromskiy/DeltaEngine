@@ -4,7 +4,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using Buffer = Silk.NET.Vulkan.Buffer;
 
-namespace DeltaEngine.Rendering;
+namespace Delta.Rendering;
 internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
 {
     private nint _pData;
@@ -27,7 +27,7 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
     public unsafe StorageDynamicArray(RenderBase renderBase, uint length)
     {
         _renderBase = renderBase;
-        _length = Math.Max(1, BitOperations.RoundUpToPowerOf2(length));
+        _length = Math.Max(1, BitOperations.RoundUpToPowerOf2(length + 1));
 
         ulong size = (ulong)(sizeof(T) * _length);
         CreateBuffer(ref size, out _buffer, out _memory, out _pData);
@@ -64,7 +64,7 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
             [MethodImpl(Inl)]
             get
             {
-                Debug.Assert(index >= 0 && index < _length);
+                Debug.Assert(index > 0 && index < _length);
                 return ref Unsafe.Add(ref Unsafe.AsRef<T>((void*)_pData), index);
             }
         }

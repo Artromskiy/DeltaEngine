@@ -1,20 +1,14 @@
-﻿using Arch.Core;
-using DeltaEngine.ECS;
+﻿using Delta.ECS;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
-namespace DeltaEngine;
+namespace Delta;
 
 public struct Transform : IDirty
 {
     internal Vector4 _position;
     public Quaternion Rotation;
     internal Vector4 _scale;
-
-    static Transform()
-    {
-
-    }
 
     /// <summary>
     /// Local Position
@@ -26,6 +20,7 @@ public struct Transform : IDirty
         [MethodImpl(Inl)]
         set => _position = new(value, 0);
     }
+
     /// <summary>
     /// Local Scale
     /// </summary>
@@ -45,9 +40,4 @@ public struct Transform : IDirty
         get => Matrix4x4.Transform(Matrix4x4.CreateScale(Scale), Rotation) * Matrix4x4.CreateTranslation(Position);
     }
 
-}
-
-internal struct ChildOf
-{
-    public EntityReference parent;
 }

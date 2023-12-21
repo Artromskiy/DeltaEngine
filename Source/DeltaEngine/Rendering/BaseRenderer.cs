@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using Buffer = Silk.NET.Vulkan.Buffer;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 
-namespace DeltaEngine.Rendering;
+namespace Delta.Rendering;
 
 public abstract unsafe partial class BaseRenderer : IDisposable, IJob
 {
@@ -15,7 +15,6 @@ public abstract unsafe partial class BaseRenderer : IDisposable, IJob
     private readonly Window* _window;
     internal readonly RenderBase _rendererData;
 
-    private const string RendererName = "Delta Renderer";
     private readonly string _appName;
 
     private readonly Pipeline graphicsPipeline;
@@ -25,17 +24,12 @@ public abstract unsafe partial class BaseRenderer : IDisposable, IJob
     private readonly RenderPass renderPass;
     private readonly PipelineLayout pipelineLayout;
 
-    private int _currentFrame = 0;
-
-    private Queue<Frame> _frames;
-
     private readonly string[] deviceExtensions = [KhrSwapchain.ExtensionName];
     private readonly SurfaceFormatKHR targetFormat = new(Format.B8G8R8A8Srgb, ColorSpaceKHR.SpaceAdobergbLinearExt);
 
-    private Silk.NET.SDL.Event emptySdlEvent = new();
+    private readonly Queue<Frame> _frames = [];
 
-    private const uint Buffering = 3;
-
+    private const uint Buffering = 1;
     private const bool CanSkipRender = true;
     private const bool RenderLessMode = false;
 
@@ -46,12 +40,12 @@ public abstract unsafe partial class BaseRenderer : IDisposable, IJob
         _appName = appName;
         _api = new();
         _window = RenderHelper.CreateWindow(_api.sdl, _appName);
-        _rendererData = new RenderBase(_api, _window, deviceExtensions, _appName, RendererName, targetFormat);
+        _rendererData = new RenderBase(_api, _window, deviceExtensions, _appName, targetFormat);
         renderPass = RenderHelper.CreateRenderPass(_api, _rendererData.deviceQ.device, _rendererData.format.Format);
         swapChain = new SwapChain(_api, _rendererData, renderPass, GetSdlWindowSize(), Buffering, _rendererData.format);
         descriptorSetLayout = RenderHelper.CreateDescriptorSetLayout(_rendererData);
         (graphicsPipeline, pipelineLayout) = RenderHelper.CreateGraphicsPipeline(_rendererData, renderPass, [descriptorSetLayout]);
-        _frames = [];
+
         for (int i = 0; i < swapChain.imageCount; i++)
             _frames.Enqueue(new Frame(_rendererData, swapChain, renderPass, descriptorSetLayout));
     }
@@ -66,14 +60,11 @@ public abstract unsafe partial class BaseRenderer : IDisposable, IJob
 
         PreSync();
 
-        _skippedFrame = RenderLessMode || (CanSkipRender && !CurrentFrame.Synced());
-
-        if (_skippedFrame)
+        if (_skippedFrame = RenderLessMode || (CanSkipRender && !CurrentFrame.Synced()))
             return;
 
         _waitSync.Start();
         CurrentFrame.Sync();
-        //_frames[_currentFrame].Sync();
         _waitSync.Stop();
 
         PostSync();
@@ -100,35 +91,15 @@ public abstract unsafe partial class BaseRenderer : IDisposable, IJob
         }
 
         CurrentFrame.Draw(graphicsPipeline, pipelineLayout, out var resize);
-        //_frames[_currentFrame].Draw(graphicsPipeline, pipelineLayout, out var resize);
         if (resize)
             OnResize();
     }
 
-    internal DynamicBuffer GetTRSBuffer()
-    {
-        return CurrentFrame.GetTRSBuffer();
-    }
-
-    internal DynamicBuffer GetParentsBuffer()
-    {
-        return CurrentFrame.GEtParentsBuffer();
-    }
-
-    protected void SetBuffers(Buffer vbo, Buffer ibo, uint indicesCount, uint verticesCount)
-    {
-        CurrentFrame.SetBuffers(vbo, ibo, indicesCount, verticesCount);
-    }
-
-    protected void SetInstanceCount(uint instances)
-    {
-        CurrentFrame.SetInstanceCount(instances);
-    }
-
-    protected void AddSemaphore(Semaphore semaphore)
-    {
-        CurrentFrame.AddSemaphore(semaphore);
-    }
+    internal DynamicBuffer GetTRSBuffer() => CurrentFrame.GetTRSBuffer();
+    internal DynamicBuffer GetParentsBuffer() => CurrentFrame.GEtParentsBuffer();
+    protected void SetBuffers(Buffer vbo, Buffer ibo, uint indicesCount, uint verticesCount) => CurrentFrame.SetBuffers(vbo, ibo, indicesCount, verticesCount);
+    protected void SetInstanceCount(uint instances) => CurrentFrame.SetInstanceCount(instances);
+    protected void AddSemaphore(Semaphore semaphore) => CurrentFrame.AddSemaphore(semaphore);
 
     public unsafe void Dispose()
     {

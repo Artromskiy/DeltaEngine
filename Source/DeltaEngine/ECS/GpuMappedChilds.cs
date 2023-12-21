@@ -1,13 +1,12 @@
 ﻿using Arch.Core;
-using DeltaEngine.Collections;
-using DeltaEngine.Rendering;
+using Delta.Rendering;
 
-namespace DeltaEngine.ECS;
+namespace Delta.ECS;
 internal class GpuMappedChilds<C, P> : StorageDynamicArray<uint>
 {
     private static readonly QueryDescription _all = new QueryDescription().WithAll<VersId<C>>();
     private static readonly QueryDescription _direct = new QueryDescription().WithAll<VersId<C>, VersId<P>>();
-    private static readonly QueryDescription _childed = new QueryDescription().WithAll<VersId<C>, ChildOf>().WithNone<VersId<P>>();
+    private static readonly QueryDescription _childed = new QueryDescription().WithAll<VersId<C>, ChildOf>();
     private static readonly bool _skipDirect = typeof(C).Equals(typeof(P));
 
     private readonly World _world;
@@ -32,6 +31,7 @@ internal class GpuMappedChilds<C, P> : StorageDynamicArray<uint>
             writer[child.id] = parent.id;
         }
     }
+
     private readonly struct ChildedInlineCreator(Writer writer) : IForEach<VersId<C>, ChildOf>
     {
         public readonly void Update(ref VersId<C> child, ref ChildOf childOf)

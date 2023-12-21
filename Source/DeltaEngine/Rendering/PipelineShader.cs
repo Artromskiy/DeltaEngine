@@ -5,7 +5,7 @@ using System;
 using System.IO;
 
 
-namespace DeltaEngine.Rendering;
+namespace Delta.Rendering;
 
 public readonly struct PipelineShader : IDisposable
 {

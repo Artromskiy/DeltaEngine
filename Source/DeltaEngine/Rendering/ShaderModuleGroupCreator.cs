@@ -2,7 +2,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace DeltaEngine.Rendering;
+namespace Delta.Rendering;
 
 public static class ShaderModuleGroupCreator
 {

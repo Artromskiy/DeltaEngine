@@ -4,7 +4,7 @@ using Silk.NET.Vulkan.Extensions.KHR;
 using System;
 using System.Collections.Immutable;
 
-namespace DeltaEngine.Rendering;
+namespace Delta.Rendering;
 
 public readonly struct QueueFamilyIndiciesDetails
 {
@@ -54,7 +54,7 @@ public readonly struct QueueFamilyIndiciesDetails
                 graphicsIndex = i;
                 graphicsQueueNum = bookedFamilies[i]++;
             }
-            if (bookedFamilies[i] < props.QueueCount && i!= graphicsIndex && presentSupport && presentIndex < 0)
+            if (bookedFamilies[i] < props.QueueCount && i != graphicsIndex && presentSupport && presentIndex < 0)
             {
                 presentIndex = i;
                 presentQueueNum = bookedFamilies[i]++;

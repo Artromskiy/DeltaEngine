@@ -1,8 +1,8 @@
-﻿using DeltaEngine.Files;
+﻿using Delta.Rendering;
 using System.Collections.Generic;
 using System.Numerics;
 
-namespace DeltaEngine.Rendering;
+namespace Delta.Files;
 
 public class MaterialData : IAsset
 {

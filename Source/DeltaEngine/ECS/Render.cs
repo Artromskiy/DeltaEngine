@@ -1,9 +1,8 @@
-﻿using DeltaEngine.ECS;
-using DeltaEngine.Files;
-using DeltaEngine.Rendering;
+﻿using Delta.Files;
+using Delta.Rendering;
 using System.Runtime.CompilerServices;
 
-namespace DeltaEngine;
+namespace Delta.ECS;
 
 internal struct Render : IDirty
 {

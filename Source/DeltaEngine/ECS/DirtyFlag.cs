@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace DeltaEngine.ECS;
+namespace Delta.ECS;
 
 internal interface IDirty { }
 
@@ -87,7 +87,7 @@ internal static class DirtyExtensions
         return desc;
     }
 
-    public readonly ref  struct Impl<Iface, T>
+    public readonly ref struct Impl<Iface, T>
     {
         private static readonly bool _implements = typeof(Iface).IsAssignableFrom(typeof(T));
 

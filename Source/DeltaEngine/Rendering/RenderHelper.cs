@@ -13,7 +13,7 @@ using System.Text;
 using Buffer = Silk.NET.Vulkan.Buffer;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 
-namespace DeltaEngine.Rendering;
+namespace Delta.Rendering;
 
 public static class RenderHelper
 {
@@ -25,8 +25,8 @@ public static class RenderHelper
         | WindowFlags.Resizable
         | WindowFlags.AllowHighdpi
         | WindowFlags.Borderless
-        //| WindowFlags.AlwaysOnTop
-        //| WindowFlags.FullscreenDesktop
+   //| WindowFlags.AlwaysOnTop
+   //| WindowFlags.FullscreenDesktop
    );
 
     public static unsafe Window* CreateWindow(Sdl sdl, string title)
@@ -54,7 +54,6 @@ public static class RenderHelper
             EnabledLayerCount = (uint)layers.Length,
             PNext = instanceChain,
         };
-
         _ = vk.CreateInstance(createInfo, null, out var instance);
         Marshal.FreeHGlobal((nint)appInfo.PApplicationName);
         Marshal.FreeHGlobal((nint)appInfo.PEngineName);
@@ -323,8 +322,8 @@ public static class RenderHelper
     public static uint FindMemoryType(RenderBase data, int typeFilter, MemoryPropertyFlags properties)
     {
         int i = 0;
-        for (; i < data.gpuMemory.memoryProperties.MemoryTypeCount; i++)
-            if (Convert.ToBoolean(typeFilter & (1 << i)) && (data.gpuMemory.memoryProperties.MemoryTypes[i].PropertyFlags & properties) == properties) // some mask magic
+        for (; i < data.memoryProperties.MemoryTypeCount; i++)
+            if (Convert.ToBoolean(typeFilter & (1 << i)) && (data.memoryProperties.MemoryTypes[i].PropertyFlags & properties) == properties) // some mask magic
                 return (uint)i;
         _ = false;
         return (uint)i;
@@ -334,10 +333,10 @@ public static class RenderHelper
     {
         memoryFlagsHas = MemoryPropertyFlags.None;
         int i = 0;
-        for (; i < data.gpuMemory.memoryProperties.MemoryTypeCount; i++)
-            if (Convert.ToBoolean(typeFilter & (1 << i)) && (data.gpuMemory.memoryProperties.MemoryTypes[i].PropertyFlags & properties) == properties) // some mask magic
+        for (; i < data.memoryProperties.MemoryTypeCount; i++)
+            if (Convert.ToBoolean(typeFilter & (1 << i)) && (data.memoryProperties.MemoryTypes[i].PropertyFlags & properties) == properties) // some mask magic
             {
-                memoryFlagsHas = data.gpuMemory.memoryProperties.MemoryTypes[i].PropertyFlags;
+                memoryFlagsHas = data.memoryProperties.MemoryTypes[i].PropertyFlags;
                 return (uint)i;
             }
         _ = false;
@@ -348,7 +347,6 @@ public static class RenderHelper
     {
         using var vertShader = new PipelineShader(data, ShaderStageFlags.VertexBit, "shaders/vert.spv");
         using var fragShader = new PipelineShader(data, ShaderStageFlags.FragmentBit, "shaders/frag.spv");
-        //var groupCreator = new ShaderModuleGroupCreator();
         var stages = stackalloc PipelineShaderStageCreateInfo[2]
         {
             ShaderModuleGroupCreator.Create(vertShader),
@@ -662,24 +660,10 @@ public static class RenderHelper
         return ChooseSwapSurfaceFormat(formats, new(Format.B8G8R8A8Srgb, ColorSpaceKHR.SpaceSrgbNonlinearKhr));
     }
 
-
     public static SurfaceFormatKHR ChooseSwapSurfaceFormat(ImmutableArray<SurfaceFormatKHR> formats, SurfaceFormatKHR targetFormat)
     {
         return formats.AsSpan().Exist(f => f.Format == targetFormat.Format && f.ColorSpace == targetFormat.ColorSpace, out var format) ?
             format : formats[0];
-    }
-
-    public static PresentModeKHR ChoosePresentMode(ImmutableArray<PresentModeKHR> availablePresentModes)
-    {
-        foreach (var availablePresentMode in availablePresentModes)
-        {
-            if (availablePresentMode == PresentModeKHR.ImmediateKhr)
-            {
-                return availablePresentMode;
-            }
-        }
-
-        return PresentModeKHR.FifoKhr;
     }
 
     private static unsafe Extent2D ChooseSwapExtent(Api api, Window* window, SurfaceCapabilitiesKHR capabilities)
@@ -701,7 +685,6 @@ public static class RenderHelper
         };
     }
 
-
     private static unsafe bool IsDeviceSuitable(Vk vk, PhysicalDevice device, SurfaceKHR surface, KhrSurface khrsf, string[] neededExtensions)
     {
         var indices = new QueueFamilyIndiciesDetails(vk, surface, device, khrsf);
@@ -721,5 +704,4 @@ public static class RenderHelper
                 return false;
         return true;
     }
-
 }

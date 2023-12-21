@@ -1,10 +1,10 @@
-﻿using DeltaEngine.Files;
+﻿using Delta.Files;
 using Silk.NET.SPIRV;
 using Silk.NET.SPIRV.Cross;
 using System;
 using System.Collections.Immutable;
 
-namespace DeltaEngine.Rendering;
+namespace Delta.Rendering;
 
 public class ShaderData : IAsset
 {

@@ -4,7 +4,7 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 
-namespace DeltaEngine.Files;
+namespace Delta.Files;
 
 public class AssetImporter
 {

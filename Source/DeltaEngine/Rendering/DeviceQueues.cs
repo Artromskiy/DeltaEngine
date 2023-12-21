@@ -2,7 +2,7 @@
 using Silk.NET.Vulkan;
 using System;
 
-namespace DeltaEngine.Rendering;
+namespace Delta.Rendering;
 public readonly struct DeviceQueues
 {
     public readonly Device device;

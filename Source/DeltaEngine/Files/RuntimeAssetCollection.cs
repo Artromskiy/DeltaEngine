@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
-namespace DeltaEngine.Files;
+namespace Delta.Files;
 
 internal class RuntimeAssetCollection
 {

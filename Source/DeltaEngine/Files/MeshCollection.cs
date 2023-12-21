@@ -1,4 +1,4 @@
-﻿using DeltaEngine.Rendering;
+﻿using Delta.Rendering;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 
-namespace DeltaEngine.Files;
+namespace Delta.Files;
 internal class MeshCollection : IAssetCollection<MeshData>
 {
     private readonly Dictionary<Guid, Dictionary<VertexAttribute, WeakReference<byte[]?>>> _meshMapVariants = new();

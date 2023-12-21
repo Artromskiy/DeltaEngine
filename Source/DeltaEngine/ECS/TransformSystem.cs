@@ -2,7 +2,7 @@
 using Arch.Core.Extensions;
 using System.Numerics;
 
-namespace DeltaEngine.ECS;
+namespace Delta.ECS;
 
 internal class TransformSystem
 {
