@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using Buffer = Silk.NET.Vulkan.Buffer;
 
 namespace Delta.Rendering;
-internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
+internal unsafe class GpuArray<T> : IDisposable where T : unmanaged
 {
     private nint _pData;
     private Buffer _buffer;
@@ -19,12 +19,12 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
     private uint _length;
     private ulong _size;
 
-    protected uint Length => _length;
+    public uint Length => _length;
     public ulong Size => _size;
 
     private readonly RenderBase _renderBase;
 
-    public unsafe StorageDynamicArray(RenderBase renderBase, uint length)
+    public unsafe GpuArray(RenderBase renderBase, uint length)
     {
         _renderBase = renderBase;
         _length = Math.Max(1, BitOperations.RoundUpToPowerOf2(length + 1));
@@ -47,14 +47,14 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
         }
     }
     internal Buffer GetBuffer() => _buffer;
-    protected Writer GetWriter() => new(_length, _pData);
+    public Writer GetWriter() => new(_length, _pData);
 
     /// <summary>
     /// Fastest way to write directly to gpu memory
     /// </summary>
     /// <param name="length"></param>
     /// <param name="pData"></param>
-    protected readonly struct Writer(uint length, nint pData)
+    public readonly struct Writer(uint length, nint pData)
     {
         private readonly uint _length = length;
         private readonly nint _pData = pData;
@@ -64,13 +64,13 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
             [MethodImpl(Inl)]
             get
             {
-                Debug.Assert(index > 0 && index < _length);
+                Debug.Assert(index >= 0 && index < _length);
                 return ref Unsafe.Add(ref Unsafe.AsRef<T>((void*)_pData), index);
             }
         }
     }
 
-    protected void Flush(uint min, uint max) // TODO use these ranges according to vulkan docs about MappedMemoryRange and "multiple of n bytes per fucking transfer)
+    public void Flush(uint min, uint max) // TODO use these ranges according to vulkan docs about MappedMemoryRange and "multiple of n bytes per fucking transfer)
     {
         if (!_needsToFlush)
             return;
@@ -84,7 +84,7 @@ internal unsafe class StorageDynamicArray<T> : IDisposable where T : unmanaged
     }
 
     [MethodImpl(Inl)]
-    protected void Resize(uint length)
+    public void Resize(uint length)
     {
         _length = length;
         ulong newSize = (ulong)(sizeof(T) * length);

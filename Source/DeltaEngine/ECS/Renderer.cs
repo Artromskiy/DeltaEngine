@@ -41,11 +41,6 @@ internal class Renderer : BaseRenderer
     private readonly DeviceMemory _indexBufferMemory;
 
     private readonly World _world;
-    private readonly GpuMappedSystem<Transform> _TrsDatas;
-
-    private readonly GpuMappedChilds<Transform, Transform> _TrsToTrsHierarchy;
-
-    private readonly GpuMappedSystem<RenderMapper, Render, RendData> _RendDatas;
 
     private readonly Fence _TRSCopyFence;
     private readonly Semaphore _TRSCopySemaphore;
@@ -56,9 +51,8 @@ internal class Renderer : BaseRenderer
     public Renderer(World world, string appName) : base(appName)
     {
         _world = world;
-        _TrsDatas = new GpuMappedSystem<Transform>(_world, _rendererData);
-        _RendDatas = new GpuMappedSystem<RenderMapper, Render, RendData>(_world, _rendererData);
-        _TrsToTrsHierarchy = new GpuMappedChilds<Transform, Transform>(_world, _rendererData);
+        //_TrsDatas = new GpuMappedSystem<Transform>(_world, _rendererData);
+        //_RendDatas = new GpuMapped<RenderMapper, Render, RendData>(_world, _rendererData);
 
         deltaLetterVerticesUnindexed = new Vertex[deltaLetterIndices.Length];
         for (int i = 0; i < deltaLetterIndices.Length; i++)
@@ -73,7 +67,6 @@ internal class Renderer : BaseRenderer
         _TRSCopySemaphore = RenderHelper.CreateSemaphore(_rendererData);
     }
 
-
     public override void PreSync()
     {
         _copyBuffer.Start();
@@ -82,7 +75,7 @@ internal class Renderer : BaseRenderer
         _copyBuffer.Stop();
 
         _updateDirty.Start();
-        var range = _TrsDatas.UpdateDirty(); // TODO use range to copy data to frame partially
+
         //_RendDatas.UpdateDirty();
         _updateDirty.Stop();
     }
@@ -91,13 +84,12 @@ internal class Renderer : BaseRenderer
     {
         _copyBufferSetup.Start();
         // TODO use bulk copy command for all dirty buffers. Generally it should be up to frame or base renderer to collect changes and select needed data ranges to copy in appropriate frame buffers
-        _rendererData.CopyBuffer(_TrsDatas, GetTRSBuffer(), _TRSCopyFence, _TRSCopySemaphore, _TRSCopyCmdBuffer);
-        _rendererData.CopyBuffer(_TrsToTrsHierarchy, GetParentsBuffer(), _TRSTRSCopyCmdBuffer);
+        //_rendererData.CopyBuffer(_TrsDatas, GetTRSBuffer(), _TRSCopyFence, _TRSCopySemaphore, _TRSCopyCmdBuffer);
         _rendererData.vk.ResetCommandBuffer(_TRSTRSCopyCmdBuffer, 0);
         _copyBufferSetup.Stop();
 
         AddSemaphore(_TRSCopySemaphore);
         SetBuffers(_vertexBuffer, _indexBuffer, (uint)deltaLetterIndices.Length, (uint)deltaLetterVerticesUnindexed.Length);
-        SetInstanceCount((uint)_TrsDatas.Count);
+        //SetInstanceCount((uint)_TrsDatas.Count);
     }
 }

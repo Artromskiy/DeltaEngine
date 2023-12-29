@@ -17,7 +17,7 @@ public class AssetImporter
     private const string MetaEnding = ".meta";
     private const string MetaSearch = "*.meta";
 
-    private readonly Dictionary<Type, IAssetCollection<IAsset>> _assetCollections = [];
+    private readonly Dictionary<Type, object> _assetCollections = [];
     private readonly RuntimeAssetCollection _runtimeAssetCollection = new();
 
     private static AssetImporter? _instance;
@@ -46,9 +46,10 @@ public class AssetImporter
                 _pathToGuid.Add(assetPath, metaData.guid);
             }
         }
+        _assetCollections.Add(typeof(MeshData), new MeshCollection());
     }
 
-    public GuidAsset<T> CreateAsset<T>(string name, T asset) where T : IAsset
+    public GuidAsset<T> CreateAsset<T>(string name, T asset) where T : class, IAsset
     {
         string path = GetNextAvailableFilename(Path.Combine(_currentFolder, name));
         if (_pathToGuid.ContainsKey(path))
@@ -68,14 +69,17 @@ public class AssetImporter
         return new GuidAsset<T>(guid);
     }
 
-    public GuidAsset<T> CreateRuntimeAsset<T>(T asset) where T : IAsset
+    public GuidAsset<T> CreateRuntimeAsset<T>(T asset) where T : class, IAsset
     {
         return _runtimeAssetCollection.CreateAsset(asset);
     }
 
-    public T GetAsset<T>(GuidAsset<T> asset) where T : IAsset
+    public T GetAsset<T>(GuidAsset<T> asset) where T : class, IAsset
     {
-        return ((IAssetCollection<T>)_assetCollections[typeof(T)]).LoadAsset(asset);
+        var type = typeof(T);
+        if (!_assetCollections.TryGetValue(type, out var collection))
+            _assetCollections[type] = collection = new DefaultAssetCollection<T>();
+        return ((IAssetCollection<T>)collection).LoadAsset(asset);
     }
 
     public string GetPath(Guid guid)

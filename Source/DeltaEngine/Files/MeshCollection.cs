@@ -21,12 +21,12 @@ internal class MeshCollection : IAssetCollection<MeshData>
         return meshData;
     }
 
-    public MeshData LoadAsset(GuidAsset<MeshData> asset)
+    public MeshData LoadAsset(GuidAsset<MeshData> guidAsset)
     {
-        if (!_meshDataMap.TryGetValue(asset.guid, out var reference))
-            _meshDataMap[asset.guid] = reference = new(null);
+        if (!_meshDataMap.TryGetValue(guidAsset.guid, out var reference))
+            _meshDataMap[guidAsset.guid] = reference = new(null);
         if (!reference.TryGetTarget(out var meshData))
-            reference.SetTarget(meshData = LoadMesh(asset.guid));
+            reference.SetTarget(meshData = LoadMesh(guidAsset.guid));
         return meshData;
     }
 

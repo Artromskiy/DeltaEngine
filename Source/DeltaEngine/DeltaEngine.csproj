@@ -7,7 +7,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-
+    
+    <RootNamespace>Delta</RootNamespace>
+    
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <PublishAot>true</PublishAot>
     <StripSymbols>true</StripSymbols>
@@ -83,11 +85,11 @@
   </ItemGroup>
   
   <ItemGroup>
-    <Using Include="DeltaEngine.DebugHelper">
+    <Using Include="Delta.DebugHelper">
       <Static>True</Static>
     </Using>
 
-    <Using Include="DeltaEngine.Attributes">
+    <Using Include="Delta.Attributes">
       <Static>True</Static>
     </Using>
 

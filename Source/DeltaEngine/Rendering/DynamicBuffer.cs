@@ -58,7 +58,7 @@ internal class DynamicBuffer
     }
 
     [MethodImpl(Inl)]
-    public void UpdateFrom<T>(StorageDynamicArray<T> array) where T : unmanaged
+    public void UpdateFrom<T>(GpuArray<T> array) where T : unmanaged
     {
         var sourceSize = array.Size;
         if (sourceSize > _size)

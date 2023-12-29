@@ -16,12 +16,7 @@ public class ShaderData : IAsset
     {
         vertBytes = ImmutableArray.Create(vert);
         fragBytes = ImmutableArray.Create(frag);
-        vertexMask = GetInputAttributes(vertBytes.AsSpan());
-    }
-    private ShaderData() { }
-    public static ShaderData DummyShaderData()
-    {
-        return new ShaderData();
+        vertexMask = GetInputAttributes([.. vertBytes]);
     }
 
     private unsafe VertexAttribute GetInputAttributes(ReadOnlySpan<byte> shaderCode)
@@ -39,9 +34,9 @@ public class ShaderData : IAsset
         using Cross api = Cross.GetApi();
         api.ContextCreate(&context);
 
-        fixed (byte* decodedPtr = shaderCode)
+        fixed (void* decodedPtr = shaderCode)
         {
-            api.ContextParseSpirv(context, (uint)decodedPtr, (uint)shaderCode.Length / 4, &ir);
+            api.ContextParseSpirv(context, (uint*)decodedPtr, (uint)shaderCode.Length / 4, &ir);
             api.ContextCreateCompiler(context, Backend.None, ir, CaptureMode.TakeOwnership, &compiler);
             api.CompilerGetActiveInterfaceVariables(compiler, &set);
             api.CompilerCreateShaderResourcesForActiveVariables(compiler, &resources, &set);

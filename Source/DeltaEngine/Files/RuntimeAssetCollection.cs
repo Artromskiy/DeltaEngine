@@ -18,7 +18,7 @@ internal class RuntimeAssetCollection
         _currentFolder = Directory.CreateTempSubdirectory().FullName;
     }
 
-    public GuidAsset<T> CreateAsset<T>(T asset) where T : IAsset
+    public GuidAsset<T> CreateAsset<T>(T asset) where T : class, IAsset
     {
         var guid = Guid.NewGuid();
 

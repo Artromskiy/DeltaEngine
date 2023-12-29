@@ -1,5 +1,7 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
+using System;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace Delta.ECS;
@@ -11,42 +13,116 @@ internal struct ChildOf
 
 internal static class ChildOfExtensions
 {
-    public static bool GetParent(this in Entity entity, out Entity parent)
+    /// <summary>
+    /// Use to get World matrix on <see cref="Entity"/>s when existense of <see cref="Transform"/> or <see cref="ChildOf"/> components not known
+    /// </summary>
+    /// <param name="entity"></param>
+    /// <returns>World matrix or <see cref="Matrix4x4.Identity"/> if no <see cref="Transform"/> found</returns>
+    [MethodImpl(Inl)]
+    public static Matrix4x4 GetWorldMatrix(this in Entity entity)
     {
-        ref var childOf = ref entity.TryGetRef<ChildOf>(out bool hasParent);
-        if (!hasParent || !childOf.parent.IsAlive())
-        {
-            parent = default;
-            return false;
-        }
-        parent = childOf.parent.Entity;
-        return true;
+        if (entity.Has<Transform>())
+            return GetWorldRecursive(entity);
+        else
+            return GetParentWorldMatrix(entity);
     }
 
-    public static bool GetParent<T>(this ref ChildOf child, out T component)
+    /// <summary>
+    /// Use for <see cref="Entity"/> without <see cref="Transform"/> component but with <see cref="ChildOf"/>
+    /// component containing reference to parent
+    /// </summary>
+    /// <param name="entity"></param>
+    /// <returns>World matrix or <see cref="Matrix4x4.Identity"/> if no parent with <see cref="Transform"/> found</returns>
+    [MethodImpl(Inl)]
+    public static Matrix4x4 GetParentWorldMatrix(this in Entity entity)
     {
-        ref ChildOf childOf = ref Unsafe.NullRef<ChildOf>();
-        Entity parent = child.parent;
-        bool hasParent = parent.IsAlive();
-        while (hasParent)
+        if (entity.GetParent<Transform>(out var parent))
+            return parent.GetWorldRecursive();
+        return Matrix4x4.Identity;
+    }
+
+    /// <summary>
+    /// Use for <see cref="Entity"/>> with transform
+    /// </summary>
+    /// <param name="entity"></param>
+    /// <returns>World matrix</returns>
+    [MethodImpl(Inl)]
+    public static Matrix4x4 GetWorldRecursive(this in Entity entity)
+    {
+        var localMatrix = entity.Get<Transform>().LocalMatrix;
+        if (entity.GetParent<Transform>(out Entity parent))
+            return parent.GetWorldRecursive() * localMatrix;
+        else
+            return localMatrix;
+    }
+
+    [MethodImpl(Inl)]
+    public static bool GetParent(this ref Entity entity)
+    {
+        ref var childOf = ref entity.TryGetRef<ChildOf>(out bool has);
+        if (has)
         {
-            if (parent.TryGet(out component!))
-                return true;
-            childOf = parent.TryGetRef<ChildOf>(out hasParent);
-            parent = hasParent ? childOf.parent : parent;
-            hasParent = hasParent && parent.IsAlive();
+            entity = childOf.parent;
+            return entity.Version() == childOf.parent.Version;
         }
-        component = default!;
         return false;
     }
 
-    public static bool GetParent<T>(this in Entity entity, out Entity parent)
+    [MethodImpl(Inl)]
+    public static bool GetParent<T>(this Entity entity, out Entity parent)
     {
-        while (GetParent(in entity, out parent))
-        {
+        parent = entity;
+        while (GetParent(ref parent))
             if (parent.Has<T>())
                 return true;
-        }
+        return false;
+    }
+
+    [MethodImpl(Inl)]
+    public static bool HasParent<T>(this Entity entity)
+    {
+        while (GetParent(ref entity))
+            if (entity.Has<T>())
+                return true;
+        return false;
+    }
+
+    [MethodImpl(Inl)]
+    public static uint GetDepth<T>(this Entity entity)
+    {
+        uint depth = 0;
+        while (GetParent(ref entity))
+            if (entity.Has<T>())
+                depth++;
+        return depth;
+    }
+
+    public static void WriteDepth<T>(this Entity entity, Span<T> depthSpan)
+    {
+        int depth = 0;
+        while (GetParent(ref entity))
+            if (entity.Has<T>())
+                depthSpan[depth++] = entity.Get<T>();
+    }
+
+    [MethodImpl(Inl)]
+    public static bool GetLast<T>(this Entity entity, out Entity last)
+    {
+        last = Entity.Null;
+        while (GetParent(ref entity))
+            if (entity.Has<T>())
+                last = entity;
+        return last != Entity.Null;
+    }
+
+
+    public static bool Has(this World world, in QueryDescription queryDescription)
+    {
+        var query = world.Query(in queryDescription);
+        foreach (var archetype in query.GetArchetypeIterator())
+            if (archetype.EntityCount > 0)
+                return true;
+
         return false;
     }
 }

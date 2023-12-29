@@ -31,7 +31,7 @@ public abstract unsafe partial class BaseRenderer : IDisposable, IJob
 
     private const uint Buffering = 1;
     private const bool CanSkipRender = true;
-    private const bool RenderLessMode = false;
+    private const bool RenderLessMode = true;
 
     private bool _skippedFrame = true;
 

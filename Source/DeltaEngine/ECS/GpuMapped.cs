@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Delta.ECS;
-internal class GpuMappedSystem<M, C, G> : StorageDynamicArray<G>
+internal class GpuMapped<M, C, G> : GpuArray<G>
     where M : struct, IGpuMapper<C, G> // Mapper
     where G : unmanaged                // GpuStruct
     where C : IDirty                   // Component
@@ -28,7 +28,7 @@ internal class GpuMappedSystem<M, C, G> : StorageDynamicArray<G>
     private static readonly QueryDescription _withId = new QueryDescription().WithAll<C, VersId<C>>();
     private static readonly QueryDescription _withIdDirty = new QueryDescription().WithAll<C, VersId<C>, DirtyFlag<C>>();
 
-    public GpuMappedSystem(World world, RenderBase renderData) : base(renderData, (uint)world.CountEntities(_all))
+    public GpuMapped(World world, RenderBase renderData) : base(renderData, (uint)world.CountEntities(_all))
     {
         _taken = new bool[Length];
         _taken[0] = true;
@@ -37,8 +37,8 @@ internal class GpuMappedSystem<M, C, G> : StorageDynamicArray<G>
 
         _world = world;
 
-        Count = _world.CountEntities(_all);
         _world.Add<VersId<C>>(_all);
+        Count = _world.CountEntities(_all);
         InlineCreator creator = new(GetWriter());
         _world.InlineQuery<InlineCreator, C, VersId<C>>(_withId, ref creator);
         Array.Fill(_taken, true, 1, Count);
@@ -209,4 +209,4 @@ public readonly struct DirectMapper<C> : IGpuMapper<C, C> where C : unmanaged
     [MethodImpl(Inl)]
     public readonly C Map(ref C value) => value;
 }
-internal class GpuMappedSystem<C>(World world, RenderBase renderData) : GpuMappedSystem<DirectMapper<C>, C, C>(world, renderData) where C : unmanaged, IDirty { }
+internal class GpuMappedSystem<C>(World world, RenderBase renderData) : GpuMapped<DirectMapper<C>, C, C>(world, renderData) where C : unmanaged, IDirty { }

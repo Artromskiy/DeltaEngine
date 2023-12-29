@@ -97,20 +97,20 @@ public static class RenderHelper
         return result;
     }
 
-    internal static unsafe void CopyBuffer<T>(this RenderBase data, StorageDynamicArray<T> source, DynamicBuffer destination,
+    internal static unsafe void CopyBuffer<T>(this RenderBase data, GpuArray<T> source, DynamicBuffer destination,
         CommandBuffer cmdBuffer) where T : unmanaged
     {
         destination.EnsureSize(source.Size);
         data.CopyBuffer(source.GetBuffer(), source.Size, destination.GetBuffer(), destination.Size, cmdBuffer);
     }
 
-    internal static unsafe void CopyBuffer<T>(this RenderBase data, StorageDynamicArray<T> source, DynamicBuffer destination,
+    internal static unsafe void CopyBuffer<T>(this RenderBase data, GpuArray<T> source, DynamicBuffer destination,
         Fence fence, Semaphore semaphore, CommandBuffer cmdBuffer) where T : unmanaged
     {
         destination.EnsureSize(source.Size);
         data.CopyBuffer(source.GetBuffer(), source.Size, destination.GetBuffer(), destination.Size, fence, semaphore, cmdBuffer);
     }
-    internal static unsafe void CopyBuffer<T>(this RenderBase data, StorageDynamicArray<T> source, DynamicBuffer destination,
+    internal static unsafe void CopyBuffer<T>(this RenderBase data, GpuArray<T> source, DynamicBuffer destination,
         Fence fence, CommandBuffer cmdBuffer) where T : unmanaged
     {
         destination.EnsureSize(source.Size);
