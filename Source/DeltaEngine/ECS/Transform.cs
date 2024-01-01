@@ -19,6 +19,7 @@ public struct Transform : IDirty
         //get => Matrix4x4.CreateScale(Scale) * Matrix4x4.CreateFromQuaternion(Rotation) * Matrix4x4.CreateTranslation(Position);
         //get => Matrix4x4.Transform(Matrix4x4.CreateScale(Scale), Rotation) * Matrix4x4.CreateTranslation(Position);
         get => LocalOptimized();
+        //get => Matrix4x4.Identity;
     }
 
     [MethodImpl(Inl)]

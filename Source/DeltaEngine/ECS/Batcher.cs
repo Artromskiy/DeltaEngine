@@ -5,16 +5,14 @@ using JobScheduler;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Delta.ECS;
-internal class RenderBatcherSystem
+internal class Batcher : IJob
 {
-    private readonly Stack<uint> _free = [];
-    private uint _lastIndex = 0;
+    private readonly Queue<uint> _free;
 
     private readonly GpuArray<Matrix4x4> _trs;
     private readonly GpuArray<uint> _trsTransfer; // send to compute to transfer new trs from host to device
@@ -35,7 +33,9 @@ internal class RenderBatcherSystem
 
     private readonly RendGroupData _rendGroupData = new();
 
-    public RenderBatcherSystem(World world, RenderBase renderBase)
+    private readonly IJob[] jobs;
+
+    public Batcher(World world, RenderBase renderBase)
     {
         _world = world;
         _trsSorted = new GpuArray<uint>(renderBase, 1);
@@ -43,107 +43,91 @@ internal class RenderBatcherSystem
         _trsTransfer = new GpuArray<uint>(renderBase, 1);
         _transferIndicesSet = [];
         _forceTrsWrite = [];
+        _free = new Queue<uint>((int)_trs.Length);
+        for (uint i = 0; i < _trs.Length; i++)
+            _free.Enqueue(i);
+        jobs =
+        [
+             new RemoveRender(_world, _free, _rendGroupData),
+             new AddRender(_world, _free, _rendGroupData, _forceTrsWrite),
+             new ChangeRender(_world, _rendGroupData),
+             new SortWriteRender(_world, _trsSorted, _rendGroupData),
+             new WriteTrs(_world, _trs, _transferIndicesSet, _forceTrsWrite)
+        ];
     }
 
-    private readonly Stopwatch _trsWrite = new();
-    private readonly Stopwatch _jobSetup = new();
-    private readonly Stopwatch _jobWait = new();
 
-    public TimeSpan TrsWriteMetric => _trsWrite.Elapsed;
-    public TimeSpan JobSetupMetric => _jobSetup.Elapsed;
-    public TimeSpan JobWaitMetric => _jobWait.Elapsed;
-
-    public void ClearMetrics()
-    {
-        _trsWrite.Reset();
-        _jobSetup.Reset();
-        _jobWait.Reset();
-    }
-
-    public void Update()
+    public void Execute()
     {
         _forceTrsWrite.Clear();
         _forceTrsWrite.TrimExcess(); // we assume it's better to free this, as large changes will create large internal array
-
         _transferIndicesSet.Clear();
 
-        RemoveRendJob removeJob = new(_world, _free, _rendGroupData);
-        removeJob.Execute();
+        BufferResize();
 
-        uint newLastIndex = EnsureBuffersCapacity();
-
-        AddRendJob addJob = new(_world, _free, _rendGroupData, _forceTrsWrite, _lastIndex);
-        addJob.Execute();
-        _lastIndex = newLastIndex;
-
-        ChangeRendJob changeJob = new(_world, _rendGroupData);
-        changeJob.Execute();
-
-        _jobSetup.Start();
-        using SortWriteJob sortWriteJob = new(_world, _trsSorted.GetWriter(), _rendGroupData);
-        var handle = JobScheduler.JobScheduler.Instance.Schedule(sortWriteJob);
-        JobScheduler.JobScheduler.Instance.Flush();
-        _jobSetup.Stop();
-
-        _trsWrite.Start();
-        using TrsWriteJob trsJob = new(_world, _trs.GetWriter(), _transferIndicesSet, _forceTrsWrite);
-        trsJob.Execute();
-        _trsWrite.Stop();
-
-        _jobWait.Start();
-        handle.Complete();
-        _jobWait.Stop();
+        foreach (var item in jobs)
+            using (item as IDisposable)
+                item.Execute();
     }
+
+    /// <summary>
+    /// Contains matrices with world position of each <see cref="Render"/>
+    /// </summary>
+    public GpuArray<Matrix4x4> Trs => _trs;
+    public uint TrsCount => (uint)_world.CountEntities(_renderDescription);
+    /// <summary>
+    /// Contains indices to elements of <see cref="Trs"/> ordered by <see cref="Render"/>
+    /// </summary>
+    public GpuArray<uint> TrsSorted => _trsSorted;
 
     /// <summary>
     /// Ensures capacity of buffers to fit new <see cref="Render"/>s
     /// </summary>
-    /// <returns><see cref="_lastIndex"/> needed to be applied after all new <see cref="Render"/> been setup</returns>
-    private uint EnsureBuffersCapacity()
+    private void BufferResize()
     {
         var countToAdd = _world.CountEntities(_addDescription);
-        if (countToAdd > 0)
+        var countToRemove = _world.CountEntities(_removeDescription);
+        var wholeFree = _free.Count + countToRemove;
+        var delta = countToAdd - wholeFree;
+        if (delta > 0)
         {
-            var wholeFree = _free.Count + (_trs.Length - _lastIndex);
-            uint newLastIndex = (uint)(_lastIndex + Math.Max(0, countToAdd - wholeFree));
-            if (wholeFree < countToAdd)
-            {
-                uint size = (uint)(_trs.Length + countToAdd - wholeFree);
-                _trs.Resize(BitOperations.RoundUpToPowerOf2(size));
-                _trsSorted.Resize(BitOperations.RoundUpToPowerOf2(size));
-            }
-            return newLastIndex;
+            var length = _trs.Length;
+            var newLength = BitOperations.RoundUpToPowerOf2((uint)(length + delta));
+            _trs.Resize(newLength);
+            _trsSorted.Resize(newLength);
+            _free.EnsureCapacity((int)newLength);
+            for (uint i = length; i < newLength; i++)
+                _free.Enqueue(i);
         }
-        return _lastIndex;
     }
 
-    private readonly struct RemoveRendJob(World world, Stack<uint> free, RendGroupData rendGroupData) : IJob
+    private readonly struct RemoveRender(World world, Queue<uint> freeIds, RendGroupData rendGroupData) : IJob
     {
         [MethodImpl(Inl)]
         public readonly void Execute()
         {
             if (!world.Has(_removeDescription))
                 return;
-            var remover = new InlineRemover(free, rendGroupData);
+            var remover = new InlineRemover(freeIds, rendGroupData);
             world.InlineQuery<InlineRemover, RendId, RendGroup>(_removeDescription, ref remover);
             world.Remove<RendId, RendGroup>(_removeDescription);
         }
 
-        private readonly struct InlineRemover(Stack<uint> free, RendGroupData rendGroupData)
+        private readonly struct InlineRemover(Queue<uint> free, RendGroupData rendGroupData)
             : IForEach<RendId, RendGroup>
         {
             [MethodImpl(Inl)]
             public readonly void Update(ref RendId id, ref RendGroup group)
             {
                 rendGroupData.Remove(group);
-                free.Push(id.trsId);
+                free.Enqueue(id.trsId);
             }
         }
     }
 
-    private readonly struct AddRendJob(World world, Stack<uint> free,
+    private readonly struct AddRender(World world, Queue<uint> free,
         RendGroupData rendGroupData,
-        PooledSet<uint> forceUpdate, uint lastIndex) : IJob
+        PooledSet<uint> forceUpdate) : IJob
     {
         private static readonly QueryDescription _addTag = new QueryDescription().WithAll<AddTag>();
         private readonly struct AddTag();
@@ -158,22 +142,21 @@ internal class RenderBatcherSystem
             // and then remove this tag, as it's faster than CommandBuffer
             world.Add<AddTag, RendId, RendGroup>(_addDescription);
 
-            InlineAdder adder = new(free, rendGroupData, forceUpdate, lastIndex);
+            InlineAdder adder = new(free, rendGroupData, forceUpdate);
             world.InlineQuery<InlineAdder, Render, RendId, RendGroup>(_addTag, ref adder);
             world.Remove<AddTag>(_addTag);
         }
 
         private struct InlineAdder(
-            Stack<uint> free,
+            Queue<uint> free,
             RendGroupData rendGroupData,
-            PooledSet<uint> forceUpdate, uint lastIndex)
+            PooledSet<uint> forceUpdate)
             : IForEach<Render, RendId, RendGroup>
         {
-            public uint lastIndex = lastIndex;
             [MethodImpl(Inl)]
-            public void Update(ref Render render, ref RendId id, ref RendGroup group)
+            public readonly void Update(ref Render render, ref RendId id, ref RendGroup group)
             {
-                uint index = free.Count > 0 ? free.Pop() : lastIndex++;
+                uint index = free.Dequeue();
                 group = rendGroupData.Add(ref render);
                 id = new RendId(index);
                 forceUpdate.Add(index);
@@ -181,7 +164,7 @@ internal class RenderBatcherSystem
         }
     }
 
-    private readonly struct ChangeRendJob(World world, RendGroupData rendGroupData) : IJob
+    private readonly struct ChangeRender(World world, RendGroupData rendGroupData) : IJob
     {
         [MethodImpl(Inl)]
         public readonly void Execute()
@@ -204,14 +187,14 @@ internal class RenderBatcherSystem
         }
     }
 
-    private readonly struct SortWriteJob(World world,
-        GpuArray<uint>.Writer rendersArray,
-        RendGroupData rendGroupData) : IJob, IDisposable
+    private readonly struct SortWriteRender(World world,
+        GpuArray<uint> rendersArray,
+        RendGroupData rendGroupData) : IJob
     {
-        private readonly uint[] offsets = ArrayPool<uint>.Shared.Rent(rendGroupData.rendToGroup.Count);
         [MethodImpl(Inl)]
         public readonly void Execute()
         {
+            var offsets = ArrayPool<uint>.Shared.Rent(rendGroupData.rendToGroup.Count);
             foreach (var item in rendGroupData.groupToCount)
                 offsets[item.Key.id] = item.Value;
             uint index = 0;
@@ -221,8 +204,9 @@ internal class RenderBatcherSystem
                 offsets[item.Value.id] = index;
                 index += tmp;
             }
-            RenderWriter writer = new(rendersArray, offsets);
+            RenderWriter writer = new(rendersArray.GetWriter(), offsets);
             world.InlineQuery<RenderWriter, RendGroup, RendId>(_renderDescription, ref writer);
+            ArrayPool<uint>.Shared.Return(offsets);
         }
 
         private readonly struct RenderWriter(GpuArray<uint>.Writer writer, uint[] offsets) :
@@ -231,32 +215,25 @@ internal class RenderBatcherSystem
             [MethodImpl(Inl)]
             public readonly void Update(ref RendGroup group, ref RendId id) => writer[offsets[group.id]++] = id.trsId;
         }
-        [MethodImpl(Inl)]
-        public readonly void Dispose() => ArrayPool<uint>.Shared.Return(offsets);
     }
 
-    private readonly struct TrsWriteJob(World world, GpuArray<Matrix4x4>.Writer trs, List<uint> trsTransferIndices, PooledSet<uint> forceWrite) : IJob, IDisposable
+    private readonly struct WriteTrs(World world, GpuArray<Matrix4x4> trs, List<uint> trsTransferIndices, PooledSet<uint> forceWrite) : IJob
     {
         private readonly ThreadLocal<PooledList<uint>> _threadTransfer = new(() => new PooledList<uint>(ClearMode.Never), true);
 
         [MethodImpl(Inl)]
         public readonly void Execute()
         {
-            TrsWriterWithTransform trsWithTransform = new(trs, _threadTransfer, forceWrite);
-            TrsWriterWithParent trsWithParent = new(trs, _threadTransfer, forceWrite);
+            var writer = trs.GetWriter();
+            TrsWriterWithTransform trsWithTransform = new(writer, _threadTransfer, forceWrite);
+            TrsWriterWithParent trsWithParent = new(writer, _threadTransfer, forceWrite);
             world.InlineParallelEntityQuery<TrsWriterWithTransform, RendId>(_trsDescriptionTransform, ref trsWithTransform);
             world.InlineParallelEntityQuery<TrsWriterWithParent, RendId>(_trsDescriptionParent, ref trsWithParent);
-
             foreach (var item in _threadTransfer.Values)
+            {
                 trsTransferIndices.AddRange(item.Span);
-        }
-
-        [MethodImpl(Inl)]
-        public void Dispose()
-        {
-            foreach (var item in _threadTransfer.Values)
                 item.Clear();
-            _threadTransfer.Dispose();
+            }
         }
 
         private readonly struct TrsWriterWithTransform(GpuArray<Matrix4x4>.Writer trsArray,
@@ -287,7 +264,6 @@ internal class RenderBatcherSystem
             }
         }
     }
-
 
     /// <summary>
     /// Encapsulates containers with info about <see cref="Render"/>s ordering,

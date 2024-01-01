@@ -1,4 +1,5 @@
-﻿using Silk.NET.Core;
+﻿using Delta.Files;
+using Silk.NET.Core;
 using Silk.NET.Core.Native;
 using Silk.NET.SDL;
 using Silk.NET.Vulkan;
@@ -285,6 +286,37 @@ public static class RenderHelper
         _ = data.vk.AllocateMemory(data.deviceQ.device, allocateInfo, null, out var memory);
         _ = data.vk.BindBufferMemory(data.deviceQ.device, buffer, memory, 0);
         return (buffer, memory);
+    }
+
+    public static unsafe (Buffer, DeviceMemory) CreateVertexBuffer(RenderBase data, MeshData meshData, VertexAttribute attributeMask)
+    {
+        var size = (uint)(attributeMask.GetVertexSize() * meshData.vertexCount);
+        var res = CreateBufferAndMemory(data, size, BufferUsageFlags.VertexBufferBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit);
+
+        void* datap;
+        data.vk.MapMemory(data.deviceQ.device, res.memory, 0, size, 0, &datap);
+
+        Unsafe.CopyBlockUnaligned(ref Unsafe.AsRef<byte>(datap),
+            ref MemoryMarshal.GetArrayDataReference(MeshCollection.GetMeshVariant(meshData, attributeMask)),
+            size);
+
+        data.vk.UnmapMemory(data.deviceQ.device, res.memory);
+        return res;
+    }
+    public static unsafe (Buffer, DeviceMemory) CreateIndexBuffer(RenderBase data, MeshData meshData)
+    {
+        var size = (uint)(sizeof(uint) * meshData.indices.Length);
+        var res = CreateBufferAndMemory(data, size, BufferUsageFlags.IndexBufferBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit);
+
+        void* datap;
+        data.vk.MapMemory(data.deviceQ.device, res.memory, 0, size, 0, &datap);
+
+        Unsafe.CopyBlockUnaligned(ref Unsafe.AsRef<byte>(datap),
+            ref Unsafe.As<uint, byte>(ref meshData.indices[0]),
+            size);
+
+        data.vk.UnmapMemory(data.deviceQ.device, res.memory);
+        return res;
     }
 
     public static unsafe (Buffer, DeviceMemory) CreateVertexBuffer(RenderBase data, Vertex[] vertices)

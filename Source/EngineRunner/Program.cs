@@ -18,7 +18,7 @@ using System.Diagnostics;
         sw.Stop();
         ms += sw.ElapsedTicks;
         c++;
-        if (c == 1000)
+        if (c == 100)
         {
             ms /= c;
             var sy = eng.GetSyncRendererMetric / c;
@@ -30,9 +30,6 @@ using System.Diagnostics;
             var sud = eng.GetSubmitDrawRenderMetric / c;
             var sup = eng.GetSubmitPresentRenderMetric / c;
             var csn = eng.GetSceneMetric / c;
-            var cst = eng.GetSceneTrsWriteMetric / c;
-            var css = eng.GetSceneJobSetupMetric / c;
-            var csw = eng.GetSceneJobWaitMetric / c;
             var skp = eng.GetRenderSkipPercent;
             Console.WriteLine();
             Console.WriteLine($"updt: {up.TotalMilliseconds}"); // FPS of main thread
@@ -48,9 +45,6 @@ using System.Diagnostics;
 
             Console.WriteLine();
             Console.WriteLine($"scen: {csn.TotalMilliseconds}"); // FPS of main thread
-            Console.WriteLine($"trsw: {cst.TotalMilliseconds}"); // FPS of main thread
-            Console.WriteLine($"jobS: {css.TotalMilliseconds}"); // FPS of main thread
-            Console.WriteLine($"jobW: {csw.TotalMilliseconds}"); // FPS of main thread
             Console.WriteLine($"skip: {(int)(skp * 100)}%"); // FPS of main thread
 
             Console.WriteLine((int)(10000000f / ms)); // FPS of main thread

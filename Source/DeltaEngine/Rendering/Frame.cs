@@ -19,7 +19,6 @@ internal class Frame : IDisposable
     private DescriptorSet _descriptorSet;
 
     private readonly DynamicBuffer _matricesDynamicBuffer;
-    private readonly DynamicBuffer _parentsDynamicBuffer;
 
     private Semaphore _syncSemaphore;
     private Buffer _vertexBuffer;
@@ -39,7 +38,6 @@ internal class Frame : IDisposable
         _swapChain = swapChain;
         _renderPass = renderPass;
         _matricesDynamicBuffer = new(renderBase, 1);
-        _parentsDynamicBuffer = new(renderBase, 1);
 
         FenceCreateInfo fenceInfo = new(StructureType.FenceCreateInfo, null, FenceCreateFlags.SignaledBit);
         SemaphoreCreateInfo semaphoreInfo = new(StructureType.SemaphoreCreateInfo);
@@ -75,7 +73,6 @@ internal class Frame : IDisposable
     public bool Synced() => _rendererData.vk.GetFenceStatus(_rendererData.deviceQ.device, renderFinishedFence) == Result.Success;
 
     public DynamicBuffer GetTRSBuffer() => _matricesDynamicBuffer;
-    public DynamicBuffer GEtParentsBuffer() => _parentsDynamicBuffer;
     public void SetBuffers(Buffer vbo, Buffer ibo, uint indices, uint vertices)
     {
         _vertexBuffer = vbo;
@@ -133,11 +130,6 @@ internal class Frame : IDisposable
             RenderHelper.BindBuffersToDescriptorSet(_rendererData, _descriptorSet, _matricesDynamicBuffer.GetBuffer(), 0, DescriptorType.StorageBuffer);
             _matricesDynamicBuffer.ChangedBuffer = false;
         }
-        if (_parentsDynamicBuffer.ChangedBuffer)
-        {
-            RenderHelper.BindBuffersToDescriptorSet(_rendererData, _descriptorSet, _parentsDynamicBuffer.GetBuffer(), 1, DescriptorType.StorageBuffer);
-            _parentsDynamicBuffer.ChangedBuffer = false;
-        }
         _recordRender.Start();
         RecordCommandBuffer(commandBuffer, imageIndex, graphicsPipeline, layout, _vertexBuffer, _indexBuffer, _indicesLength);
         _recordRender.Stop();
@@ -175,7 +167,7 @@ internal class Frame : IDisposable
         };
         _submitPresent.Start();
         res = _swapChain.khrSw.QueuePresent(_rendererData.deviceQ.presentQueue, presentInfo);
-        _submitRender.Stop();
+        _submitPresent.Stop();
         resize = res == Result.SuboptimalKhr || res == Result.ErrorOutOfDateKhr;
         if (!resize)
             _ = res;
@@ -217,8 +209,8 @@ internal class Frame : IDisposable
         _rendererData.vk.CmdBindIndexBuffer(commandBuffer, ibo, 0, IndexType.Uint32);
         var matrices = _descriptorSet;
         _rendererData.vk.CmdBindDescriptorSets(commandBuffer, PipelineBindPoint.Graphics, layout, 0, 1, &matrices, 0, 0);
+        _rendererData.vk.CmdDrawIndexed(commandBuffer, _indicesLength, _instances, 0, 0, 0);
 
-        _rendererData.vk.CmdDrawIndexed(commandBuffer, _indicesLength, _instances, 0, 0, 1);
         //_rendererData.vk.CmdDraw(commandBuffer, _verticesLength, _instances, 0, 0);
         _rendererData.vk.CmdEndRenderPass(commandBuffer);
 

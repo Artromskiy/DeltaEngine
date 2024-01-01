@@ -7,10 +7,10 @@ using System.Runtime.InteropServices;
 namespace Delta.Files.Defaults;
 internal static class DeltaMesh
 {
-    private static readonly Vector3 r = new(1.0f, 0.0f, 0.0f);
-    private static readonly Vector3 g = new(0.0f, 1.0f, 0.0f);
-    private static readonly Vector3 b = new(0.0f, 0.0f, 1.0f);
-    private static readonly Vector3[] colors = [b, g, r, r, b, g];
+    private static readonly Vector4 r = new(1.0f, 0.0f, 0.0f, 1.0f);
+    private static readonly Vector4 g = new(0.0f, 1.0f, 0.0f, 1.0f);
+    private static readonly Vector4 b = new(0.0f, 0.0f, 1.0f, 1.0f);
+    private static readonly Vector4[] colors = [b, g, r, r, b, g];
     private static readonly Vector2[] positions =
     [
         new(  0.00f,  -0.50f),

@@ -13,40 +13,26 @@ internal class Scene
     private readonly Renderer _renderer;
     private readonly World _sceneWorld;
 
-    private readonly RenderBatcherSystem _meshRenderer;
-
     public Scene(World world, Renderer renderer)
     {
         _sceneWorld = world;
         var tr = new QueryDescription().WithAll<Transform>();
-        _sceneWorld.Query(tr, (ref Transform t) => t.Scale = new(0.1f));
-        _sceneWorld.Query(tr, (ref Transform t) => t.Position = new Vector3(0, -0.25f, 0));
+        _sceneWorld.Query(tr, (ref Transform t) => t.Scale = new(1));
+        _sceneWorld.Query(tr, (ref Transform t) => t.Position = RndVector());
         _sceneWorld.Add<DirtyFlag<Transform>>(tr);
 
         var move = new QueryDescription().WithAll<Transform>().WithNone<ChildOf>();
-        int count = _sceneWorld.CountEntities(move);
-        // move parents
-        _sceneWorld.Query(move, (Entity e) =>
-        {
-            if (count <= 0)
-                return;
-            count--;
-            _sceneWorld.Add<MoveToTarget>(e);
-        });
+        _sceneWorld.Add<MoveToTarget>(move);
+        move = new QueryDescription().WithAll<Transform, ChildOf>();
+        _sceneWorld.Query(move, (ref Transform t) => t.Position = new(0, 0.2f, 0));
         _renderer = renderer;
-
-        _meshRenderer = new RenderBatcherSystem(_sceneWorld, _renderer._rendererData);
     }
 
     private readonly Stopwatch _sceneSw = new();
     public TimeSpan GetSceneMetric => _sceneSw.Elapsed;
-    public TimeSpan TrsWriteMetric => _meshRenderer.TrsWriteMetric;
-    public TimeSpan JobSetupMetric => _meshRenderer.JobSetupMetric;
-    public TimeSpan JobWaitMetric => _meshRenderer.JobWaitMetric;
     public void ClearSceneMetric()
     {
         _sceneSw.Reset();
-        _meshRenderer.ClearMetrics();
     }
 
     public struct MoveToTarget
@@ -61,23 +47,18 @@ internal class Scene
     [MethodImpl(NoInl)]
     public void Run(float deltaTime)
     {
-        //_renderer.Sync();
-
-        //_sceneWorld.Remove<DirtyFlag<Transform>>(new QueryDescription().WithAll<DirtyFlag<Transform>>());
-
-        //var r = new MoveAllTransforms(_sceneWorld, deltaTime);
-        //r.Execute();
-        //var h1 = JobScheduler.JobScheduler.Instance.Schedule(new MoveAllTransforms(_sceneWorld, deltaTime));
-        //var h2 = JobScheduler.JobScheduler.Instance.Schedule(_renderer);
-        //JobScheduler.JobScheduler.Instance.Flush();
-
-        //h1.Complete();
-        //h2.Complete();
+        _renderer.Sync();
+        _sceneWorld.Remove<DirtyFlag<Transform>>(new QueryDescription().WithAll<DirtyFlag<Transform>>());
 
         _sceneSw.Start();
-        _meshRenderer.Update();
-        _sceneSw.Stop();
 
+        var h2 = JobScheduler.JobScheduler.Instance.Schedule(_renderer);
+        JobScheduler.JobScheduler.Instance.Flush();
+        new MoveAllTransforms(_sceneWorld, deltaTime).Execute();
+
+        h2.Complete();
+
+        _sceneSw.Stop();
     }
 
     private readonly struct MoveAllTransforms(World world, float deltaTime) : IJob
@@ -99,20 +80,19 @@ internal class Scene
         [MethodImpl(Inl)]
         public readonly void Update(ref Transform t, ref MoveToTarget m)
         {
-            //var tpercent = 1 - InCubic(1 - m.percent);
-            //var spercent = InCubic(m.percent);
-            //t.Position = Vector3.Lerp(m.start, m.target, tpercent);
-            //t.Scale = new(float.Lerp(m.startScale, m.targetScale, spercent));
-            //m.percent += deltaTime * 0.5f;
-            //m.percent = Math.Clamp(m.percent, 0f, 1f);
-            //if (m.percent == 1)
-            //{
-            //    m.start = m.target;
-            //    m.target = RndVector();
-            //    m.startScale = m.targetScale;
-            //    m.targetScale = Random.Shared.NextSingle() * 0.1f;
-            //    m.percent = 0;
-            //}
+            t.Position = Vector3.Lerp(m.start, m.target, m.percent);
+            t.Scale = Vector3.Lerp(t.Scale, new(m.targetScale), m.percent);
+            m.percent += deltaTime * 0.5f;
+            m.percent = Math.Clamp(m.percent, 0f, 1f);
+            t.Rotation *= Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI * deltaTime * 5);
+            if (m.percent == 1)
+            {
+                m.start = m.target;
+                m.target = RndVector();
+                m.startScale = m.targetScale;
+                m.targetScale = Random.Shared.NextSingle() * 0.1f;
+                m.percent = 0;
+            }
         }
     }
 
@@ -131,7 +111,6 @@ internal class Scene
     {
         Random rnd = Random.Shared;
         var xy = new Vector2(rnd.NextSingle() - 0.5f, rnd.NextSingle() - 0.5f) * 0.5f;
-        xy = xy.Length() > 0.25f ? Vector2.Normalize(xy) * 0.25f : xy;
         var position = new Vector3(xy.X, xy.Y, 0) * 2;
         return position;
     }

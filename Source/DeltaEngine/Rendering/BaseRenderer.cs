@@ -29,9 +29,9 @@ public abstract unsafe partial class BaseRenderer : IDisposable, IJob
 
     private readonly Queue<Frame> _frames = [];
 
-    private const uint Buffering = 1;
+    private const uint Buffering = 3;
     private const bool CanSkipRender = true;
-    private const bool RenderLessMode = true;
+    private const bool RenderLessMode = false;
 
     private bool _skippedFrame = true;
 
@@ -83,7 +83,6 @@ public abstract unsafe partial class BaseRenderer : IDisposable, IJob
     public void Execute()
     {
         _framesCount++;
-
         if (_skippedFrame)
         {
             _framesSkip++;
@@ -96,7 +95,6 @@ public abstract unsafe partial class BaseRenderer : IDisposable, IJob
     }
 
     internal DynamicBuffer GetTRSBuffer() => CurrentFrame.GetTRSBuffer();
-    internal DynamicBuffer GetParentsBuffer() => CurrentFrame.GEtParentsBuffer();
     protected void SetBuffers(Buffer vbo, Buffer ibo, uint indicesCount, uint verticesCount) => CurrentFrame.SetBuffers(vbo, ibo, indicesCount, verticesCount);
     protected void SetInstanceCount(uint instances) => CurrentFrame.SetInstanceCount(instances);
     protected void AddSemaphore(Semaphore semaphore) => CurrentFrame.AddSemaphore(semaphore);

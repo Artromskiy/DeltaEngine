@@ -8,6 +8,7 @@ using Delta.Scenes;
 using System;
 using System.Buffers;
 using System.Diagnostics;
+using System.Numerics;
 
 namespace Delta;
 
@@ -26,11 +27,12 @@ public sealed partial class Engine : IDisposable
     //private readonly int N = 500_000;
     //private readonly int N = 300_000;
     //private readonly int N = 200_000;
-    private readonly int N = 100_000;
-    //private readonly int N = 10_000;
+    //private readonly int N = 100_000;
+    private readonly int N = 10_000;
     //private readonly int N = 1_000;
     //private readonly int N = 100;
     //private readonly int N = 10;
+    //private readonly int N = 2;
 
     public Engine()
     {
@@ -47,7 +49,7 @@ public sealed partial class Engine : IDisposable
     {
         var world = World.Create();
         for (int i = 0; i < N; i++)
-            world.Create<Transform>();
+            world.Create<Transform>(new Transform() { Position = Vector3.One, Rotation = Quaternion.Identity, Scale = Vector3.One});
         var transforms = ArrayPool<Entity>.Shared.Rent(N);
         world.GetEntities(new QueryDescription().WithAll<Transform>(), transforms);
         for (int i = 0; i < N / 2; i++)
@@ -73,7 +75,7 @@ public sealed partial class Engine : IDisposable
         if (firstRun)
         {
             _world.TrimExcess();
-            GC.Collect();
+            //GC.Collect();
             firstRun = false;
         }
     }

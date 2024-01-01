@@ -11,8 +11,8 @@
     <RootNamespace>Delta</RootNamespace>
     
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <PublishAot>true</PublishAot>
-    <StripSymbols>true</StripSymbols>
+    <PublishAot>false</PublishAot>
+    <StripSymbols>false</StripSymbols>
     <IncludeSymbols>true</IncludeSymbols>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
     <Configurations>Debug;Release;DebugPerf;Perf</Configurations>

@@ -48,24 +48,24 @@ internal class MeshCollection : IAssetCollection<MeshData>
         return result;
     }
 
-    private static byte[] GetMeshVariant(MeshData meshData, VertexAttribute vertexMask)
+    public static byte[] GetMeshVariant(MeshData meshData, VertexAttribute vertexMask)
     {
         int vertexSize = vertexMask.GetVertexSize();
-        var sizeInBytes = vertexSize * meshData.vertexCount;
-        byte[] result = new byte[sizeInBytes];
+        var meshSize = vertexSize * meshData.vertexCount;
+        byte[] result = new byte[meshSize];
         ref var resultRef = ref MemoryMarshal.GetArrayDataReference(result);
-        int innerOffset = 0;
+        int offset = 0;
         foreach (var attrib in vertexMask.Iterate())
         {
-            ref var attribArray = ref MemoryMarshal.GetReference(meshData.verticesData[attrib.location].AsSpan());
+            ref var attribArray = ref MemoryMarshal.GetArrayDataReference(meshData.vertices[attrib.location]);
             int attribSize = attrib.size;
-            for (int i = 0; i < vertexSize; i++)
+            for (int i = 0; i < meshData.vertexCount; i++)
             {
-                ref var source = ref Unsafe.Add(ref attribArray, (attribSize * i) + innerOffset);
-                ref var destination = ref Unsafe.Add(ref resultRef, i * vertexSize);
-                Unsafe.CopyBlockUnaligned(ref source, ref destination, (uint)attribSize);
+                ref var source = ref Unsafe.Add(ref attribArray, attribSize * i);
+                ref var destination = ref Unsafe.Add(ref resultRef, i * vertexSize + offset);
+                Unsafe.CopyBlockUnaligned(ref destination, ref source, (uint)attribSize);
             }
-            innerOffset += attribSize;
+            offset += attribSize;
         }
         return result;
     }
