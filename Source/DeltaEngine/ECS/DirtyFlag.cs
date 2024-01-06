@@ -13,9 +13,8 @@ internal struct DirtyFlag<T> { }
 internal static class DirtyExtensions
 {
     private static readonly Dictionary<QueryDescription, Dictionary<ComponentType, QueryDescription>> _nonDirtyLookup = [];
-    private static readonly Dictionary<Type, bool> _iDirtyLookup = [];
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Inl)]
     public static void InlineDirtyQuery<T, T0>(this World world, in QueryDescription description, ref T iForEach)
         where T : struct, IForEach<T0>
     {
@@ -23,7 +22,7 @@ internal static class DirtyExtensions
         world.InlineQuery<T, T0>(description, ref iForEach);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Inl)]
     public static void InlineDirtyQuery<T, T0, T1>(this World world, in QueryDescription description, ref T iForEach)
         where T : struct, IForEach<T0, T1>
     {
@@ -32,6 +31,7 @@ internal static class DirtyExtensions
         world.InlineQuery<T, T0, T1>(description, ref iForEach);
     }
 
+    [MethodImpl(Inl)]
     public static void InlineDirtyParallelQuery<T, T0, T1>(this World world, in QueryDescription description, ref T iForEach)
         where T : struct, IForEach<T0, T1>
     {
@@ -40,7 +40,7 @@ internal static class DirtyExtensions
         world.InlineParallelQuery<T, T0, T1>(description, ref iForEach);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Inl)]
     public static void InlinePrallelDirtyQuery<T, T0>(this World world, in QueryDescription description, ref T iForEach)
         where T : struct, IForEach<T0>
     {
@@ -48,6 +48,7 @@ internal static class DirtyExtensions
         world.InlineParallelQuery<T, T0>(description, ref iForEach);
     }
 
+    [MethodImpl(Inl)]
     private static void AddDirty<T>(this World world, in QueryDescription description)
     {
         if (new Impl<IDirty, T>())

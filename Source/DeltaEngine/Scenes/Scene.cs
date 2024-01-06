@@ -1,210 +1,82 @@
 ﻿using Arch.Core;
-using Delta.ECS;
-using Delta.Rendering;
+using Arch.Persistence;
 using JobScheduler;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
-using System.Numerics;
-using System.Runtime.CompilerServices;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Delta.Scenes;
-internal class Scene
+public sealed class Scene : IDisposable
 {
-    private readonly Renderer _renderer;
-    private readonly World _sceneWorld;
+    [JsonConverter(typeof(WorldConverter))]
+    internal readonly World _world;
+    private readonly List<IJob> _jobs;
 
-    public Scene(World world, Renderer renderer)
-    {
-        _sceneWorld = world;
-        var tr = new QueryDescription().WithAll<Transform>();
-        _sceneWorld.Query(tr, (ref Transform t) => t.Scale = new(1));
-        _sceneWorld.Query(tr, (ref Transform t) => t.Position = RndVector());
-        _sceneWorld.Add<DirtyFlag<Transform>>(tr);
-
-        var move = new QueryDescription().WithAll<Transform>().WithNone<ChildOf>();
-        _sceneWorld.Add<MoveToTarget>(move);
-        move = new QueryDescription().WithAll<Transform, ChildOf>();
-        _sceneWorld.Query(move, (ref Transform t) => t.Position = new(0, 0.2f, 0));
-        _renderer = renderer;
-    }
-
+    private float _deltaTime;
     private readonly Stopwatch _sceneSw = new();
-    public TimeSpan GetSceneMetric => _sceneSw.Elapsed;
-    public void ClearSceneMetric()
+
+    public Scene()
     {
-        _sceneSw.Reset();
+        _world = World.Create();
+        _jobs = [];
     }
 
-    public struct MoveToTarget
+    public void Run()
     {
-        public Vector3 start;
-        public Vector3 target;
-        public float percent;
-        public float startScale;
-        public float targetScale;
-    }
+        _sceneSw.Restart();
 
-    [MethodImpl(NoInl)]
-    public void Run(float deltaTime)
-    {
-        _renderer.Sync();
-        _sceneWorld.Remove<DirtyFlag<Transform>>(new QueryDescription().WithAll<DirtyFlag<Transform>>());
-
-        _sceneSw.Start();
-
-        var h2 = JobScheduler.JobScheduler.Instance.Schedule(_renderer);
-        JobScheduler.JobScheduler.Instance.Flush();
-        new MoveAllTransforms(_sceneWorld, deltaTime).Execute();
-
-        h2.Complete();
+        foreach (var item in _jobs)
+            item.Execute();
 
         _sceneSw.Stop();
+        _deltaTime = (float)_sceneSw.Elapsed.TotalSeconds;
     }
 
-    private readonly struct MoveAllTransforms(World world, float deltaTime) : IJob
+    public float DeltaTime() => _deltaTime;
+
+    public void AddJob(IJob job)
     {
-        private readonly World _sceneWorld = world;
-        private readonly float _deltaTime = deltaTime;
-        public readonly void Execute()
+        _jobs.Add(job);
+    }
+
+    public void RemoveJob(IJob job)
+    {
+        _jobs.Remove(job);
+    }
+
+    public void AddEntity()
+    {
+        _world.Create();
+    }
+
+    public void RemoveEntity()
+    {
+        var all = QueryDescription.Null;
+        Span<Entity> e = stackalloc Entity[_world.CountEntities(all)];
+        _world.GetEntities(all, e);
+        _world.Destroy(e[0]);
+    }
+
+    public void Dispose()
+    {
+        World.Destroy(_world);
+        foreach (var item in _jobs)
+            using (item as IDisposable) ;
+        _jobs.Clear();
+    }
+
+    private class WorldConverter : JsonConverter<World>
+    {
+        private static readonly ArchJsonSerializer _serializer = new();
+        public override World? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            var query = new QueryDescription().WithAll<Transform, MoveToTarget>();
-            MoveTransforms move = new(_deltaTime);
-            _sceneWorld.InlineDirtyParallelQuery<MoveTransforms, Transform, MoveToTarget>(query, ref move);
+            return _serializer.Deserialize(reader.GetBytesFromBase64());
+        }
+        public override void Write(Utf8JsonWriter writer, World value, JsonSerializerOptions options)
+        {
+            writer.WriteBase64StringValue(_serializer.Serialize(value));
         }
     }
-
-    private readonly struct MoveTransforms(float deltaTime) : IForEach<Transform, MoveToTarget>
-    {
-        private readonly float deltaTime = deltaTime;
-
-        [MethodImpl(Inl)]
-        public readonly void Update(ref Transform t, ref MoveToTarget m)
-        {
-            t.Position = Vector3.Lerp(m.start, m.target, m.percent);
-            t.Scale = Vector3.Lerp(t.Scale, new(m.targetScale), m.percent);
-            m.percent += deltaTime * 0.5f;
-            m.percent = Math.Clamp(m.percent, 0f, 1f);
-            t.Rotation *= Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI * deltaTime * 5);
-            if (m.percent == 1)
-            {
-                m.start = m.target;
-                m.target = RndVector();
-                m.startScale = m.targetScale;
-                m.targetScale = Random.Shared.NextSingle() * 0.1f;
-                m.percent = 0;
-            }
-        }
-    }
-
-    [MethodImpl(Inl)]
-    public static float InCubic(float t) => t * t * t;
-
-    [MethodImpl(Inl)]
-    public static Vector3 MoveTo(Vector3 src, Vector3 trg, float t)
-    {
-        var delta = trg - src;
-        float d = delta.LengthSquared();
-        return d <= t * t ? trg : src + (delta / MathF.Sqrt(d) * t);
-    }
-
-    private static Vector3 RndVector()
-    {
-        Random rnd = Random.Shared;
-        var xy = new Vector2(rnd.NextSingle() - 0.5f, rnd.NextSingle() - 0.5f) * 0.5f;
-        var position = new Vector3(xy.X, xy.Y, 0) * 2;
-        return position;
-    }
-
-
-    /*
-    [0][1][2][3][4][5][6][7][0][1][2][3][4][5][6][7][0][1][2][3][4][5][6][7][0][1]
-
-    [t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t]  transforms
-    [i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i]  parent index
-
-    [r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r]  render
-    [i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i]  reference to transform
-
-
-    BitArray
-    [0][0][0][0][0][0][0][0][x][0][0][0][x][0][0][0][0][0][0][0][x][0][0][0][0][0] dirty transforms at host (1 world step) // updates of frame are done with mapped system class, but we must store bitarray during update
-    [0][0][0][0][0][x][0][0][0][0][0][0][0][0][0][0][x][0][0][0][0][0][0][0][0][0] dirty transforms at host (2 world step)
-    [0][0][x][0][0][0][0][0][x][0][x][0][x][0][0][0][0][x][0][0][0][x][0][0][0][0] dirty transforms at host (3 world step)
-                                          ____
-                                       __|    |__
-                                      \         /
-                                       \       /
-                                        \     /
-                                         \   /
-                                          \ /
-                                           *
-    [0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] dirty transforms after frame rendered (none, as always update all before render) // BAD as it leads to increase of work submitted to each frame buffer
-    [0][0][0][0][0][0][0][0][x][0][0][0][x][0][0][0][0][0][0][0][x][0][0][0][0][0] dirty transforms at frame (1 world step) (bitwice or with host)
-    [0][0][0][0][0][x][0][0][x][0][0][0][x][0][0][0][x][0][0][0][x][0][0][0][0][0] dirty transforms at frame (2 world step) (bitwice or with host)
-    [0][0][x][0][0][x][0][0][x][0][x][0][x][0][0][0][x][x][0][0][x][x][0][0][0][0] dirty transforms at frame (2 world step) (bitwice or with host)
-
-                                                                                   same logic applied for each replicated buffer
-
-                                                                                   lets say system asks to render current frame
-
-    [0][1][2][3][4][5][6][7][0][1][2][3][4][5][6][7][0][1][2][3][4][5][6][7][0][1]
-    [2][5][8][10][12][16][17][20][21]                                              indices to copy from host to buffer constructed from dirty mask
-
-                                                                                   setup compute shader for data replication
-
-    [t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t] host transforms
-    [t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t][t] frame transforms
-    [2][5][8][10][12][16][17][20][21]                                              replication indices         Change of any index leads to global position recalculation via tree
-
-    [i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i] host parent of transform Index
-    [i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i] frame parent of trnasform Index
-    [2][5][8][10][12][16][17][20][21]                                              replication indices         Change of any index leads to global position recalculation via tree
-                                                                                                               
-                                                                                                               We also can build array of changed layers (transform changed - whole tree dirty, parenting changed - whole tree dirty)
-                                                                                                               This will give ability to correctly calculate world position matrices for whole array using N steps of compute shader where N is depth of tree
-                                                                                                               if we moved root we will send N indices to gpu it's N uints => N * 4 bytes => N * 4 bytes * 120 fps => 480 MB/second (so it fits in transfer bottleneck)
-
-                                                                                                               The question is where we should run compute shader for global transform recalculations?
-                                                                                                               Running it in frame buffer will drop performance by count of buffers. Running on local leads to slower compute shader
-                                                                                                               We can have device global compute layer which will take care of transfering data and it's preparing for frame buffer
-
-    [r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r] host renders                We don't neeed to send whole render data, we can send an index of transform inside frame buffer and it leads to somehow grouped transform indices
-    [r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r][r] frame renders
-    [2][5][8][10][12][16][17][20][21]                                              replication indices
-
-    [i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i] host parent of render Index
-    [i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i][i] frame parent of render Index
-    [2][5][8][10][12][16][17][20][21]                                              replication indices
-
-
-    So before rendering frame each Render asks if it has dirty transform in parents;
-    for each render with dirty transfrom in parent we go up to point where dirtiness ends (exclusive)
-    we store unqieue versId of dirty transforms based on their hierarchy depth in array,                        Array I
-    0 depth transforms will be stored first and leafs will be stored last
-    we store count of transforms with same depth in second array (0 depth count first, leaf depth last)         Array L
-    we store count of dirty depths                                                                              Uint  N
-
-
-    we send this data to compute shader which will do something like this:
-
-    void RebuildWorld()
-    {
-        for(int l = 0; l < N; l++)  // Execute for each layer
-        {
-            int indices = L[l];     // Count of transforms in layer
-
-            for(int i = 0; i < indices; i++) // Execute same layer transforms
-            {
-                int index = I[i];
-                world[index] = local[index] * world[parent[index]];
-            }
-
-            barrier();      //  wait for layer calculation end
-        }
-    }
-    With this approach we can also update bounding boxes etc
-
-    After that all selected versIds marked clear (not all, just related, as other could be bound to render in later frames)
-
-    */
 }

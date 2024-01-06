@@ -52,7 +52,7 @@ public abstract unsafe partial class BaseRenderer : IDisposable, IJob
 
     private Frame CurrentFrame => _frames.Peek();
 
-    public void Sync()
+    private void Sync()
     {
         _api.sdl.PumpEvents();
         if (!_skippedFrame)
@@ -81,6 +81,12 @@ public abstract unsafe partial class BaseRenderer : IDisposable, IJob
     public abstract void PreSync();
 
     public void Execute()
+    {
+        Sync();
+        Draw();
+    }
+
+    public void Draw()
     {
         _framesCount++;
         if (_skippedFrame)
