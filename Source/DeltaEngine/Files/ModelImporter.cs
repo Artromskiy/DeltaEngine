@@ -11,14 +11,14 @@ internal class ModelImporter : IAssetImporter, IDisposable
 {
     private static readonly Assimp _assimp = Assimp.GetApi();
     private const PostProcessSteps importMode = PostProcessSteps.Triangulate | PostProcessSteps.GenerateNormals | PostProcessSteps.JoinIdenticalVertices;
-    public ImmutableHashSet<string> FileFormats { get; } = ImmutableHashSet.Create("fbx");
+    public ImmutableHashSet<string> FileFormats { get; } = ["fbx"];
     public void Dispose() => _assimp.Dispose();
 
     public unsafe void Import(string path)
     {
         var fileName = Path.GetFileNameWithoutExtension(path);
         Scene* scene = _assimp.ImportFile(path, (uint)importMode);
-        List<(MeshData meshData, string name)> meshDatas = new();
+        List<(MeshData meshData, string name)> meshDatas = [];
         ProcessScene(scene->MRootNode, scene, meshDatas);
         foreach (var (meshData, name) in meshDatas)
             AssetImporter.Instance.CreateAsset($"{fileName}.{name}.Mesh", meshData);

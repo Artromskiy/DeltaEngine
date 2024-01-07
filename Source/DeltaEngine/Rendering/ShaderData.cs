@@ -8,17 +8,17 @@ namespace Delta.Rendering;
 
 public class ShaderData : IAsset
 {
-    public readonly VertexAttribute vertexMask;
-    public readonly ImmutableArray<byte> vertBytes;
-    public readonly ImmutableArray<byte> fragBytes;
+    public readonly byte[] vertBytes;
+    public readonly byte[] fragBytes;
 
     public ShaderData(byte[] vert, byte[] frag)
     {
-        vertBytes = ImmutableArray.Create(vert);
-        fragBytes = ImmutableArray.Create(frag);
-        vertexMask = GetInputAttributes([.. vertBytes]);
+        vertBytes = (byte[])vert.Clone();
+        fragBytes = (byte[])frag.Clone();
+        //vertexMask = GetInputAttributes([.. vertBytes]);
     }
 
+    // TODO calculate vertex mask somewhere else, we should provide renderless api
     private unsafe VertexAttribute GetInputAttributes(ReadOnlySpan<byte> shaderCode)
     {
         Context* context = default;

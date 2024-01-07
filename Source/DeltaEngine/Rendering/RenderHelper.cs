@@ -16,7 +16,7 @@ using Semaphore = Silk.NET.Vulkan.Semaphore;
 
 namespace Delta.Rendering;
 
-public static class RenderHelper
+internal static class RenderHelper
 {
 
     private const uint flags = (uint)
@@ -247,7 +247,7 @@ public static class RenderHelper
         _ = api.vk.EnumerateInstanceLayerProperties(&layersCount, null);
         Span<LayerProperties> layers = stackalloc LayerProperties[(int)layersCount];
         _ = api.vk.EnumerateInstanceLayerProperties(&layersCount, layers);
-        HashSet<string> layersNames = new();
+        HashSet<string> layersNames = [];
         foreach (var layer in layers)
         {
             var layerName = Marshal.PtrToStringUTF8((nint)layer.LayerName);
@@ -319,21 +319,6 @@ public static class RenderHelper
         return res;
     }
 
-    public static unsafe (Buffer, DeviceMemory) CreateVertexBuffer(RenderBase data, Vertex[] vertices)
-    {
-        var size = (uint)(Vertex.Size * vertices.Length);
-        var res = CreateBufferAndMemory(data, size, BufferUsageFlags.VertexBufferBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit);
-
-        void* datap;
-        data.vk.MapMemory(data.deviceQ.device, res.memory, 0, size, 0, &datap);
-
-        Unsafe.CopyBlockUnaligned(ref Unsafe.AsRef<byte>(datap),
-            ref Unsafe.As<Vertex, byte>(ref MemoryMarshal.GetArrayDataReference(vertices)),
-            size);
-
-        data.vk.UnmapMemory(data.deviceQ.device, res.memory);
-        return res;
-    }
 
     public static unsafe (Buffer, DeviceMemory) CreateIndexBuffer(RenderBase data, uint[] indices)
     {
@@ -375,20 +360,51 @@ public static class RenderHelper
         return (uint)i;
     }
 
-    public static unsafe (Pipeline pipeline, PipelineLayout layout) CreateGraphicsPipeline(RenderBase data, RenderPass renderPass, DescriptorSetLayout[] setLayouts)
+    public static VertexInputBindingDescription GetBindingDescription(VertexAttribute vertexAttributeMask) => new()
     {
-        using var vertShader = new PipelineShader(data, ShaderStageFlags.VertexBit, "shaders/vert.spv");
-        using var fragShader = new PipelineShader(data, ShaderStageFlags.FragmentBit, "shaders/frag.spv");
+        Binding = 0,
+        InputRate = VertexInputRate.Vertex,
+        Stride = (uint)vertexAttributeMask.GetVertexSize()
+    };
+
+    public static unsafe void FillAttributeDesctiption(VertexInputAttributeDescription* ptr, VertexAttribute vertexAttributeMask)
+    {
+        int index = 0;
+        int offset = 0;
+        foreach (var attrib in vertexAttributeMask.Iterate())
+        {
+            Format format = attrib.size switch
+            {
+                4 * 1 => Format.R32Sfloat,
+                4 * 2 => Format.R32G32Sfloat,
+                4 * 3 => Format.R32G32B32Sfloat,
+                4 * 4 => Format.R32G32B32A32Sfloat,
+                _ => throw new Exception("Invalid vertex attribute size defined")
+            };
+            ptr[index++] = new()
+            {
+                Binding = 0,
+                Format = format,
+                Location = (uint)attrib.location,
+                Offset = (uint)offset,
+            };
+            offset += attrib.size;
+        }
+    }
+
+    public static unsafe (Pipeline pipeline, PipelineLayout layout) CreateGraphicsPipeline(ShaderData shaderData, RenderBase data, RenderPass renderPass)
+    {
+        using var vertShader = new PipelineShader(data, ShaderStageFlags.VertexBit, shaderData.vertBytes);
+        using var fragShader = new PipelineShader(data, ShaderStageFlags.FragmentBit, shaderData.fragBytes);
         var stages = stackalloc PipelineShaderStageCreateInfo[2]
         {
             ShaderModuleGroupCreator.Create(vertShader),
             ShaderModuleGroupCreator.Create(fragShader)
         };
-
-        var bind = Vertex.GetBindingDescription(vertShader.attributeMask);
+        var bind = GetBindingDescription(vertShader.attributeMask);
         var attribCount = vertShader.attributeMask.GetAttributesCount();
         var attr = stackalloc VertexInputAttributeDescription[attribCount];
-        Vertex.FillAttributeDesctiption(attr, vertShader.attributeMask);
+        FillAttributeDesctiption(attr, vertShader.attributeMask);
         PipelineVertexInputStateCreateInfo vertexInputInfo = new()
         {
             SType = StructureType.PipelineVertexInputStateCreateInfo,
@@ -461,13 +477,131 @@ public static class RenderHelper
             PAttachments = &colorBlendAttachment,
         };
 
-        var layouts = stackalloc DescriptorSetLayout[setLayouts.Length];
-        for (int i = 0; i < setLayouts.Length; i++)
-            layouts[i] = setLayouts[i];
+        int setsLength = data.ShaderLayoutsDefault.Length;
+        var layouts = stackalloc DescriptorSetLayout[setsLength];
+        data.ShaderLayoutsDefault.CopyTo(new(layouts, setsLength));
         PipelineLayoutCreateInfo pipelineLayoutInfo = new()
         {
             SType = StructureType.PipelineLayoutCreateInfo,
-            SetLayoutCount = (uint)setLayouts.Length,
+            SetLayoutCount = (uint)setsLength,
+            PSetLayouts = layouts,
+        };
+        _ = data.vk.CreatePipelineLayout(data.deviceQ.device, pipelineLayoutInfo, null, out var pipelineLayout);
+
+        GraphicsPipelineCreateInfo pipelineInfo = new()
+        {
+            SType = StructureType.GraphicsPipelineCreateInfo,
+            StageCount = 2,
+            PStages = stages,
+            PVertexInputState = &vertexInputInfo,
+            PInputAssemblyState = &inputAssembly,
+            PViewportState = &viewportState,
+            PDynamicState = &dynamicState,
+            //PDepthStencilState = &depthStencil,
+            PRasterizationState = &rasterizer,
+            PMultisampleState = &multisampling,
+            PColorBlendState = &colorBlending,
+            Layout = pipelineLayout,
+            RenderPass = renderPass,
+            Subpass = 0,
+            BasePipelineHandle = default,
+        };
+        _ = data.vk.CreateGraphicsPipelines(data.deviceQ.device, default, 1, pipelineInfo, null, out var graphicsPipeline);
+        return (graphicsPipeline, pipelineLayout);
+    }
+
+    public static unsafe (Pipeline pipeline, PipelineLayout layout) CreateGraphicsPipeline(RenderBase data, RenderPass renderPass)
+    {
+        using var vertShader = new PipelineShader(data, ShaderStageFlags.VertexBit, "shaders/vert.spv");
+        using var fragShader = new PipelineShader(data, ShaderStageFlags.FragmentBit, "shaders/frag.spv");
+        var stages = stackalloc PipelineShaderStageCreateInfo[2]
+        {
+            ShaderModuleGroupCreator.Create(vertShader),
+            ShaderModuleGroupCreator.Create(fragShader)
+        };
+        var bind = GetBindingDescription(vertShader.attributeMask);
+        var attribCount = vertShader.attributeMask.GetAttributesCount();
+        var attr = stackalloc VertexInputAttributeDescription[attribCount];
+        FillAttributeDesctiption(attr, vertShader.attributeMask);
+        PipelineVertexInputStateCreateInfo vertexInputInfo = new()
+        {
+            SType = StructureType.PipelineVertexInputStateCreateInfo,
+            VertexBindingDescriptionCount = 1,
+            PVertexBindingDescriptions = &bind,
+            VertexAttributeDescriptionCount = (uint)attribCount,
+            PVertexAttributeDescriptions = attr,
+        };
+
+        PipelineInputAssemblyStateCreateInfo inputAssembly = new()
+        {
+            SType = StructureType.PipelineInputAssemblyStateCreateInfo,
+            Topology = PrimitiveTopology.TriangleList,
+            PrimitiveRestartEnable = false,
+        };
+
+        var dynamicStates = stackalloc[] { DynamicState.Viewport, DynamicState.Scissor };
+        PipelineDynamicStateCreateInfo dynamicState = new()
+        {
+            SType = StructureType.PipelineDynamicStateCreateInfo,
+            PDynamicStates = dynamicStates,
+            DynamicStateCount = 2,
+        };
+        PipelineViewportStateCreateInfo viewportState = new()
+        {
+            SType = StructureType.PipelineViewportStateCreateInfo,
+            ViewportCount = 1,
+            ScissorCount = 1,
+        };
+
+        PipelineRasterizationStateCreateInfo rasterizer = new()
+        {
+            SType = StructureType.PipelineRasterizationStateCreateInfo,
+            DepthClampEnable = false,
+            RasterizerDiscardEnable = false,
+            PolygonMode = PolygonMode.Fill,
+            LineWidth = 1,
+            CullMode = CullModeFlags.BackBit,
+            FrontFace = FrontFace.Clockwise,
+            DepthBiasEnable = false,
+        };
+
+        PipelineMultisampleStateCreateInfo multisampling = new()
+        {
+            SType = StructureType.PipelineMultisampleStateCreateInfo,
+            SampleShadingEnable = false,
+            RasterizationSamples = SampleCountFlags.Count1Bit,
+        };
+
+        PipelineColorBlendAttachmentState colorBlendAttachment = new()
+        {
+            ColorWriteMask = ColorComponentFlags.RBit | ColorComponentFlags.GBit | ColorComponentFlags.BBit | ColorComponentFlags.ABit,
+            BlendEnable = false,
+        };
+        //PipelineDepthStencilStateCreateInfo depthStencil = new()
+        //{
+        //    SType = StructureType.PipelineDepthStencilStateCreateInfo,
+        //    DepthTestEnable = true,
+        //    DepthWriteEnable = true,
+        //    DepthCompareOp = CompareOp.LessOrEqual,
+        //    DepthBoundsTestEnable = false
+        //};
+
+        PipelineColorBlendStateCreateInfo colorBlending = new()
+        {
+            SType = StructureType.PipelineColorBlendStateCreateInfo,
+            LogicOpEnable = false,
+            LogicOp = LogicOp.Copy,
+            AttachmentCount = 1,
+            PAttachments = &colorBlendAttachment,
+        };
+
+        int setsLength = data.ShaderLayoutsDefault.Length;
+        var layouts = stackalloc DescriptorSetLayout[setsLength];
+        data.ShaderLayoutsDefault.CopyTo(new(layouts, setsLength));
+        PipelineLayoutCreateInfo pipelineLayoutInfo = new()
+        {
+            SType = StructureType.PipelineLayoutCreateInfo,
+            SetLayoutCount = (uint)setsLength,
             PSetLayouts = layouts,
         };
         _ = data.vk.CreatePipelineLayout(data.deviceQ.device, pipelineLayoutInfo, null, out var pipelineLayout);

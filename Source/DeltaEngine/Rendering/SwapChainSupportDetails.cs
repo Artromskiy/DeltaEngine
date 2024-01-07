@@ -5,7 +5,7 @@ using System.Collections.Immutable;
 
 namespace Delta.Rendering;
 
-public readonly struct SwapChainSupportDetails
+internal readonly struct SwapChainSupportDetails
 {
     public readonly SurfaceCapabilitiesKHR Capabilities;
     public readonly ImmutableArray<PresentModeKHR> PresentModes;

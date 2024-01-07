@@ -11,19 +11,14 @@ public struct Transform : IDirty
     public Quaternion Rotation;
     public Vector3 Scale;
 
-
-
-    public Matrix4x4 LocalMatrix
+    public readonly Matrix4x4 LocalMatrix
     {
         [MethodImpl(Inl)]
-        //get => Matrix4x4.CreateScale(Scale) * Matrix4x4.CreateFromQuaternion(Rotation) * Matrix4x4.CreateTranslation(Position);
-        //get => Matrix4x4.Transform(Matrix4x4.CreateScale(Scale), Rotation) * Matrix4x4.CreateTranslation(Position);
-        get => LocalOptimized();
-        //get => Matrix4x4.Identity;
+        get => LocalMatrixInternal();
     }
 
     [MethodImpl(Inl)]
-    public Matrix4x4 LocalOptimized()
+    private readonly Matrix4x4 LocalMatrixInternal()
     {
         ref readonly var t = ref Position;
         ref readonly var r = ref Rotation;

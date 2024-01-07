@@ -4,6 +4,7 @@ namespace Delta.Files;
 
 public class MeshData : IAsset
 {
+    // TODO implement access as readonly span
     [JsonInclude]
     public readonly int vertexCount;
     [JsonInclude]

@@ -3,7 +3,7 @@ using Silk.NET.Vulkan;
 
 namespace Delta.Rendering;
 
-public readonly struct Api
+internal readonly struct Api
 {
     public readonly Sdl sdl;
     public readonly Vk vk;

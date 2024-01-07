@@ -9,7 +9,7 @@ using Semaphore = Silk.NET.Vulkan.Semaphore;
 
 namespace Delta.Rendering;
 
-public abstract unsafe partial class BaseRenderer : IDisposable, IJob
+internal abstract unsafe partial class BaseRenderer : IDisposable, IJob
 {
     private readonly Api _api;
     private readonly Window* _window;
@@ -44,7 +44,7 @@ public abstract unsafe partial class BaseRenderer : IDisposable, IJob
         renderPass = RenderHelper.CreateRenderPass(_api, _rendererData.deviceQ.device, _rendererData.format.Format);
         swapChain = new SwapChain(_api, _rendererData, renderPass, GetSdlWindowSize(), Buffering, _rendererData.format);
         descriptorSetLayout = RenderHelper.CreateDescriptorSetLayout(_rendererData);
-        (graphicsPipeline, pipelineLayout) = RenderHelper.CreateGraphicsPipeline(_rendererData, renderPass, [descriptorSetLayout]);
+        (graphicsPipeline, pipelineLayout) = RenderHelper.CreateGraphicsPipeline(_rendererData, renderPass);
 
         for (int i = 0; i < swapChain.imageCount; i++)
             _frames.Enqueue(new Frame(_rendererData, swapChain, renderPass, descriptorSetLayout));

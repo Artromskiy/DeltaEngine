@@ -9,8 +9,8 @@ using System.Text.Json;
 namespace Delta.Files;
 internal class MeshCollection : IAssetCollection<MeshData>
 {
-    private readonly Dictionary<Guid, Dictionary<VertexAttribute, WeakReference<byte[]?>>> _meshMapVariants = new();
-    private readonly Dictionary<Guid, WeakReference<MeshData?>> _meshDataMap = new();
+    private readonly Dictionary<Guid, Dictionary<VertexAttribute, WeakReference<byte[]?>>> _meshMapVariants = [];
+    private readonly Dictionary<Guid, WeakReference<MeshData?>> _meshDataMap = [];
 
     public unsafe MeshData GetMeshData(Guid guid)
     {
@@ -40,7 +40,7 @@ internal class MeshCollection : IAssetCollection<MeshData>
     public unsafe byte[] GetMeshVariant(VertexAttribute vertexMask, Guid guid)
     {
         if (!_meshMapVariants.TryGetValue(guid, out var meshVariants))
-            _meshMapVariants[guid] = meshVariants = new();
+            _meshMapVariants[guid] = meshVariants = [];
         if (!meshVariants.TryGetValue(vertexMask, out var reference))
             meshVariants[vertexMask] = reference = new(null);
         if (!reference.TryGetTarget(out var result))

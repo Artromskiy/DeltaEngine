@@ -4,6 +4,7 @@ using System.Diagnostics;
 //try
 {
     using var eng = new Engine(Directory.GetCurrentDirectory());
+    eng.CreateTestScene();
     eng.Run();
     Stopwatch sw = new();
 

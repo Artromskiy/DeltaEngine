@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace Delta.Rendering;
 
-public static class ShaderModuleGroupCreator
+internal static class ShaderModuleGroupCreator
 {
     private const string ShaderEntryName = "main";
     private static readonly nint namePtr;

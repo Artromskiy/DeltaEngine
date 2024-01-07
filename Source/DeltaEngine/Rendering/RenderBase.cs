@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace Delta.Rendering;
 
-public sealed class RenderBase : IDisposable
+internal sealed class RenderBase : IDisposable
 {
     public readonly Vk vk;
     public readonly Instance instance;
@@ -24,6 +24,9 @@ public sealed class RenderBase : IDisposable
     public readonly DeviceQueues deviceQ;
 
     public readonly DescriptorPool descriptorPool;
+
+    private readonly DescriptorSetLayout[] _shaderLayoutsDefault;
+    public ReadOnlySpan<DescriptorSetLayout> ShaderLayoutsDefault => _shaderLayoutsDefault.AsSpan();
 
     private const string RendererName = "Delta Renderer";
 
@@ -63,6 +66,8 @@ public sealed class RenderBase : IDisposable
         format = RenderHelper.ChooseSwapSurfaceFormat(swapChainSupport.Formats, targetFormat);
 
         descriptorPool = RenderHelper.CreateDescriptorPool(this);
+
+        _shaderLayoutsDefault = [RenderHelper.CreateDescriptorSetLayout(this)];
     }
 
     public unsafe void Dispose()

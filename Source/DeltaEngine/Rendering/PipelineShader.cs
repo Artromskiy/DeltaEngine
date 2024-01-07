@@ -7,7 +7,7 @@ using System.IO;
 
 namespace Delta.Rendering;
 
-public readonly struct PipelineShader : IDisposable
+internal readonly struct PipelineShader : IDisposable
 {
     public readonly ShaderModule module;
     public readonly ShaderStageFlags stage;

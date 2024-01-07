@@ -6,7 +6,7 @@ using System.Text.Json;
 
 namespace Delta.Files;
 
-public class AssetImporter
+internal class AssetImporter
 {
     private readonly string ProjectFolder;
     private readonly string ResourcesFolder;
@@ -25,8 +25,6 @@ public class AssetImporter
 
     private readonly string _currentFolder;
 
-
-    public AssetImporter() : this(Directory.GetCurrentDirectory()) { }
     public AssetImporter(string path)
     {
         _instance = this;

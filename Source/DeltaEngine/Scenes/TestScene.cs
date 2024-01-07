@@ -21,8 +21,8 @@ internal static class TestScene
     //private const int N = 100_000;
     //private const int N = 10_000;
     //private const int N = 1_000;
-    //private const int N = 100;
-    private const int N = 10;
+    private const int N = 100;
+    //private const int N = 10;
     //private const int N = 2;
 
     static TestScene()
@@ -57,7 +57,6 @@ internal static class TestScene
         Scene._world.Add<MoveToTarget>(move);
         move = new QueryDescription().WithAll<Transform, ChildOf>();
         Scene._world.Query(move, (ref Transform t) => t.Position = new(0, 0.2f, 0));
-
     }
 
 

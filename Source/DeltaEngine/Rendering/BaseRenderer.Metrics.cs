@@ -2,7 +2,7 @@
 using System.Diagnostics;
 
 namespace Delta.Rendering;
-public partial class BaseRenderer
+internal partial class BaseRenderer
 {
     private readonly Stopwatch _waitSync = new();
     private ulong _framesCount;

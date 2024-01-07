@@ -6,7 +6,7 @@ using System.Collections.Immutable;
 
 namespace Delta.Rendering;
 
-public readonly struct QueueFamilyIndiciesDetails
+internal readonly struct QueueFamilyIndiciesDetails
 {
     public readonly ImmutableArray<QueueFamilyProperties> queueFamilyProperties;
 
