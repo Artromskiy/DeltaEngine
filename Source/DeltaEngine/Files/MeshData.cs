@@ -1,16 +1,20 @@
-﻿using System.Text.Json.Serialization;
+﻿using System;
+using System.Text.Json.Serialization;
 
 namespace Delta.Files;
 
 public class MeshData : IAsset
 {
-    // TODO implement access as readonly span
     [JsonInclude]
     public readonly int vertexCount;
     [JsonInclude]
-    public readonly byte[][] vertices;
+    private readonly byte[][] vertices;
     [JsonInclude]
-    public readonly uint[] indices;
+    private readonly uint[] indices;
+
+    [JsonIgnore]
+    public ReadOnlySpan<uint> Indices => indices;
+    public ReadOnlySpan<byte> GetAttributeArray(int index) => vertices[index];
 
     public MeshData(uint[] indices, byte[][] vertices, int vertexCount)
     {

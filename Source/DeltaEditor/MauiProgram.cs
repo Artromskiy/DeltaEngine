@@ -1,5 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
-using Delta;
+﻿using Delta;
+using Microsoft.Extensions.Logging;
 
 namespace DeltaEditor
 {
@@ -30,7 +30,7 @@ namespace DeltaEditor
                 .AddSingleton<MainPage>();
 
 #if DEBUG
-    		builder.Logging.AddDebug();
+            builder.Logging.AddDebug();
             System.Diagnostics.Debugger.Launch();
 #endif
             return builder.Build();

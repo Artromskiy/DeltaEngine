@@ -1,6 +1,7 @@
-﻿using Silk.NET.Vulkan;
+﻿using Delta.ECS;
+using Silk.NET.Vulkan;
 using System;
-using System.Diagnostics;
+using System.Collections.Generic;
 using Buffer = Silk.NET.Vulkan.Buffer;
 
 namespace Delta.Rendering;
@@ -91,22 +92,6 @@ internal class Frame : IDisposable
         _syncSemaphore = semaphore;
     }
 
-    private readonly Stopwatch _acquire = new();
-    private readonly Stopwatch _recordRender = new();
-    private readonly Stopwatch _submitRender = new();
-    private readonly Stopwatch _submitPresent = new();
-    public TimeSpan AcquireMetric => _acquire.Elapsed;
-    public TimeSpan RecordMetric => _recordRender.Elapsed;
-    public TimeSpan SubmitDrawMetric => _submitRender.Elapsed;
-    public TimeSpan SubmitPresentMetric => _submitPresent.Elapsed;
-    public void ClearMetrics()
-    {
-        _acquire.Reset();
-        _recordRender.Reset();
-        _submitRender.Reset();
-        _submitPresent.Reset();
-    }
-
     public unsafe void Draw(Pipeline graphicsPipeline, PipelineLayout layout, out bool resize)
     {
         //_rendererData.vk.WaitForFences(_rendererData.deviceQueues.device, 1, renderFinishedFence, true, ulong.MaxValue);
@@ -114,9 +99,7 @@ internal class Frame : IDisposable
         var imageAvailable = this.imageAvailable;
         uint imageIndex = 0;
 
-        _acquire.Start();
         var res = _swapChain.khrSw.AcquireNextImage(_rendererData.deviceQ.device, _swapChain.swapChain, ulong.MaxValue, imageAvailable, default, &imageIndex);
-        _acquire.Stop();
 
         resize = res == Result.SuboptimalKhr || res == Result.ErrorOutOfDateKhr;
         if (resize)
@@ -130,9 +113,7 @@ internal class Frame : IDisposable
             RenderHelper.BindBuffersToDescriptorSet(_rendererData, _descriptorSet, _matricesDynamicBuffer.GetBuffer(), 0, DescriptorType.StorageBuffer);
             _matricesDynamicBuffer.ChangedBuffer = false;
         }
-        _recordRender.Start();
         RecordCommandBuffer(commandBuffer, imageIndex, graphicsPipeline, layout, _vertexBuffer, _indexBuffer, _indicesLength);
-        _recordRender.Stop();
 
         var buffer = commandBuffer;
         var syncSemaphore = _syncSemaphore;
@@ -152,9 +133,7 @@ internal class Frame : IDisposable
             SignalSemaphoreCount = 1,
             PSignalSemaphores = &renderFinished,
         };
-        _submitRender.Start();
         _ = _rendererData.vk.QueueSubmit(_rendererData.deviceQ.graphicsQueue, 1, submitInfo, renderFinishedFence);
-        _submitRender.Stop();
         var swapChain = _swapChain.swapChain;
         PresentInfoKHR presentInfo = new()
         {
@@ -165,9 +144,7 @@ internal class Frame : IDisposable
             PSwapchains = &swapChain,
             PImageIndices = &imageIndex
         };
-        _submitPresent.Start();
         res = _swapChain.khrSw.QueuePresent(_rendererData.deviceQ.presentQueue, presentInfo);
-        _submitPresent.Stop();
         resize = res == Result.SuboptimalKhr || res == Result.ErrorOutOfDateKhr;
         if (!resize)
             _ = res;
@@ -198,9 +175,10 @@ internal class Frame : IDisposable
         _ = _rendererData.vk.BeginCommandBuffer(commandBuffer, &beginInfo);
 
         _rendererData.vk.CmdBeginRenderPass(commandBuffer, &renderPassInfo, SubpassContents.Inline);
-        _rendererData.vk.CmdBindPipeline(commandBuffer, PipelineBindPoint.Graphics, graphicsPipeline);
         _rendererData.vk.CmdSetViewport(commandBuffer, 0, 1, &viewport);
         _rendererData.vk.CmdSetScissor(commandBuffer, 0, 1, &renderRect);
+        
+        _rendererData.vk.CmdBindPipeline(commandBuffer, PipelineBindPoint.Graphics, graphicsPipeline);
 
         var buffer = stackalloc Buffer[] { vbo };
         ulong offsets = 0;
@@ -215,5 +193,114 @@ internal class Frame : IDisposable
         _rendererData.vk.CmdEndRenderPass(commandBuffer);
 
         _ = _rendererData.vk.EndCommandBuffer(commandBuffer);
+    }
+
+
+
+
+    public unsafe void Draw(List<(Render render, int count)> rendersData, out bool resize)
+    {
+
+        //_rendererData.vk.WaitForFences(_rendererData.deviceQueues.device, 1, renderFinishedFence, true, ulong.MaxValue);
+
+        var imageAvailable = this.imageAvailable;
+        uint imageIndex = 0;
+
+        var res = _swapChain.khrSw.AcquireNextImage(_rendererData.deviceQ.device, _swapChain.swapChain, ulong.MaxValue, imageAvailable, default, &imageIndex);
+
+        resize = res == Result.SuboptimalKhr || res == Result.ErrorOutOfDateKhr;
+        if (resize)
+            return;
+
+        _rendererData.vk.ResetFences(_rendererData.deviceQ.device, 1, renderFinishedFence);
+        _rendererData.vk.ResetCommandBuffer(commandBuffer, 0);
+
+        if (_matricesDynamicBuffer.ChangedBuffer)
+        {
+            RenderHelper.BindBuffersToDescriptorSet(_rendererData, _descriptorSet, _matricesDynamicBuffer.GetBuffer(), 0, DescriptorType.StorageBuffer);
+            _matricesDynamicBuffer.ChangedBuffer = false;
+        }
+        RecordCommandBuffer(commandBuffer, imageIndex);
+
+        var buffer = commandBuffer;
+        var syncSemaphore = _syncSemaphore;
+
+        var waitStages = stackalloc PipelineStageFlags[] { PipelineStageFlags.ColorAttachmentOutputBit, PipelineStageFlags.ColorAttachmentOutputBit };
+        var waitBeforeRender = stackalloc Semaphore[2] { imageAvailable, syncSemaphore };
+        var renderFinished = this.renderFinished;
+
+        SubmitInfo submitInfo = new()
+        {
+            SType = StructureType.SubmitInfo,
+            WaitSemaphoreCount = 2,
+            PWaitSemaphores = waitBeforeRender,
+            PWaitDstStageMask = waitStages,
+            CommandBufferCount = 1,
+            PCommandBuffers = &buffer,
+            SignalSemaphoreCount = 1,
+            PSignalSemaphores = &renderFinished,
+        };
+        _ = _rendererData.vk.QueueSubmit(_rendererData.deviceQ.graphicsQueue, 1, submitInfo, renderFinishedFence);
+        var swapChain = _swapChain.swapChain;
+        PresentInfoKHR presentInfo = new()
+        {
+            SType = StructureType.PresentInfoKhr,
+            WaitSemaphoreCount = 1,
+            PWaitSemaphores = &renderFinished,
+            SwapchainCount = 1,
+            PSwapchains = &swapChain,
+            PImageIndices = &imageIndex
+        };
+        res = _swapChain.khrSw.QueuePresent(_rendererData.deviceQ.presentQueue, presentInfo);
+        resize = res == Result.SuboptimalKhr || res == Result.ErrorOutOfDateKhr;
+        if (!resize)
+            _ = res;
+    }
+
+    private unsafe void RecordCommandBuffer(CommandBuffer commandBuffer, uint imageIndex)
+    {
+        /*
+        CommandBufferBeginInfo beginInfo = new(StructureType.CommandBufferBeginInfo);
+        ClearValue clearColor = new(new ClearColorValue(0.05f, 0.05f, 0.05f, 1));
+        Rect2D renderRect = new(null, _swapChain.extent);
+        var renderPass = _renderPass;
+        RenderPassBeginInfo renderPassInfo = new()
+        {
+            SType = StructureType.RenderPassBeginInfo,
+            RenderPass = renderPass,
+            Framebuffer = _swapChain.frameBuffers[(int)imageIndex],
+            ClearValueCount = 1,
+            PClearValues = &clearColor,
+            RenderArea = renderRect
+        };
+        Viewport viewport = new()
+        {
+            Width = _swapChain.extent.Width,
+            Height = _swapChain.extent.Height,
+            MinDepth = 0.0f,
+            MaxDepth = 1.0f
+        };
+        _ = _rendererData.vk.BeginCommandBuffer(commandBuffer, &beginInfo);
+
+        _rendererData.vk.CmdBeginRenderPass(commandBuffer, &renderPassInfo, SubpassContents.Inline);
+        _rendererData.vk.CmdSetViewport(commandBuffer, 0, 1, &viewport);
+        _rendererData.vk.CmdSetScissor(commandBuffer, 0, 1, &renderRect);
+
+        _rendererData.vk.CmdBindPipeline(commandBuffer, PipelineBindPoint.Graphics, graphicsPipeline);
+
+        var buffer = stackalloc Buffer[] { vbo };
+        ulong offsets = 0;
+
+        _rendererData.vk.CmdBindVertexBuffers(commandBuffer, 0, 1, buffer, &offsets);
+        _rendererData.vk.CmdBindIndexBuffer(commandBuffer, ibo, 0, IndexType.Uint32);
+        var matrices = _descriptorSet;
+
+        _rendererData.vk.CmdBindDescriptorSets(commandBuffer, PipelineBindPoint.Graphics, layout, 0, 1, &matrices, 0, 0);
+        _rendererData.vk.CmdDrawIndexed(commandBuffer, _indicesLength, _instances, 0, 0, 0);
+
+        _rendererData.vk.CmdEndRenderPass(commandBuffer);
+
+        _ = _rendererData.vk.EndCommandBuffer(commandBuffer);
+        */
     }
 }

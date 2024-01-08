@@ -1,5 +1,3 @@
-using System;
-
 namespace Delta;
 
 public partial class Engine

@@ -59,13 +59,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Collections\" />
     <Folder Include="shaders\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="shaders\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Collections\**" />
+    <EmbeddedResource Remove="Collections\**" />
+    <None Remove="Collections\**" />
   </ItemGroup>
   
   <ItemGroup>

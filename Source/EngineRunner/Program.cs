@@ -21,7 +21,7 @@ using System.Diagnostics;
         c++;
         if (c == 100)
         {
-            var el =  ms / c;
+            var el = ms / c;
             //var sy = eng.GetSyncRendererMetric / c;
             //var up = eng.GetUpdateRendererMetric / c;
             //var cp = eng.GetCopyRendererMetric / c;

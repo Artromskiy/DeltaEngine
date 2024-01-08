@@ -56,7 +56,6 @@ internal class Batcher : IJob
         ];
     }
 
-
     public void Execute()
     {
         _forceTrsWrite.Clear();
@@ -313,7 +312,7 @@ internal class Batcher : IJob
     /// Used to improve performance when sorting <see cref="Render"/>s
     /// </summary>
     /// <param name="rehash"></param>
-    private readonly struct RendGroup(uint rehash) : IEquatable<RendGroup>
+    internal readonly struct RendGroup(uint rehash) : IEquatable<RendGroup>
     {
         public readonly uint id = rehash;
         public bool Equals(RendGroup other) => id == other.id;

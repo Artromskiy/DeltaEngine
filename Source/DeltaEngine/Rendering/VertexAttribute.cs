@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Numerics;
 
 namespace Delta.Rendering;
@@ -13,14 +12,14 @@ namespace Delta.Rendering;
 [Flags]
 public enum VertexAttribute : int
 {
-    Pos3   = 1 << 0,
-    Pos2   = 1 << 1,
-    Col    = 1 << 2,
-    Tex    = 1 << 3,
-    Norm   = 1 << 4,
-    Tan    = 1 << 5,
+    Pos3 = 1 << 0,
+    Pos2 = 1 << 1,
+    Col = 1 << 2,
+    Tex = 1 << 3,
+    Norm = 1 << 4,
+    Tan = 1 << 5,
     Binorm = 1 << 6,
-    Bitan  = 1 << 7,
+    Bitan = 1 << 7,
 }
 
 internal static class VertexAttributeExtensions

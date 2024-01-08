@@ -28,7 +28,7 @@ internal class Renderer : BaseRenderer
         (_vertexBuffer, _vertexBufferMemory) = RenderHelper.CreateVertexBuffer(_rendererData, DeltaMesh.Mesh.Asset, VertexAttribute.Pos2 | VertexAttribute.Col);
         (_indexBuffer, _indexBufferMemory) = RenderHelper.CreateIndexBuffer(_rendererData, DeltaMesh.Mesh.Asset);
         vertexCount = (uint)DeltaMesh.Mesh.Asset.vertexCount;
-        indicesCount = (uint)DeltaMesh.Mesh.Asset.indices.Length;
+        indicesCount = (uint)DeltaMesh.Mesh.Asset.Indices.Length;
 
         _TRSCopyCmdBuffer = RenderHelper.CreateCommandBuffer(_rendererData, _rendererData.deviceQ.transferCmdPool);
         _TRSCopyFence = RenderHelper.CreateFence(_rendererData, true);
@@ -39,21 +39,15 @@ internal class Renderer : BaseRenderer
 
     public override void PreSync()
     {
-        _copyBuffer.Start();
         _rendererData.vk.WaitForFences(_rendererData.deviceQ.device, 1, _TRSCopyFence, true, ulong.MaxValue);
         _rendererData.vk.ResetCommandBuffer(_TRSCopyCmdBuffer, 0);
-        _copyBuffer.Stop();
 
-        _updateDirty.Start();
         _batcher.Execute();
-        _updateDirty.Stop();
     }
 
     public sealed override void PostSync()
     {
-        _copyBufferSetup.Start();
         _rendererData.CopyBuffer(_batcher.Trs, GetTRSBuffer(), _TRSCopyFence, _TRSCopySemaphore, _TRSCopyCmdBuffer);
-        _copyBufferSetup.Stop();
 
         AddSemaphore(_TRSCopySemaphore);
         SetBuffers(_vertexBuffer, _indexBuffer, indicesCount, vertexCount);

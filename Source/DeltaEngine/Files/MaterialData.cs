@@ -5,7 +5,8 @@ using System.Text.Json.Serialization;
 
 namespace Delta.Files;
 
-public class MaterialData : IAsset
+[method: JsonConstructor]
+public class MaterialData() : IAsset
 {
     public readonly GuidAsset<ShaderData> shader;
 
@@ -14,10 +15,8 @@ public class MaterialData : IAsset
     public Dictionary<string, Vector3> _vector3Values = [];
     public Dictionary<string, Vector4> _vector4Values = [];
 
-    public MaterialData(GuidAsset<ShaderData> shader)
+    public MaterialData(GuidAsset<ShaderData> shader) : this()
     {
         this.shader = shader;
     }
-    [JsonConstructor]
-    private MaterialData() { }
 }

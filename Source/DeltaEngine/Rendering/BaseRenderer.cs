@@ -1,4 +1,5 @@
-﻿using JobScheduler;
+﻿using Delta.ECS;
+using JobScheduler;
 using Silk.NET.SDL;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
@@ -63,9 +64,7 @@ internal abstract unsafe partial class BaseRenderer : IDisposable, IJob
         if (_skippedFrame = RenderLessMode || (CanSkipRender && !CurrentFrame.Synced()))
             return;
 
-        _waitSync.Start();
         CurrentFrame.Sync();
-        _waitSync.Stop();
 
         PostSync();
     }
@@ -88,10 +87,20 @@ internal abstract unsafe partial class BaseRenderer : IDisposable, IJob
 
     public void Draw()
     {
-        _framesCount++;
         if (_skippedFrame)
         {
-            _framesSkip++;
+            return;
+        }
+
+        CurrentFrame.Draw(graphicsPipeline, pipelineLayout, out var resize);
+        if (resize)
+            OnResize();
+    }
+
+    private void Draw(List<(Render render, int count)> rendersData)
+    {
+        if (_skippedFrame)
+        {
             return;
         }
 

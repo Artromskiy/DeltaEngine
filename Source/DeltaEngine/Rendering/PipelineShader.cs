@@ -17,7 +17,7 @@ internal readonly struct PipelineShader : IDisposable
     private readonly Vk _vk;
     private readonly Device _device;
 
-    public unsafe PipelineShader(RenderBase data, ShaderStageFlags stage, byte[] shaderCode)
+    public unsafe PipelineShader(RenderBase data, ShaderStageFlags stage, ReadOnlySpan<byte> shaderCode)
     {
         _vk = data.vk;
         _device = data.deviceQ.device;
@@ -38,7 +38,7 @@ internal readonly struct PipelineShader : IDisposable
     }
 
     public PipelineShader(RenderBase data, ShaderStageFlags stage, string path) : this(data, stage, File.ReadAllBytes(path)) { }
-    private unsafe VertexAttribute GetInputAttributes(byte[] shaderCode)
+    private unsafe VertexAttribute GetInputAttributes(ReadOnlySpan<byte> shaderCode)
     {
         Context* context = default;
         ParsedIr* ir = default;
@@ -53,11 +53,9 @@ internal readonly struct PipelineShader : IDisposable
         using Cross api = Cross.GetApi();
         api.ContextCreate(&context);
 
-        uint[] decoded = new uint[shaderCode.Length / 4];
-        System.Buffer.BlockCopy(shaderCode, 0, decoded, 0, shaderCode.Length);
-        fixed (uint* decodedPtr = decoded)
+        fixed (void* decodedPtr = shaderCode)
         {
-            api.ContextParseSpirv(context, decodedPtr, (uint)decoded.Length, &ir);
+            api.ContextParseSpirv(context, (uint*)decodedPtr, (uint)shaderCode.Length / 4, &ir);
             api.ContextCreateCompiler(context, Backend.None, ir, CaptureMode.TakeOwnership, &compiler);
             api.CompilerGetActiveInterfaceVariables(compiler, &set);
             api.CompilerCreateShaderResources(compiler, &resources);

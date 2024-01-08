@@ -12,7 +12,6 @@ internal class RuntimeAssetCollection
     private readonly string _currentFolder;
     private const string MetaEnding = ".meta";
 
-
     public RuntimeAssetCollection()
     {
         _currentFolder = Directory.CreateTempSubdirectory().FullName;

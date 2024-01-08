@@ -2,8 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Text.Json;
 
 namespace Delta.Files;
@@ -53,17 +51,16 @@ internal class MeshCollection : IAssetCollection<MeshData>
         int vertexSize = vertexMask.GetVertexSize();
         var meshSize = vertexSize * meshData.vertexCount;
         byte[] result = new byte[meshSize];
-        ref var resultRef = ref MemoryMarshal.GetArrayDataReference(result);
         int offset = 0;
         foreach (var attrib in vertexMask.Iterate())
         {
-            ref var attribArray = ref MemoryMarshal.GetArrayDataReference(meshData.vertices[attrib.location]);
+            var attribArray = meshData.GetAttributeArray(attrib.location);
             int attribSize = attrib.size;
             for (int i = 0; i < meshData.vertexCount; i++)
             {
-                ref var source = ref Unsafe.Add(ref attribArray, attribSize * i);
-                ref var destination = ref Unsafe.Add(ref resultRef, i * vertexSize + offset);
-                Unsafe.CopyBlockUnaligned(ref destination, ref source, (uint)attribSize);
+                var source = attribArray.Slice(attribSize * i, attribSize);
+                var destination = new Span<byte>(result, (i * vertexSize) + offset, attribSize);
+                source.CopyTo(destination);
             }
             offset += attribSize;
         }

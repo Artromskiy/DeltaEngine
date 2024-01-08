@@ -2,6 +2,8 @@
 using Silk.NET.Core;
 using Silk.NET.Core.Native;
 using Silk.NET.SDL;
+using Silk.NET.SPIRV;
+using Silk.NET.SPIRV.Cross;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
 using System;
@@ -10,7 +12,6 @@ using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-
 using Buffer = Silk.NET.Vulkan.Buffer;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 
@@ -18,7 +19,6 @@ namespace Delta.Rendering;
 
 internal static class RenderHelper
 {
-
     private const uint flags = (uint)
     (
           WindowFlags.Vulkan
@@ -26,8 +26,6 @@ internal static class RenderHelper
         | WindowFlags.Resizable
         | WindowFlags.AllowHighdpi
         | WindowFlags.Borderless
-   //| WindowFlags.AlwaysOnTop
-   //| WindowFlags.FullscreenDesktop
    );
 
     public static unsafe Window* CreateWindow(Sdl sdl, string title)
@@ -305,15 +303,14 @@ internal static class RenderHelper
     }
     public static unsafe (Buffer, DeviceMemory) CreateIndexBuffer(RenderBase data, MeshData meshData)
     {
-        var size = (uint)(sizeof(uint) * meshData.indices.Length);
+        var size = (uint)(sizeof(uint) * meshData.Indices.Length);
         var res = CreateBufferAndMemory(data, size, BufferUsageFlags.IndexBufferBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit);
 
         void* datap;
         data.vk.MapMemory(data.deviceQ.device, res.memory, 0, size, 0, &datap);
 
-        Unsafe.CopyBlockUnaligned(ref Unsafe.AsRef<byte>(datap),
-            ref Unsafe.As<uint, byte>(ref meshData.indices[0]),
-            size);
+        Span<uint> dataSpan = new(datap, meshData.Indices.Length);
+        meshData.Indices.CopyTo(dataSpan);
 
         data.vk.UnmapMemory(data.deviceQ.device, res.memory);
         return res;
@@ -392,10 +389,44 @@ internal static class RenderHelper
         }
     }
 
+    private static unsafe VertexAttribute GetInputAttributes(ReadOnlySpan<byte> shaderCode)
+    {
+        Context* context = default;
+        ParsedIr* ir = default;
+        Compiler* compiler = default;
+        Resources* resources = default;
+        ReflectedResource* list = default;
+        Set set = default;
+        nuint count;
+        nuint i;
+        VertexAttribute res = default;
+
+        using Cross api = Cross.GetApi();
+        api.ContextCreate(&context);
+
+        fixed (void* decodedPtr = shaderCode)
+        {
+            api.ContextParseSpirv(context, (uint*)decodedPtr, (uint)shaderCode.Length / 4, &ir);
+            api.ContextCreateCompiler(context, Backend.None, ir, CaptureMode.TakeOwnership, &compiler);
+            api.CompilerGetActiveInterfaceVariables(compiler, &set);
+            api.CompilerCreateShaderResourcesForActiveVariables(compiler, &resources, &set);
+            api.ResourcesGetResourceListForType(resources, ResourceType.StageInput, &list, &count);
+            for (i = 0; i < count; i++)
+            {
+                var loc = (int)api.CompilerGetDecoration(compiler, list[i].Id, Decoration.Location);
+                res |= (VertexAttribute)(1 << loc);
+                var binding = api.CompilerGetDecoration(compiler, list[i].Id, Decoration.Binding);
+                var dset = api.CompilerGetDecoration(compiler, list[i].Id, Decoration.DescriptorSet);
+            }
+        }
+        api.ContextDestroy(context);
+        return res;
+    }
+
     public static unsafe (Pipeline pipeline, PipelineLayout layout) CreateGraphicsPipeline(ShaderData shaderData, RenderBase data, RenderPass renderPass)
     {
-        using var vertShader = new PipelineShader(data, ShaderStageFlags.VertexBit, shaderData.vertBytes);
-        using var fragShader = new PipelineShader(data, ShaderStageFlags.FragmentBit, shaderData.fragBytes);
+        using var vertShader = new PipelineShader(data, ShaderStageFlags.VertexBit, shaderData.VertBytes);
+        using var fragShader = new PipelineShader(data, ShaderStageFlags.FragmentBit, shaderData.FragBytes);
         var stages = stackalloc PipelineShaderStageCreateInfo[2]
         {
             ShaderModuleGroupCreator.Create(vertShader),
