@@ -19,7 +19,7 @@ internal class SwapChain : IDisposable
 
     private readonly RenderBase data;
 
-    public unsafe SwapChain(Api api, RenderBase data, RenderPass rp, (int w, int h) size, uint trgImageCount, SurfaceFormatKHR targetFormat)
+    public unsafe SwapChain(Api api, RenderBase data, (int w, int h) size, uint trgImageCount, SurfaceFormatKHR targetFormat)
     {
         this.data = data;
         var swSupport = data.swapChainSupport;
@@ -47,7 +47,6 @@ internal class SwapChain : IDisposable
             ImageExtent = extent,
             ImageArrayLayers = 1,
             ImageUsage = ImageUsageFlags.ColorAttachmentBit,
-            //Flags = SwapchainCreateFlagsKHR.DeferredMemoryAllocationBitExt,
             ImageSharingMode = sameFamily ? SharingMode.Exclusive : SharingMode.Concurrent,
             QueueFamilyIndexCount = sameFamily ? 0u : 2u,
             PQueueFamilyIndices = sameFamily ? null : queueFamilyIndices,
@@ -55,7 +54,8 @@ internal class SwapChain : IDisposable
             CompositeAlpha = CompositeAlphaFlagsKHR.OpaqueBitKhr,
             PresentMode = presentMode,
             Clipped = true,
-            OldSwapchain = default
+            OldSwapchain = default,
+            Flags = SwapchainCreateFlagsKHR.None
         };
 
         _ = api.vk.TryGetDeviceExtension(data.instance, data.deviceQ.device, out khrSw);
@@ -66,7 +66,7 @@ internal class SwapChain : IDisposable
         _ = khrSw.GetSwapchainImages(data.deviceQ.device, swapChain, &imCount, imageSpan);
         images = ImmutableArray.Create(imageSpan);
         imageViews = RenderHelper.CreateImageViews(api, data.deviceQ.device, [.. images], format.Format);
-        frameBuffers = RenderHelper.CreateFramebuffers(api, data.deviceQ.device, [.. imageViews], rp, extent);
+        frameBuffers = RenderHelper.CreateFramebuffers(api, data.deviceQ.device, [.. imageViews], data.renderPass, extent);
     }
 
     public unsafe void Dispose()

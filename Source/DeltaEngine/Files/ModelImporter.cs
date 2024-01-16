@@ -60,6 +60,6 @@ internal class ModelImporter : IAssetImporter, IDisposable
         if (mesh->MColors[0] != null)
             meshData[VertexAttribute.Col.Location()] = new Span<byte>(mesh->MColors[0], vertexCount * VertexAttribute.Col.Size()).ToArray();
 
-        return (new MeshData(indices.ToArray(), meshData, vertexCount), mesh->MName);
+        return (new MeshData(vertexCount, indices.ToArray(), meshData), mesh->MName);
     }
 }

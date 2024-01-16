@@ -17,18 +17,38 @@ public sealed class Scene : IDisposable
     private float _deltaTime;
     private readonly Stopwatch _sceneSw = new();
 
+    private readonly Dictionary<Type, TimeSpan> _metrics = [];
+    public void ClearMetrics() => _metrics.Clear();
+    public Dictionary<string, TimeSpan> GetMetrics()
+    {
+        Dictionary<string, TimeSpan> result = [];
+        foreach (var item in _metrics)
+            result.Add(item.Key.ToString(), item.Value);
+        return result;
+    }
+
     public Scene()
     {
         _world = World.Create();
         _jobs = [];
     }
 
+    private readonly Stopwatch _jobWatch = new();
+
     public void Run()
     {
         _sceneSw.Restart();
 
         foreach (var item in _jobs)
+        {
+            _jobWatch.Restart();
             item.Execute();
+            _jobWatch.Stop();
+            var type = item.GetType();
+            _metrics.TryAdd(type, TimeSpan.Zero);
+            _metrics[type] += _jobWatch.Elapsed;
+            //Console.WriteLine($"{item}: {_jobWatch.Elapsed.TotalMilliseconds:0.00} ms");
+        }
 
         _sceneSw.Stop();
         _deltaTime = (float)_sceneSw.Elapsed.TotalSeconds;

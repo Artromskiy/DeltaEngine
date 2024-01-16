@@ -56,11 +56,13 @@ internal class AssetImporter
         var guid = Guid.NewGuid();
         var meta = new Meta(guid);
 
-        using FileStream fileStream = File.Create(path);
-        JsonSerializer.Serialize<T>(fileStream, asset);
+        Serialization.Serialize(path, asset);
+        //using FileStream fileStream = File.Create(path);
+        //JsonSerializer.Serialize<T>(fileStream, asset);
 
-        using FileStream metaStream = File.Create($"{path}{MetaEnding}");
-        JsonSerializer.Serialize(metaStream, meta);
+        Serialization.Serialize($"{path}{MetaEnding}", meta);
+        //using FileStream metaStream = File.Create($"{path}{MetaEnding}");
+        //JsonSerializer.Serialize(metaStream, meta);
 
         _assetPaths.Add(guid, path);
         _pathToGuid.Add(path, guid);
@@ -85,7 +87,6 @@ internal class AssetImporter
         if (!_assetPaths.TryGetValue(guid, out string? result))
             return _runtimeAssetCollection.GetPath(guid);
         return result;
-
     }
 
     public static string GetNextAvailableFilename(string filename)

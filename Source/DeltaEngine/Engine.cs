@@ -38,7 +38,7 @@ public sealed partial class Engine(string projectPath) : IDisposable
     public void CreateFile()
     {
         var mesh = DeltaMesh.Mesh;
-        _assetImporter.CreateAsset("mesh", mesh.Asset);
+        _assetImporter.CreateAsset("mesh", mesh.GetAsset());
     }
 
     public Scene GetCurrentScene() => _scene;

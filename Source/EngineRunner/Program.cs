@@ -22,34 +22,13 @@ using System.Diagnostics;
         if (c == 100)
         {
             var el = ms / c;
-            //var sy = eng.GetSyncRendererMetric / c;
-            //var up = eng.GetUpdateRendererMetric / c;
-            //var cp = eng.GetCopyRendererMetric / c;
-            //var cs = eng.GetCopySetupRendererMetric / c;
-            //var acq = eng.GetAcquireFrameRendererMetric / c;
-            //var rec = eng.GetRecordDrawRenderMetric / c;
-            //var sud = eng.GetSubmitDrawRenderMetric / c;
-            //var sup = eng.GetSubmitPresentRenderMetric / c;
-            //var csn = eng.GetSceneMetric / c;
-            //var skp = eng.GetRenderSkipPercent;
             Console.WriteLine();
-            //Console.WriteLine($"updt: {up.TotalMilliseconds}"); // FPS of main thread
-            //Console.WriteLine($"sync: {sy.TotalMilliseconds}"); // FPS of main thread
-            //Console.WriteLine($"cpys: {cs.TotalMilliseconds}"); // FPS of main thread
-            //Console.WriteLine();
-            //Console.WriteLine($"copy: {cp.TotalMilliseconds}"); // FPS of main thread
-            //Console.WriteLine($"acqu: {acq.TotalMilliseconds}"); // FPS of main thread
-            //
-            //Console.WriteLine($"recd: {rec.TotalMilliseconds}"); // FPS of main thread
-            //Console.WriteLine($"subd: {sud.TotalMilliseconds}"); // FPS of main thread
-            //Console.WriteLine($"subp: {sup.TotalMilliseconds}"); // FPS of main thread
-            //
-            //Console.WriteLine();
-            //Console.WriteLine($"scen: {csn.TotalMilliseconds}"); // FPS of main thread
-            //Console.WriteLine($"skip: {(int)(skp * 100)}%"); // FPS of main thread
-
             Console.WriteLine((int)(1.0 / el.TotalSeconds)); // FPS of main thread
+            Console.WriteLine();
             eng.ClearRendererMetrics();
+            foreach (var item in eng.GetCurrentScene().GetMetrics())
+                Console.WriteLine($"{item.Key}: {(item.Value / 100).TotalMilliseconds:0.00}ms");
+            eng.GetCurrentScene().ClearMetrics();
             ms = TimeSpan.Zero;
             c = 0;
         }

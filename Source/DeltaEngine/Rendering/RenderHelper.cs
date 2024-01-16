@@ -9,9 +9,11 @@ using Silk.NET.Vulkan.Extensions.KHR;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 using Buffer = Silk.NET.Vulkan.Buffer;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 
@@ -116,6 +118,38 @@ internal static class RenderHelper
         data.CopyBuffer(source.GetBuffer(), source.Size, destination.GetBuffer(), destination.Size, fence, cmdBuffer);
     }
 
+
+    public static unsafe void BeginCmdBuffer(this RenderBase data, CommandBuffer cmdBuffer)
+    {
+        CommandBufferBeginInfo beginInfo = new()
+        {
+            SType = StructureType.CommandBufferBeginInfo,
+            Flags = CommandBufferUsageFlags.OneTimeSubmitBit
+        };
+        _ = data.vk.BeginCommandBuffer(cmdBuffer, &beginInfo);
+    }
+
+    internal static unsafe void CopyCmd<T>(this RenderBase data, GpuArray<T> source, DynamicBuffer destination, CommandBuffer cmdBuffer) where T: unmanaged
+    {
+        destination.EnsureSize(source.Size);
+        BufferCopy copy = new(0, 0, Math.Min(source.Size, destination.Size));
+        data.vk.CmdCopyBuffer(cmdBuffer, source.GetBuffer(), destination.GetBuffer(), 1, &copy);
+    }
+
+    public static unsafe void EndCmdBuffer(this RenderBase data, Queue queue, CommandBuffer cmdBuffer, Fence fence, Semaphore semaphore)
+    {
+        _ = data.vk.EndCommandBuffer(cmdBuffer);
+        SubmitInfo submitInfo = new()
+        {
+            SType = StructureType.SubmitInfo,
+            CommandBufferCount = 1,
+            PCommandBuffers = &cmdBuffer,
+            SignalSemaphoreCount = 1,
+            PSignalSemaphores = &semaphore,
+        };
+        _ = data.vk.QueueSubmit(queue, 1, &submitInfo, fence);
+    }
+
     public static unsafe void CopyBuffer(this RenderBase data, Buffer source, ulong sourceSize, Buffer destination, ulong destinationSize, Fence fence, Semaphore semaphore, CommandBuffer cmdBuffer)
     {
         Vk vk = data.vk;
@@ -139,6 +173,8 @@ internal static class RenderHelper
         };
         _ = vk.QueueSubmit(data.deviceQ.transferQueue, 1, &submitInfo, fence);
     }
+
+
     public static unsafe void CopyBuffer(this RenderBase data, Buffer source, ulong sourceSize, Buffer destination, ulong destinationSize, Fence fence, CommandBuffer cmdBuffer)
     {
         Vk vk = data.vk;
@@ -183,7 +219,7 @@ internal static class RenderHelper
         vk.DeviceWaitIdle(data.deviceQ.device);
     }
 
-    public static unsafe RenderPass CreateRenderPass(Api api, Device device, Format swapChainImageFormat)
+    public static unsafe RenderPass CreateRenderPass(Vk vk, Device device, Format swapChainImageFormat)
     {
         AttachmentDescription colorAttachment = new()
         {
@@ -226,7 +262,7 @@ internal static class RenderHelper
             PDependencies = &dependency,
         };
 
-        _ = api.vk.CreateRenderPass(device, renderPassInfo, null, out var renderPass);
+        _ = vk.CreateRenderPass(device, renderPassInfo, null, out var renderPass);
         return renderPass;
     }
 
@@ -286,7 +322,7 @@ internal static class RenderHelper
         return (buffer, memory);
     }
 
-    public static unsafe (Buffer, DeviceMemory) CreateVertexBuffer(RenderBase data, MeshData meshData, VertexAttribute attributeMask)
+    public static unsafe (Buffer buffer, DeviceMemory memory) CreateVertexBuffer(RenderBase data, MeshData meshData, VertexAttribute attributeMask)
     {
         var size = (uint)(attributeMask.GetVertexSize() * meshData.vertexCount);
         var res = CreateBufferAndMemory(data, size, BufferUsageFlags.VertexBufferBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit);
@@ -301,16 +337,16 @@ internal static class RenderHelper
         data.vk.UnmapMemory(data.deviceQ.device, res.memory);
         return res;
     }
-    public static unsafe (Buffer, DeviceMemory) CreateIndexBuffer(RenderBase data, MeshData meshData)
+    public static unsafe (Buffer buffer, DeviceMemory memory) CreateIndexBuffer(RenderBase data, MeshData meshData)
     {
-        var size = (uint)(sizeof(uint) * meshData.Indices.Length);
+        var size = (uint)(sizeof(uint) * meshData.GetIndices().Length);
         var res = CreateBufferAndMemory(data, size, BufferUsageFlags.IndexBufferBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit);
 
         void* datap;
         data.vk.MapMemory(data.deviceQ.device, res.memory, 0, size, 0, &datap);
 
-        Span<uint> dataSpan = new(datap, meshData.Indices.Length);
-        meshData.Indices.CopyTo(dataSpan);
+        Span<uint> dataSpan = new(datap, meshData.GetIndices().Length);
+        meshData.GetIndices().CopyTo(dataSpan);
 
         data.vk.UnmapMemory(data.deviceQ.device, res.memory);
         return res;
@@ -364,7 +400,7 @@ internal static class RenderHelper
         Stride = (uint)vertexAttributeMask.GetVertexSize()
     };
 
-    public static unsafe void FillAttributeDesctiption(VertexInputAttributeDescription* ptr, VertexAttribute vertexAttributeMask)
+    public static unsafe void FillAttributeDesctiption(Span<VertexInputAttributeDescription> description, VertexAttribute vertexAttributeMask)
     {
         int index = 0;
         int offset = 0;
@@ -378,7 +414,7 @@ internal static class RenderHelper
                 4 * 4 => Format.R32G32B32A32Sfloat,
                 _ => throw new Exception("Invalid vertex attribute size defined")
             };
-            ptr[index++] = new()
+            description[index++] = new()
             {
                 Binding = 0,
                 Format = format,
@@ -389,7 +425,7 @@ internal static class RenderHelper
         }
     }
 
-    private static unsafe VertexAttribute GetInputAttributes(ReadOnlySpan<byte> shaderCode)
+    public static unsafe VertexAttribute GetInputAttributes(ReadOnlySpan<byte> shaderCode)
     {
         Context* context = default;
         ParsedIr* ir = default;
@@ -409,7 +445,7 @@ internal static class RenderHelper
             api.ContextParseSpirv(context, (uint*)decodedPtr, (uint)shaderCode.Length / 4, &ir);
             api.ContextCreateCompiler(context, Backend.None, ir, CaptureMode.TakeOwnership, &compiler);
             api.CompilerGetActiveInterfaceVariables(compiler, &set);
-            api.CompilerCreateShaderResourcesForActiveVariables(compiler, &resources, &set);
+            api.CompilerCreateShaderResources(compiler, &resources);
             api.ResourcesGetResourceListForType(resources, ResourceType.StageInput, &list, &count);
             for (i = 0; i < count; i++)
             {
@@ -423,19 +459,21 @@ internal static class RenderHelper
         return res;
     }
 
-    public static unsafe (Pipeline pipeline, PipelineLayout layout) CreateGraphicsPipeline(ShaderData shaderData, RenderBase data, RenderPass renderPass)
+    public static unsafe Pipeline CreateGraphicsPipeline(ShaderData shaderData, RenderBase data, out VertexAttribute attributeMask)
     {
-        using var vertShader = new PipelineShader(data, ShaderStageFlags.VertexBit, shaderData.VertBytes);
-        using var fragShader = new PipelineShader(data, ShaderStageFlags.FragmentBit, shaderData.FragBytes);
+        using var vertShader = new PipelineShader(data, ShaderStageFlags.VertexBit, shaderData.GetVertBytes());
+        using var fragShader = new PipelineShader(data, ShaderStageFlags.FragmentBit, shaderData.GetFragBytes());
         var stages = stackalloc PipelineShaderStageCreateInfo[2]
         {
             ShaderModuleGroupCreator.Create(vertShader),
             ShaderModuleGroupCreator.Create(fragShader)
         };
-        var bind = GetBindingDescription(vertShader.attributeMask);
-        var attribCount = vertShader.attributeMask.GetAttributesCount();
+        attributeMask = GetInputAttributes(shaderData.GetVertBytes());
+        var bind = GetBindingDescription(attributeMask);
+        var attribCount = attributeMask.GetAttributesCount();
         var attr = stackalloc VertexInputAttributeDescription[attribCount];
-        FillAttributeDesctiption(attr, vertShader.attributeMask);
+        Span<VertexInputAttributeDescription> attrSpan = new(attr, attribCount);
+        FillAttributeDesctiption(attrSpan, attributeMask);
         PipelineVertexInputStateCreateInfo vertexInputInfo = new()
         {
             SType = StructureType.PipelineVertexInputStateCreateInfo,
@@ -508,17 +546,6 @@ internal static class RenderHelper
             PAttachments = &colorBlendAttachment,
         };
 
-        int setsLength = data.ShaderLayoutsDefault.Length;
-        var layouts = stackalloc DescriptorSetLayout[setsLength];
-        data.ShaderLayoutsDefault.CopyTo(new(layouts, setsLength));
-        PipelineLayoutCreateInfo pipelineLayoutInfo = new()
-        {
-            SType = StructureType.PipelineLayoutCreateInfo,
-            SetLayoutCount = (uint)setsLength,
-            PSetLayouts = layouts,
-        };
-        _ = data.vk.CreatePipelineLayout(data.deviceQ.device, pipelineLayoutInfo, null, out var pipelineLayout);
-
         GraphicsPipelineCreateInfo pipelineInfo = new()
         {
             SType = StructureType.GraphicsPipelineCreateInfo,
@@ -532,28 +559,32 @@ internal static class RenderHelper
             PRasterizationState = &rasterizer,
             PMultisampleState = &multisampling,
             PColorBlendState = &colorBlending,
-            Layout = pipelineLayout,
-            RenderPass = renderPass,
+            Layout = data.pipelineLayout,
+            RenderPass = data.renderPass,
             Subpass = 0,
             BasePipelineHandle = default,
         };
         _ = data.vk.CreateGraphicsPipelines(data.deviceQ.device, default, 1, pipelineInfo, null, out var graphicsPipeline);
-        return (graphicsPipeline, pipelineLayout);
+        return graphicsPipeline;
     }
 
-    public static unsafe (Pipeline pipeline, PipelineLayout layout) CreateGraphicsPipeline(RenderBase data, RenderPass renderPass)
+    public static unsafe Pipeline CreateGraphicsPipeline(RenderBase data)
     {
-        using var vertShader = new PipelineShader(data, ShaderStageFlags.VertexBit, "shaders/vert.spv");
-        using var fragShader = new PipelineShader(data, ShaderStageFlags.FragmentBit, "shaders/frag.spv");
+        var vertPath = "shaders/vert.spv";
+        var fragPath = "shaders/frag.spv";
+        using var vertShader = new PipelineShader(data, ShaderStageFlags.VertexBit, vertPath);
+        using var fragShader = new PipelineShader(data, ShaderStageFlags.FragmentBit, fragPath);
         var stages = stackalloc PipelineShaderStageCreateInfo[2]
         {
             ShaderModuleGroupCreator.Create(vertShader),
             ShaderModuleGroupCreator.Create(fragShader)
         };
-        var bind = GetBindingDescription(vertShader.attributeMask);
-        var attribCount = vertShader.attributeMask.GetAttributesCount();
+        var attributeMask = GetInputAttributes(File.ReadAllBytes(vertPath));
+        var bind = GetBindingDescription(attributeMask);
+        var attribCount = attributeMask.GetAttributesCount();
         var attr = stackalloc VertexInputAttributeDescription[attribCount];
-        FillAttributeDesctiption(attr, vertShader.attributeMask);
+        Span<VertexInputAttributeDescription> attrSpan = new(attr, attribCount);
+        FillAttributeDesctiption(attrSpan, attributeMask);
         PipelineVertexInputStateCreateInfo vertexInputInfo = new()
         {
             SType = StructureType.PipelineVertexInputStateCreateInfo,
@@ -626,17 +657,6 @@ internal static class RenderHelper
             PAttachments = &colorBlendAttachment,
         };
 
-        int setsLength = data.ShaderLayoutsDefault.Length;
-        var layouts = stackalloc DescriptorSetLayout[setsLength];
-        data.ShaderLayoutsDefault.CopyTo(new(layouts, setsLength));
-        PipelineLayoutCreateInfo pipelineLayoutInfo = new()
-        {
-            SType = StructureType.PipelineLayoutCreateInfo,
-            SetLayoutCount = (uint)setsLength,
-            PSetLayouts = layouts,
-        };
-        _ = data.vk.CreatePipelineLayout(data.deviceQ.device, pipelineLayoutInfo, null, out var pipelineLayout);
-
         GraphicsPipelineCreateInfo pipelineInfo = new()
         {
             SType = StructureType.GraphicsPipelineCreateInfo,
@@ -650,15 +670,31 @@ internal static class RenderHelper
             PRasterizationState = &rasterizer,
             PMultisampleState = &multisampling,
             PColorBlendState = &colorBlending,
-            Layout = pipelineLayout,
-            RenderPass = renderPass,
+            Layout = data.pipelineLayout,
+            RenderPass = data.renderPass,
             Subpass = 0,
             BasePipelineHandle = default,
         };
         _ = data.vk.CreateGraphicsPipelines(data.deviceQ.device, default, 1, pipelineInfo, null, out var graphicsPipeline);
-        return (graphicsPipeline, pipelineLayout);
+        return graphicsPipeline;
     }
 
+
+    public static unsafe PipelineLayout CreatePipelineLayout(Vk vk, Device device, ReadOnlySpan<DescriptorSetLayout> layouts)
+    {
+        PipelineLayout result;
+        fixed (DescriptorSetLayout* layoutsPtr = layouts)
+        {
+            PipelineLayoutCreateInfo pipelineLayoutInfo = new()
+            {
+                SType = StructureType.PipelineLayoutCreateInfo,
+                SetLayoutCount = (uint)layouts.Length,
+                PSetLayouts = layoutsPtr,
+            };
+            _ = vk.CreatePipelineLayout(device, pipelineLayoutInfo, null, out result);
+        }
+        return result;
+    }
 
     public static unsafe ImmutableArray<Framebuffer> CreateFramebuffers(Api api, Device device, ReadOnlySpan<ImageView> swapChainImageViews, RenderPass renderPass, Extent2D swapChainExtent)
     {

@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text.Json;
 
 namespace Delta.Files;
 internal class DefaultAssetCollection<T> : IAssetCollection<T> where T : class, IAsset
@@ -20,7 +18,6 @@ internal class DefaultAssetCollection<T> : IAssetCollection<T> where T : class, 
     private static T LoadAsset(Guid guid)
     {
         var path = AssetImporter.Instance.GetPath(guid);
-        using Stream stream = new FileStream(path, FileMode.Open, FileAccess.Read);
-        return JsonSerializer.Deserialize<T>(stream);
+        return Serialization.Deserialize<T>(path);
     }
 }

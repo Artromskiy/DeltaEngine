@@ -1,11 +1,11 @@
-﻿using Delta.ECS;
+﻿using Collections.Pooled;
+using Delta.ECS;
 using JobScheduler;
 using Silk.NET.SDL;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
 using System;
 using System.Collections.Generic;
-using Buffer = Silk.NET.Vulkan.Buffer;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 
 namespace Delta.Rendering;
@@ -22,11 +22,12 @@ internal abstract unsafe partial class BaseRenderer : IDisposable, IJob
     private readonly DescriptorSetLayout descriptorSetLayout;
     private SwapChain swapChain;
 
-    private readonly RenderPass renderPass;
-    private readonly PipelineLayout pipelineLayout;
-
     private readonly string[] deviceExtensions = [KhrSwapchain.ExtensionName];
     private readonly SurfaceFormatKHR targetFormat = new(Format.B8G8R8A8Srgb, ColorSpaceKHR.SpaceAdobergbLinearExt);
+
+    private readonly RenderAssets renderAssets;
+
+    private readonly List<(Render rend, uint count)> renderList = [];
 
     private readonly Queue<Frame> _frames = [];
 
@@ -42,13 +43,13 @@ internal abstract unsafe partial class BaseRenderer : IDisposable, IJob
         _api = new();
         _window = RenderHelper.CreateWindow(_api.sdl, _appName);
         _rendererData = new RenderBase(_api, _window, deviceExtensions, _appName, targetFormat);
-        renderPass = RenderHelper.CreateRenderPass(_api, _rendererData.deviceQ.device, _rendererData.format.Format);
-        swapChain = new SwapChain(_api, _rendererData, renderPass, GetSdlWindowSize(), Buffering, _rendererData.format);
+        swapChain = new SwapChain(_api, _rendererData, GetSdlWindowSize(), Buffering, _rendererData.format);
         descriptorSetLayout = RenderHelper.CreateDescriptorSetLayout(_rendererData);
-        (graphicsPipeline, pipelineLayout) = RenderHelper.CreateGraphicsPipeline(_rendererData, renderPass);
+        graphicsPipeline = RenderHelper.CreateGraphicsPipeline(_rendererData);
+        renderAssets = new RenderAssets(_rendererData);
 
         for (int i = 0; i < swapChain.imageCount; i++)
-            _frames.Enqueue(new Frame(_rendererData, swapChain, renderPass, descriptorSetLayout));
+            _frames.Enqueue(new Frame(_rendererData, renderAssets, swapChain, descriptorSetLayout));
     }
 
     private Frame CurrentFrame => _frames.Peek();
@@ -85,41 +86,31 @@ internal abstract unsafe partial class BaseRenderer : IDisposable, IJob
         Draw();
     }
 
-    public void Draw()
+    private void Draw()
     {
         if (_skippedFrame)
         {
             return;
         }
 
-        CurrentFrame.Draw(graphicsPipeline, pipelineLayout, out var resize);
-        if (resize)
-            OnResize();
-    }
-
-    private void Draw(List<(Render render, int count)> rendersData)
-    {
-        if (_skippedFrame)
-        {
-            return;
-        }
-
-        CurrentFrame.Draw(graphicsPipeline, pipelineLayout, out var resize);
+        CurrentFrame.Draw(renderList, out var resize);
         if (resize)
             OnResize();
     }
 
     internal DynamicBuffer GetTRSBuffer() => CurrentFrame.GetTRSBuffer();
-    protected void SetBuffers(Buffer vbo, Buffer ibo, uint indicesCount, uint verticesCount) => CurrentFrame.SetBuffers(vbo, ibo, indicesCount, verticesCount);
-    protected void SetInstanceCount(uint instances) => CurrentFrame.SetInstanceCount(instances);
+    internal DynamicBuffer GetIdsBuffer() => CurrentFrame.GetIdsBuffer();
     protected void AddSemaphore(Semaphore semaphore) => CurrentFrame.AddSemaphore(semaphore);
+    protected void SetRenders(ReadOnlySpan<(Render rend, uint count)> renders)
+    {
+        renderList.Clear();
+        renderList.AddRange(renders);
+    }
 
     public unsafe void Dispose()
     {
         _frames.Dispose();
         _rendererData.vk.DestroyPipeline(_rendererData.deviceQ.device, graphicsPipeline, null);
-        _rendererData.vk.DestroyPipelineLayout(_rendererData.deviceQ.device, pipelineLayout, null);
-        _rendererData.vk.DestroyRenderPass(_rendererData.deviceQ.device, renderPass, null);
 
         swapChain.Dispose();
         _rendererData.Dispose();
@@ -141,7 +132,7 @@ internal abstract unsafe partial class BaseRenderer : IDisposable, IJob
     {
         swapChain.Dispose();
         _rendererData.UpdateSupportDetails();
-        swapChain = new SwapChain(_api, _rendererData, renderPass, GetSdlWindowSize(), 3, _rendererData.format);
+        swapChain = new SwapChain(_api, _rendererData, GetSdlWindowSize(), 3, _rendererData.format);
 
         if (swapChain.imageCount == _frames.Count)
         {
@@ -153,6 +144,6 @@ internal abstract unsafe partial class BaseRenderer : IDisposable, IJob
         _frames.Dispose();
         _frames.Clear();
         for (int i = 0; i < swapChain.imageCount; i++)
-            _frames.Enqueue(new Frame(_rendererData, swapChain, renderPass, descriptorSetLayout));
+            _frames.Enqueue(new Frame(_rendererData, renderAssets, swapChain, descriptorSetLayout));
     }
 }

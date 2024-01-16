@@ -6,17 +6,15 @@ namespace Delta.Rendering;
 
 public class ShaderData : IAsset
 {
-    private readonly byte[] vertBytes;
-    private readonly byte[] fragBytes;
+    private readonly byte[] vert;
+    private readonly byte[] frag;
 
-    [JsonIgnore]
-    public ReadOnlySpan<byte> VertBytes => vertBytes;
-    [JsonIgnore]
-    public ReadOnlySpan<byte> FragBytes => fragBytes;
+    public ReadOnlySpan<byte> GetVertBytes() => vert;
+    public ReadOnlySpan<byte> GetFragBytes() => frag;
 
     public ShaderData(byte[] vert, byte[] frag)
     {
-        vertBytes = (byte[])vert.Clone();
-        fragBytes = (byte[])frag.Clone();
+        this.vert = (byte[])vert.Clone();
+        this.frag = (byte[])frag.Clone();
     }
 }

@@ -21,7 +21,8 @@ internal static class TestScene
     //private const int N = 100_000;
     //private const int N = 10_000;
     //private const int N = 1_000;
-    private const int N = 100;
+    //private const int N = 100;
+    private const int N = 20;
     //private const int N = 10;
     //private const int N = 2;
 
@@ -36,14 +37,28 @@ internal static class TestScene
 
     private static void InitWorld()
     {
+        Transform defaultTransform = new() { Position = Vector3.One, Rotation = Quaternion.Identity, Scale = Vector3.One };
         for (int i = 0; i < N; i++)
-            Scene._world.Create<Transform>(new Transform() { Position = Vector3.One, Rotation = Quaternion.Identity, Scale = Vector3.One });
+            Scene._world.Create(defaultTransform);
         var transforms = ArrayPool<Entity>.Shared.Rent(N);
         Scene._world.GetEntities(new QueryDescription().WithAll<Transform>(), transforms);
+        Render rend1 = new()
+        {
+            Material = VCShader.VCMat,
+            Mesh = DeltaMesh.Mesh
+        };
+        Render rend2 = new()
+        {
+            Material = VCShader.VCMat,
+            Mesh = TriangleMesh.Mesh
+        };
         for (int i = 0; i < N / 2; i++)
         {
-            transforms[i].Add(new ChildOf() { parent = Scene._world.Reference(transforms[i + (N / 2)]) });
-            transforms[i].Add(new Render() { Material = DeltaMesh.VCMat, Mesh = DeltaMesh.Mesh });
+            transforms[i].Add(new ChildOf()
+            {
+                parent = Scene._world.Reference(transforms[i + (N / 2)])
+            });
+            transforms[i].Add(Random.Shared.NextSingle() > 0.5f ? rend1 : rend2);
         }
         ArrayPool<Entity>.Shared.Return(transforms);
         Scene._world.TrimExcess();
@@ -81,7 +96,7 @@ internal static class TestScene
                 t.Scale = new(float.Lerp(m.startScale, m.targetScale, m.percent));
                 m.percent += deltaTime * 0.5f;
                 m.percent = Math.Clamp(m.percent, 0f, 1f);
-                t.Rotation *= Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI * deltaTime * 5);
+                t.Rotation *= Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI * deltaTime);
                 if (m.percent == 1)
                 {
                     m.start = m.target;
@@ -117,7 +132,7 @@ internal static class TestScene
     private static Vector3 RndVector()
     {
         Random rnd = Random.Shared;
-        var xy = new Vector2(rnd.NextSingle() - 0.5f, rnd.NextSingle() - 0.5f) * 0.5f;
+        var xy = new Vector2(rnd.NextSingle() - 0.5f, rnd.NextSingle() - 0.5f);
         var position = new Vector3(xy.X, xy.Y, 0) * 2;
         return position;
     }

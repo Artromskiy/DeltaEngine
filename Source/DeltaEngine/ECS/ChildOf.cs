@@ -11,6 +11,61 @@ internal struct ChildOf
     public EntityReference parent;
 }
 
+internal readonly struct WorldContext(World world)
+{
+
+    [MethodImpl(Inl)]
+    public readonly Matrix4x4 GetParentWorldMatrix(Entity entity)
+    {
+        if (entity.GetParent<Transform>(out var parent))
+            return GetWorldRecursive(parent);
+        return Matrix4x4.Identity;
+    }
+
+    [MethodImpl(Inl)]
+    public readonly bool GetParent<T>(Entity entity, out Entity parent)
+    {
+        parent = entity;
+        while (GetParent(ref parent))
+            if (world.Has<T>(parent))
+                return true;
+        return false;
+    }
+
+
+    [MethodImpl(Inl)]
+    public readonly Matrix4x4 GetWorldRecursive(Entity entity)
+    {
+        ref var transform = ref world.Get<Transform>(entity);
+        var localMatrix = transform.LocalMatrix;
+        if (GetParent<Transform>(entity, out Entity parent))
+            return GetWorldRecursive(parent) * localMatrix;
+        else
+            return localMatrix;
+    }
+
+    [MethodImpl(Inl)]
+    public readonly bool GetParent(ref Entity entity)
+    {
+        ref var childOf = ref world.TryGetRef<ChildOf>(entity, out bool has);
+        if (has)
+        {
+            entity = childOf.parent;
+            return world.Version(entity) == childOf.parent.Version;
+        }
+        return false;
+    }
+
+    [MethodImpl(Inl)]
+    public readonly bool HasParent<T>(Entity entity)
+    {
+        while (GetParent(ref entity))
+            if (world.Has<T>(entity))
+                return true;
+        return false;
+    }
+}
+
 internal static class ChildOfExtensions
 {
     /// <summary>
@@ -40,22 +95,23 @@ internal static class ChildOfExtensions
             return parent.GetWorldRecursive();
         return Matrix4x4.Identity;
     }
-
+    
     /// <summary>
     /// Use for <see cref="Entity"/>> with transform
     /// </summary>
     /// <param name="entity"></param>
     /// <returns>World matrix</returns>
     [MethodImpl(Inl)]
-    public static Matrix4x4 GetWorldRecursive(this in Entity entity)
+    public static Matrix4x4 GetWorldRecursive(this Entity entity)
     {
-        var localMatrix = entity.Get<Transform>().LocalMatrix;
+        ref var transform = ref entity.Get<Transform>();
+        var localMatrix = transform.LocalMatrix;
         if (entity.GetParent<Transform>(out Entity parent))
             return parent.GetWorldRecursive() * localMatrix;
         else
             return localMatrix;
     }
-
+    
     [MethodImpl(Inl)]
     public static bool GetParent(this ref Entity entity)
     {
@@ -68,6 +124,7 @@ internal static class ChildOfExtensions
         return false;
     }
 
+
     [MethodImpl(Inl)]
     public static bool GetParent<T>(this Entity entity, out Entity parent)
     {
@@ -77,6 +134,7 @@ internal static class ChildOfExtensions
                 return true;
         return false;
     }
+
 
     [MethodImpl(Inl)]
     public static bool HasParent<T>(this Entity entity)
@@ -122,7 +180,6 @@ internal static class ChildOfExtensions
         foreach (var archetype in query.GetArchetypeIterator())
             if (archetype.Entities > 0)
                 return true;
-
         return false;
     }
 }

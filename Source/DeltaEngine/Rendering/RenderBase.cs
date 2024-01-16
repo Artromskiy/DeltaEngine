@@ -25,15 +25,19 @@ internal sealed class RenderBase : IDisposable
 
     public readonly DescriptorPool descriptorPool;
 
-    private readonly DescriptorSetLayout[] _shaderLayoutsDefault;
-    public ReadOnlySpan<DescriptorSetLayout> ShaderLayoutsDefault => _shaderLayoutsDefault.AsSpan();
+    public readonly PipelineLayout pipelineLayout;
+
+    public readonly RenderPass renderPass;
+
+    private readonly DescriptorSetLayout[] _descriptrSetLayouts;
+    public ReadOnlySpan<DescriptorSetLayout> DescriptrSetLayouts => _descriptrSetLayouts.AsSpan();
 
     private const string RendererName = "Delta Renderer";
 
-    private static readonly string[] validationLayers = new[]
-    {
+    private static readonly string[] validationLayers =
+    [
         "VK_LAYER_KHRONOS_validation"
-    };
+    ];
 
     public unsafe RenderBase(Api api, Window* window, string[] deviceExtensions, string appName, SurfaceFormatKHR targetFormat)
     {
@@ -67,11 +71,20 @@ internal sealed class RenderBase : IDisposable
 
         descriptorPool = RenderHelper.CreateDescriptorPool(this);
 
-        _shaderLayoutsDefault = [RenderHelper.CreateDescriptorSetLayout(this)];
+        _descriptrSetLayouts = [RenderHelper.CreateDescriptorSetLayout(this)];
+
+        pipelineLayout = RenderHelper.CreatePipelineLayout(vk, deviceQ.device, _descriptrSetLayouts);
+
+        renderPass = RenderHelper.CreateRenderPass(vk, deviceQ.device, format.Format);
     }
 
     public unsafe void Dispose()
     {
+        vk.DestroyPipelineLayout(deviceQ.device, pipelineLayout, null);
+        foreach (var item in _descriptrSetLayouts)
+            vk.DestroyDescriptorSetLayout(deviceQ.device, item, null);
+        vk.DestroyRenderPass(deviceQ.device, renderPass, null);
+
         vk.DestroyDevice(deviceQ.device, null);
         khrsf.DestroySurface(instance, surface, null);
         vk.DestroyInstance(instance, null);

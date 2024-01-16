@@ -15,8 +15,9 @@ internal class Batcher : IJob
     private readonly Queue<uint> _free;
 
     private readonly GpuArray<Matrix4x4> _trs;
+
     private readonly GpuArray<uint> _trsTransfer; // send to compute to transfer new trs from host to device
-    private readonly GpuArray<uint> _trsSorted; // send to compute to sort trs on device
+    private readonly GpuArray<uint> _trsIds; // send to compute to sort trs on device
 
     private readonly PooledSet<uint> _forceTrsWrite;
     private readonly List<uint> _transferIndicesSet;
@@ -33,13 +34,16 @@ internal class Batcher : IJob
 
     private readonly RendGroupData _rendGroupData = new();
 
+    private readonly PooledList<(Render rend, uint count)> _renders = [];
+
     private readonly IJob[] jobs;
 
     public Batcher(World world, RenderBase renderBase)
     {
         _world = world;
-        _trsSorted = new GpuArray<uint>(renderBase, 1);
+        _trsIds = new GpuArray<uint>(renderBase, 1);
         _trs = new GpuArray<Matrix4x4>(renderBase, 1);
+
         _trsTransfer = new GpuArray<uint>(renderBase, 1);
         _transferIndicesSet = [];
         _forceTrsWrite = [];
@@ -51,7 +55,7 @@ internal class Batcher : IJob
              new RemoveRender(_world, _free, _rendGroupData),
              new AddRender(_world, _free, _rendGroupData, _forceTrsWrite),
              new ChangeRender(_world, _rendGroupData),
-             new SortWriteRender(_world, _trsSorted, _rendGroupData),
+             new SortWriteRender(_world, _trsIds, _rendGroupData),
              new WriteTrs(_world, _trs, _transferIndicesSet, _forceTrsWrite)
         ];
     }
@@ -77,7 +81,15 @@ internal class Batcher : IJob
     /// <summary>
     /// Contains indices to elements of <see cref="Trs"/> ordered by <see cref="Render"/>
     /// </summary>
-    public GpuArray<uint> TrsSorted => _trsSorted;
+    public GpuArray<uint> TrsIds => _trsIds;
+
+    public ReadOnlySpan<(Render rend, uint count)> GetRendGroups()
+    {
+        _renders.Clear();
+        foreach (var item in _rendGroupData.sortedRendToGroup)
+            _renders.Add((item.Key, _rendGroupData.groupToCount[item.Value]));
+        return _renders.Span;
+    }
 
     /// <summary>
     /// Ensures capacity of buffers to fit new <see cref="Render"/>s
@@ -93,7 +105,7 @@ internal class Batcher : IJob
             var length = _trs.Length;
             var newLength = BitOperations.RoundUpToPowerOf2((uint)(length + delta));
             _trs.Resize(newLength);
-            _trsSorted.Resize(newLength);
+            _trsIds.Resize(newLength);
             _free.EnsureCapacity((int)newLength);
             for (uint i = length; i < newLength; i++)
                 _free.Enqueue(i);
@@ -224,8 +236,9 @@ internal class Batcher : IJob
         public readonly void Execute()
         {
             var writer = trs.GetWriter();
-            TrsWriterWithTransform trsWithTransform = new(writer, _threadTransfer, forceWrite);
-            TrsWriterWithParent trsWithParent = new(writer, _threadTransfer, forceWrite);
+            WorldContext ctx = new(world);
+            TrsWriterWithTransform trsWithTransform = new(ctx, writer, _threadTransfer, forceWrite);
+            TrsWriterWithParent trsWithParent = new(ctx, writer, _threadTransfer, forceWrite);
             world.InlineParallelEntityQuery<TrsWriterWithTransform, RendId>(_trsDescriptionTransform, ref trsWithTransform);
             world.InlineParallelEntityQuery<TrsWriterWithParent, RendId>(_trsDescriptionParent, ref trsWithParent);
             foreach (var item in _threadTransfer.Values)
@@ -235,30 +248,30 @@ internal class Batcher : IJob
             }
         }
 
-        private readonly struct TrsWriterWithTransform(GpuArray<Matrix4x4>.Writer trsArray,
+        private readonly struct TrsWriterWithTransform(WorldContext ctx, GpuArray<Matrix4x4>.Writer trsArray,
             ThreadLocal<PooledList<uint>> transfer, PooledSet<uint> forceWrite) :
             IForEachWithEntity<RendId>
         {
             [MethodImpl(Inl)]
             public readonly void Update(Entity entity, ref RendId rendToId)
             {
-                if (!forceWrite.Contains(rendToId.trsId) && !entity.HasParent<DirtyFlag<Transform>>())
+                if (!forceWrite.Contains(rendToId.trsId) && !ctx.HasParent<DirtyFlag<Transform>>(entity))
                     return;
-                trsArray[rendToId.trsId] = entity.GetWorldRecursive();
+                trsArray[rendToId.trsId] = ctx.GetWorldRecursive(entity);
                 transfer.Value!.Add(rendToId.trsId);
             }
         }
 
-        private readonly struct TrsWriterWithParent(GpuArray<Matrix4x4>.Writer trsArray,
+        private readonly struct TrsWriterWithParent(WorldContext ctx, GpuArray<Matrix4x4>.Writer trsArray,
             ThreadLocal<PooledList<uint>> transfer, PooledSet<uint> forceWrite) :
             IForEachWithEntity<RendId>
         {
             [MethodImpl(Inl)]
             public readonly void Update(Entity entity, ref RendId rendToId)
             {
-                if (!forceWrite.Contains(rendToId.trsId) && !entity.HasParent<DirtyFlag<Transform>>())
+                if (!forceWrite.Contains(rendToId.trsId) && !ctx.HasParent<DirtyFlag<Transform>>(entity))
                     return;
-                trsArray[rendToId.trsId] = entity.GetParentWorldMatrix();
+                trsArray[rendToId.trsId] = ctx.GetParentWorldMatrix(entity);
                 transfer.Value!.Add(rendToId.trsId);
             }
         }

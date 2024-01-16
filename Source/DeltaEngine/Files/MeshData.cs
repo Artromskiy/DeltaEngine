@@ -5,18 +5,16 @@ namespace Delta.Files;
 
 public class MeshData : IAsset
 {
-    [JsonInclude]
     public readonly int vertexCount;
-    [JsonInclude]
     private readonly byte[][] vertices;
-    [JsonInclude]
     private readonly uint[] indices;
 
-    [JsonIgnore]
-    public ReadOnlySpan<uint> Indices => indices;
+    public uint GetIndicesCount() => (uint)indices.Length;
+    public ReadOnlySpan<uint> GetIndices() => indices;
     public ReadOnlySpan<byte> GetAttributeArray(int index) => vertices[index];
 
-    public MeshData(uint[] indices, byte[][] vertices, int vertexCount)
+    [JsonConstructor]
+    public MeshData(int vertexCount, uint[] indices, byte[][] vertices)
     {
         this.vertexCount = vertexCount;
         this.indices = (uint[])indices.Clone();

@@ -4,35 +4,26 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 
 namespace Delta.Files.Defaults;
-internal static class DeltaMesh
+internal class TriangleMesh
 {
     private static readonly Vector4 r = new(1.0f, 0.0f, 0.0f, 1.0f);
     private static readonly Vector4 g = new(0.0f, 1.0f, 0.0f, 1.0f);
     private static readonly Vector4 b = new(0.0f, 0.0f, 1.0f, 1.0f);
-    private static readonly Vector4[] colors = [b, g, r, r, b, g];
+    private static readonly Vector4[] colors = [b, g, r];
     private static readonly Vector2[] positions =
     [
         new(  0.00f,  -0.50f),
         new(  0.60f,   0.50f),
         new( -0.60f,   0.50f),
-        new(  0.00f,  -0.25f),
-        new(  0.35f,   0.35f),
-        new( -0.35f,   0.35f)
     ];
     private static readonly uint[] deltaLetterIndices =
     [
-        0, 1, 3,
-        1, 2, 4,
-        2, 0, 5,
-        3, 1, 4,
-        4, 2, 5,
-        5, 0, 3
+        0, 1, 2,
     ];
-
 
     public static readonly GuidAsset<MeshData> Mesh;
 
-    static DeltaMesh()
+    static TriangleMesh()
     {
         Mesh = AssetImporter.Instance.CreateRuntimeAsset(CreateMesh());
     }

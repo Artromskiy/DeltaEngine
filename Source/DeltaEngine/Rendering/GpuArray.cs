@@ -48,6 +48,7 @@ internal unsafe class GpuArray<T> : IDisposable where T : unmanaged
     }
     internal Buffer GetBuffer() => _buffer;
     public Writer GetWriter() => new(_length, _pData);
+    public Span<T> GetSpan() => new(_pData.ToPointer(), (int)_length);
 
     /// <summary>
     /// Fastest way to write directly to gpu memory
