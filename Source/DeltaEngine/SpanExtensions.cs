@@ -64,4 +64,10 @@ internal static class SpanExtensions
         ReadOnlySpan<T> ro = span;
         return FindIndex(ro, match);
     }
+
+    public static unsafe void CopyTo<T>(this T[] array, T* pointer) where T : unmanaged
+    {
+        Span<T> span = new(pointer, array.Length);
+        array.CopyTo(span);
+    }
 }

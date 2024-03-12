@@ -19,7 +19,6 @@ internal abstract unsafe partial class BaseRenderer : IDisposable, IJob
     private readonly string _appName;
 
     private readonly Pipeline graphicsPipeline;
-    private readonly DescriptorSetLayout descriptorSetLayout;
     private SwapChain swapChain;
 
     private readonly string[] deviceExtensions = [KhrSwapchain.ExtensionName];
@@ -44,12 +43,11 @@ internal abstract unsafe partial class BaseRenderer : IDisposable, IJob
         _window = RenderHelper.CreateWindow(_api.sdl, _appName);
         _rendererData = new RenderBase(_api, _window, deviceExtensions, _appName, targetFormat);
         swapChain = new SwapChain(_api, _rendererData, GetSdlWindowSize(), Buffering, _rendererData.format);
-        descriptorSetLayout = RenderHelper.CreateDescriptorSetLayout(_rendererData);
         graphicsPipeline = RenderHelper.CreateGraphicsPipeline(_rendererData);
         renderAssets = new RenderAssets(_rendererData);
 
         for (int i = 0; i < swapChain.imageCount; i++)
-            _frames.Enqueue(new Frame(_rendererData, renderAssets, swapChain, descriptorSetLayout));
+            _frames.Enqueue(new Frame(_rendererData, renderAssets, swapChain));
     }
 
     private Frame CurrentFrame => _frames.Peek();
@@ -144,6 +142,6 @@ internal abstract unsafe partial class BaseRenderer : IDisposable, IJob
         _frames.Dispose();
         _frames.Clear();
         for (int i = 0; i < swapChain.imageCount; i++)
-            _frames.Enqueue(new Frame(_rendererData, renderAssets, swapChain, descriptorSetLayout));
+            _frames.Enqueue(new Frame(_rendererData, renderAssets, swapChain));
     }
 }

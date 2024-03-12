@@ -16,7 +16,8 @@ internal class Frame : IDisposable
     private Fence renderFinishedFence;
 
     private CommandBuffer commandBuffer;
-    private DescriptorSet _descriptorSet;
+
+    private DescriptorSet _instanceDescriptorSet;
 
     private readonly DynamicBuffer _matrices;
     private readonly DynamicBuffer _ids;
@@ -28,7 +29,7 @@ internal class Frame : IDisposable
         _swapChain = swapChain;
     }
 
-    public unsafe Frame(RenderBase renderBase, RenderAssets renderAssets, SwapChain swapChain, DescriptorSetLayout descriptorSetLayout)
+    public unsafe Frame(RenderBase renderBase, RenderAssets renderAssets, SwapChain swapChain)
     {
         _rendererData = renderBase;
         _renderAssets = renderAssets;
@@ -36,9 +37,11 @@ internal class Frame : IDisposable
         _matrices = new(renderBase, 1);
         _ids = new(renderBase, 1);
 
+        _instanceDescriptorSet = RenderHelper.CreateDescriptorSet(renderBase, _rendererData.descriptorSetLayouts.Instance);
+
         FenceCreateInfo fenceInfo = new(StructureType.FenceCreateInfo, null, FenceCreateFlags.SignaledBit);
         SemaphoreCreateInfo semaphoreInfo = new(StructureType.SemaphoreCreateInfo);
-        _descriptorSet = RenderHelper.CreateDescriptorSet(renderBase, descriptorSetLayout);
+
 
         CommandBufferAllocateInfo allocInfo = new()
         {
@@ -96,9 +99,15 @@ internal class Frame : IDisposable
 
         if (_matrices.ChangedBuffer)
         {
-            RenderHelper.BindBuffersToDescriptorSet(_rendererData, _descriptorSet, _matrices.GetBuffer(), 0, DescriptorType.StorageBuffer);
+            RenderHelper.BindBuffersToDescriptorSet(_rendererData, _instanceDescriptorSet, _matrices.GetBuffer(), 0, DescriptorType.StorageBuffer);
             _matrices.ChangedBuffer = false;
         }
+        if(_ids.ChangedBuffer)
+        {
+            RenderHelper.BindBuffersToDescriptorSet(_rendererData, _instanceDescriptorSet, _ids.GetBuffer(), 1, DescriptorType.StorageBuffer);
+            _matrices.ChangedBuffer = false;
+        }
+
         RecordCommandBuffer(rendersData, commandBuffer, imageIndex);
 
         var buffer = commandBuffer;
@@ -169,7 +178,7 @@ internal class Frame : IDisposable
         VertexAttribute attributeMask = (VertexAttribute)(-1);
         uint indicesCount = 0;
 
-        var matrices = _descriptorSet;
+        var matrices = _instanceDescriptorSet;
 
         _rendererData.vk.CmdBindDescriptorSets(commandBuffer, PipelineBindPoint.Graphics, _rendererData.pipelineLayout, 0, 1, &matrices, 0, 0);
         uint firstInstance = 0;

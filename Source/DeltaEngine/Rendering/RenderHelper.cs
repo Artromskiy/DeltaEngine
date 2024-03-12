@@ -784,53 +784,6 @@ internal static class RenderHelper
         return commandBuffer;
     }
 
-    public static unsafe DescriptorSetLayout CreateDescriptorSetLayout(RenderBase data)
-    {
-        var bindings = stackalloc DescriptorSetLayoutBinding[]
-        {
-            new()
-            {
-                Binding = 0,
-                DescriptorCount = 1,
-                DescriptorType = DescriptorType.StorageBuffer,
-                StageFlags = ShaderStageFlags.VertexBit,
-            },
-            new()
-            {
-                Binding = 1,
-                DescriptorCount = 1,
-                DescriptorType = DescriptorType.StorageBuffer,
-                StageFlags = ShaderStageFlags.VertexBit,
-            }
-        };
-        DescriptorSetLayoutCreateInfo createInfo = new()
-        {
-            SType = StructureType.DescriptorSetLayoutCreateInfo,
-            BindingCount = 2,
-            PBindings = bindings,
-        };
-        _ = data.vk.CreateDescriptorSetLayout(data.deviceQ.device, &createInfo, null, out DescriptorSetLayout setLayout);
-        return setLayout;
-    }
-
-    public static unsafe DescriptorSetLayout CreateDescriptorSetLayoutSBO(RenderBase data)
-    {
-        DescriptorSetLayoutBinding binding = new()
-        {
-            Binding = 0,
-            DescriptorCount = 1,
-            DescriptorType = DescriptorType.StorageBuffer,
-            StageFlags = ShaderStageFlags.VertexBit,
-        };
-        DescriptorSetLayoutCreateInfo createInfo = new()
-        {
-            SType = StructureType.DescriptorSetLayoutCreateInfo,
-            PBindings = &binding,
-            BindingCount = 1,
-        };
-        _ = data.vk.CreateDescriptorSetLayout(data.deviceQ.device, &createInfo, null, out DescriptorSetLayout setLayout);
-        return setLayout;
-    }
 
     public static unsafe PhysicalDevice PickPhysicalDevice(Vk vk, Instance instance, SurfaceKHR surface, KhrSurface khrsf, string[] neededExtensions)
     {

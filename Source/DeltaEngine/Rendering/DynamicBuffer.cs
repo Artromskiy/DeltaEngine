@@ -42,8 +42,15 @@ internal class DynamicBuffer
             SharingMode = SharingMode.Exclusive,
             Flags = default,
         };
+
         _ = _renderBase.vk.CreateBuffer(_renderBase.deviceQ.device, createInfo, null, out buffer);
         var reqs = _renderBase.vk.GetBufferMemoryRequirements(_renderBase.deviceQ.device, buffer);
+
+        // Recreate buffer with full size given by requirements
+        _renderBase.vk.DestroyBuffer(_renderBase.deviceQ.device, buffer, null);
+        createInfo.Size = reqs.Size;
+        _ = _renderBase.vk.CreateBuffer(_renderBase.deviceQ.device, createInfo, null, out buffer);
+
         var memProps = MemoryPropertyFlags.DeviceLocalBit;
         uint memType = RenderHelper.FindMemoryType(_renderBase, (int)reqs.MemoryTypeBits, memProps);
         MemoryAllocateInfo allocateInfo = new()

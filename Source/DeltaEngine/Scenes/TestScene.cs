@@ -8,6 +8,7 @@ using System;
 using System.Buffers;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Delta.Scenes;
 internal static class TestScene
@@ -33,11 +34,12 @@ internal static class TestScene
         Scene.AddJob(new MoveTransformsJob(Scene._world, Scene.DeltaTime));
         Scene.AddJob(new Renderer(Scene._world, "TestScene"));
         Scene.AddJob(new RemoveDirtyJob(Scene._world));
+        Scene.AddJob(new FpsDropper(Scene.DeltaTime));
     }
 
     private static void InitWorld()
     {
-        Transform defaultTransform = new() { Position = Vector3.One, Rotation = Quaternion.Identity, Scale = Vector3.One };
+        Transform defaultTransform = new() { Rotation = Quaternion.Identity, Scale = Vector3.One };
         for (int i = 0; i < N; i++)
             Scene._world.Create(defaultTransform);
         var transforms = ArrayPool<Entity>.Shared.Rent(N);
@@ -54,11 +56,8 @@ internal static class TestScene
         };
         for (int i = 0; i < N / 2; i++)
         {
-            transforms[i].Add(new ChildOf()
-            {
-                parent = Scene._world.Reference(transforms[i + (N / 2)])
-            });
-            transforms[i].Add(Random.Shared.NextSingle() > 0.5f ? rend1 : rend2);
+            transforms[i].Add(new ChildOf(Scene._world.Reference(transforms[i + (N / 2)])));
+            transforms[i].Add(rnd.NextSingle() > 0.5f ? rend1 : rend2);
         }
         ArrayPool<Entity>.Shared.Return(transforms);
         Scene._world.TrimExcess();
@@ -71,7 +70,7 @@ internal static class TestScene
         var move = new QueryDescription().WithAll<Transform>().WithNone<ChildOf>();
         Scene._world.Add<MoveToTarget>(move);
         move = new QueryDescription().WithAll<Transform, ChildOf>();
-        Scene._world.Query(move, (ref Transform t) => t.Position = new(0, 0.2f, 0));
+        Scene._world.Query(move, (ref Transform t) => t.Position = new(0, 0.5f, 0));
     }
 
 
@@ -82,7 +81,7 @@ internal static class TestScene
         {
             var query = new QueryDescription().WithAll<Transform, MoveToTarget>();
             Move move = new(deltaTime.Invoke());
-            _sceneWorld.InlineDirtyParallelQuery<Move, Transform, MoveToTarget>(query, ref move);
+            _sceneWorld.InlineDirtyQuery<Move, Transform, MoveToTarget>(query, ref move);
         }
 
         private readonly struct Move(float deltaTime) : IForEach<Transform, MoveToTarget>
@@ -96,13 +95,13 @@ internal static class TestScene
                 t.Scale = new(float.Lerp(m.startScale, m.targetScale, m.percent));
                 m.percent += deltaTime * 0.5f;
                 m.percent = Math.Clamp(m.percent, 0f, 1f);
-                t.Rotation *= Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI * deltaTime);
+                t.Rotation *= Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI * deltaTime * 3f);
                 if (m.percent == 1)
                 {
                     m.start = m.target;
                     m.target = RndVector();
                     m.startScale = m.targetScale;
-                    m.targetScale = Random.Shared.NextSingle() * 0.1f;
+                    m.targetScale = rnd.NextSingle() * 0.1f;
                     m.percent = 0;
                 }
             }
@@ -128,12 +127,24 @@ internal static class TestScene
             world.Remove<DirtyFlag<Render>>(_dirtyRenders);
         }
     }
+    static readonly Random rnd = new(42);
 
     private static Vector3 RndVector()
     {
-        Random rnd = Random.Shared;
         var xy = new Vector2(rnd.NextSingle() - 0.5f, rnd.NextSingle() - 0.5f);
         var position = new Vector3(xy.X, xy.Y, 0) * 2;
         return position;
+    }
+
+
+    private readonly struct FpsDropper(Func<float> deltaTime) : IJob
+    {
+        const float TargetDeltaTime = 1f / 15f;
+        public void Execute()
+        {
+            var toSleep = TargetDeltaTime - deltaTime.Invoke();
+            if (toSleep > 0f)
+                Thread.Sleep(TimeSpan.FromSeconds(toSleep));
+        }
     }
 }

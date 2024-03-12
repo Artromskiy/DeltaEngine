@@ -6,9 +6,9 @@ using System.Runtime.CompilerServices;
 
 namespace Delta.ECS;
 
-internal struct ChildOf
+internal struct ChildOf(EntityReference parent)
 {
-    public EntityReference parent;
+    public EntityReference parent = parent;
 }
 
 internal readonly struct WorldContext(World world)

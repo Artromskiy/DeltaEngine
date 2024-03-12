@@ -19,6 +19,7 @@ internal sealed class RenderBase : IDisposable
     public readonly SurfaceFormatKHR format;
 
     public SwapChainSupportDetails swapChainSupport;
+
     public readonly PhysicalDeviceMemoryProperties memoryProperties;
 
     public readonly DeviceQueues deviceQ;
@@ -29,8 +30,7 @@ internal sealed class RenderBase : IDisposable
 
     public readonly RenderPass renderPass;
 
-    private readonly DescriptorSetLayout[] _descriptrSetLayouts;
-    public ReadOnlySpan<DescriptorSetLayout> DescriptrSetLayouts => _descriptrSetLayouts.AsSpan();
+    public readonly CommonDescriptorSetLayouts descriptorSetLayouts;
 
     private const string RendererName = "Delta Renderer";
 
@@ -71,9 +71,9 @@ internal sealed class RenderBase : IDisposable
 
         descriptorPool = RenderHelper.CreateDescriptorPool(this);
 
-        _descriptrSetLayouts = [RenderHelper.CreateDescriptorSetLayout(this)];
+        descriptorSetLayouts = new CommonDescriptorSetLayouts(this);
 
-        pipelineLayout = RenderHelper.CreatePipelineLayout(vk, deviceQ.device, _descriptrSetLayouts);
+        pipelineLayout = RenderHelper.CreatePipelineLayout(vk, deviceQ.device, descriptorSetLayouts.Layouts);
 
         renderPass = RenderHelper.CreateRenderPass(vk, deviceQ.device, format.Format);
     }
@@ -81,8 +81,11 @@ internal sealed class RenderBase : IDisposable
     public unsafe void Dispose()
     {
         vk.DestroyPipelineLayout(deviceQ.device, pipelineLayout, null);
-        foreach (var item in _descriptrSetLayouts)
+        descriptorSetLayouts.Dispose();
+
+        foreach (var item in descriptorSetLayouts.Layouts)
             vk.DestroyDescriptorSetLayout(deviceQ.device, item, null);
+
         vk.DestroyRenderPass(deviceQ.device, renderPass, null);
 
         vk.DestroyDevice(deviceQ.device, null);

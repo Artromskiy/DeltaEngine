@@ -26,7 +26,7 @@ internal class SwapChain : IDisposable
         var indiciesDetails = data.deviceQ.queueIndicesDetails;
 
         format = RenderHelper.ChooseSwapSurfaceFormat(swSupport.Formats, targetFormat);
-        var presentMode = swSupport.PresentModes.Contains(PresentModeKHR.ImmediateKhr) ? PresentModeKHR.ImmediateKhr : PresentModeKHR.FifoKhr;
+        var presentMode = PresentModeKHR.MailboxKhr; // swSupport.PresentModes.Contains(PresentModeKHR.ImmediateKhr) ? PresentModeKHR.ImmediateKhr : PresentModeKHR.FifoKhr;
         extent = RenderHelper.ChooseSwapExtent(size.w, size.h, swSupport.Capabilities);
 
         uint maxImageCount = swSupport.Capabilities.MaxImageCount;

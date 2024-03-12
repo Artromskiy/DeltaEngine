@@ -71,7 +71,7 @@ internal unsafe class GpuArray<T> : IDisposable where T : unmanaged
         }
     }
 
-    public void Flush(uint min, uint max) // TODO use these ranges according to vulkan docs about MappedMemoryRange and "multiple of n bytes per fucking transfer)
+    public void Flush(uint min, uint max) // TODO use these ranges according to vulkan docs about MappedMemoryRange and "multiple of n bytes per fucking transfer"
     {
         if (!_needsToFlush)
             return;
