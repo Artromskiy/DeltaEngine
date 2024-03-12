@@ -2,7 +2,6 @@
 using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;
-using Buffer = Silk.NET.Vulkan.Buffer;
 
 namespace Delta.Rendering;
 internal class Frame : IDisposable

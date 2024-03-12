@@ -59,11 +59,16 @@ internal readonly struct WorldContext(World world)
     [MethodImpl(Inl)]
     public readonly bool HasParent<T>(Entity entity)
     {
-        while (GetParent(ref entity))
+        do
+        {
             if (world.Has<T>(entity))
                 return true;
+        } while (GetParent(ref entity));
+
         return false;
     }
+
+    public readonly bool Has<T>(Entity entity)=> world.Has<T>(entity);
 }
 
 internal static class ChildOfExtensions
