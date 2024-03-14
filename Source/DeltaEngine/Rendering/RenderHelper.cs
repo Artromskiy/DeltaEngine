@@ -13,7 +13,6 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 using Buffer = Silk.NET.Vulkan.Buffer;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 
@@ -129,7 +128,7 @@ internal static class RenderHelper
         _ = data.vk.BeginCommandBuffer(cmdBuffer, &beginInfo);
     }
 
-    internal static unsafe void CopyCmd<T>(this RenderBase data, GpuArray<T> source, DynamicBuffer destination, CommandBuffer cmdBuffer) where T: unmanaged
+    internal static unsafe void CopyCmd<T>(this RenderBase data, GpuArray<T> source, DynamicBuffer destination, CommandBuffer cmdBuffer) where T : unmanaged
     {
         destination.EnsureSize(source.Size);
         BufferCopy copy = new(0, 0, Math.Min(source.Size, destination.Size));

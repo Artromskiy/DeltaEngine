@@ -1,6 +1,4 @@
-﻿using Silk.NET.SPIRV;
-using Silk.NET.SPIRV.Cross;
-using Silk.NET.Vulkan;
+﻿using Silk.NET.Vulkan;
 using System;
 using System.IO;
 
@@ -34,7 +32,7 @@ internal readonly struct PipelineShader : IDisposable
     }
 
     public PipelineShader(RenderBase data, ShaderStageFlags stage, string path) : this(data, stage, File.ReadAllBytes(path)) { }
-    
+
 
     public unsafe void Dispose()
     {

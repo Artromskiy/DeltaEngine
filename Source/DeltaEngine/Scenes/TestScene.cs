@@ -16,14 +16,14 @@ internal static class TestScene
     public static Scene Scene { get; private set; }
 
     //private const int N = 1_000_000;
-    private const int N = 500_000;
+    //private const int N = 500_000;
     //private const int N = 300_000;
     //private const int N = 200_000;
     //private const int N = 100_000;
     //private const int N = 10_000;
     //private const int N = 1_000;
     //private const int N = 100;
-    //private const int N = 20;
+    private const int N = 20;
     //private const int N = 10;
     //private const int N = 2;
 
@@ -78,7 +78,7 @@ internal static class TestScene
         Scene._world.Add<DirtyFlag<Transform>>(tr);
 
         var move = new QueryDescription().WithAll<Transform>().WithNone<ChildOf>();
-        Scene._world.Add(move, new MoveToTarget() { speed = 0.5f});
+        Scene._world.Add(move, new MoveToTarget() { speed = 0.5f });
         move = new QueryDescription().WithAll<Transform, ChildOf>();
         Scene._world.Query(move, (ref Transform t) => t.Position = new(0, 0.5f, 0));
     }
@@ -122,7 +122,6 @@ internal static class TestScene
 
         Console.WriteLine($"Delta count {deltaCount}");
         Console.WriteLine($"Triangle count {triangleCount}");
-
 
         ArrayPool<Entity>.Shared.Return(transforms);
         Scene._world.TrimExcess();
@@ -187,7 +186,8 @@ internal static class TestScene
             world.Remove<DirtyFlag<Render>>(_dirtyRenders);
         }
     }
-    static Random rnd = Random.Shared;
+
+    private static readonly Random rnd = Random.Shared;
 
     private static Vector3 RndVector()
     {
@@ -199,7 +199,7 @@ internal static class TestScene
 
     private readonly struct FpsDropper(Func<float> deltaTime) : IJob
     {
-        const float TargetDeltaTime = 1f / 15f;
+        private const float TargetDeltaTime = 1f / 15f;
         public void Execute()
         {
             var toSleep = TargetDeltaTime - deltaTime.Invoke();

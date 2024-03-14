@@ -68,7 +68,7 @@ internal readonly struct WorldContext(World world)
         return false;
     }
 
-    public readonly bool Has<T>(Entity entity)=> world.Has<T>(entity);
+    public readonly bool Has<T>(Entity entity) => world.Has<T>(entity);
 }
 
 internal static class ChildOfExtensions
@@ -100,7 +100,7 @@ internal static class ChildOfExtensions
             return parent.GetWorldRecursive();
         return Matrix4x4.Identity;
     }
-    
+
     /// <summary>
     /// Use for <see cref="Entity"/>> with transform
     /// </summary>
@@ -116,7 +116,7 @@ internal static class ChildOfExtensions
         else
             return localMatrix;
     }
-    
+
     [MethodImpl(Inl)]
     public static bool GetParent(this ref Entity entity)
     {

@@ -101,7 +101,7 @@ internal class Frame : IDisposable
             RenderHelper.BindBuffersToDescriptorSet(_rendererData, _instanceDescriptorSet, _matrices.GetBuffer(), 0, DescriptorType.StorageBuffer);
             _matrices.ChangedBuffer = false;
         }
-        if(_ids.ChangedBuffer)
+        if (_ids.ChangedBuffer)
         {
             RenderHelper.BindBuffersToDescriptorSet(_rendererData, _instanceDescriptorSet, _ids.GetBuffer(), 1, DescriptorType.StorageBuffer);
             _matrices.ChangedBuffer = false;

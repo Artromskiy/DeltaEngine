@@ -4,7 +4,6 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using Buffer = Silk.NET.Vulkan.Buffer;
 
-
 namespace Delta.Rendering;
 internal class DynamicBuffer
 {
@@ -116,8 +115,6 @@ internal class DynamicBuffer
         var fence = _copyFence;
         var res = vk.QueueSubmit(_renderBase.deviceQ.graphicsQueue, 1, &submitInfo, fence);
         _ = res;
-        if (res != Result.Success)
-            Console.WriteLine("here");
         if (res == Result.Success)
             _ = vk.WaitForFences(_renderBase.deviceQ.device, 1, &fence, true, ulong.MaxValue);
 

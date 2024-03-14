@@ -44,7 +44,7 @@ internal class Serialization
     {
         using Stream stream = new FileStream(path, FileMode.Open, FileAccess.Read);
         T result = JsonSerializer.Deserialize<T>(stream, _options);
-        if (result is  MaterialData md)
+        if (result is MaterialData md)
             Debug.Assert(md.shader != Guid.Empty);
         if (result is ShaderData sh)
             Debug.Assert(!sh.GetVertBytes().IsEmpty);

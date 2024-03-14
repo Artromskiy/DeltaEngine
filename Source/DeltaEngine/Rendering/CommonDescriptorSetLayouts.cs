@@ -2,7 +2,7 @@
 using System;
 
 namespace Delta.Rendering;
-internal class CommonDescriptorSetLayouts: IDisposable
+internal class CommonDescriptorSetLayouts : IDisposable
 {
     public DescriptorSetLayout Scene { get; private set; }
     public DescriptorSetLayout Material { get; private set; }
@@ -21,7 +21,7 @@ internal class CommonDescriptorSetLayouts: IDisposable
         [
             CameraBindings
         ];
-        MaterialBindings = 
+        MaterialBindings =
         [
 
         ];

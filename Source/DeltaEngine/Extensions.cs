@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Delta;
 internal static class Extensions
 {
-        /// <summary>
+    /// <summary>
     /// Calls <see cref="IDisposable.Dispose"/> on each element of <paramref name="queue"/>
     /// </summary>
     /// <param name="array"></param>

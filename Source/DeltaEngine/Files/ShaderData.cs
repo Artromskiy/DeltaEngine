@@ -1,6 +1,5 @@
 ﻿using Delta.Files;
 using System;
-using System.Text.Json.Serialization;
 
 namespace Delta.Rendering;
 
