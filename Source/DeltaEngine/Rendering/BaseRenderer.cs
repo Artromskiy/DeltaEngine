@@ -1,4 +1,5 @@
-﻿using Delta.ECS;
+﻿using Delta.ECS.Components;
+using Delta.Rendering.Internal;
 using JobScheduler;
 using Silk.NET.SDL;
 using Silk.NET.Vulkan;

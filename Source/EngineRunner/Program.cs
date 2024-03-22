@@ -25,7 +25,6 @@ using System.Diagnostics;
             Console.WriteLine();
             Console.WriteLine((int)(1.0 / el.TotalSeconds)); // FPS of main thread
             Console.WriteLine();
-            eng.ClearRendererMetrics();
             foreach (var item in eng.GetCurrentScene().GetMetrics())
                 Console.WriteLine($"{item.Key}: {(item.Value / 100).TotalMilliseconds:0.00}ms");
             eng.GetCurrentScene().ClearMetrics();

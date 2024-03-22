@@ -1,4 +1,5 @@
 ﻿using Delta;
+using DeltaEditorLib.Project;
 using Microsoft.Extensions.Logging;
 
 namespace DeltaEditor
@@ -26,6 +27,7 @@ namespace DeltaEditor
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 })
                 .Services
+                .AddSingleton(new ProjectPath(projectPath))
                 .AddSingleton(new Engine(projectPath))
                 .AddSingleton<MainPage>();
 

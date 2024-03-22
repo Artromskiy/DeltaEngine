@@ -1,13 +1,11 @@
-﻿using Delta.Rendering;
-using System;
-using System.IO;
+﻿using System.IO;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 
 namespace Delta.Files;
 
-internal class Serialization
+public static class Serialization
 {
     private static readonly JsonSerializerOptions _options;
     public static JsonSerializerOptions Options => _options;
@@ -44,10 +42,6 @@ internal class Serialization
     {
         using Stream stream = new FileStream(path, FileMode.Open, FileAccess.Read);
         T result = JsonSerializer.Deserialize<T>(stream, _options);
-        if (result is MaterialData md)
-            Debug.Assert(md.shader != Guid.Empty);
-        if (result is ShaderData sh)
-            Debug.Assert(!sh.GetVertBytes().IsEmpty);
         return result;
     }
 
@@ -65,5 +59,4 @@ internal class Serialization
             jsonTypeInfo.Properties.Add(jsonPropertyInfo);
         }
     }
-
 }

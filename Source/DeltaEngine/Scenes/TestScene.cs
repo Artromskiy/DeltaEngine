@@ -1,8 +1,10 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
 using Delta.ECS;
+using Delta.ECS.Components;
 using Delta.Files.Defaults;
 using Delta.Rendering;
+using Delta.Scripting;
 using JobScheduler;
 using System;
 using System.Buffers;
@@ -166,7 +168,8 @@ internal static class TestScene
         }
     }
 
-    public struct MoveToTarget
+    [Component]
+    private struct MoveToTarget
     {
         public Vector3 start;
         public Vector3 target;

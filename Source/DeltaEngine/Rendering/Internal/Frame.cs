@@ -1,4 +1,5 @@
-﻿using Delta.ECS;
+﻿using Delta.ECS.Components;
+using Delta.Rendering.Internal;
 using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;

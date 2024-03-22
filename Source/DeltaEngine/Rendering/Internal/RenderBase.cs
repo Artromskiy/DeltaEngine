@@ -1,11 +1,12 @@
-﻿using Silk.NET.SDL;
+﻿using Delta;
+using Silk.NET.SDL;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.EXT;
 using Silk.NET.Vulkan.Extensions.KHR;
 using System;
 using System.Runtime.InteropServices;
 
-namespace Delta.Rendering;
+namespace Delta.Rendering.Internal;
 
 internal sealed class RenderBase : IDisposable
 {

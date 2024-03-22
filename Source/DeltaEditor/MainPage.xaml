@@ -54,6 +54,12 @@
                 Clicked="CreateFile"
                 HorizontalOptions="Fill" />
             
+            <Button
+                x:Name="CompileButton"
+                Text="Try compile project" 
+                Clicked="TryCompile"
+                HorizontalOptions="Fill" />
+            
         </VerticalStackLayout>
     </ScrollView>
 

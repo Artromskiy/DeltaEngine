@@ -24,7 +24,6 @@ public enum VertexAttribute : int
 
 internal static class VertexAttributeExtensions
 {
-
     private static int GetAttributeSize(int location)
     {
         return location switch

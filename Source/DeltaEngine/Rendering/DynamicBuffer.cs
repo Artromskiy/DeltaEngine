@@ -1,4 +1,5 @@
-﻿using Silk.NET.Vulkan;
+﻿using Delta.Rendering.Internal;
+using Silk.NET.Vulkan;
 using System;
 using System.Numerics;
 using System.Runtime.CompilerServices;

@@ -1,7 +1,7 @@
 ﻿using Silk.NET.Vulkan;
 using System;
 
-namespace Delta.Rendering;
+namespace Delta.Rendering.Internal;
 internal class CommonDescriptorSetLayouts : IDisposable
 {
     public DescriptorSetLayout Scene { get; private set; }

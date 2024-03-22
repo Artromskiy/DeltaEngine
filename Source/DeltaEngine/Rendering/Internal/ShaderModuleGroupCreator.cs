@@ -2,7 +2,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace Delta.Rendering;
+namespace Delta.Rendering.Internal;
 
 internal static class ShaderModuleGroupCreator
 {

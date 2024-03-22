@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Delta.ECS;
+namespace Delta.ECS.Components;
 
 [StructLayout(LayoutKind.Sequential)]
 public struct Transform : IDirty
@@ -37,17 +37,17 @@ public struct Transform : IDirty
         var sZ2 = s.Z * 2;
         Matrix4x4 res = new
         (
-            (1.0f - (2.0f * (rYrY + rZrZ))) * s.X,
+            (1.0f - 2.0f * (rYrY + rZrZ)) * s.X,
             (rXrY - rZrW) * sY2,
             (rXrZ + rYrW) * sZ2,
             t.X,
             (rXrY + rZrW) * sX2,
-            (1.0f - (2.0f * (rXrX + rZrZ))) * s.Y,
+            (1.0f - 2.0f * (rXrX + rZrZ)) * s.Y,
             (rYrZ - rXrW) * sZ2,
             t.Y,
             (rXrZ - rYrW) * sX2,
             (rYrZ + rXrW) * sY2,
-            (1.0f - (2.0f * (rXrX + rYrY))) * s.Z,
+            (1.0f - 2.0f * (rXrX + rYrY)) * s.Z,
             t.Z,
             0.0f,
             0.0f,

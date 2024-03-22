@@ -1,7 +1,7 @@
 ﻿using Silk.NET.SDL;
 using Silk.NET.Vulkan;
 
-namespace Delta.Rendering;
+namespace Delta.Rendering.Internal;
 
 internal readonly struct Api
 {

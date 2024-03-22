@@ -2,8 +2,7 @@
 using System;
 using System.IO;
 
-
-namespace Delta.Rendering;
+namespace Delta.Rendering.Internal;
 
 internal readonly struct PipelineShader : IDisposable
 {

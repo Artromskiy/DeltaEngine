@@ -1,6 +1,8 @@
 ﻿using Arch.Core;
 using Collections.Pooled;
+using Delta.ECS.Components;
 using Delta.Rendering;
+using Delta.Rendering.Internal;
 using JobScheduler;
 using System;
 using System.Buffers;

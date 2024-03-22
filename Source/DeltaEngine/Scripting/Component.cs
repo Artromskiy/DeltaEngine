@@ -2,5 +2,5 @@
 
 namespace Delta.Scripting;
 
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Class)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
 public class ComponentAttribute() : Attribute;

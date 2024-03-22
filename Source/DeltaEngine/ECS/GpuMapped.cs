@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Delta.Rendering;
+using Delta.Rendering.Internal;
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;

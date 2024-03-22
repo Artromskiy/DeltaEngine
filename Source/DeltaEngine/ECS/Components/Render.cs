@@ -3,7 +3,7 @@ using Delta.Rendering;
 using System;
 using System.Runtime.CompilerServices;
 
-namespace Delta.ECS;
+namespace Delta.ECS.Components;
 
 internal struct Render : IEquatable<Render>, IDirty, IComparable<Render>
 {
@@ -40,6 +40,6 @@ internal struct Render : IEquatable<Render>, IDirty, IComparable<Render>
         var byShader = _shader.CompareTo(other._shader);
         var byMaterial = _material.CompareTo(other._material);
         var byMesh = Mesh.CompareTo(other.Mesh);
-        return byShader == 0 ? (byMaterial == 0 ? (byMesh == 0 ? 1 : byMesh) : byMaterial) : byShader;
+        return byShader == 0 ? byMaterial == 0 ? byMesh == 0 ? 1 : byMesh : byMaterial : byShader;
     }
 }

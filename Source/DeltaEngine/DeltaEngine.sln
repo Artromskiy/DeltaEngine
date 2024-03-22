@@ -19,6 +19,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeltaEditor", "..\DeltaEdit
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeltaHub", "..\DeltaHub\DeltaHub.csproj", "{A19A56E3-4B15-4FB8-8D9D-4F28B7B3A9C2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeltaEditorLib", "..\DeltaEditorLib\DeltaEditorLib.csproj", "{ABEA9CF9-A78C-457A-AAE8-5291B47B1482}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -67,6 +69,14 @@ Global
 		{A19A56E3-4B15-4FB8-8D9D-4F28B7B3A9C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A19A56E3-4B15-4FB8-8D9D-4F28B7B3A9C2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A19A56E3-4B15-4FB8-8D9D-4F28B7B3A9C2}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{ABEA9CF9-A78C-457A-AAE8-5291B47B1482}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ABEA9CF9-A78C-457A-AAE8-5291B47B1482}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ABEA9CF9-A78C-457A-AAE8-5291B47B1482}.DebugPerf|Any CPU.ActiveCfg = Debug|Any CPU
+		{ABEA9CF9-A78C-457A-AAE8-5291B47B1482}.DebugPerf|Any CPU.Build.0 = Debug|Any CPU
+		{ABEA9CF9-A78C-457A-AAE8-5291B47B1482}.Perf|Any CPU.ActiveCfg = Debug|Any CPU
+		{ABEA9CF9-A78C-457A-AAE8-5291B47B1482}.Perf|Any CPU.Build.0 = Debug|Any CPU
+		{ABEA9CF9-A78C-457A-AAE8-5291B47B1482}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ABEA9CF9-A78C-457A-AAE8-5291B47B1482}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

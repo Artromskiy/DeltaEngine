@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Arch.Persistence;
+using Delta.Files;
 using JobScheduler;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Delta.Scenes;
-public sealed class Scene : IDisposable
+
+public sealed class Scene : IDisposable, IAsset
 {
     [JsonConverter(typeof(WorldConverter))]
     internal readonly World _world;
@@ -47,7 +49,6 @@ public sealed class Scene : IDisposable
             var type = item.GetType();
             _metrics.TryAdd(type, TimeSpan.Zero);
             _metrics[type] += _jobWatch.Elapsed;
-            //Console.WriteLine($"{item}: {_jobWatch.Elapsed.TotalMilliseconds:0.00} ms");
         }
 
         _sceneSw.Stop();

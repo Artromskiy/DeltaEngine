@@ -27,12 +27,8 @@ internal class RuntimeAssetCollection
         var meta = new Meta(guid);
 
         Serialization.Serialize(path, asset);
-        //using FileStream fileStream = File.Create(path);
-        //JsonSerializer.Serialize<T>(fileStream, asset);
 
         Serialization.Serialize($"{path}{MetaEnding}", meta);
-        //using FileStream metaStream = File.Create($"{path}{MetaEnding}");
-        //JsonSerializer.Serialize(metaStream, meta);
 
         _assetPaths.Add(guid, path);
         _pathToGuid.Add(path, guid);
