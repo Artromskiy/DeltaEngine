@@ -1,4 +1,5 @@
 ﻿using Delta;
+using Delta.Scripting;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -16,8 +17,7 @@ namespace DeltaEditorLib.Scripting
             OutputKind.DynamicallyLinkedLibrary,
             optimizationLevel: OptimizationLevel.Release
         );
-
-        const string DllName = "Scripts.dll";
+        private const string DllName = "Scripts.dll";
 
         public static void TryCompile(string sourceFilesLocation, string destinationDllLocation)
         {
@@ -39,38 +39,46 @@ namespace DeltaEditorLib.Scripting
 
             string assemblyPath = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
 
-            MetadataReference[] defaultReferences = [mscorlib, engineLib];
+            List<MetadataReference> references = [mscorlib, engineLib];
 
-            var compilation = CSharpCompilation.Create(DllName,
-                   trees,
-                   defaultReferences,
-                   _compilationOptions);
+            references.AddRange(Assembly.
+                GetEntryAssembly()!.
+                GetReferencedAssemblies().
+                Select(a => MetadataReference.CreateFromFile(Assembly.Load(a).Location)));
 
-            List<MetadataReference> usedReferences = [];
-            var usingDirectives = compilation.SyntaxTrees.
+            references.AddRange(trees.
                 Select(tree => tree.GetRoot().ChildNodes().
                 OfType<UsingDirectiveSyntax>().
                 Where(x => x.Name != null)).
-            SelectMany(s => s);
+            SelectMany(s => s).
+            Select(u => Path.Combine(assemblyPath, u.Name!.ToString() + ".dll")).
+            Where(File.Exists).
+            Select(p => MetadataReference.CreateFromFile(p)));
 
-            foreach (var item in Assembly.GetEntryAssembly().GetReferencedAssemblies())
-                usedReferences.Add(MetadataReference.CreateFromFile(Assembly.Load(item).Location));
+            var compilation = CSharpCompilation.Create(DllName,
+                   trees,
+                   references,
+                   _compilationOptions);
 
-            foreach (var u in usingDirectives)
-            {
-                var referencePath = Path.Combine(assemblyPath, u.Name!.ToString() + ".dll");
-                if(File.Exists(referencePath))
-                    usedReferences.Add(MetadataReference.CreateFromFile(referencePath));
-            }
-            
-            compilation = compilation.AddReferences(usedReferences);
             var dllPath = Path.Combine(destinationDllLocation, DllName);
-            var result = compilation.Emit(dllPath);
 
-            var scriptsDllReference = MetadataReference.CreateFromFile(dllPath);
+            var result = compilation.Emit(dllPath);
 
             foreach (var item in result.Diagnostics)
                 Debug.WriteLine(item.GetMessage());
+
+            var scriptsDllReference = MetadataReference.CreateFromFile(dllPath);
+
+            var assembly = Assembly.LoadFrom(dllPath);
+            var types = GetComponentTypes(assembly);
+
+            foreach (var item in types)
+                Debug.WriteLine(item.FullName);
         }
+
+        private static List<Type> GetComponentTypes(Assembly assembly) => assembly.
+            GetTypes().
+            Where(type => type.GetCustomAttribute<ComponentAttribute>() != null).
+            ToList();
     }
 }
