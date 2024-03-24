@@ -1,10 +1,12 @@
 ﻿using Delta.Files;
 using Delta.Rendering;
+using Delta.Scripting;
 using System;
 using System.Runtime.CompilerServices;
 
 namespace Delta.ECS.Components;
 
+[Component]
 internal struct Render : IEquatable<Render>, IDirty, IComparable<Render>
 {
     internal GuidAsset<ShaderData> _shader;

@@ -1,10 +1,10 @@
-﻿using System.Numerics;
+﻿using Delta.Scripting;
+using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace Delta.ECS.Components;
 
-[StructLayout(LayoutKind.Sequential)]
+[Component]
 public struct Transform : IDirty
 {
     public Vector3 Position;

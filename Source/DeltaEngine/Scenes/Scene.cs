@@ -1,23 +1,23 @@
 ﻿using Arch.Core;
-using Arch.Persistence;
 using Delta.Files;
 using JobScheduler;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Delta.Scenes;
 
 public sealed class Scene : IDisposable, IAsset
 {
-    [JsonConverter(typeof(WorldConverter))]
     internal readonly World _world;
+    [JsonIgnore]
     private readonly List<IJob> _jobs;
 
     private float _deltaTime;
     private readonly Stopwatch _sceneSw = new();
+
+    private const bool WriteMetrics = false;
 
     private readonly Dictionary<Type, TimeSpan> _metrics = [];
     public void ClearMetrics() => _metrics.Clear();
@@ -46,9 +46,13 @@ public sealed class Scene : IDisposable, IAsset
             _jobWatch.Restart();
             item.Execute();
             _jobWatch.Stop();
-            var type = item.GetType();
-            _metrics.TryAdd(type, TimeSpan.Zero);
-            _metrics[type] += _jobWatch.Elapsed;
+
+            if (WriteMetrics)
+            {
+                var type = item.GetType();
+                _metrics.TryAdd(type, TimeSpan.Zero);
+                _metrics[type] += _jobWatch.Elapsed;
+            }
         }
 
         _sceneSw.Stop();
@@ -86,18 +90,5 @@ public sealed class Scene : IDisposable, IAsset
         foreach (var item in _jobs)
             using (item as IDisposable) ;
         _jobs.Clear();
-    }
-
-    private class WorldConverter : JsonConverter<World>
-    {
-        private static readonly ArchJsonSerializer _serializer = new();
-        public override World? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-        {
-            return _serializer.Deserialize(reader.GetBytesFromBase64());
-        }
-        public override void Write(Utf8JsonWriter writer, World value, JsonSerializerOptions options)
-        {
-            writer.WriteBase64StringValue(_serializer.Serialize(value));
-        }
     }
 }

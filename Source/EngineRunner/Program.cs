@@ -1,11 +1,12 @@
 ﻿using Delta;
+using Delta.Runtime;
 using System.Diagnostics;
 
 //try
 {
-    using var eng = new Engine(Directory.GetCurrentDirectory());
+    using var eng = new Runtime(new EditorPaths(Directory.GetCurrentDirectory()));
     eng.CreateTestScene();
-    eng.Run();
+    eng.RunOnce();
     Stopwatch sw = new();
 
     int c = 0;
@@ -15,7 +16,7 @@ using System.Diagnostics;
     {
         Thread.Yield();
         sw.Restart();
-        eng.Run();
+        eng.RunOnce();
         sw.Stop();
         ms += sw.Elapsed;
         c++;

@@ -1,5 +1,5 @@
-﻿using Delta;
-using DeltaEditorLib.Project;
+﻿using Delta.Runtime;
+using DeltaEditorLib.Scripting;
 using Microsoft.Extensions.Logging;
 
 namespace DeltaEditor
@@ -13,7 +13,9 @@ namespace DeltaEditor
             foreach (var item in arguments)
                 Console.WriteLine(item);
 
-            if (arguments.Length > 1)
+            bool projectExist = arguments.Length > 1 && Directory.Exists(arguments[1]);
+
+            if (projectExist)
                 projectPath = arguments[1];
             else
                 projectPath = Directory.CreateTempSubdirectory().FullName;
@@ -27,15 +29,19 @@ namespace DeltaEditor
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 })
                 .Services
-                .AddSingleton(new ProjectPath(projectPath))
-                .AddSingleton(new Engine(projectPath))
+                .AddSingleton<IProjectPath>(new EditorPaths(projectPath))
+                .AddSingleton<RuntimeLoader>()
                 .AddSingleton<MainPage>();
-
 #if DEBUG
             builder.Logging.AddDebug();
             System.Diagnostics.Debugger.Launch();
 #endif
-            return builder.Build();
+            var builded = builder.Build();
+
+            if(!projectExist)
+                new ProjectCreator(builded.Services.GetService<RuntimeLoader>()!).FullSetup();
+
+            return builded;
         }
     }
 }

@@ -7,7 +7,7 @@ using System.IO;
 
 namespace Delta.Files;
 
-internal class ModelImporter : IAssetImporter, IDisposable
+internal class ModelImporter : IDisposable
 {
     private static readonly Assimp _assimp = Assimp.GetApi();
     private const PostProcessSteps importMode = PostProcessSteps.Triangulate | PostProcessSteps.GenerateNormals | PostProcessSteps.JoinIdenticalVertices;

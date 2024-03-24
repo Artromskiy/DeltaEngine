@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Delta.Runtime;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -6,10 +7,9 @@ using System.Text.Json;
 
 namespace Delta.Files;
 
-internal class AssetImporter
+internal class AssetImporter : IAssetImporter
 {
-    private readonly string ProjectFolder;
-    private readonly string ResourcesFolder;
+    private readonly IProjectPath _projectPath;
 
     private readonly Dictionary<Guid, string> _assetPaths = [];
     private readonly Dictionary<string, Guid> _pathToGuid = [];
@@ -17,39 +17,43 @@ internal class AssetImporter
     private const string MetaEnding = ".meta";
     private const string MetaSearch = "*.meta";
 
-    private readonly Dictionary<Type, object> _assetCollections = [];
     private readonly RuntimeAssetCollection _runtimeAssetCollection = new();
+    private readonly Dictionary<Type, object> _assetCollections = new()
+    {
+        {typeof(MeshData), new MeshCollection() },
+    };
 
     private static AssetImporter? _instance;
     public static AssetImporter Instance => _instance!;
 
-    private readonly string _currentFolder;
-
-    public AssetImporter(string path)
+    public AssetImporter(IProjectPath projectPath)
     {
+        _projectPath = projectPath;
         _instance = this;
-        ProjectFolder = path;
-        ResourcesFolder = $"{path}{Path.DirectorySeparatorChar}Resources";
-        _currentFolder = ResourcesFolder;
-        Directory.CreateDirectory(ResourcesFolder);
-        HashSet<string> allFiles = new(Directory.GetFiles(ProjectFolder, "*", SearchOption.AllDirectories));
-        foreach (var item in allFiles)
+    }
+
+    public void InitFiles()
+    {
+        foreach (var item in Directory.EnumerateFiles(_projectPath.ResourcesDirectory, MetaSearch, SearchOption.AllDirectories))
         {
-            if (item.EndsWith(MetaEnding))
-            {
-                using Stream fileStream = new FileStream(item, FileMode.Open, FileAccess.Read);
-                var metaData = JsonSerializer.Deserialize<Meta>(fileStream);
-                var assetPath = item[0..^MetaEnding.Length];
-                _assetPaths.Add(metaData.guid, assetPath);
-                _pathToGuid.Add(assetPath, metaData.guid);
-            }
+            using Stream fileStream = new FileStream(item, FileMode.Open, FileAccess.Read);
+
+            var metaData = JsonSerializer.Deserialize<Meta>(fileStream);
+            if (_assetPaths.ContainsKey(metaData.guid))
+                continue;
+
+            var assetPath = item[0..^MetaEnding.Length];
+            if (_pathToGuid.ContainsKey(assetPath))
+                continue;
+
+            _assetPaths.Add(metaData.guid, assetPath);
+            _pathToGuid.Add(assetPath, metaData.guid);
         }
-        _assetCollections.Add(typeof(MeshData), new MeshCollection());
     }
 
     public GuidAsset<T> CreateAsset<T>(string name, T asset) where T : class, IAsset
     {
-        string path = GetNextAvailableFilename(Path.Combine(_currentFolder, name));
+        string path = GetNextAvailableFilename(Path.Combine(_projectPath.ResourcesDirectory, name));
         if (_pathToGuid.ContainsKey(path))
             return new GuidAsset<T>();
 
@@ -57,12 +61,8 @@ internal class AssetImporter
         var meta = new Meta(guid);
 
         Serialization.Serialize(path, asset);
-        //using FileStream fileStream = File.Create(path);
-        //JsonSerializer.Serialize<T>(fileStream, asset);
 
         Serialization.Serialize($"{path}{MetaEnding}", meta);
-        //using FileStream metaStream = File.Create($"{path}{MetaEnding}");
-        //JsonSerializer.Serialize(metaStream, meta);
 
         _assetPaths.Add(guid, path);
         _pathToGuid.Add(path, guid);
@@ -100,10 +100,16 @@ internal class AssetImporter
         var directory = Path.GetDirectoryName(filenameSpan);
         var plainName = Path.GetFileNameWithoutExtension(filenameSpan);
         var extension = Path.GetExtension(filenameSpan);
+
         StringBuilder sb = new();
         do
-            alternateFilename = sb.Clear().Append(directory).Append(Path.DirectorySeparatorChar).Append(plainName).Append(fileNameIndex++).Append(extension).ToString();
-        while (File.Exists(alternateFilename));
+            sb.Clear().
+            Append(directory).
+            Append(Path.DirectorySeparatorChar).
+            Append(plainName).
+            Append(fileNameIndex++).
+            Append(extension);
+        while (File.Exists(alternateFilename = sb.ToString()));
 
         return alternateFilename;
     }

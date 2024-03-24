@@ -31,6 +31,7 @@ internal static class DeltaMesh
 
 
     public static readonly GuidAsset<MeshData> Mesh;
+    public static MeshData MeshData => CreateMesh();
 
     static DeltaMesh()
     {

@@ -1,5 +1,4 @@
-﻿using Delta;
-using Delta.Scripting;
+﻿using Delta.Runtime;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -9,24 +8,27 @@ using System.Reflection;
 
 namespace DeltaEditorLib.Scripting
 {
-    public static class CodeLoader
+    internal class CompileHelper(IProjectPath projectPath)
     {
+        private const string DllName = "Scripts.dll";
+        private readonly IProjectPath _projectPath = projectPath;
+        private readonly string dllPath = Path.Combine(projectPath.RootDirectory, DllName);
+        private string RandomDllName => Path.Combine(_projectPath.RootDirectory, Path.GetRandomFileName() + DllName);
+
+
         private static readonly CSharpParseOptions _parseOptions = new(LanguageVersion.CSharp12);
         private static readonly CSharpCompilationOptions _compilationOptions = new
         (
             OutputKind.DynamicallyLinkedLibrary,
             optimizationLevel: OptimizationLevel.Release
         );
-        private const string DllName = "Scripts.dll";
 
-        public static void TryCompile(string sourceFilesLocation, string destinationDllLocation)
+
+        public string TryCompile()
         {
-            TestCompileFiles.CreateTestFile(sourceFilesLocation);
+            var sourceFiles = Directory.EnumerateFiles(_projectPath.RootDirectory, "*.cs", SearchOption.AllDirectories);
 
-            DirectoryInfo d = new(sourceFilesLocation);
-            string[] sourceFiles = Directory.GetFiles(sourceFilesLocation, "*.cs", SearchOption.AllDirectories);
-
-            List<SyntaxTree> trees = new(sourceFiles.Length);
+            List<SyntaxTree> trees = [];
             foreach (string file in sourceFiles)
             {
                 using var stream = File.OpenRead(file);
@@ -35,7 +37,7 @@ namespace DeltaEditorLib.Scripting
             }
 
             MetadataReference mscorlib = MetadataReference.CreateFromFile(typeof(object).Assembly.Location);
-            MetadataReference engineLib = MetadataReference.CreateFromFile(typeof(Engine).Assembly.Location);
+            MetadataReference engineLib = MetadataReference.CreateFromFile(typeof(IRuntime).Assembly.Location);
 
             string assemblyPath = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
 
@@ -55,30 +57,15 @@ namespace DeltaEditorLib.Scripting
             Where(File.Exists).
             Select(p => MetadataReference.CreateFromFile(p)));
 
-            var compilation = CSharpCompilation.Create(DllName,
-                   trees,
-                   references,
-                   _compilationOptions);
+            var compilation = CSharpCompilation.Create(DllName, trees, references, _compilationOptions);
 
-            var dllPath = Path.Combine(destinationDllLocation, DllName);
-
+            var dllPath = RandomDllName;
             var result = compilation.Emit(dllPath);
 
             foreach (var item in result.Diagnostics)
                 Debug.WriteLine(item.GetMessage());
 
-            var scriptsDllReference = MetadataReference.CreateFromFile(dllPath);
-
-            var assembly = Assembly.LoadFrom(dllPath);
-            var types = GetComponentTypes(assembly);
-
-            foreach (var item in types)
-                Debug.WriteLine(item.FullName);
+            return dllPath;
         }
-
-        private static List<Type> GetComponentTypes(Assembly assembly) => assembly.
-            GetTypes().
-            Where(type => type.GetCustomAttribute<ComponentAttribute>() != null).
-            ToList();
     }
 }

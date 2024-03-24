@@ -1,49 +1,61 @@
-﻿using Delta;
-using DeltaEditorLib.Project;
+﻿using Delta.Runtime;
 using DeltaEditorLib.Scripting;
+using System.Diagnostics;
 
 namespace DeltaEditor
 {
     public partial class MainPage : ContentPage
     {
-        private readonly Engine _engine;
-        private readonly ProjectPath _projectData;
+        private readonly IProjectPath _projectData;
+        private readonly RuntimeLoader _runtimeLoader;
+        private IRuntime Runtime => _runtimeLoader.Runtime;
 
-        public MainPage(Engine engine, ProjectPath projectData)
+        public MainPage(RuntimeLoader runtimeLoader, IProjectPath projectData)
         {
-            _engine = engine;
+            _runtimeLoader = runtimeLoader;
             _projectData = projectData;
             InitializeComponent();
-        }
-
-        private void CreateFile(object sender, EventArgs e)
-        {
-            _engine.CreateFile();
+            CompPicker.ItemsSource = runtimeLoader.GetComponentsNames();
         }
 
         private void CreateScene(object sender, EventArgs e)
         {
-            _engine.CreateScene();
+            Runtime.CreateTestScene();
         }
 
-        private void OnClickRun(object sender, EventArgs e)
+        private void RunScene(object sender, ToggledEventArgs e)
         {
-            _engine.GetCurrentScene().Run();
+            Runtime.Running = e.Value;
         }
 
-        private void AddEntity(object sender, EventArgs e)
+        private void SaveScene(object sender, EventArgs e)
         {
-            _engine.GetCurrentScene().AddEntity();
-        }
-
-        private void RemoveEntity(object sender, EventArgs e)
-        {
-            _engine.GetCurrentScene().RemoveEntity();
+            Runtime.SaveScene("scene");
         }
 
         private void TryCompile(object sender, EventArgs e)
         {
-            CodeLoader.TryCompile(_projectData.path, _projectData.path);
+            _runtimeLoader.ReloadRuntime();
+            CompPicker.ItemsSource = _runtimeLoader.GetComponentsNames();
+        }
+
+        private void OpenProjectFolder(object sender, EventArgs e)
+        {
+            if (Directory.Exists(_projectData.RootDirectory))
+                Process.Start("explorer.exe", _projectData.RootDirectory);
+        }
+
+        void OnPickerComponentIndexChanged(object sender, EventArgs e)
+        {
+            var picker = (Picker)sender;
+            int selectedIndex = picker.SelectedIndex;
+
+            /*
+            if (selectedIndex != -1)
+            {
+                monkeyNameLabel.Text = (string)picker.ItemsSource[selectedIndex];
+            }
+            */
         }
     }
 }

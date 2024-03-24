@@ -1,6 +1,10 @@
-﻿using System.IO;
+﻿using Arch.Core;
+using Arch.Persistence;
+using System;
+using System.IO;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 
 namespace Delta.Files;
@@ -19,12 +23,13 @@ public static class Serialization
             IgnoreReadOnlyProperties = true,
             AllowTrailingCommas = false,
             WriteIndented = true,
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
             TypeInfoResolver = new DefaultJsonTypeInfoResolver
             {
                 Modifiers = { AddPrivateFieldsModifier }
-            }
+            },
         };
+        _options.Converters.Add(new WorldConverter());
     }
 
     public static void Serialize<T>(Stream utf8Stream, T value)
@@ -57,6 +62,19 @@ public static class Serialization
             jsonPropertyInfo.Set = field.SetValue;
 
             jsonTypeInfo.Properties.Add(jsonPropertyInfo);
+        }
+    }
+
+    private class WorldConverter : JsonConverter<World>
+    {
+        private readonly ArchJsonSerializer _serializer = new();
+        public override World? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            return _serializer.Deserialize(reader.GetBytesFromBase64());
+        }
+        public override void Write(Utf8JsonWriter writer, World value, JsonSerializerOptions options)
+        {
+            writer.WriteBase64StringValue(_serializer.Serialize(value));
         }
     }
 }

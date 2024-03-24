@@ -25,41 +25,51 @@
                 SemanticProperties.Description="Welcome to dot net Multi platform App U I" />
 
             <Button
-                x:Name="AddEntityButton"
-                Text="Add entity" 
-                Clicked="AddEntity"
-                HorizontalOptions="Fill" />
-            
-            <Button
-                x:Name="RemoveEntityButton"
-                Text="Remove entity" 
-                Clicked="RemoveEntity"
-                HorizontalOptions="Fill" />
-
-            <Button
-                x:Name="RunSceneButton"
-                Text="Run scene" 
-                Clicked="OnClickRun"
-                HorizontalOptions="Fill" />
-
-            <Button
                 x:Name="CreateSceneButton"
                 Text="Create new scene" 
                 Clicked="CreateScene"
                 HorizontalOptions="Fill" />
 
+            <Switch
+                x:Name="RunSceneSwitch"
+                OnColor="Green"
+                IsToggled="False"
+                Toggled="RunScene"
+                ThumbColor="DarkGrey" />
+
             <Button
-                x:Name="CreateFileButton"
-                Text="Create new file" 
-                Clicked="CreateFile"
+                x:Name="SaveSceneButton"
+                Text="Save scene" 
+                Clicked="SaveScene"
                 HorizontalOptions="Fill" />
-            
+
             <Button
                 x:Name="CompileButton"
                 Text="Try compile project" 
                 Clicked="TryCompile"
                 HorizontalOptions="Fill" />
             
+            <Button
+                x:Name="OpenProjectButton"
+                Text="Open project folder" 
+                Clicked="OpenProjectFolder"
+                HorizontalOptions="Fill" />
+
+            <Picker x:Name="CompPicker"
+                Title="Select a monkey">
+                <Picker.ItemsSource>
+                    <x:Array Type="{x:Type x:String}">
+                        <x:String>Baboon</x:String>
+                        <x:String>Capuchin Monkey</x:String>
+                        <x:String>Blue Monkey</x:String>
+                        <x:String>Squirrel Monkey</x:String>
+                        <x:String>Golden Lion Tamarin</x:String>
+                        <x:String>Howler Monkey</x:String>
+                        <x:String>Japanese Macaque</x:String>
+                    </x:Array>
+                </Picker.ItemsSource>
+            </Picker>
+
         </VerticalStackLayout>
     </ScrollView>
 

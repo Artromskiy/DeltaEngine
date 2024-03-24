@@ -1,23 +1,20 @@
-﻿using Delta.Scenes;
+﻿using Delta.Runtime;
+using Delta.Scenes;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace Delta.Files;
+
 internal class SceneCollection
 {
-    private readonly GuidAsset<Scene>[] _scenes;
+    private readonly List<GuidAsset<Scene>> _scenes = [];
+    public ReadOnlySpan<GuidAsset<Scene>> GetScenes() => CollectionsMarshal.AsSpan(_scenes);
 
-    public ReadOnlySpan<GuidAsset<Scene>> GetScenes() => _scenes;
-
-    const string Directory = "SceneCollection";
-
-    public SceneCollection(GuidAsset<Scene>[] scenes)
+    public SceneCollection(IProjectPath projectPath)
     {
-        _scenes = scenes;
-    }
-
-    public SceneCollection(string path)
-    {
-        _scenes = Serialization.Deserialize<GuidAsset<Scene>[]>(Path.Combine(path, Directory));
+        if (File.Exists(projectPath.ScenesFile))
+            _scenes = Serialization.Deserialize<List<GuidAsset<Scene>>>(projectPath.ScenesFile);
     }
 }

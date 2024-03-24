@@ -22,6 +22,7 @@ internal class TriangleMesh
     ];
 
     public static readonly GuidAsset<MeshData> Mesh;
+    public static MeshData MeshData => CreateMesh();
 
     static TriangleMesh()
     {
