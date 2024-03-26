@@ -7,13 +7,11 @@ namespace Delta.Runtime;
 
 public class Runtime : IRuntime, IDisposable
 {
-    public IProjectPath ProjectPath { get; }
-    public IAssetImporter AssetImporter { get; }
-    private readonly SceneCollection? _sceneCollection;
+    public IRuntimeContext Context { get; }
+
     private readonly JobScheduler.JobScheduler _jobScheduler = new("WorkerThread");
 
     private bool _disposed = false;
-
     private bool _firstRun = false;
 
     private Scene? _scene;
@@ -31,11 +29,12 @@ public class Runtime : IRuntime, IDisposable
 
     public Runtime(IProjectPath projectPath)
     {
-        ProjectPath = projectPath;
-        AssetImporter = new AssetImporter(ProjectPath);
-        _sceneCollection = new(ProjectPath);
+        Context = new RuntimeContext(projectPath, new AssetImporter(projectPath));
+
         _runtimeThread = new Thread(Loop);
         _runtimeThread.Start();
+
+        IRuntimeContext.Current = Context;
     }
 
     public void CreateScene()
@@ -55,7 +54,7 @@ public class Runtime : IRuntime, IDisposable
     public void SaveScene(string name)
     {
         using var _ = _pauseHandle.Pause();
-        AssetImporter.CreateAsset<Scene>(name, _scene);
+        IRuntimeContext.Current.AssetImporter.CreateAsset<Scene>(name, _scene);
     }
 
     public void RunOnce()

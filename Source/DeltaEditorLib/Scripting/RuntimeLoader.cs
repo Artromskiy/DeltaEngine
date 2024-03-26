@@ -8,13 +8,13 @@ namespace DeltaEditorLib.Scripting
 {
     public class RuntimeLoader
     {
-        private readonly CompileHelper _compileHelper;
         private readonly IProjectPath _projectPath;
+
         private AssemblyLoadContext _alc;
         private AssemblyLoadContext.ContextualReflectionScope _scope;
+        private readonly CompileHelper _compileHelper;
 
         private readonly HashSet<WeakReference<AssemblyLoadContext>> _oldAlcs = [];
-
 
         public IRuntime Runtime { get; private set; }
 
@@ -49,8 +49,10 @@ namespace DeltaEditorLib.Scripting
         public void ReloadRuntime()
         {
             Runtime.Running = false;
-            
+
             _alc = Recompile();
+
+            Runtime.Dispose();
             Runtime = new Runtime(_projectPath);
             return;
         }

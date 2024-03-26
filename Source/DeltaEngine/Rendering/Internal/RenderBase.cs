@@ -81,18 +81,13 @@ internal sealed class RenderBase : IDisposable
 
     public unsafe void Dispose()
     {
+        vk.DestroyRenderPass(deviceQ.device, renderPass, null);
         vk.DestroyPipelineLayout(deviceQ.device, pipelineLayout, null);
         descriptorSetLayouts.Dispose();
-
-        foreach (var item in descriptorSetLayouts.Layouts)
-            vk.DestroyDescriptorSetLayout(deviceQ.device, item, null);
-
-        vk.DestroyRenderPass(deviceQ.device, renderPass, null);
-
-        vk.DestroyDevice(deviceQ.device, null);
+        vk.DestroyDescriptorPool(deviceQ.device, descriptorPool,null);
+        deviceQ.Dispose();
         khrsf.DestroySurface(instance, surface, null);
         vk.DestroyInstance(instance, null);
-        vk.Dispose();
     }
 
     public void UpdateSupportDetails()

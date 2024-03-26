@@ -1,4 +1,5 @@
 ﻿using Delta.Rendering;
+using Delta.Runtime;
 using System.IO;
 
 namespace Delta.Files.Defaults;
@@ -12,8 +13,8 @@ internal static class VCShader
 
     static VCShader()
     {
-        VC = AssetImporter.Instance.CreateRuntimeAsset(CreateShader());
-        VCMat = AssetImporter.Instance.CreateRuntimeAsset(new MaterialData(VC));
+        VC = IRuntimeContext.Current.AssetImporter.CreateRuntimeAsset(CreateShader());
+        VCMat = IRuntimeContext.Current.AssetImporter.CreateRuntimeAsset(new MaterialData(VC));
     }
 
     private static ShaderData CreateShader()

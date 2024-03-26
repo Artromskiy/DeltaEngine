@@ -1,4 +1,5 @@
 ﻿using Delta.Rendering;
+using Delta.Runtime;
 using Silk.NET.Assimp;
 using System;
 using System.Collections.Generic;
@@ -21,7 +22,7 @@ internal class ModelImporter : IDisposable
         List<(MeshData meshData, string name)> meshDatas = [];
         ProcessScene(scene->MRootNode, scene, meshDatas);
         foreach (var (meshData, name) in meshDatas)
-            AssetImporter.Instance.CreateAsset($"{fileName}.{name}.Mesh", meshData);
+            IRuntimeContext.Current.AssetImporter.CreateAsset($"{fileName}.{name}.Mesh", meshData);
     }
 
     private unsafe void ProcessScene(Node* node, Scene* scene, List<(MeshData meshData, string name)> meshDatas)
@@ -32,7 +33,7 @@ internal class ModelImporter : IDisposable
             ProcessScene(node->MChildren[i], scene, meshDatas);
     }
 
-    private unsafe (MeshData data, string name) ProcessMesh(Silk.NET.Assimp.Mesh* mesh, Scene* scene)
+    private unsafe (MeshData data, string name) ProcessMesh(Mesh* mesh, Scene* scene)
     {
         uint indicesCount = 0;
         for (uint i = 0; i < mesh->MNumFaces; i++)

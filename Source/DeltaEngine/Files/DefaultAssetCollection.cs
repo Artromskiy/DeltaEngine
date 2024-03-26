@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Delta.Runtime;
+using System;
 using System.Collections.Generic;
 
 namespace Delta.Files;
@@ -17,7 +18,7 @@ internal class DefaultAssetCollection<T> : IAssetCollection<T> where T : class, 
 
     private static T LoadAsset(Guid guid)
     {
-        var path = AssetImporter.Instance.GetPath(guid);
+        var path = IRuntimeContext.Current.AssetImporter.GetPath(guid);
         return Serialization.Deserialize<T>(path);
     }
 }

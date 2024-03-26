@@ -12,7 +12,7 @@ namespace Delta.Rendering;
 
 internal abstract unsafe partial class BaseRenderer : IDisposable, IJob
 {
-    private readonly Api _api;
+    private static readonly Api _api = new();
     private readonly Window* _window;
     internal readonly RenderBase _rendererData;
 
@@ -39,7 +39,6 @@ internal abstract unsafe partial class BaseRenderer : IDisposable, IJob
     public unsafe BaseRenderer(string appName)
     {
         _appName = appName;
-        _api = new();
         _window = RenderHelper.CreateWindow(_api.sdl, _appName);
         _rendererData = new RenderBase(_api, _window, deviceExtensions, _appName, targetFormat);
         swapChain = new SwapChain(_api, _rendererData, GetSdlWindowSize(), Buffering, _rendererData.format);
@@ -107,14 +106,17 @@ internal abstract unsafe partial class BaseRenderer : IDisposable, IJob
 
     public unsafe void Dispose()
     {
+        _ = _rendererData.vk.DeviceWaitIdle(_rendererData.deviceQ.device);
+
         _frames.Dispose();
+        renderAssets.Dispose();
         _rendererData.vk.DestroyPipeline(_rendererData.deviceQ.device, graphicsPipeline, null);
 
         swapChain.Dispose();
         _rendererData.Dispose();
 
         _api.sdl.DestroyWindow(_window);
-        _api.sdl.Dispose();
+        //_api.sdl.Dispose();
     }
 
 

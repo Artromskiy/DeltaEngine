@@ -4,8 +4,10 @@ using Silk.NET.Vulkan;
 using System;
 
 namespace Delta.Rendering;
-internal readonly struct DeviceQueues
+internal readonly struct DeviceQueues: IDisposable
 {
+    private readonly Vk _vk;
+
     public readonly Device device;
 
     public readonly Queue graphicsQueue;
@@ -22,6 +24,7 @@ internal readonly struct DeviceQueues
 
     public unsafe DeviceQueues(Vk vk, PhysicalDevice gpu, QueueFamilyIndiciesDetails indices, string[] deviceExtensions)
     {
+        _vk = vk;
         queueIndicesDetails = indices;
         Span<(uint queueFamily, uint count)> uniqueFamilyIndices = stackalloc (uint, uint)[4];
         uniqueFamilyIndices = uniqueFamilyIndices[..indices.GetUniqueFamilies(uniqueFamilyIndices)];
@@ -73,5 +76,14 @@ internal readonly struct DeviceQueues
         transferCmdPool = cmdPools[uniqueFamilyIndices.FindIndex(x => x.queueFamily == indices.transferFamily)];
 
         SilkMarshal.Free((nint)createInfo.PpEnabledExtensionNames);
+    }
+
+    public unsafe void Dispose()
+    {
+        _vk.DestroyCommandPool(device, graphicsCmdPool, null);
+        _vk.DestroyCommandPool(device, presentCmdPool, null);
+        _vk.DestroyCommandPool(device, computeCmdPool, null);
+        _vk.DestroyCommandPool(device, transferCmdPool, null);
+        _vk.DestroyDevice(device, null);
     }
 }

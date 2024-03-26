@@ -10,6 +10,7 @@ namespace DeltaEditorLib.Scripting
 {
     internal class CompileHelper(IProjectPath projectPath)
     {
+        private const string CsSearch = "*.cs";
         private const string DllName = "Scripts.dll";
         private readonly IProjectPath _projectPath = projectPath;
         private readonly string dllPath = Path.Combine(projectPath.RootDirectory, DllName);
@@ -26,15 +27,12 @@ namespace DeltaEditorLib.Scripting
 
         public string TryCompile()
         {
-            var sourceFiles = Directory.EnumerateFiles(_projectPath.RootDirectory, "*.cs", SearchOption.AllDirectories);
-
-            List<SyntaxTree> trees = [];
-            foreach (string file in sourceFiles)
+            var sourceFiles = Directory.EnumerateFiles(_projectPath.RootDirectory, CsSearch, SearchOption.AllDirectories);
+            var trees = sourceFiles.Select(x =>
             {
-                using var stream = File.OpenRead(file);
-                SyntaxTree tree = CSharpSyntaxTree.ParseText(SourceText.From(stream), _parseOptions);
-                trees.Add(tree);
-            }
+                using var stream = File.OpenRead(x);
+                return CSharpSyntaxTree.ParseText(SourceText.From(stream), _parseOptions);
+            });
 
             MetadataReference mscorlib = MetadataReference.CreateFromFile(typeof(object).Assembly.Location);
             MetadataReference engineLib = MetadataReference.CreateFromFile(typeof(IRuntime).Assembly.Location);
@@ -51,9 +49,10 @@ namespace DeltaEditorLib.Scripting
             references.AddRange(trees.
                 Select(tree => tree.GetRoot().ChildNodes().
                 OfType<UsingDirectiveSyntax>().
-                Where(x => x.Name != null)).
+                Where(x => x.Name != null).
+                Select(x=>x.Name)).
             SelectMany(s => s).
-            Select(u => Path.Combine(assemblyPath, u.Name!.ToString() + ".dll")).
+            Select(u => Path.Combine(assemblyPath, u!.ToString() + ".dll")).
             Where(File.Exists).
             Select(p => MetadataReference.CreateFromFile(p)));
 

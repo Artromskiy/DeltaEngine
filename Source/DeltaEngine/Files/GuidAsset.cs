@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Delta.Runtime;
+using System;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 
@@ -10,14 +11,13 @@ public readonly struct GuidAsset<T> : IEquatable<GuidAsset<T>>, IComparable<Guid
 {
     public readonly Guid guid;
 
-    public readonly T GetAsset() => AssetImporter.Instance.GetAsset(this);
-
     [JsonConstructor]
-    internal GuidAsset(Guid guid)
-    {
-        this.guid = guid;
-    }
+    internal GuidAsset(Guid guid)=> this.guid = guid;
 
+    public readonly T GetAsset() => IRuntimeContext.Current.AssetImporter.GetAsset(this);
+
+    [MethodImpl(Inl)]
+    public static implicit operator T(GuidAsset<T> guidAsset) => IRuntimeContext.Current.AssetImporter.GetAsset(guidAsset);
     [MethodImpl(Inl)]
     public static implicit operator Guid(GuidAsset<T> guidAsset) => guidAsset.guid;
 

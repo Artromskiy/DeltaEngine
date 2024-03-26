@@ -11,6 +11,7 @@ using System.Diagnostics;
 
     int c = 0;
     TimeSpan ms = TimeSpan.Zero;
+    TimeSpan timer = TimeSpan.Zero;
 
     while (true)
     {
@@ -19,6 +20,7 @@ using System.Diagnostics;
         eng.RunOnce();
         sw.Stop();
         ms += sw.Elapsed;
+        timer += sw.Elapsed;
         c++;
         if (c == 100)
         {
@@ -31,6 +33,11 @@ using System.Diagnostics;
             eng.GetCurrentScene().ClearMetrics();
             ms = TimeSpan.Zero;
             c = 0;
+        }
+        if(timer.TotalSeconds >= 20)
+        {
+            timer = TimeSpan.Zero;
+            eng.CreateTestScene();
         }
     }
 }

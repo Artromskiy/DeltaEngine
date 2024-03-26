@@ -8,17 +8,9 @@ namespace DeltaEditor
     {
         public static MauiApp CreateMauiApp()
         {
-            string projectPath;
-            var arguments = Environment.GetCommandLineArgs();
-            foreach (var item in arguments)
-                Console.WriteLine(item);
-
+            string[] arguments = Environment.GetCommandLineArgs();
             bool projectExist = arguments.Length > 1 && Directory.Exists(arguments[1]);
-
-            if (projectExist)
-                projectPath = arguments[1];
-            else
-                projectPath = Directory.CreateTempSubdirectory().FullName;
+            string projectPath = projectExist? arguments[1]: Directory.CreateTempSubdirectory().FullName;
 
             var builder = MauiApp.CreateBuilder();
             builder
@@ -36,12 +28,12 @@ namespace DeltaEditor
             builder.Logging.AddDebug();
             System.Diagnostics.Debugger.Launch();
 #endif
-            var builded = builder.Build();
+            MauiApp app = builder.Build();
 
             if(!projectExist)
-                new ProjectCreator(builded.Services.GetService<RuntimeLoader>()!).FullSetup();
+                new ProjectCreator(app.Services.GetService<RuntimeLoader>()!).FullSetup();
 
-            return builded;
+            return app;
         }
     }
 }

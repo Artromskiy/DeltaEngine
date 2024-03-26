@@ -1,4 +1,5 @@
 ﻿using Delta.Rendering;
+using Delta.Runtime;
 using System;
 using System.Collections.Generic;
 
@@ -28,10 +29,7 @@ internal class MeshCollection : IAssetCollection<MeshData>
 
     private static MeshData LoadMesh(Guid guid)
     {
-        var path = AssetImporter.Instance.GetPath(guid);
-        return Serialization.Deserialize<MeshData>(path);
-        //using Stream s = new FileStream(path, FileMode.Open, FileAccess.Read);
-        //return JsonSerializer.Deserialize<MeshData>(s);
+        return Serialization.Deserialize<MeshData>(IRuntimeContext.Current.AssetImporter.GetPath(guid));
     }
 
     public unsafe byte[] GetMeshVariant(VertexAttribute vertexMask, Guid guid)

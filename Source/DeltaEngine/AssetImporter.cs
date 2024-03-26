@@ -23,13 +23,9 @@ internal class AssetImporter : IAssetImporter
         {typeof(MeshData), new MeshCollection() },
     };
 
-    private static AssetImporter? _instance;
-    public static AssetImporter Instance => _instance!;
-
     public AssetImporter(IProjectPath projectPath)
     {
         _projectPath = projectPath;
-        _instance = this;
     }
 
     public void InitFiles()

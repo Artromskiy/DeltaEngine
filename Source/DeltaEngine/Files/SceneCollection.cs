@@ -14,7 +14,7 @@ internal class SceneCollection
 
     public SceneCollection(IProjectPath projectPath)
     {
-        if (File.Exists(projectPath.ScenesFile))
-            _scenes = Serialization.Deserialize<List<GuidAsset<Scene>>>(projectPath.ScenesFile);
+        //if (File.Exists(projectPath.ScenesFile))
+        //    _scenes = Serialization.Deserialize<List<GuidAsset<Scene>>>(projectPath.ScenesFile);
     }
 }

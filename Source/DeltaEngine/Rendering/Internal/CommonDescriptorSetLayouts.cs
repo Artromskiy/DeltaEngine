@@ -4,6 +4,7 @@ using System;
 namespace Delta.Rendering.Internal;
 internal class CommonDescriptorSetLayouts : IDisposable
 {
+    private readonly RenderBase _data;
     public DescriptorSetLayout Scene { get; private set; }
     public DescriptorSetLayout Material { get; private set; }
     public DescriptorSetLayout Instance { get; private set; }
@@ -17,6 +18,7 @@ internal class CommonDescriptorSetLayouts : IDisposable
 
     public unsafe CommonDescriptorSetLayouts(RenderBase data)
     {
+        _data = data;
         SceneBindings =
         [
             CameraBindings
@@ -59,5 +61,9 @@ internal class CommonDescriptorSetLayouts : IDisposable
 
     private static readonly unsafe DescriptorSetLayoutBinding CameraBindings = new(0, DescriptorType.UniformBuffer, 1, StageFlags);
 
-    public void Dispose() => throw new NotImplementedException();
+    public unsafe void Dispose()
+    {
+        foreach (var item in _layouts)
+            _data.vk.DestroyDescriptorSetLayout(_data.deviceQ.device, item, null);
+    }
 }

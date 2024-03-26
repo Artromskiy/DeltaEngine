@@ -1,4 +1,5 @@
 ﻿using Delta.Rendering;
+using Delta.Runtime;
 using System;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -31,18 +32,20 @@ internal static class DeltaMesh
 
 
     public static readonly GuidAsset<MeshData> Mesh;
-    public static MeshData MeshData => CreateMesh();
 
     static DeltaMesh()
     {
-        Mesh = AssetImporter.Instance.CreateRuntimeAsset(CreateMesh());
+        Mesh = IRuntimeContext.Current.AssetImporter.CreateRuntimeAsset(MeshData);
     }
 
-    private static MeshData CreateMesh()
+    public static MeshData MeshData
     {
-        byte[][] meshData = new byte[16][];
-        meshData[VertexAttribute.Pos2.Location()] = MemoryMarshal.AsBytes(positions.AsSpan()).ToArray();
-        meshData[VertexAttribute.Col.Location()] = MemoryMarshal.AsBytes(colors.AsSpan()).ToArray();
-        return new(positions.Length, deltaLetterIndices, meshData);
+        get
+        {
+            byte[][] meshData = new byte[16][];
+            meshData[VertexAttribute.Pos2.Location()] = MemoryMarshal.AsBytes(positions.AsSpan()).ToArray();
+            meshData[VertexAttribute.Col.Location()] = MemoryMarshal.AsBytes(colors.AsSpan()).ToArray();
+            return new(positions.Length, deltaLetterIndices, meshData);
+        }
     }
 }

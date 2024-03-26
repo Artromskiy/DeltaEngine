@@ -12,8 +12,8 @@ namespace DeltaEditorLib.Scripting
         public ProjectCreator(RuntimeLoader loader)
         {
             _runtime = loader.Runtime;
-            _projectPath = _runtime.ProjectPath;
-            _assetImporter = _runtime.AssetImporter;
+            _projectPath = _runtime.Context.ProjectPath;
+            _assetImporter = _runtime.Context.AssetImporter;
             FullSetup();
         }
 
