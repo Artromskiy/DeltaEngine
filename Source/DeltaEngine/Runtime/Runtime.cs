@@ -49,6 +49,7 @@ public class Runtime : IRuntime, IDisposable
         using var _ = _pauseHandle.Pause();
         _scene?.Dispose();
         _scene = TestScene.Scene;
+        RunOnce();
     }
 
     public void SaveScene(string name)
@@ -66,7 +67,10 @@ public class Runtime : IRuntime, IDisposable
     private void InternalRun()
     {
         if (_scene == null)
+        {
+            Console.WriteLine("Fucked up");
             throw new InvalidOperationException("No loaded scenes to run");
+        }
 
         _scene.Run();
         if (_firstRun)
@@ -88,7 +92,7 @@ public class Runtime : IRuntime, IDisposable
                 return;
 
             InternalRun();
-            Thread.Yield();
+            //Thread.Yield();
             _pauseHandle.loopEnded.Set();
         }
     }
