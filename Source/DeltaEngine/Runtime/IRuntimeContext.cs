@@ -4,8 +4,8 @@ namespace Delta.Runtime;
 
 public interface IRuntimeContext
 {
-    public IAssetImporter AssetImporter { get; init; }
-    public IProjectPath ProjectPath { get; init; }
+    public IAssetImporter AssetImporter { get; }
+    public IProjectPath ProjectPath { get; }
 
     private static IRuntimeContext? _current;
     internal static IRuntimeContext Current

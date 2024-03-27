@@ -3,7 +3,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="DeltaEditor.MainPage">
 
-    <ScrollView>
+    <HorizontalStackLayout
+        Padding="30"
+        Spacing="25">
+        
+        <ScrollView>
         <VerticalStackLayout
             Padding="30,0"
             Spacing="25">
@@ -84,6 +88,12 @@
             </Picker>
 
         </VerticalStackLayout>
-    </ScrollView>
+        </ScrollView>
+        <VerticalStackLayout
+            x:Name="InspectorView"
+            Padding="30"
+            Spacing="25">
+        </VerticalStackLayout>
+    </HorizontalStackLayout>
 
 </ContentPage>

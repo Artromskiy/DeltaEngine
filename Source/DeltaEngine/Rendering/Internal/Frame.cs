@@ -187,16 +187,16 @@ internal class Frame : IDisposable
             var itemShader = rend._shader;
             var itemMesh = rend.Mesh;
 
-            if (itemShader != currentShader) // shader switch
+            if (itemShader.guid != currentShader) // shader switch
             {
                 (var pipeline, attributeMask) = _renderAssets.GetPipelineAndAttributes(itemShader);
                 _rendererData.vk.CmdBindPipeline(commandBuffer, PipelineBindPoint.Graphics, pipeline);
-                currentShader = itemShader;
+                currentShader = itemShader.guid;
             }
 
             // material switch?
 
-            if (itemMesh != currentMesh) // mesh switch
+            if (itemMesh.guid != currentMesh) // mesh switch
             {
                 (var vertices, var indices, indicesCount) = _renderAssets.GetVertexIndexBuffersAndCount(itemMesh, attributeMask);
 

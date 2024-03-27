@@ -1,4 +1,6 @@
-﻿using Delta.Runtime;
+﻿using Arch.Core;
+using Arch.Core.Extensions;
+using Delta.Runtime;
 using Delta.Scripting;
 using Microsoft.CodeAnalysis;
 using System.Reflection;
@@ -91,6 +93,14 @@ namespace DeltaEditorLib.Scripting
             return assembly.GetTypes().
                 Where(type => type.GetCustomAttribute<ComponentAttribute>() != null).
                 Select(x => x.Name);
+        }
+
+        private void ConvertEntityToJson()
+        {
+            Entity entity = Entity.Null;
+            var components = entity.GetComponentTypes();
+            //jsonchema
+            //components[0].;
         }
 
         private static List<Type> GetComponentTypes(Assembly assembly) => assembly.

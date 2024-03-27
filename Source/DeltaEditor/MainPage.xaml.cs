@@ -49,6 +49,12 @@ namespace DeltaEditor
             CompPicker.ItemsSource = _runtimeLoader.GetComponentsNames();
         }
 
+        private void UpdateData()
+        {
+            InspectorView.Children.Clear();
+            //_runtimeLoader.Runtime.
+        }
+
         private void OpenProjectFolder(object sender, EventArgs e)
         {
             if (Directory.Exists(_projectData.RootDirectory))

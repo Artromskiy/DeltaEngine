@@ -1,5 +1,4 @@
-﻿using Delta.Files;
-using Delta.Scenes;
+﻿using Delta.Scenes;
 using System;
 using System.Threading;
 
@@ -29,7 +28,7 @@ public class Runtime : IRuntime, IDisposable
 
     public Runtime(IProjectPath projectPath)
     {
-        Context = new RuntimeContext(projectPath, new AssetImporter(projectPath));
+        Context = new DefaultRuntimeContext(projectPath, new AssetImporter(projectPath));
 
         _runtimeThread = new Thread(Loop);
         _runtimeThread.Start();
