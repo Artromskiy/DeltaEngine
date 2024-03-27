@@ -2,14 +2,11 @@
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
 using System;
-using System.Collections.Immutable;
 
 namespace Delta.Rendering.Internal;
 
 internal readonly struct QueueFamilyIndiciesDetails
 {
-    public readonly ImmutableArray<QueueFamilyProperties> queueFamilyProperties;
-
     public readonly uint graphicsFamily;
     public readonly uint presentFamily;
     public readonly uint computeFamily;
@@ -28,43 +25,34 @@ internal readonly struct QueueFamilyIndiciesDetails
         vk.GetPhysicalDeviceQueueFamilyProperties(gpu, &queueFamilityCount, null);
         Span<QueueFamilyProperties> queueFamilies = stackalloc QueueFamilyProperties[(int)queueFamilityCount];
         vk.GetPhysicalDeviceQueueFamilyProperties(gpu, &queueFamilityCount, queueFamilies);
-        queueFamilyProperties = ImmutableArray.Create(queueFamilies);
 
-        int graphicsIndex, presentIndex;
-        graphicsIndex = presentIndex = -1;
-        int transferIndex = -1;
-        int computendex = -1;
+        int graphicsIndex, presentIndex , transferIndex, computendex;
+        graphicsIndex = presentIndex = transferIndex = computendex = -1;
 
         Span<uint> bookedFamilies = stackalloc uint[(int)queueFamilityCount];
 
         // Selection of specialized queues
-        for (int i = 0; i < queueFamilyProperties.Length; i++)
+        for (int i = 0; i < queueFamilies.Length; i++)
         {
-            var props = queueFamilyProperties[i];
-            var flags = props.QueueFlags;
-            _ = khrsf.GetPhysicalDeviceSurfaceSupport(gpu, (uint)i, surface, out var presentSupport);
+            var props = queueFamilies[i];
+            var flags = GetFlags(queueFamilies, i, gpu, surface, khrsf);
 
-            bool hasGraphics = flags.HasFlag(QueueFlags.GraphicsBit);
-            bool hasTransfer = flags.HasFlag(QueueFlags.TransferBit);
-            bool hasCompute = flags.HasFlag(QueueFlags.ComputeBit);
-            bool hasPresent = presentSupport;
-
-            if (bookedFamilies[i] < props.QueueCount && hasGraphics && graphicsIndex < 0)
+            if (bookedFamilies[i] < props.QueueCount && flags.hasGraphics && graphicsIndex < 0)
             {
                 graphicsIndex = i;
                 graphicsQueueNum = bookedFamilies[i]++;
             }
-            if (bookedFamilies[i] < props.QueueCount && i != graphicsIndex && presentSupport && presentIndex < 0)
+            if (bookedFamilies[i] < props.QueueCount && i != graphicsIndex && flags.hasPresent && presentIndex < 0)
             {
                 presentIndex = i;
                 presentQueueNum = bookedFamilies[i]++;
             }
-            if (bookedFamilies[i] < props.QueueCount && !hasGraphics && hasCompute && computendex < 0)
+            if (bookedFamilies[i] < props.QueueCount && !flags.hasGraphics && flags.hasCompute && computendex < 0)
             {
                 computendex = i;
                 computeQueueNum = bookedFamilies[i]++;
             }
-            if (bookedFamilies[i] < props.QueueCount && !hasGraphics && hasTransfer && transferIndex < 0)
+            if (bookedFamilies[i] < props.QueueCount && !flags.hasGraphics && flags.hasTransfer && transferIndex < 0)
             {
                 transferIndex = i;
                 transferQueueNum = bookedFamilies[i]++;
@@ -74,30 +62,24 @@ internal readonly struct QueueFamilyIndiciesDetails
         }
 
         // fallback if no unique specialized queue search just specialized
-        for (int i = 0; i < queueFamilyProperties.Length; i++)
+        for (int i = 0; i < queueFamilies.Length; i++)
         {
             if (graphicsIndex >= 0 && presentIndex >= 0 && computendex >= 0 && transferIndex >= 0)
                 break;
-            var props = queueFamilyProperties[i];
-            var flags = props.QueueFlags;
-            _ = khrsf.GetPhysicalDeviceSurfaceSupport(gpu, (uint)i, surface, out var presentSupport);
 
-            bool hasGraphics = flags.HasFlag(QueueFlags.GraphicsBit);
-            bool hasTransfer = flags.HasFlag(QueueFlags.TransferBit);
-            bool hasCompute = flags.HasFlag(QueueFlags.ComputeBit);
-            bool hasPresent = presentSupport;
+            var flags = GetFlags(queueFamilies, i, gpu, surface, khrsf);
 
-            if (presentSupport && presentIndex < 0)
+            if (flags.hasPresent && presentIndex < 0)
             {
                 presentIndex = i;
                 presentQueueNum = 0;
             }
-            if (!hasGraphics && hasCompute && computendex < 0)
+            if (!flags.hasGraphics && flags.hasCompute && computendex < 0)
             {
                 computendex = i;
                 computeQueueNum = 0;
             }
-            if (!hasGraphics && hasTransfer && transferIndex < 0)
+            if (!flags.hasGraphics && flags.hasTransfer && transferIndex < 0)
             {
                 transferIndex = i;
                 transferQueueNum = 0;
@@ -105,22 +87,19 @@ internal readonly struct QueueFamilyIndiciesDetails
         }
 
         // fallback to anything supported
-        for (int i = 0; i < queueFamilyProperties.Length; i++)
+        for (int i = 0; i < queueFamilies.Length; i++)
         {
             if (graphicsIndex >= 0 && presentIndex >= 0 && computendex >= 0 && transferIndex >= 0)
                 break;
-            var props = queueFamilyProperties[i];
-            var flags = props.QueueFlags;
 
-            bool hasTransfer = flags.HasFlag(QueueFlags.TransferBit);
-            bool hasCompute = flags.HasFlag(QueueFlags.ComputeBit);
+            var flags = GetFlags(queueFamilies, i, gpu, surface, khrsf);
 
-            if (hasCompute && computendex < 0)
+            if (flags.hasCompute && computendex < 0)
             {
                 computendex = i;
                 computeQueueNum = 0;
             }
-            if (hasTransfer && transferIndex < 0)
+            if (flags.hasTransfer && transferIndex < 0)
             {
                 transferIndex = i;
                 transferQueueNum = 0;
@@ -136,6 +115,34 @@ internal readonly struct QueueFamilyIndiciesDetails
         transferFamily = (uint)transferIndex;
 
         var c = GetUniqueCount();
+    }
+
+    private static QueueFlagsData GetFlags(Span<QueueFamilyProperties> queueProps, int index, PhysicalDevice gpu, SurfaceKHR surface, KhrSurface khrsf)
+    {
+        var props = queueProps[index];
+        var flags = props.QueueFlags;
+        _ = khrsf.GetPhysicalDeviceSurfaceSupport(gpu, (uint)index, surface, out var presentSupport);
+        return new QueueFlagsData(
+            flags.HasFlag(QueueFlags.GraphicsBit),
+            flags.HasFlag(QueueFlags.TransferBit),
+            flags.HasFlag(QueueFlags.ComputeBit),
+            presentSupport);
+    }
+
+    private readonly struct QueueFlagsData
+    {
+        public readonly bool hasGraphics;
+        public readonly bool hasTransfer;
+        public readonly bool hasCompute;
+        public readonly bool hasPresent;
+
+        public QueueFlagsData(bool hasGraphics, bool hasTransfer, bool hasCompute, bool hasPresent)
+        {
+            this.hasGraphics = hasGraphics;
+            this.hasTransfer = hasTransfer;
+            this.hasCompute = hasCompute;
+            this.hasPresent = hasPresent;
+        }
     }
 
     public int GetUniqueFamilies(Span<(uint family, uint num)> uniqueFamilies)

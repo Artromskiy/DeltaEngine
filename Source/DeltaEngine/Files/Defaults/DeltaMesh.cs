@@ -30,13 +30,7 @@ internal static class DeltaMesh
         5, 0, 3
     ];
 
-
-    public static readonly GuidAsset<MeshData> Mesh;
-
-    static DeltaMesh()
-    {
-        Mesh = IRuntimeContext.Current.AssetImporter.CreateRuntimeAsset(MeshData);
-    }
+    public static GuidAsset<MeshData> Mesh => IRuntimeContext.Current.AssetImporter.CreateRuntimeAsset(MeshData);
 
     public static MeshData MeshData
     {

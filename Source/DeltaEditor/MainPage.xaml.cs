@@ -23,6 +23,16 @@ namespace DeltaEditor
             Runtime.CreateTestScene();
         }
 
+        private void ClearList(object sender, EventArgs e)
+        {
+            _runtimeLoader.ClearListOfInstantiatedObjects();
+        }
+
+        private void SetSaveObjects(object sender, ToggledEventArgs e)
+        {
+            _runtimeLoader.SaveObjects = e.Value;
+        }
+
         private void RunScene(object sender, ToggledEventArgs e)
         {
             Runtime.Running = e.Value;

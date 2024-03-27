@@ -1,11 +1,11 @@
-﻿using Delta.Runtime;
+﻿using Delta.Files;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Text.Json;
 
-namespace Delta.Files;
+namespace Delta.Runtime;
 
 internal class AssetImporter : IAssetImporter
 {
@@ -76,6 +76,11 @@ internal class AssetImporter : IAssetImporter
         if (!_assetCollections.TryGetValue(type, out var collection))
             _assetCollections[type] = collection = new DefaultAssetCollection<T>();
         return ((IAssetCollection<T>)collection).LoadAsset(asset);
+    }
+
+    public T GetAsset<T>(string path) where T : class, IAsset
+    {
+        return GetAsset(new GuidAsset<T>(_pathToGuid[path]));
     }
 
     public string GetPath(Guid guid)

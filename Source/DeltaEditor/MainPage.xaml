@@ -48,7 +48,20 @@
                 Text="Try compile project" 
                 Clicked="TryCompile"
                 HorizontalOptions="Fill" />
-            
+
+            <Button
+                x:Name="ClearButton"
+                Text="Clear Objects" 
+                Clicked="ClearList"
+                HorizontalOptions="Fill" />
+
+            <Switch
+                x:Name="SaveObjects"
+                OnColor="Green"
+                IsToggled="False"
+                Toggled="SetSaveObjects"
+                ThumbColor="DarkGrey" />
+
             <Button
                 x:Name="OpenProjectButton"
                 Text="Open project folder" 

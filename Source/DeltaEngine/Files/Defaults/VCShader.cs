@@ -8,13 +8,13 @@ internal static class VCShader
     private const string VCVert = "shaders/vert.spv";
     private const string VCFrag = "shaders/frag.spv";
 
-    public static readonly GuidAsset<ShaderData> VC;
-    public static readonly GuidAsset<MaterialData> VCMat;
-
-    static VCShader()
+    public static GuidAsset<MaterialData> VCMat
     {
-        VC = IRuntimeContext.Current.AssetImporter.CreateRuntimeAsset(CreateShader());
-        VCMat = IRuntimeContext.Current.AssetImporter.CreateRuntimeAsset(new MaterialData(VC));
+        get
+        {
+            var VC = IRuntimeContext.Current.AssetImporter.CreateRuntimeAsset(CreateShader());
+            return IRuntimeContext.Current.AssetImporter.CreateRuntimeAsset(new MaterialData(VC));
+        }
     }
 
     private static ShaderData CreateShader()

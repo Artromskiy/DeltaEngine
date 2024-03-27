@@ -16,6 +16,7 @@
     <IncludeSymbols>true</IncludeSymbols>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
     <Configurations>Debug;Release;DebugPerf;Perf</Configurations>
+    <AnalysisLevel>latest</AnalysisLevel>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

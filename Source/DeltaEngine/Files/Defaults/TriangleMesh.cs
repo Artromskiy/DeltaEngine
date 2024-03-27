@@ -22,12 +22,7 @@ internal class TriangleMesh
         0, 1, 2,
     ];
 
-    static TriangleMesh()
-    {
-        Mesh = IRuntimeContext.Current.AssetImporter.CreateRuntimeAsset(MeshData);
-    }
-
-    public static GuidAsset<MeshData> Mesh { get; }
+    public static GuidAsset<MeshData> Mesh => IRuntimeContext.Current.AssetImporter.CreateRuntimeAsset(MeshData);
 
     public static MeshData MeshData
     {

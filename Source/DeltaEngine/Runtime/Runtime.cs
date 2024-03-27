@@ -49,7 +49,15 @@ public class Runtime : IRuntime, IDisposable
         using var _ = _pauseHandle.Pause();
         _scene?.Dispose();
         _scene = TestScene.Scene;
+        // DO NOT DELETE. Somehow we can get "device lost" without prerender
         RunOnce();
+    }
+
+    public void LoadScene(string path)
+    {
+        using var _ = _pauseHandle.Pause();
+        _scene?.Dispose();
+        _scene = IRuntimeContext.Current.AssetImporter.GetAsset<Scene>(path);
     }
 
     public void SaveScene(string name)

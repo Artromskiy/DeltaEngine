@@ -787,14 +787,13 @@ internal static class RenderHelper
 
     public static unsafe PhysicalDevice PickPhysicalDevice(Vk vk, Instance instance, SurfaceKHR surface, KhrSurface khrsf, string[] neededExtensions)
     {
-        uint devicedCount = 0;
-        _ = vk.EnumeratePhysicalDevices(instance, &devicedCount, null);
-        _ = devicedCount != 0;
-        Span<PhysicalDevice> devices = stackalloc PhysicalDevice[(int)devicedCount];
+        uint deviceCount = 0;
+        _ = vk.EnumeratePhysicalDevices(instance, &deviceCount, null);
+        Span<PhysicalDevice> devices = stackalloc PhysicalDevice[(int)deviceCount];
         PhysicalDevice selected = default;
         bool discrete = false;
         bool suitable = false;
-        vk.EnumeratePhysicalDevices(instance, &devicedCount, devices);
+        vk.EnumeratePhysicalDevices(instance, &deviceCount, devices);
         foreach (var device in devices)
         {
             vk.GetPhysicalDeviceProperties(device, out var props);

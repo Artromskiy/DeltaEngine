@@ -36,6 +36,7 @@ internal static class TestScene
         scene.AddJob(new MoveTransformsJob(scene._world, scene.DeltaTime));
         scene.AddJob(new Renderer(scene._world, "TestScene"));
         scene.AddJob(new RemoveDirtyJob(scene._world));
+        scene.AddJob(new FpsDropper(60, scene.DeltaTime));
         return scene;
     }
 
@@ -106,16 +107,16 @@ internal static class TestScene
             public readonly void Update(ref Transform t, ref MoveToTarget m)
             {
                 t.Position = Vector3.Lerp(m.start, m.target, m.percent);
-                t.Scale = new(0.1f); //float.Lerp(m.startScale, m.targetScale, m.percent));
+                t.Scale = new(float.Lerp(m.startScale, m.targetScale, m.percent));
                 m.percent += deltaTime * m.speed;
                 m.percent = Math.Clamp(m.percent, 0f, 1f);
-                //t.Rotation *= Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI * deltaTime * 3f);
+                t.Rotation *= Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI * deltaTime * 3f);
                 if (m.percent == 1)
                 {
                     m.start = m.target;
                     m.target = RndVector();
-                    //m.startScale = m.targetScale;
-                    //m.targetScale = rnd.NextSingle() * 0.1f;
+                    m.startScale = m.targetScale;
+                    m.targetScale = rnd.NextSingle() * 0.1f;
                     m.percent = 0;
                 }
             }
@@ -154,12 +155,12 @@ internal static class TestScene
     }
 
 
-    private readonly struct FpsDropper(Func<float> deltaTime) : IJob
+    private readonly struct FpsDropper(int targetFrameRate, Func<float> deltaTime) : IJob
     {
-        private const float TargetDeltaTime = 1f / 15f;
+        private readonly float _targetDeltaTime = 1f / (float)targetFrameRate;
         public void Execute()
         {
-            var toSleep = TargetDeltaTime - deltaTime.Invoke();
+            var toSleep = _targetDeltaTime - deltaTime.Invoke();
             if (toSleep > 0f)
                 Thread.Sleep(TimeSpan.FromSeconds(toSleep));
         }
