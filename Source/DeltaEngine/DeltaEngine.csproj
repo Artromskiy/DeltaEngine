@@ -44,7 +44,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Arch" Version="1.2.7" />
+    <PackageReference Include="Arch" Version="1.2.8" />
     <PackageReference Include="Arch.Persistence" Version="1.0.3" />
     <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.2.2" />
     <PackageReference Include="hydos.VulkanMemoryAllocator" Version="1.0.0" />

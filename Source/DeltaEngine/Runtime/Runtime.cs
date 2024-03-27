@@ -1,4 +1,6 @@
-﻿using Delta.Scenes;
+﻿using Arch.Core;
+using Delta.Scenes;
+using Schedulers;
 using System;
 using System.Threading;
 
@@ -8,8 +10,6 @@ public class Runtime : IRuntime, IDisposable
 {
     public IRuntimeContext Context { get; }
 
-    private readonly JobScheduler.JobScheduler _jobScheduler = new("WorkerThread");
-
     private bool _disposed = false;
     private bool _firstRun = false;
 
@@ -17,7 +17,7 @@ public class Runtime : IRuntime, IDisposable
 
     private readonly Thread _runtimeThread;
 
-    private readonly PauseHandle _pauseHandle = new();
+    private readonly RuntimeRunner _pauseHandle = new();
 
 
     public bool Running
@@ -28,7 +28,9 @@ public class Runtime : IRuntime, IDisposable
 
     public Runtime(IProjectPath projectPath)
     {
-        Context = new DefaultRuntimeContext(projectPath, new AssetImporter(projectPath));
+        var path = projectPath;
+        var assimp = new AssetImporter(path);
+        Context = new DefaultRuntimeContext(path, assimp);
 
         _runtimeThread = new Thread(Loop);
         _runtimeThread.Start();
@@ -38,14 +40,14 @@ public class Runtime : IRuntime, IDisposable
 
     public void CreateScene()
     {
-        using var _ = _pauseHandle.Pause();
+        using var _ = _pauseHandle.Pause;
         _scene?.Dispose();
         _scene = new Scene();
     }
 
     public void CreateTestScene()
     {
-        using var _ = _pauseHandle.Pause();
+        using var _ = _pauseHandle.Pause;
         _scene?.Dispose();
         _scene = TestScene.Scene;
         // DO NOT DELETE. Somehow we can get "device lost" without prerender
@@ -54,21 +56,21 @@ public class Runtime : IRuntime, IDisposable
 
     public void LoadScene(string path)
     {
-        using var _ = _pauseHandle.Pause();
+        using var _ = _pauseHandle.Pause;
         _scene?.Dispose();
         _scene = IRuntimeContext.Current.AssetImporter.GetAsset<Scene>(path);
     }
 
     public void SaveScene(string name)
     {
-        using var _ = _pauseHandle.Pause();
+        using var _ = _pauseHandle.Pause;
         IRuntimeContext.Current.AssetImporter.CreateAsset<Scene>(name, _scene);
     }
 
     public void RunOnce()
     {
-        using var _ = _pauseHandle.Pause();
-        InternalRun();
+        using var run = _pauseHandle.Run;
+        using var pause = _pauseHandle.Pause;
     }
 
     private void InternalRun()
@@ -78,6 +80,13 @@ public class Runtime : IRuntime, IDisposable
             Console.WriteLine("Fucked up");
             throw new InvalidOperationException("No loaded scenes to run");
         }
+        World.SharedJobScheduler ??= new JobScheduler(new JobScheduler.Config()
+        {
+            ThreadPrefixName = "Arch.Multithreading",
+            ThreadCount = 0,
+            MaxExpectedConcurrentJobs = 64,
+            StrictAllocationMode = false,
+        });
 
         _scene.Run();
         if (_firstRun)
@@ -96,27 +105,33 @@ public class Runtime : IRuntime, IDisposable
             _pauseHandle.loopEnded.Reset();
 
             if (_disposed)
-                return;
+                break;
 
             InternalRun();
             //Thread.Yield();
             _pauseHandle.loopEnded.Set();
         }
+
     }
 
     public Scene? GetCurrentScene() => _scene;
+
     public void Dispose()
     {
-        using var _ = _pauseHandle.Pause();
+        using var _ = _pauseHandle.Pause;
 
         _scene?.Dispose();
+        World.SharedJobScheduler?.Dispose();
+        World.SharedJobScheduler = null;
         _disposed = true;
     }
 
-    private class PauseHandle : IDisposable
+    private class RuntimeRunner
     {
         public readonly EventWaitHandle loopStart = new(false, EventResetMode.ManualReset);
         public readonly EventWaitHandle loopEnded = new(true, EventResetMode.ManualReset);
+
+        private bool _running = false;
         public bool Running
         {
             get => _running;
@@ -139,16 +154,24 @@ public class Runtime : IRuntime, IDisposable
             }
         }
 
-        private bool _running = false;
-        private bool state = false;
-
-        public PauseHandle Pause()
+        public readonly ref struct PauseHandle
         {
-            state = _running;
-            Running = false;
-            return this;
+            private readonly bool state;
+            private readonly RuntimeRunner _runner;
+            public PauseHandle(RuntimeRunner runner, bool value)
+            {
+                _runner = runner;
+                state = _runner._running;
+                _runner.Running = !value;
+            }
+
+            public void Dispose()
+            {
+                _runner.Running = state;
+            }
         }
 
-        public void Dispose() => Running = state;
+        public PauseHandle Pause => new(this, true);
+        public PauseHandle Run => new(this, false);
     }
 }

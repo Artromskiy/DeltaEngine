@@ -1,6 +1,6 @@
 ﻿using Arch.Core;
+using Delta.ECS;
 using Delta.Files;
-using JobScheduler;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,7 +12,7 @@ public sealed class Scene : IDisposable, IAsset
 {
     internal readonly World _world;
     [JsonIgnore]
-    private readonly List<IJob> _jobs;
+    private readonly List<ISystem> _jobs;
 
     private float _deltaTime;
     private readonly Stopwatch _sceneSw = new();
@@ -61,12 +61,12 @@ public sealed class Scene : IDisposable, IAsset
 
     public float DeltaTime() => _deltaTime;
 
-    public void AddJob(IJob job)
+    public void AddJob(ISystem job)
     {
         _jobs.Add(job);
     }
 
-    public void RemoveJob(IJob job)
+    public void RemoveJob(ISystem job)
     {
         _jobs.Remove(job);
     }

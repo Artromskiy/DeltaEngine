@@ -1,6 +1,6 @@
-﻿using Delta.ECS.Components;
+﻿using Delta.ECS;
+using Delta.ECS.Components;
 using Delta.Rendering.Internal;
-using JobScheduler;
 using Silk.NET.SDL;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
@@ -10,7 +10,7 @@ using Semaphore = Silk.NET.Vulkan.Semaphore;
 
 namespace Delta.Rendering;
 
-internal abstract unsafe partial class BaseRenderer : IDisposable, IJob
+internal abstract unsafe partial class BaseRenderer : IDisposable, ISystem
 {
     private static readonly Api _api = new();
     private readonly Window* _window;

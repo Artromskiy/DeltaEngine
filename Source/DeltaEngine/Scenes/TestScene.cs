@@ -5,7 +5,6 @@ using Delta.ECS.Components;
 using Delta.Files.Defaults;
 using Delta.Rendering;
 using Delta.Scripting;
-using JobScheduler;
 using System;
 using System.Buffers;
 using System.Numerics;
@@ -89,7 +88,7 @@ internal static class TestScene
 
 
 
-    private readonly struct MoveTransformsJob(World world, Func<float> deltaTime) : IJob
+    private readonly struct MoveTransformsJob(World world, Func<float> deltaTime) : ISystem
     {
         private readonly World _sceneWorld = world;
         public readonly void Execute()
@@ -134,7 +133,7 @@ internal static class TestScene
         public float targetScale;
     }
 
-    private readonly struct RemoveDirtyJob(World world) : IJob
+    private readonly struct RemoveDirtyJob(World world) : ISystem
     {
         private readonly QueryDescription _dirtyTransforms = new QueryDescription().WithAll<DirtyFlag<Transform>>();
         private readonly QueryDescription _dirtyRenders = new QueryDescription().WithAll<DirtyFlag<Render>>();
@@ -155,7 +154,7 @@ internal static class TestScene
     }
 
 
-    private readonly struct FpsDropper(int targetFrameRate, Func<float> deltaTime) : IJob
+    private readonly struct FpsDropper(int targetFrameRate, Func<float> deltaTime) : ISystem
     {
         private readonly float _targetDeltaTime = 1f / (float)targetFrameRate;
         public void Execute()

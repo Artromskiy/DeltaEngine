@@ -184,7 +184,7 @@ internal static class ChildOfExtensions
     {
         var query = world.Query(in queryDescription);
         foreach (var archetype in query.GetArchetypeIterator())
-            if (archetype.Entities > 0)
+            if (archetype.EntityCount > 0)
                 return true;
         return false;
     }

@@ -3,7 +3,6 @@ using Collections.Pooled;
 using Delta.ECS.Components;
 using Delta.Rendering;
 using Delta.Rendering.Internal;
-using JobScheduler;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -12,7 +11,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Delta.ECS;
-internal class Batcher : IJob
+internal class Batcher : ISystem
 {
     private readonly Queue<uint> _free;
 
@@ -38,7 +37,7 @@ internal class Batcher : IJob
 
     private readonly PooledList<(Render rend, uint count)> _renders = [];
 
-    private readonly IJob[] jobs;
+    private readonly ISystem[] jobs;
 
     public Batcher(World world, RenderBase renderBase)
     {
@@ -114,7 +113,7 @@ internal class Batcher : IJob
         }
     }
 
-    private readonly struct RemoveRender(World world, Queue<uint> freeIds, RendGroupData rendGroupData) : IJob
+    private readonly struct RemoveRender(World world, Queue<uint> freeIds, RendGroupData rendGroupData) : ISystem
     {
         [MethodImpl(Inl)]
         public readonly void Execute()
@@ -140,7 +139,7 @@ internal class Batcher : IJob
 
     private readonly struct AddRender(World world, Queue<uint> free,
         RendGroupData rendGroupData,
-        PooledSet<uint> forceUpdate) : IJob
+        PooledSet<uint> forceUpdate) : ISystem
     {
         private static readonly QueryDescription _addTag = new QueryDescription().WithAll<AddTag>();
         private readonly struct AddTag();
@@ -177,7 +176,7 @@ internal class Batcher : IJob
         }
     }
 
-    private readonly struct ChangeRender(World world, RendGroupData rendGroupData) : IJob
+    private readonly struct ChangeRender(World world, RendGroupData rendGroupData) : ISystem
     {
         [MethodImpl(Inl)]
         public readonly void Execute()
@@ -202,7 +201,7 @@ internal class Batcher : IJob
 
     private readonly struct SortWriteRender(World world,
         GpuArray<uint> rendersArray,
-        RendGroupData rendGroupData) : IJob
+        RendGroupData rendGroupData) : ISystem
     {
         [MethodImpl(Inl)]
         public readonly void Execute()
@@ -230,7 +229,7 @@ internal class Batcher : IJob
         }
     }
 
-    private readonly struct WriteTrs(World world, GpuArray<Matrix4x4> trs, List<uint> trsTransferIndices, PooledSet<uint> forceWrite) : IJob
+    private readonly struct WriteTrs(World world, GpuArray<Matrix4x4> trs, List<uint> trsTransferIndices, PooledSet<uint> forceWrite) : ISystem
     {
         private readonly ThreadLocal<PooledList<uint>> _threadTransfer = new(() => new PooledList<uint>(ClearMode.Never), true);
 
