@@ -58,26 +58,26 @@ internal class SwapChain : IDisposable
             Flags = SwapchainCreateFlagsKHR.None
         };
 
-        _ = api.vk.TryGetDeviceExtension(data.instance, data.deviceQ.device, out khrSw);
-        _ = khrSw.CreateSwapchain(data.deviceQ.device, creatInfo, null, out swapChain);
+        _ = api.vk.TryGetDeviceExtension(data.instance, data.deviceQ, out khrSw);
+        _ = khrSw.CreateSwapchain(data.deviceQ, creatInfo, null, out swapChain);
         uint imCount = (uint)imageCount;
-        _ = khrSw.GetSwapchainImages(data.deviceQ.device, swapChain, &imCount, null);
+        _ = khrSw.GetSwapchainImages(data.deviceQ, swapChain, &imCount, null);
         Span<Image> imageSpan = stackalloc Image[(int)imCount];
-        _ = khrSw.GetSwapchainImages(data.deviceQ.device, swapChain, &imCount, imageSpan);
+        _ = khrSw.GetSwapchainImages(data.deviceQ, swapChain, &imCount, imageSpan);
         images = ImmutableArray.Create(imageSpan);
-        imageViews = RenderHelper.CreateImageViews(api, data.deviceQ.device, [.. images], format.Format);
-        frameBuffers = RenderHelper.CreateFramebuffers(api, data.deviceQ.device, [.. imageViews], data.renderPass, extent);
+        imageViews = RenderHelper.CreateImageViews(api, data.deviceQ, [.. images], format.Format);
+        frameBuffers = RenderHelper.CreateFramebuffers(api, data.deviceQ, [.. imageViews], data.renderPass, extent);
     }
 
     public unsafe void Dispose()
     {
-        data.vk.DeviceWaitIdle(data.deviceQ.device);
+        data.vk.DeviceWaitIdle(data.deviceQ);
 
         foreach (var framebuffer in frameBuffers)
-            data.vk.DestroyFramebuffer(data.deviceQ.device, framebuffer, null);
+            data.vk.DestroyFramebuffer(data.deviceQ, framebuffer, null);
         foreach (var imageView in imageViews)
-            data.vk.DestroyImageView(data.deviceQ.device, imageView, null);
+            data.vk.DestroyImageView(data.deviceQ, imageView, null);
 
-        khrSw.DestroySwapchain(data.deviceQ.device, swapChain, null);
+        khrSw.DestroySwapchain(data.deviceQ, swapChain, null);
     }
 }

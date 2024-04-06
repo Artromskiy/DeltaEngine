@@ -57,13 +57,13 @@ internal class RenderAssets : IDisposable
         unsafe
         {
             foreach (var item in _renderToPipe)
-                _renderBase.vk.DestroyPipeline(_renderBase.deviceQ.device, item.Value.pipeline, null);
+                _renderBase.vk.DestroyPipeline(_renderBase.deviceQ, item.Value.pipeline, null);
             foreach (var item in _renderToMeshHandler)
             {
-                _renderBase.vk.DestroyBuffer(_renderBase.deviceQ.device, item.Value.vertices, null);
-                _renderBase.vk.DestroyBuffer(_renderBase.deviceQ.device, item.Value.indices, null);
-                _renderBase.vk.FreeMemory(_renderBase.deviceQ.device, item.Value.verticesMemory, null);
-                _renderBase.vk.FreeMemory(_renderBase.deviceQ.device, item.Value.indicesMemory, null);
+                _renderBase.vk.DestroyBuffer(_renderBase.deviceQ, item.Value.vertices, null);
+                _renderBase.vk.DestroyBuffer(_renderBase.deviceQ, item.Value.indices, null);
+                _renderBase.vk.FreeMemory(_renderBase.deviceQ, item.Value.verticesMemory, null);
+                _renderBase.vk.FreeMemory(_renderBase.deviceQ, item.Value.indicesMemory, null);
             }
         }
         _renderToPipe.Clear();

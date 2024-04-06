@@ -18,7 +18,6 @@ internal abstract unsafe partial class BaseRenderer : IDisposable, ISystem
 
     private readonly string _appName;
 
-    private readonly Pipeline graphicsPipeline;
     private SwapChain swapChain;
 
     private readonly string[] deviceExtensions = [KhrSwapchain.ExtensionName];
@@ -30,8 +29,8 @@ internal abstract unsafe partial class BaseRenderer : IDisposable, ISystem
 
     private readonly Queue<Frame> _frames = [];
 
-    private const uint Buffering = 3;
-    private const bool CanSkipRender = true;
+    private const uint Buffering = 1;
+    private const bool CanSkipRender = false;
     private const bool RenderLessMode = false;
 
     private bool _skippedFrame = true;
@@ -42,7 +41,6 @@ internal abstract unsafe partial class BaseRenderer : IDisposable, ISystem
         _window = RenderHelper.CreateWindow(_api.sdl, _appName);
         _rendererData = new RenderBase(_api, _window, deviceExtensions, _appName, targetFormat);
         swapChain = new SwapChain(_api, _rendererData, GetSdlWindowSize(), Buffering, _rendererData.format);
-        graphicsPipeline = RenderHelper.CreateGraphicsPipeline(_rendererData);
         renderAssets = new RenderAssets(_rendererData);
 
         for (int i = 0; i < swapChain.imageCount; i++)
@@ -106,11 +104,10 @@ internal abstract unsafe partial class BaseRenderer : IDisposable, ISystem
 
     public unsafe void Dispose()
     {
-        _ = _rendererData.vk.DeviceWaitIdle(_rendererData.deviceQ.device);
+        _ = _rendererData.vk.DeviceWaitIdle(_rendererData.deviceQ);
 
         _frames.Dispose();
         renderAssets.Dispose();
-        _rendererData.vk.DestroyPipeline(_rendererData.deviceQ.device, graphicsPipeline, null);
 
         swapChain.Dispose();
         _rendererData.Dispose();

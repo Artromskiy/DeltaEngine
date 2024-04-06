@@ -33,6 +33,7 @@ public class Runtime : IRuntime, IDisposable
         Context = new DefaultRuntimeContext(path, assimp);
 
         _runtimeThread = new Thread(Loop);
+        _runtimeThread.Name = "RuntimeThread." + _runtimeThread.ManagedThreadId;
         _runtimeThread.Start();
 
         IRuntimeContext.Current = Context;

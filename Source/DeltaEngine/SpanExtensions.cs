@@ -70,4 +70,16 @@ internal static class SpanExtensions
         Span<T> span = new(pointer, array.Length);
         array.CopyTo(span);
     }
+
+    public static unsafe void CopyTo<T>(this Span<T> array, T* pointer) where T : unmanaged
+    {
+        Span<T> span = new(pointer, array.Length);
+        array.CopyTo(span);
+    }
+
+    public static unsafe void CopyTo<T>(this ReadOnlySpan<T> array, T* pointer) where T : unmanaged
+    {
+        Span<T> span = new(pointer, array.Length);
+        array.CopyTo(span);
+    }
 }

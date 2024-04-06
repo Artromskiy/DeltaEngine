@@ -8,7 +8,7 @@ internal readonly struct DeviceQueues: IDisposable
 {
     private readonly Vk _vk;
 
-    public readonly Device device;
+    private readonly Device device;
 
     public readonly Queue graphicsQueue;
     public readonly Queue presentQueue;
@@ -21,6 +21,8 @@ internal readonly struct DeviceQueues: IDisposable
     public readonly CommandPool transferCmdPool;
 
     public readonly QueueFamilyIndiciesDetails queueIndicesDetails;
+
+    public static implicit operator Device(DeviceQueues deviceQueues) => deviceQueues.device;
 
     public unsafe DeviceQueues(Vk vk, PhysicalDevice gpu, QueueFamilyIndiciesDetails indices, string[] deviceExtensions)
     {

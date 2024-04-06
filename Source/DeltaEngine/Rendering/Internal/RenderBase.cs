@@ -1,5 +1,4 @@
-﻿using Delta;
-using Silk.NET.SDL;
+﻿using Silk.NET.SDL;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.EXT;
 using Silk.NET.Vulkan.Extensions.KHR;
@@ -74,17 +73,17 @@ internal sealed class RenderBase : IDisposable
 
         descriptorSetLayouts = new CommonDescriptorSetLayouts(this);
 
-        pipelineLayout = RenderHelper.CreatePipelineLayout(vk, deviceQ.device, descriptorSetLayouts.Layouts);
+        pipelineLayout = RenderHelper.CreatePipelineLayout(vk, deviceQ, descriptorSetLayouts.Layouts);
 
-        renderPass = RenderHelper.CreateRenderPass(vk, deviceQ.device, format.Format);
+        renderPass = RenderHelper.CreateRenderPass(vk, deviceQ, format.Format);
     }
 
     public unsafe void Dispose()
     {
-        vk.DestroyRenderPass(deviceQ.device, renderPass, null);
-        vk.DestroyPipelineLayout(deviceQ.device, pipelineLayout, null);
+        vk.DestroyRenderPass(deviceQ, renderPass, null);
+        vk.DestroyPipelineLayout(deviceQ, pipelineLayout, null);
         descriptorSetLayouts.Dispose();
-        vk.DestroyDescriptorPool(deviceQ.device, descriptorPool,null);
+        vk.DestroyDescriptorPool(deviceQ, descriptorPool, null);
         deviceQ.Dispose();
         khrsf.DestroySurface(instance, surface, null);
         vk.DestroyInstance(instance, null);

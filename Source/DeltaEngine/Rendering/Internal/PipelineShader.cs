@@ -15,7 +15,7 @@ internal readonly struct PipelineShader : IDisposable
     public unsafe PipelineShader(RenderBase data, ShaderStageFlags stage, ReadOnlySpan<byte> shaderCode)
     {
         _vk = data.vk;
-        _device = data.deviceQ.device;
+        _device = data.deviceQ;
         this.stage = stage;
 
         fixed (byte* code = shaderCode)

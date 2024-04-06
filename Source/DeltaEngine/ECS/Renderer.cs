@@ -25,7 +25,7 @@ internal class Renderer : BaseRenderer
 
     public override void PreSync()
     {
-        _rendererData.vk.WaitForFences(_rendererData.deviceQ.device, 1, _TRSCopyFence, true, ulong.MaxValue);
+        _rendererData.vk.WaitForFences(_rendererData.deviceQ, 1, _TRSCopyFence, true, ulong.MaxValue);
         _rendererData.vk.ResetCommandBuffer(_TRSCopyCmdBuffer, 0);
 
         _batcher.Execute();
@@ -33,7 +33,7 @@ internal class Renderer : BaseRenderer
 
     public sealed override void PostSync()
     {
-        _rendererData.vk.ResetFences(_rendererData.deviceQ.device, 1, _TRSCopyFence);
+        _rendererData.vk.ResetFences(_rendererData.deviceQ, 1, _TRSCopyFence);
         _rendererData.BeginCmdBuffer(_TRSCopyCmdBuffer);
         _rendererData.CopyCmd(_batcher.Trs, GetTRSBuffer(), _TRSCopyCmdBuffer);
         _rendererData.CopyCmd(_batcher.TrsIds, GetIdsBuffer(), _TRSCopyCmdBuffer);
