@@ -49,7 +49,7 @@ internal class CommonDescriptorSetLayouts : IDisposable
     private static readonly unsafe DescriptorSetLayoutBinding IdsBindings = new(RendConst.IdsBinding, DescriptorType.StorageBuffer, 1, StageFlags);
     private static readonly unsafe DescriptorSetLayoutBinding CameraBindings = new(RendConst.CameraBinding, DescriptorType.StorageBuffer, 1, StageFlags);
     private static readonly unsafe DescriptorSetLayoutBinding MaterialBindings = new(RendConst.MaterialBinding, DescriptorType.StorageBuffer, 1, StageFlags);
-    
+
     public unsafe void Dispose()
     {
         foreach (var item in _layouts)

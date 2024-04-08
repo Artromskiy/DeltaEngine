@@ -93,8 +93,8 @@ internal abstract unsafe partial class BaseRenderer : IDisposable, ISystem
             OnResize();
     }
 
-    internal DynamicBuffer GetTRSBuffer() => CurrentFrame.GetTRSBuffer();
-    internal DynamicBuffer GetIdsBuffer() => CurrentFrame.GetIdsBuffer();
+    internal FrameDescriptorSets DescriptorSets => CurrentFrame.descriptorSets;
+
     protected void AddSemaphore(Semaphore semaphore) => CurrentFrame.AddSemaphore(semaphore);
     protected void SetRenders(ReadOnlySpan<(Render rend, uint count)> renders)
     {

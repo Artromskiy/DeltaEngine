@@ -1,6 +1,5 @@
-﻿using System;
+﻿namespace Delta.Rendering.Internal;
 
-namespace Delta.Rendering.Internal;
 internal struct RendConst
 {
     public const int SetsCount = 3;

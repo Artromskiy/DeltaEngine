@@ -17,8 +17,7 @@ internal class Frame : IDisposable
 
     private CommandBuffer commandBuffer;
 
-
-    private readonly FrameDescriptorSets _descriptorSets;
+    public readonly FrameDescriptorSets descriptorSets;
 
 
     private Semaphore _syncSemaphore;
@@ -34,7 +33,7 @@ internal class Frame : IDisposable
         _renderAssets = renderAssets;
         _swapChain = swapChain;
 
-        _descriptorSets = new FrameDescriptorSets(renderBase);
+        descriptorSets = new FrameDescriptorSets(renderBase);
 
         FenceCreateInfo fenceInfo = new(StructureType.FenceCreateInfo, null, FenceCreateFlags.SignaledBit);
         SemaphoreCreateInfo semaphoreInfo = new(StructureType.SemaphoreCreateInfo);
@@ -61,7 +60,7 @@ internal class Frame : IDisposable
         _rendererBase.vk.DestroySemaphore(_rendererBase.deviceQ, renderFinished, null);
         _rendererBase.vk.DestroyFence(_rendererBase.deviceQ, renderFinishedFence, null);
 
-        _descriptorSets.Dispose();
+        descriptorSets.Dispose();
     }
 
     public void Sync()
@@ -70,9 +69,6 @@ internal class Frame : IDisposable
     }
 
     public bool Synced() => _rendererBase.vk.GetFenceStatus(_rendererBase.deviceQ, renderFinishedFence) == Result.Success;
-
-    public DynamicBuffer GetTRSBuffer() => _descriptorSets.Matrices;
-    public DynamicBuffer GetIdsBuffer() => _descriptorSets.Ids;
 
     public void AddSemaphore(Semaphore semaphore)
     {
@@ -95,7 +91,7 @@ internal class Frame : IDisposable
         _rendererBase.vk.ResetFences(_rendererBase.deviceQ, 1, renderFinishedFence);
         _rendererBase.vk.ResetCommandBuffer(commandBuffer, 0);
 
-        _descriptorSets.UpdateDescriptorSets();
+        descriptorSets.UpdateDescriptorSets();
 
         // if (_matrices.ChangedBuffer)
         // {
@@ -180,7 +176,7 @@ internal class Frame : IDisposable
 
         //var matrices = _instanceDescriptorSet;
 
-        _descriptorSets.BindDescriptorSets(commandBuffer);
+        descriptorSets.BindDescriptorSets(commandBuffer);
 
         //_rendererBase.vk.CmdBindDescriptorSets(commandBuffer, PipelineBindPoint.Graphics, _rendererBase.pipelineLayout, 0, 1, &matrices, 0, 0);
         uint firstInstance = 0;

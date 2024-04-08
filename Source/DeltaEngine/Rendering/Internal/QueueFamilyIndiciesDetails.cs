@@ -26,7 +26,7 @@ internal readonly struct QueueFamilyIndiciesDetails
         Span<QueueFamilyProperties> queueFamilies = stackalloc QueueFamilyProperties[(int)queueFamilityCount];
         vk.GetPhysicalDeviceQueueFamilyProperties(gpu, &queueFamilityCount, queueFamilies);
 
-        int graphicsIndex, presentIndex , transferIndex, computendex;
+        int graphicsIndex, presentIndex, transferIndex, computendex;
         graphicsIndex = presentIndex = transferIndex = computendex = -1;
 
         Span<uint> bookedFamilies = stackalloc uint[(int)queueFamilityCount];

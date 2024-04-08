@@ -61,7 +61,7 @@ namespace DeltaEditor
                 Process.Start("explorer.exe", _projectData.RootDirectory);
         }
 
-        void OnPickerComponentIndexChanged(object sender, EventArgs e)
+        private void OnPickerComponentIndexChanged(object sender, EventArgs e)
         {
             var picker = (Picker)sender;
             int selectedIndex = picker.SelectedIndex;

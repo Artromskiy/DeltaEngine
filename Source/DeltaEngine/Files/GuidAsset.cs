@@ -12,7 +12,7 @@ public readonly struct GuidAsset<T> : IEquatable<GuidAsset<T>>, IComparable<Guid
     public readonly Guid guid;
 
     [JsonConstructor]
-    internal GuidAsset(Guid guid)=> this.guid = guid;
+    internal GuidAsset(Guid guid) => this.guid = guid;
 
     public readonly T GetAsset() => IRuntimeContext.Current.AssetImporter.GetAsset(this);
 

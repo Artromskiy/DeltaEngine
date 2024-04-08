@@ -50,7 +50,7 @@ namespace DeltaEditorLib.Scripting
                 Select(tree => tree.GetRoot().ChildNodes().
                 OfType<UsingDirectiveSyntax>().
                 Where(x => x.Name != null).
-                Select(x=>x.Name)).
+                Select(x => x.Name)).
             SelectMany(s => s).
             Select(u => Path.Combine(assemblyPath, u!.ToString() + ".dll")).
             Where(File.Exists).

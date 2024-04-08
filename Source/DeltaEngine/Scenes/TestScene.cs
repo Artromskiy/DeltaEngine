@@ -35,31 +35,62 @@ internal static class TestScene
         scene.AddJob(new MoveTransformsJob(scene._world, scene.DeltaTime));
         scene.AddJob(new Renderer(scene._world, "TestScene"));
         scene.AddJob(new RemoveDirtyJob(scene._world));
-        scene.AddJob(new FpsDropper(60, scene.DeltaTime));
+        //scene.AddJob(new FpsDropper(60, scene.DeltaTime));
         return scene;
     }
 
     private static void InitWorldSimple(Scene scene)
     {
-        Transform defaultTransform = new() { Rotation = Quaternion.Identity, Scale = Vector3.One };
-        for (int i = 0; i < N; i++)
+        CreateManyTriangles(scene, N);
+        //CreateOneDelta(scene);
+        CreateCamera(scene);
+        MarkTransformsDirty(scene);
+    }
+
+    private static void CreateCamera(Scene scene)
+    {
+        var cameraEntity = scene._world.Create();
+        cameraEntity.Add<Transform>(new()
+        {
+            position = new Vector3(0, 0, -2),
+            rotation = Quaternion.Identity,
+            scale = Vector3.One
+        });
+        cameraEntity.Add<Camera>(new()
+        {
+            projection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(float.DegreesToRadians(90), 1, float.Epsilon, 1000)
+            //projection = Matrix4x4.CreateOrthographicLeftHanded(5, 5, float.Epsilon, 1000)
+        });
+    }
+
+    private static void MarkTransformsDirty(Scene scene)
+    {
+        var tr = new QueryDescription().WithAll<Transform>();
+        scene._world.Add<DirtyFlag<Transform>>(tr);
+    }
+
+    private static void CreateManyTriangles(Scene scene, int count)
+    {
+        Transform defaultTransform = new() { rotation = Quaternion.Identity, scale = Vector3.One };
+        for (int i = 0; i < count; i++)
             scene._world.Create(defaultTransform);
-        var transforms = ArrayPool<Entity>.Shared.Rent(N);
+        var transforms = ArrayPool<Entity>.Shared.Rent(count);
         scene._world.GetEntities(new QueryDescription().WithAll<Transform>(), transforms);
+        var material = VCShader.VCMat;
         Render deltaRend = new()
         {
-            Material = VCShader.VCMat,
+            Material = material,
             Mesh = DeltaMesh.Mesh
         };
         Render triangleRend = new()
         {
-            Material = VCShader.VCMat,
+            Material = material,
             Mesh = TriangleMesh.Mesh
         };
 
         int deltaCount = 0;
         int triangleCount = 0;
-        for (int i = 0; i < N; i++)
+        for (int i = 0; i < count; i++)
         {
             bool delta = rnd.NextSingle() > 0.5f;
             transforms[i].Add(delta ? deltaRend : triangleRend);
@@ -81,9 +112,20 @@ internal static class TestScene
 
         ArrayPool<Entity>.Shared.Return(transforms);
         scene._world.TrimExcess();
+    }
 
-        var tr = new QueryDescription().WithAll<Transform>();
-        scene._world.Add<DirtyFlag<Transform>>(tr);
+    private static void CreateOneDelta(Scene scene)
+    {
+        var entity = scene._world.Create();
+        Transform defaultTransform = new()
+        {
+            scale = Vector3.One * 1f,
+            rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI * 0.5f),
+            position = new Vector3(0.5f, 0, 10)
+        };
+        Render deltaRend = new() { Material = VCShader.VCMat, Mesh = DeltaMesh.Mesh };
+        entity.Add(defaultTransform);
+        entity.Add(deltaRend);
     }
 
 
@@ -105,11 +147,11 @@ internal static class TestScene
             [MethodImpl(Inl)]
             public readonly void Update(ref Transform t, ref MoveToTarget m)
             {
-                t.Position = Vector3.Lerp(m.start, m.target, m.percent);
-                t.Scale = new(float.Lerp(m.startScale, m.targetScale, m.percent));
+                t.position = Vector3.Lerp(m.start, m.target, m.percent);
+                t.scale = new(float.Lerp(m.startScale, m.targetScale, m.percent));
                 m.percent += deltaTime * m.speed;
                 m.percent = Math.Clamp(m.percent, 0f, 1f);
-                t.Rotation *= Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI * deltaTime * 3f);
+                t.rotation *= Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI * deltaTime * 3f);
                 if (m.percent == 1)
                 {
                     m.start = m.target;
@@ -156,7 +198,7 @@ internal static class TestScene
 
     private readonly struct FpsDropper(int targetFrameRate, Func<float> deltaTime) : ISystem
     {
-        private readonly float _targetDeltaTime = 1f / (float)targetFrameRate;
+        private readonly float _targetDeltaTime = 1f / targetFrameRate;
         public void Execute()
         {
             var toSleep = _targetDeltaTime - deltaTime.Invoke();

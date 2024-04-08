@@ -4,7 +4,7 @@ using Silk.NET.Vulkan;
 using System;
 
 namespace Delta.Rendering;
-internal readonly struct DeviceQueues: IDisposable
+internal readonly struct DeviceQueues : IDisposable
 {
     private readonly Vk _vk;
 

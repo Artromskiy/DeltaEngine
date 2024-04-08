@@ -15,10 +15,17 @@ internal class Batcher : ISystem
 {
     private readonly Queue<uint> _free;
 
-    private readonly GpuArray<Matrix4x4> _trs;
+
+    /// <summary>
+    /// Contains matrices with world position of each <see cref="Render"/>
+    /// </summary>
+    public readonly GpuArray<Matrix4x4> trs;
+    /// <summary>
+    /// Contains indices to elements of <see cref="trs"/> ordered by <see cref="Render"/>
+    /// </summary>
+    public readonly GpuArray<uint> trsIds; // send to compute to sort trs on device
 
     private readonly GpuArray<uint> _trsTransfer; // send to compute to transfer new trs from host to device
-    private readonly GpuArray<uint> _trsIds; // send to compute to sort trs on device
 
     private readonly PooledSet<uint> _forceTrsWrite;
     private readonly List<uint> _transferIndicesSet;
@@ -37,27 +44,28 @@ internal class Batcher : ISystem
 
     private readonly PooledList<(Render rend, uint count)> _renders = [];
 
-    private readonly ISystem[] jobs;
+    private readonly ISystem[] systems;
 
     public Batcher(World world, RenderBase renderBase)
     {
         _world = world;
-        _trsIds = new GpuArray<uint>(renderBase, 1);
-        _trs = new GpuArray<Matrix4x4>(renderBase, 1);
+        trsIds = new GpuArray<uint>(renderBase, 1);
+        trs = new GpuArray<Matrix4x4>(renderBase, 1);
 
         _trsTransfer = new GpuArray<uint>(renderBase, 1);
+
         _transferIndicesSet = [];
         _forceTrsWrite = [];
-        _free = new Queue<uint>((int)_trs.Length);
-        for (uint i = 0; i < _trs.Length; i++)
+        _free = new Queue<uint>((int)trs.Length);
+        for (uint i = 0; i < trs.Length; i++)
             _free.Enqueue(i);
-        jobs =
+        systems =
         [
              new RemoveRender(_world, _free, _rendGroupData),
              new AddRender(_world, _free, _rendGroupData, _forceTrsWrite),
              new ChangeRender(_world, _rendGroupData),
-             new SortWriteRender(_world, _trsIds, _rendGroupData),
-             new WriteTrs(_world, _trs, _transferIndicesSet, _forceTrsWrite)
+             new SortWriteRender(_world, trsIds, _rendGroupData),
+             new WriteTrs(_world, trs, _transferIndicesSet, _forceTrsWrite)
         ];
     }
 
@@ -69,20 +77,10 @@ internal class Batcher : ISystem
 
         BufferResize();
 
-        foreach (var item in jobs)
+        foreach (var item in systems)
             using (item as IDisposable)
                 item.Execute();
     }
-
-    /// <summary>
-    /// Contains matrices with world position of each <see cref="Render"/>
-    /// </summary>
-    public GpuArray<Matrix4x4> Trs => _trs;
-    public uint TrsCount => (uint)_world.CountEntities(_renderDescription);
-    /// <summary>
-    /// Contains indices to elements of <see cref="Trs"/> ordered by <see cref="Render"/>
-    /// </summary>
-    public GpuArray<uint> TrsIds => _trsIds;
 
     public ReadOnlySpan<(Render rend, uint count)> GetRendGroups()
     {
@@ -103,10 +101,10 @@ internal class Batcher : ISystem
         var delta = countToAdd - wholeFree;
         if (delta > 0)
         {
-            var length = _trs.Length;
+            var length = trs.Length;
             var newLength = BitOperations.RoundUpToPowerOf2((uint)(length + delta));
-            _trs.Resize(newLength);
-            _trsIds.Resize(newLength);
+            trs.Resize(newLength);
+            trsIds.Resize(newLength);
             _free.EnsureCapacity((int)newLength);
             for (uint i = length; i < newLength; i++)
                 _free.Enqueue(i);
@@ -298,7 +296,7 @@ internal class Batcher : ISystem
             if (!rendToGroup.TryGetValue(render, out var group))
             {
                 sortedRendToGroup[render] = rendToGroup[render] = group = new RendGroup((uint)rendToGroup.Count);
-                groupToCount.Add(group, 0);
+                groupToCount[group] = 0;
             }
             groupToCount[group]++;
             return group;

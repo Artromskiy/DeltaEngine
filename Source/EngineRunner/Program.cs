@@ -1,6 +1,7 @@
-﻿using Delta;
+﻿using Delta.ECS.Components;
 using Delta.Runtime;
 using System.Diagnostics;
+using System.Numerics;
 
 //try
 {
@@ -34,7 +35,7 @@ using System.Diagnostics;
             ms = TimeSpan.Zero;
             c = 0;
         }
-        if(timer.TotalSeconds >= 20)
+        if (timer.TotalSeconds >= 20)
         {
             timer = TimeSpan.Zero;
             eng.CreateTestScene();

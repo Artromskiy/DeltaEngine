@@ -10,7 +10,7 @@ namespace DeltaEditor
         {
             string[] arguments = Environment.GetCommandLineArgs();
             bool projectExist = arguments.Length > 1 && Directory.Exists(arguments[1]);
-            string projectPath = projectExist? arguments[1]: Directory.CreateTempSubdirectory().FullName;
+            string projectPath = projectExist ? arguments[1] : Directory.CreateTempSubdirectory().FullName;
 
             var builder = MauiApp.CreateBuilder();
             builder
@@ -30,7 +30,7 @@ namespace DeltaEditor
 #endif
             MauiApp app = builder.Build();
 
-            if(!projectExist)
+            if (!projectExist)
                 new ProjectCreator(app.Services.GetService<RuntimeLoader>()!).FullSetup();
 
             return app;

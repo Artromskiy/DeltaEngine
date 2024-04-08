@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Delta.Rendering.Internal;
+using System.Collections.Generic;
 using System.Numerics;
-using Delta.Rendering.Internal;
 
 namespace Delta.Rendering;
 internal class GpuSet<T> : GpuArray<T> where T : unmanaged

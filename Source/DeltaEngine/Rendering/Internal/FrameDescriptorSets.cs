@@ -3,7 +3,7 @@ using System;
 
 namespace Delta.Rendering.Internal;
 
-internal class FrameDescriptorSets: IDisposable
+internal class FrameDescriptorSets : IDisposable
 {
     private readonly RenderBase _renderBase;
 
@@ -14,7 +14,7 @@ internal class FrameDescriptorSets: IDisposable
 
     private readonly DescriptorSet[] _descriptorSets;
 
-    private DescriptorSet Instance=> _descriptorSets[RendConst.InsSet];
+    private DescriptorSet Instance => _descriptorSets[RendConst.InsSet];
     private DescriptorSet Scene => _descriptorSets[RendConst.ScnSet];
     private DescriptorSet Material => _descriptorSets[RendConst.MatSet];
 
@@ -79,6 +79,6 @@ internal class FrameDescriptorSets: IDisposable
         _renderBase.vk.DestroyBuffer(_renderBase.deviceQ, _ids, null);
         _renderBase.vk.DestroyBuffer(_renderBase.deviceQ, _materials, null);
         _renderBase.vk.DestroyBuffer(_renderBase.deviceQ, _camera, null);
-
     }
+
 }
