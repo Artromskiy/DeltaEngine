@@ -13,7 +13,6 @@ namespace DeltaEditorLib.Scripting
         private readonly IProjectPath _projectPath;
 
         private readonly List<object> _instantiatedObjects = [];
-        public bool SaveObjects { get; set; } = false;
 
         private AssemblyLoadContext _alc;
         private AssemblyLoadContext.ContextualReflectionScope _scope;
@@ -50,13 +49,6 @@ namespace DeltaEditorLib.Scripting
             return alc;
         }
 
-        public void ClearListOfInstantiatedObjects()
-        {
-            _instantiatedObjects.Clear();
-            _oldAlcs.RemoveWhere(r => !r.TryGetTarget(out _));
-            GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, true);
-        }
-
         public void ReloadRuntime()
         {
             Runtime.Running = false;
@@ -75,15 +67,6 @@ namespace DeltaEditorLib.Scripting
                 components.AddRange(GetComponentsNames(assembly));
             foreach (var assembly in AssemblyLoadContext.Default.Assemblies)
                 components.AddRange(GetComponentsNames(assembly));
-
-            object? obj = null;
-
-            foreach (var assembly in AssemblyLoadContext.CurrentContextualReflectionContext!.Assemblies)
-                foreach (var type in assembly.GetTypes())
-                    if (type.GetCustomAttribute<ComponentAttribute>() != null)
-                        obj = Activator.CreateInstance(type);
-            if (SaveObjects && obj != null)
-                _instantiatedObjects.Add(obj);
 
             return components;
         }

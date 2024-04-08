@@ -3,97 +3,132 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="DeltaEditor.MainPage">
 
-    <HorizontalStackLayout
-        Padding="30"
-        Spacing="25">
-        
-        <ScrollView>
-        <VerticalStackLayout
-            Padding="30,0"
-            Spacing="25">
-            <Image
-                Source="dotnet_bot.png"
-                HeightRequest="185"
-                Aspect="AspectFit"
-                SemanticProperties.Description="dot net bot in a race car number eight" />
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-            <Label
-                Text="Hello, World!"
-                Style="{StaticResource Headline}"
-                SemanticProperties.HeadingLevel="Level1" />
+        <Frame Grid.Row="0"
+               HorizontalOptions="FillAndExpand"
+               BackgroundColor="{StaticResource PrimaryDarkest}"
+               Padding="0"
+               CornerRadius="0"
+               Margin="0">
+            <HorizontalStackLayout x:Name="TopMenu"
+                                   HorizontalOptions="Center">
+                <ImageButton x:Name="PlayButton"
+                             Clicked="PlayButton_Clicked"
+                             Source="play.png"
+                             BackgroundColor="{StaticResource PrimaryDark}"
+                             CornerRadius="5"
+                             Padding="10"
+                             Margin="5,0,5,0"
+                             HeightRequest="25"
+                             WidthRequest="25"
+                             Aspect="AspectFit" />
 
-            <Label
-                Text="Welcome to &#10;.NET Multi-platform App UI"
-                Style="{StaticResource SubHeadline}"
-                SemanticProperties.HeadingLevel="Level2"
-                SemanticProperties.Description="Welcome to dot net Multi platform App U I" />
+                <ImageButton x:Name="PauseButton"
+                             Clicked="PauseButton_Clicked"
+                             Source="pause.png"
+                             BackgroundColor="{StaticResource PrimaryDark}"
+                             CornerRadius="5"
+                             Padding="10"
+                             Margin="5,0,5,0"
+                             HeightRequest="25"
+                             WidthRequest="25"
+                             Aspect="AspectFit" />
 
-            <Button
-                x:Name="CreateSceneButton"
-                Text="Create new scene" 
-                Clicked="CreateScene"
-                HorizontalOptions="Fill" />
+                <ImageButton x:Name="NextButton"
+                             Clicked="NextButton_Clicked"
+                             Source="next.png"
+                             BackgroundColor="{StaticResource PrimaryDark}"
+                             CornerRadius="5"
+                             Padding="10"
+                             Margin="5,0,5,0"
+                             HeightRequest="25"
+                             WidthRequest="25"
+                             Aspect="AspectFit" />
+            </HorizontalStackLayout>
+        </Frame>
 
-            <Switch
-                x:Name="RunSceneSwitch"
-                OnColor="Green"
-                IsToggled="False"
-                Toggled="RunScene"
-                ThumbColor="DarkGrey" />
 
-            <Button
-                x:Name="SaveSceneButton"
-                Text="Save scene" 
-                Clicked="SaveScene"
-                HorizontalOptions="Fill" />
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-            <Button
-                x:Name="CompileButton"
-                Text="Try compile project" 
-                Clicked="TryCompile"
-                HorizontalOptions="Fill" />
+            <VerticalStackLayout Grid.Column="0"
+                                 MinimumWidthRequest="300"
+                                 VerticalOptions="FillAndExpand"
+                                 BackgroundColor="{StaticResource PrimaryDarkest}">
+                <Label Text="Hierarchy"
+                       Padding="10"
+                       FontSize="Subtitle" />
+                <ScrollView>
+                    <VerticalStackLayout x:Name="HierarchyStack"
+                                         Padding="30,0">
+                    </VerticalStackLayout>
+                </ScrollView>
+            </VerticalStackLayout>
 
-            <Button
-                x:Name="ClearButton"
-                Text="Clear Objects" 
-                Clicked="ClearList"
-                HorizontalOptions="Fill" />
+            <ScrollView Grid.Column="1">
+                <VerticalStackLayout Padding="30,0"
+                                     Spacing="25">
 
-            <Switch
-                x:Name="SaveObjects"
-                OnColor="Green"
-                IsToggled="False"
-                Toggled="SetSaveObjects"
-                ThumbColor="DarkGrey" />
+                    <Button x:Name="CreateSceneButton"
+                            Text="Create new scene"
+                            Clicked="CreateScene"
+                            HorizontalOptions="Fill" />
 
-            <Button
-                x:Name="OpenProjectButton"
-                Text="Open project folder" 
-                Clicked="OpenProjectFolder"
-                HorizontalOptions="Fill" />
+                    <Switch x:Name="RunSceneSwitch"
+                            OnColor="Green"
+                            IsToggled="False"
+                            Toggled="RunScene"
+                            ThumbColor="DarkGrey" />
 
-            <Picker x:Name="CompPicker"
-                Title="Select a monkey">
-                <Picker.ItemsSource>
-                    <x:Array Type="{x:Type x:String}">
-                        <x:String>Baboon</x:String>
-                        <x:String>Capuchin Monkey</x:String>
-                        <x:String>Blue Monkey</x:String>
-                        <x:String>Squirrel Monkey</x:String>
-                        <x:String>Golden Lion Tamarin</x:String>
-                        <x:String>Howler Monkey</x:String>
-                        <x:String>Japanese Macaque</x:String>
-                    </x:Array>
-                </Picker.ItemsSource>
-            </Picker>
+                    <Button x:Name="SaveSceneButton"
+                            Text="Save scene"
+                            Clicked="SaveScene"
+                            HorizontalOptions="Fill" />
 
-        </VerticalStackLayout>
-        </ScrollView>
-        <VerticalStackLayout
-            x:Name="InspectorView"
-            Padding="30"
-            Spacing="25">
-        </VerticalStackLayout>
-    </HorizontalStackLayout>
+                    <Button x:Name="CompileButton"
+                            Text="Try compile project"
+                            Clicked="TryCompile"
+                            HorizontalOptions="Fill" />
 
+                    <Button x:Name="OpenProjectButton"
+                            Text="Open project folder"
+                            Clicked="OpenProjectFolder"
+                            HorizontalOptions="Fill" />
+
+                    <Picker x:Name="CompPicker"
+                            Title="Select a monkey" />
+
+
+                </VerticalStackLayout>
+            </ScrollView>
+
+
+            <VerticalStackLayout Grid.Column="2"
+                                 BackgroundColor="{StaticResource PrimaryDarkest}">
+                <Label Text="Inspector"
+                       Padding="10"
+                       FontSize="Subtitle" />
+                <ScrollView>
+                    <VerticalStackLayout x:Name="InspectorStack"
+                                         Padding="30,0">
+                    </VerticalStackLayout>
+                </ScrollView>
+            </VerticalStackLayout>
+
+        </Grid>
+
+    </Grid>
+    
 </ContentPage>

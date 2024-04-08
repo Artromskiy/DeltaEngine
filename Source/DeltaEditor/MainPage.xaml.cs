@@ -23,16 +23,6 @@ namespace DeltaEditor
             Runtime.CreateTestScene();
         }
 
-        private void ClearList(object sender, EventArgs e)
-        {
-            _runtimeLoader.ClearListOfInstantiatedObjects();
-        }
-
-        private void SetSaveObjects(object sender, ToggledEventArgs e)
-        {
-            _runtimeLoader.SaveObjects = e.Value;
-        }
-
         private void RunScene(object sender, ToggledEventArgs e)
         {
             Runtime.Running = e.Value;
@@ -51,7 +41,8 @@ namespace DeltaEditor
 
         private void UpdateData()
         {
-            InspectorView.Children.Clear();
+            HierarchyStack.Children.Clear();
+            InspectorStack.Children.Clear();
             //_runtimeLoader.Runtime.
         }
 
@@ -72,6 +63,21 @@ namespace DeltaEditor
                 monkeyNameLabel.Text = (string)picker.ItemsSource[selectedIndex];
             }
             */
+        }
+
+        private void PlayButton_Clicked(object sender, EventArgs e)
+        {
+
+        }
+
+        private void PauseButton_Clicked(object sender, EventArgs e)
+        {
+
+        }
+
+        private void NextButton_Clicked(object sender, EventArgs e)
+        {
+
         }
     }
 }

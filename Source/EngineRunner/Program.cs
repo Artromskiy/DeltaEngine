@@ -1,7 +1,5 @@
-﻿using Delta.ECS.Components;
-using Delta.Runtime;
+﻿using Delta.Runtime;
 using System.Diagnostics;
-using System.Numerics;
 
 //try
 {
