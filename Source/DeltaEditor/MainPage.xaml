@@ -3,53 +3,75 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="DeltaEditor.MainPage">
 
+    <ContentPage.MenuBarItems>
+        <MenuBarItem Text="File">
+            <MenuFlyoutItem Text="Open project folder"
+                            Clicked="OpenProjectFolder" />
+        </MenuBarItem>
+    </ContentPage.MenuBarItems>
+
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="40" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="0" />
         </Grid.RowDefinitions>
-
-        <Frame Grid.Row="0"
+        <Frame x:Name="TopMenu"
+               Grid.Row="0"
                HorizontalOptions="FillAndExpand"
                BackgroundColor="{StaticResource PrimaryDarkest}"
                Padding="0"
                CornerRadius="0"
                Margin="0">
-            <HorizontalStackLayout x:Name="TopMenu"
-                                   HorizontalOptions="Center">
+            <Grid HorizontalOptions="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Switch IsToggled="False"
+                        Toggled="RunScene"
+                        ThumbColor="DarkGrey"
+                        Grid.Column="0" />
+                <!--
                 <ImageButton x:Name="PlayButton"
                              Clicked="PlayButton_Clicked"
                              Source="play.png"
                              BackgroundColor="{StaticResource PrimaryDark}"
                              CornerRadius="5"
-                             Padding="10"
+                             Padding="8"
                              Margin="5,0,5,0"
-                             HeightRequest="25"
-                             WidthRequest="25"
-                             Aspect="AspectFit" />
-
+                             Aspect="AspectFit"
+                             MinimumHeightRequest="0"
+                             MinimumWidthRequest="0"
+                             Grid.Column="0" />
+                -->
                 <ImageButton x:Name="PauseButton"
                              Clicked="PauseButton_Clicked"
                              Source="pause.png"
                              BackgroundColor="{StaticResource PrimaryDark}"
                              CornerRadius="5"
-                             Padding="10"
+                             Padding="8"
                              Margin="5,0,5,0"
-                             HeightRequest="25"
-                             WidthRequest="25"
-                             Aspect="AspectFit" />
+                             Aspect="AspectFit"
+                             MinimumHeightRequest="0"
+                             MinimumWidthRequest="0"
+                             Grid.Column="1" />
 
                 <ImageButton x:Name="NextButton"
                              Clicked="NextButton_Clicked"
                              Source="next.png"
                              BackgroundColor="{StaticResource PrimaryDark}"
                              CornerRadius="5"
-                             Padding="10"
+                             Padding="8"
                              Margin="5,0,5,0"
-                             HeightRequest="25"
-                             WidthRequest="25"
-                             Aspect="AspectFit" />
-            </HorizontalStackLayout>
+                             Aspect="AspectFit"
+                             MinimumHeightRequest="0"
+                             MinimumWidthRequest="0"
+                             Grid.Column="2" />
+            </Grid>
         </Frame>
 
 
@@ -70,11 +92,16 @@
                 <Label Text="Hierarchy"
                        Padding="10"
                        FontSize="Subtitle" />
-                <ScrollView>
-                    <VerticalStackLayout x:Name="HierarchyStack"
-                                         Padding="30,0">
-                    </VerticalStackLayout>
-                </ScrollView>
+
+                <ListView x:Name="HierarchyListView"
+                          ItemSelected="HierarchyListView_ItemSelected">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <TextCell Text="{Binding Name}" />
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+
             </VerticalStackLayout>
 
             <ScrollView Grid.Column="1">
@@ -86,12 +113,6 @@
                             Clicked="CreateScene"
                             HorizontalOptions="Fill" />
 
-                    <Switch x:Name="RunSceneSwitch"
-                            OnColor="Green"
-                            IsToggled="False"
-                            Toggled="RunScene"
-                            ThumbColor="DarkGrey" />
-
                     <Button x:Name="SaveSceneButton"
                             Text="Save scene"
                             Clicked="SaveScene"
@@ -102,33 +123,46 @@
                             Clicked="TryCompile"
                             HorizontalOptions="Fill" />
 
-                    <Button x:Name="OpenProjectButton"
-                            Text="Open project folder"
-                            Clicked="OpenProjectFolder"
+                    <Button x:Name="UpdateHierarchyButton"
+                            Text="Update Hierarchy"
+                            Clicked="UpdateHierarchyButton_Clicked"
                             HorizontalOptions="Fill" />
-
-                    <Picker x:Name="CompPicker"
-                            Title="Select a monkey" />
 
 
                 </VerticalStackLayout>
             </ScrollView>
 
-
             <VerticalStackLayout Grid.Column="2"
-                                 BackgroundColor="{StaticResource PrimaryDarkest}">
+                                 VerticalOptions="FillAndExpand">
                 <Label Text="Inspector"
                        Padding="10"
                        FontSize="Subtitle" />
-                <ScrollView>
-                    <VerticalStackLayout x:Name="InspectorStack"
-                                         Padding="30,0">
+
+                <ScrollView VerticalOptions="FillAndExpand"
+                            VerticalScrollBarVisibility="Always">
+                    <VerticalStackLayout x:Name="NewInspectorListView"
+                                         VerticalOptions="FillAndExpand"
+                                         HorizontalOptions="FillAndExpand">
+
                     </VerticalStackLayout>
                 </ScrollView>
+
+                <Picker x:Name="InspectorAvaliableComponents"
+                        ItemDisplayBinding="{Binding Name}"
+                        Title="Add Component"
+                        HorizontalOptions="Center" />
+
             </VerticalStackLayout>
 
         </Grid>
+<!--
+        <Frame x:Name="ProjectFrame"
+               Grid.Row="2">
+            <Label Text="Project">
 
+            </Label>
+        </Frame>
+-->
     </Grid>
-    
+
 </ContentPage>

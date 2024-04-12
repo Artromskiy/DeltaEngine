@@ -3,6 +3,7 @@ using Arch.Core.Extensions;
 using Delta.Runtime;
 using Delta.Scripting;
 using Microsoft.CodeAnalysis;
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.Loader;
 
@@ -20,6 +21,8 @@ namespace DeltaEditorLib.Scripting
 
         private readonly HashSet<WeakReference<AssemblyLoadContext>> _oldAlcs = [];
 
+        private readonly HashSet<Type> _components = [];
+
         public IRuntime Runtime { get; private set; }
 
         public RuntimeLoader(IProjectPath projectPath)
@@ -28,12 +31,13 @@ namespace DeltaEditorLib.Scripting
             _compileHelper = new(_projectPath);
 
             _alc = Recompile();
+
             Runtime = new Runtime(_projectPath);
         }
 
         private AssemblyLoadContext Recompile()
         {
-            var dllPath = _compileHelper.TryCompile();
+            var scriptingDll = _compileHelper.CompileScripts();
 
             _scope.Dispose();
             _alc?.Unload();
@@ -45,7 +49,16 @@ namespace DeltaEditorLib.Scripting
 
             var alc = new AssemblyLoadContext("Scripting", true);
             _scope = alc.EnterContextualReflection();
-            alc.LoadFromAssemblyPath(dllPath);
+            alc.LoadFromAssemblyPath(scriptingDll);
+
+            _components.Clear();
+            _components.UnionWith(GetComponents());
+
+            var accessorsDll = _compileHelper.CompileAccessors(_components);
+            var accessorsAssembly = alc.LoadFromAssemblyPath(accessorsDll);
+            var accessorType = accessorsAssembly.GetTypes().Where(t => typeof(IAccessorsContainer).IsAssignableFrom(t)).FirstOrDefault();
+            var accessor = Activator.CreateInstance(accessorType) as IAccessorsContainer;
+
             return alc;
         }
 
@@ -60,23 +73,9 @@ namespace DeltaEditorLib.Scripting
             return;
         }
 
-        public List<string> GetComponentsNames()
-        {
-            List<string> components = [];
-            foreach (var assembly in AssemblyLoadContext.CurrentContextualReflectionContext!.Assemblies)
-                components.AddRange(GetComponentsNames(assembly));
-            foreach (var assembly in AssemblyLoadContext.Default.Assemblies)
-                components.AddRange(GetComponentsNames(assembly));
+        public List<Type> Components => new(_components);
+        public List<EntityReference> GetEntities() => Runtime.GetEntities();
 
-            return components;
-        }
-
-        private static IEnumerable<string> GetComponentsNames(Assembly assembly)
-        {
-            return assembly.GetTypes().
-                Where(type => type.GetCustomAttribute<ComponentAttribute>() != null).
-                Select(x => x.Name);
-        }
 
         private void ConvertEntityToJson()
         {
@@ -86,9 +85,31 @@ namespace DeltaEditorLib.Scripting
             //components[0].;
         }
 
-        private static List<Type> GetComponentTypes(Assembly assembly) => assembly.
-            GetTypes().
-            Where(type => type.GetCustomAttribute<ComponentAttribute>() != null).
-            ToList();
+
+        private static IEnumerable<Type> GetComponents()
+        {
+            var contextAssemblies = AssemblyLoadContext.CurrentContextualReflectionContext!.Assemblies;
+            var mainAssemblies = AssemblyLoadContext.Default.Assemblies;
+            return contextAssemblies.Select(GetComponents).
+                Concat(AssemblyLoadContext.Default.Assemblies.Select(GetComponents)).
+                SelectMany(type => type);
+        }
+
+        private static IEnumerable<Type> GetComponents(Assembly assembly)
+        {
+            return assembly.GetTypes().
+                Where(type => type.GetCustomAttribute<ComponentAttribute>() != null);
+        }
+
+        public void OpenProjectFolder()
+        {
+            try
+            {
+                if (Directory.Exists(_projectPath.RootDirectory))
+                    Process.Start("explorer.exe", _projectPath.RootDirectory);
+            }
+            catch { }
+        }
     }
+
 }

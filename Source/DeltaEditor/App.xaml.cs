@@ -6,10 +6,7 @@ namespace DeltaEditor
         public App()
         {
             InitializeComponent();
-            MainPage = new AppShell()
-            {
-                Title = "Delta",
-            };
+            MainPage = new AppShell();
         }
     }
 }

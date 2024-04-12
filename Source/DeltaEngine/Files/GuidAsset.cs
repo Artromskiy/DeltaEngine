@@ -6,8 +6,9 @@ using System.Text.Json.Serialization;
 namespace Delta.Files;
 
 public interface IAsset { }
+public interface IGuid { Guid GetGuid(); }
 
-public readonly struct GuidAsset<T> : IEquatable<GuidAsset<T>>, IComparable<GuidAsset<T>> where T : class, IAsset
+public readonly struct GuidAsset<T> : IGuid, IEquatable<GuidAsset<T>>, IComparable<GuidAsset<T>> where T : class, IAsset
 {
     public readonly Guid guid;
 
@@ -15,6 +16,7 @@ public readonly struct GuidAsset<T> : IEquatable<GuidAsset<T>>, IComparable<Guid
     internal GuidAsset(Guid guid) => this.guid = guid;
 
     public readonly T GetAsset() => IRuntimeContext.Current.AssetImporter.GetAsset(this);
+    public readonly Guid GetGuid() => guid;
 
     [MethodImpl(Inl)]
     public static implicit operator T(GuidAsset<T> guidAsset) => IRuntimeContext.Current.AssetImporter.GetAsset(guidAsset);

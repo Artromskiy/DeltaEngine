@@ -4,7 +4,7 @@ using System.Numerics;
 namespace Delta.ECS.Components;
 
 [Component]
-internal struct Camera
+public struct Camera
 {
     public Matrix4x4 projection;
 }

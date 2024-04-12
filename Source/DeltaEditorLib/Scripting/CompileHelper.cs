@@ -2,8 +2,10 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CodeAnalysis.Text;
 using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 
 namespace DeltaEditorLib.Scripting
@@ -11,10 +13,13 @@ namespace DeltaEditorLib.Scripting
     internal class CompileHelper(IProjectPath projectPath)
     {
         private const string CsSearch = "*.cs";
-        private const string DllName = "Scripts.dll";
+        private const string ScriptsDllName = "Scripts.dll";
+
+        private const string AccessorsDllName = "Accessors.dll";
+
         private readonly IProjectPath _projectPath = projectPath;
-        private readonly string dllPath = Path.Combine(projectPath.RootDirectory, DllName);
-        private string RandomDllName => Path.Combine(_projectPath.RootDirectory, Path.GetRandomFileName() + DllName);
+        private readonly string dllPath = Path.Combine(projectPath.RootDirectory, ScriptsDllName);
+        private string RandomDllName => Path.Combine(_projectPath.RootDirectory, Path.GetRandomFileName() + ScriptsDllName);
 
 
         private static readonly CSharpParseOptions _parseOptions = new(LanguageVersion.CSharp12);
@@ -25,7 +30,7 @@ namespace DeltaEditorLib.Scripting
         );
 
 
-        public string TryCompile()
+        public string CompileScripts()
         {
             var sourceFiles = Directory.EnumerateFiles(_projectPath.RootDirectory, CsSearch, SearchOption.AllDirectories);
             var trees = sourceFiles.Select(x =>
@@ -34,13 +39,44 @@ namespace DeltaEditorLib.Scripting
                 return CSharpSyntaxTree.ParseText(SourceText.From(stream), _parseOptions);
             });
 
+            var references = GetReferences(trees);
+
+            var compilation = CSharpCompilation.Create(ScriptsDllName, trees, references, _compilationOptions);
+
+            var dllPath = RandomDllName;
+            var result = compilation.Emit(dllPath);
+
+            LogCompilation(result);
+
+            return dllPath;
+        }
+
+        public string CompileAccessors(HashSet<Type> components)
+        {
+            AccessorGenerator generator = new();
+            var code = generator.GenerateAccessors(components);
+            SyntaxTree[] trees = [CSharpSyntaxTree.ParseText(SourceText.From(code), _parseOptions)];
+
+            var references = GetReferences(trees);
+
+            var compilation = CSharpCompilation.Create(AccessorsDllName, trees, references, _compilationOptions);
+
+            var dllPath = RandomDllName;
+            var result = compilation.Emit(dllPath);
+
+            LogCompilation(result);
+
+            return dllPath;
+        }
+
+
+        private List<MetadataReference> GetReferences(IEnumerable<SyntaxTree> trees)
+        {
             MetadataReference mscorlib = MetadataReference.CreateFromFile(typeof(object).Assembly.Location);
             MetadataReference engineLib = MetadataReference.CreateFromFile(typeof(IRuntime).Assembly.Location);
-
-            string assemblyPath = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
-
             List<MetadataReference> references = [mscorlib, engineLib];
 
+            string assemblyPath = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
             references.AddRange(Assembly.
                 GetEntryAssembly()!.
                 GetReferencedAssemblies().
@@ -55,16 +91,13 @@ namespace DeltaEditorLib.Scripting
             Select(u => Path.Combine(assemblyPath, u!.ToString() + ".dll")).
             Where(File.Exists).
             Select(p => MetadataReference.CreateFromFile(p)));
+            return references;
+        }
 
-            var compilation = CSharpCompilation.Create(DllName, trees, references, _compilationOptions);
-
-            var dllPath = RandomDllName;
-            var result = compilation.Emit(dllPath);
-
+        private static void LogCompilation(EmitResult result)
+        {
             foreach (var item in result.Diagnostics)
                 Debug.WriteLine(item.GetMessage());
-
-            return dllPath;
         }
     }
 }

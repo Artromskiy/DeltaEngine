@@ -7,8 +7,11 @@ namespace Delta.ECS.Components;
 [Component]
 public struct Transform : IDirty
 {
+    [Editable]
     public Vector3 position;
+    [Editable]
     public Quaternion rotation;
+    [Editable]
     public Vector3 scale;
 
     public readonly Matrix4x4 LocalMatrix
