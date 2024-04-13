@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 namespace Delta.ECS.Components;
 
 [Component]
-internal struct Render : IEquatable<Render>, IDirty, IComparable<Render>
+public struct Render : IEquatable<Render>, IDirty, IComparable<Render>
 {
     internal GuidAsset<ShaderData> _shader;
     internal GuidAsset<MaterialData> _material;
@@ -37,6 +37,7 @@ internal struct Render : IEquatable<Render>, IDirty, IComparable<Render>
     public override readonly bool Equals(object? obj) => obj is Render render && Equals(render);
     [MethodImpl(Inl)]
     public override readonly int GetHashCode() => HashCode.Combine(_shader, _material, Mesh);
+    [MethodImpl(Inl)]
     public readonly int CompareTo(Render other)
     {
         var byShader = _shader.CompareTo(other._shader);
@@ -44,4 +45,9 @@ internal struct Render : IEquatable<Render>, IDirty, IComparable<Render>
         var byMesh = Mesh.CompareTo(other.Mesh);
         return byShader == 0 ? byMaterial == 0 ? byMesh == 0 ? 1 : byMesh : byMaterial : byShader;
     }
+
+    [MethodImpl(Inl)]
+    public static bool operator ==(Render left, Render right)=> left.Equals(right);
+    [MethodImpl(Inl)]
+    public static bool operator !=(Render left, Render right)=> !(left == right);
 }

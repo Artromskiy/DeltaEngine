@@ -6,52 +6,76 @@ namespace DeltaEditor
 {
     public class ComponentEditor : ContentView
     {
-
-        private readonly HashSet<object> _processedObjects = [];
-
-        public ComponentEditor(object component)
+        //private readonly HashSet<object> _processedObjects = [];
+        //private readonly IAccessorsContainer _accessors;
+        private ComponentEditor(View view)
         {
-            Content = GenerateEditor(component, component.GetType().Name);
+            Content = view;
         }
 
-        private View GenerateEditor(object obj, string propertyName)
+        public static ComponentEditor? Create(object component, IAccessorsContainer accessors)
         {
-            if (_processedObjects.Contains(obj))
+            HashSet<object> visited = [];
+            var editor  = GenerateEditor(component, component.GetType().Name, accessors, visited);
+            if (editor != null)
+                return new ComponentEditor(editor);
+            return null;
+        }
+
+        private static View? GenerateEditor(object obj, string propertyName, IAccessorsContainer accessors, HashSet<object> visited)
+        {
+            if (visited.Contains(obj) || !obj.GetType().IsPublic)
             {
-                return new ContentView();
+                return null;
             }
 
-            _processedObjects.Add(obj);
+            visited.Add(obj);
 
-            var stackLayout = new StackLayout();
 
-            stackLayout.Children.Add(new Label { Text = propertyName });
-
+            accessors.AllAccessors.TryGetValue(obj.GetType(), out var accessor);
+            List<View> views = [];
+            foreach (var fieldName in accessor.FieldNames)
+            {
+                var fieldData = accessor.GetFieldValue(ref obj, fieldName);
+                var editorForProp = CreateEditorForProperty(fieldName, fieldData, accessors, visited);
+                if (editorForProp != null)
+                    views.Add(editorForProp);
+            }
+            StackLayout? stackLayout = null;
+            if (views.Count != 0)
+            {
+                stackLayout = [new Label { Text = propertyName }];
+                foreach (var view in views)
+                    stackLayout.Children.Add(view);
+            }
             /*
             foreach (var property in obj.GetType().GetProperties())
                 if (property.CanWrite && property.CanRead && (property.GetGetMethod()?.IsPublic == true || property.IsDefined(typeof(EditableAttribute))))
                     stackLayout.Children.Add(CreateEditorForProperty(property.Name, property.GetValue(obj)));
             */
-
+            /*
             foreach (var field in obj.GetType().GetFields())
                 if ((!field.IsStatic && field.IsPublic) || field.IsDefined(typeof(EditableAttribute), false))
                     stackLayout.Children.Add(CreateEditorForProperty(field.Name, field.GetValue(obj)));
-
+            */
             return stackLayout;
         }
 
-        private static StackLayout CreateEditorForProperty(string propertyName, object value)
+        private static StackLayout? CreateEditorForProperty(string propertyName, object value, IAccessorsContainer accessors, HashSet<object> visited)
         {
-            var stackLayout = new StackLayout();
+            StackLayout? stackLayout = null;
 
-            stackLayout.Children.Add(new Label { Text = propertyName });
-
-            stackLayout.Children.Add(CreateView(value));
+            var view = CreateView(value, accessors, visited);
+            if (view != null)
+            {
+                stackLayout = [new Label { Text = propertyName }];
+                stackLayout.Children.Add(view);
+            }
 
             return stackLayout;
         }
 
-        private static View CreateView(object value)
+        private static View? CreateView(object value, IAccessorsContainer accessors, HashSet<object> visited)
         {
             return value switch
             {
@@ -60,14 +84,14 @@ namespace DeltaEditor
                 Quaternion quat => Quaternion3View(quat),
                 Matrix4x4 mat4 => Matrix4x4View(mat4),
                 IGuid => GuidAssetView(value),
-                _ => DefaultView(value)
+                _ => DefaultView(value, accessors, visited)
             };
         }
 
-        static View DefaultView(object value)
+        private static View? DefaultView(object value, IAccessorsContainer accessors, HashSet<object> visited)
         {
             if (value != null && !value.GetType().IsPrimitive && value.GetType() != typeof(string))
-                return new ComponentEditor(value);
+                return GenerateEditor(value, value.GetType().Name, accessors, visited);
             else
                 return new Entry { Text = value?.ToString() };
         }

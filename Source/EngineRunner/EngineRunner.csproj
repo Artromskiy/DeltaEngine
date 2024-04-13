@@ -7,6 +7,7 @@
     <Nullable>enable</Nullable>
     <StripSymbols>true</StripSymbols>
     <Configurations>Debug;Release;DebugPerf;Perf</Configurations>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

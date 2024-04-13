@@ -107,11 +107,15 @@ namespace DeltaEditor
 
             foreach (var componentEditor in _inspectorComponentsEditors)
                 NewInspectorListView.Remove(componentEditor);
-
+            _inspectorComponentsEditors.Clear();
             foreach (var component in components)
             {
-                component.GetType().IsDefined(typeof(ComponentAttribute), false);
-                var componentEditor = new ComponentEditor(component);
+                var type = component.GetType();
+                if (!_runtimeLoader.AccessorsContainer.AllAccessors.ContainsKey(type))
+                    continue;
+                var componentEditor = ComponentEditor.Create(component, _runtimeLoader.AccessorsContainer);
+                if (componentEditor == null)
+                    continue;
                 NewInspectorListView.Add(componentEditor);
                 _inspectorComponentsEditors.Add(componentEditor);
             }

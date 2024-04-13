@@ -132,7 +132,6 @@ public class Runtime : IRuntime, IDisposable
         _disposed = true;
     }
 
-
     public readonly EventWaitHandle loopStart = new(false, EventResetMode.ManualReset);
     public readonly EventWaitHandle loopEnded = new(true, EventResetMode.ManualReset);
 

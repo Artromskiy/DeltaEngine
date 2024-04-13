@@ -1,5 +1,4 @@
 ﻿using Arch.Core;
-using Arch.Core.Extensions;
 using Delta.Runtime;
 using Delta.Scripting;
 using Microsoft.CodeAnalysis;
@@ -15,7 +14,7 @@ namespace DeltaEditorLib.Scripting
 
         private readonly List<object> _instantiatedObjects = [];
 
-        private AssemblyLoadContext _alc;
+        private AssemblyLoadContext LoadContext;
         private AssemblyLoadContext.ContextualReflectionScope _scope;
         private readonly CompileHelper _compileHelper;
 
@@ -24,67 +23,76 @@ namespace DeltaEditorLib.Scripting
         private readonly HashSet<Type> _components = [];
 
         public IRuntime Runtime { get; private set; }
+        public IAccessorsContainer AccessorsContainer { get; private set; }
 
         public RuntimeLoader(IProjectPath projectPath)
         {
             _projectPath = projectPath;
             _compileHelper = new(_projectPath);
 
-            _alc = Recompile();
+            LoadContext = NewLoadContext();
+            Compile();
+
+            _components.UnionWith(GetComponents());
+            AccessorsContainer = (Activator.CreateInstance(AccessorsContainerType()) as IAccessorsContainer)!;
 
             Runtime = new Runtime(_projectPath);
-        }
-
-        private AssemblyLoadContext Recompile()
-        {
-            var scriptingDll = _compileHelper.CompileScripts();
-
-            _scope.Dispose();
-            _alc?.Unload();
-
-            _oldAlcs.RemoveWhere(r => !r.TryGetTarget(out _));
-
-            if (_alc != null)
-                _oldAlcs.Add(new WeakReference<AssemblyLoadContext>(_alc, false));
-
-            var alc = new AssemblyLoadContext("Scripting", true);
-            _scope = alc.EnterContextualReflection();
-            alc.LoadFromAssemblyPath(scriptingDll);
-
-            _components.Clear();
-            _components.UnionWith(GetComponents());
-
-            var accessorsDll = _compileHelper.CompileAccessors(_components);
-            var accessorsAssembly = alc.LoadFromAssemblyPath(accessorsDll);
-            var accessorType = accessorsAssembly.GetTypes().Where(t => typeof(IAccessorsContainer).IsAssignableFrom(t)).FirstOrDefault();
-            var accessor = Activator.CreateInstance(accessorType) as IAccessorsContainer;
-
-            return alc;
         }
 
         public void ReloadRuntime()
         {
-            Runtime.Running = false;
-
-            _alc = Recompile();
-
             Runtime.Dispose();
+            Runtime = null;
+            UnloadContext();
+            LoadContext = NewLoadContext();
+            Compile();
+
+            _components.UnionWith(GetComponents());
+            AccessorsContainer = (Activator.CreateInstance(AccessorsContainerType()) as IAccessorsContainer)!;
+
             Runtime = new Runtime(_projectPath);
             return;
         }
 
-        public List<Type> Components => new(_components);
-        public List<EntityReference> GetEntities() => Runtime.GetEntities();
-
-
-        private void ConvertEntityToJson()
+        private void Compile()
         {
-            Entity entity = Entity.Null;
-            var components = entity.GetComponentTypes();
-            //jsonchema
-            //components[0].;
+            var scriptingDll = _compileHelper.CompileScripts();
+            LoadContext.LoadFromAssemblyPath(scriptingDll);
+            HashSet<Type> components = new(GetComponents());
+            var accessorsDll = _compileHelper.CompileAccessors(components);
+            LoadContext.LoadFromAssemblyPath(accessorsDll);
         }
 
+
+        private AssemblyLoadContext NewLoadContext()
+        {
+            var loadContext = new AssemblyLoadContext("Scripting", true);
+            _scope = loadContext.EnterContextualReflection();
+            return loadContext;
+        }
+
+        private void UnloadContext()
+        {
+            _components.Clear();
+            AccessorsContainer = null;
+            _scope.Dispose();
+            _scope = default;
+            LoadContext?.Unload();
+            if (LoadContext != null)
+                _oldAlcs.Add(new WeakReference<AssemblyLoadContext>(LoadContext, false));
+            LoadContext = null;
+            _oldAlcs.RemoveWhere(r => !r.TryGetTarget(out _));
+        }
+
+
+        public List<Type> Components => new(_components);
+
+        private static Type AccessorsContainerType()
+        {
+            var contextAssemblies = AssemblyLoadContext.CurrentContextualReflectionContext!.Assemblies;
+            var contextTypes = contextAssemblies.SelectMany(x => x.GetTypes());
+            return contextTypes.Where(t => typeof(IAccessorsContainer).IsAssignableFrom(t)).FirstOrDefault();
+        }
 
         private static IEnumerable<Type> GetComponents()
         {
