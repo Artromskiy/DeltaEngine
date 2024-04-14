@@ -6,6 +6,9 @@ from C# via PInvoke has a fixed overhead of 10-30 x86 instructions, for example,
 Third-party technologies:
 
 Silk.NET bindings library  (https://github.com/dotnet/Silk.NET)
+
 Arch ECS library (https://github.com/genaray/Arch)
+
 Roslyn compiler (https://github.com/dotnet/roslyn)
+
 MAUI framework (https://github.com/dotnet/maui)
