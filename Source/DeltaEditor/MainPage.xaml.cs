@@ -2,7 +2,7 @@
 using Arch.Core.Extensions;
 using Delta.ECS.Components;
 using Delta.Runtime;
-using Delta.Scripting;
+using DeltaEditor.Inspector;
 using DeltaEditorLib.Scripting;
 using System.Collections.ObjectModel;
 
@@ -15,18 +15,20 @@ namespace DeltaEditor
         private IRuntime Runtime => _runtimeLoader.Runtime;
 
         private readonly ObservableCollection<HierarchyEntityView> _entities = [];
-        private readonly ObservableCollection<InspectorComponentView> _components = [];
-        private readonly ObservableCollection<InspectorAvaliableComponent> _avaliableComponents = [];
 
-        private List<ContentView> _inspectorComponentsEditors = [];
+        private readonly InspectorView _inspector;
+
 
         public MainPage(RuntimeLoader runtimeLoader, IProjectPath projectData)
         {
             _runtimeLoader = runtimeLoader;
             _projectPath = projectData;
             InitializeComponent();
+            _inspector = new InspectorView(_runtimeLoader.AccessorsContainer, _runtimeLoader.Components);
             HierarchyListView.ItemsSource = _entities;
-            InspectorAvaliableComponents.ItemsSource = _avaliableComponents;
+            InspectorAvaliableComponents.ItemsSource = _inspector.AvaliableComponents;
+            InspectorScrollView.Content = _inspector;
+            _runtimeLoader.RuntimeLoaderCall += UpdateInspectors;
         }
 
         private void CreateScene(object sender, EventArgs e)
@@ -47,8 +49,8 @@ namespace DeltaEditor
         private void TryCompile(object sender, EventArgs e)
         {
             _runtimeLoader.ReloadRuntime();
-            _avaliableComponents.Clear();
-
+            // TODO Inspector clear
+            //_avaliableComponents.Clear();
         }
 
 
@@ -90,55 +92,28 @@ namespace DeltaEditor
             }
         }
 
+        private void UpdateInspectors()
+        {
+            MainThread.InvokeOnMainThreadAsync(_inspector.UpdateComponentsData).Wait();
+        }
+
         private void HierarchyListView_ItemSelected(object sender, SelectedItemChangedEventArgs e)
         {
             using var _ = _runtimeLoader.Runtime.Pause;
             var entityReference = _entities[e.SelectedItemIndex].EntityReference;
             if (!entityReference.IsAlive())
                 return;
-            UpdateComponentsNew(entityReference);
+            UpdateComponentsNewest(entityReference);
         }
 
-
-        private void UpdateComponentsNew(EntityReference entityReference)
+        private void UpdateComponentsNewest(EntityReference entityReference)
         {
-            var componentsTypes = entityReference.Entity.GetComponentTypes();
-            var components = entityReference.Entity.GetAllComponents();
-
-            foreach (var componentEditor in _inspectorComponentsEditors)
-                NewInspectorListView.Remove(componentEditor);
-            _inspectorComponentsEditors.Clear();
-            foreach (var component in components)
-            {
-                var type = component.GetType();
-                if (!_runtimeLoader.AccessorsContainer.AllAccessors.ContainsKey(type))
-                    continue;
-                var componentEditor = ComponentEditor.Create(component, _runtimeLoader.AccessorsContainer);
-                if (componentEditor == null)
-                    continue;
-                NewInspectorListView.Add(componentEditor);
-                _inspectorComponentsEditors.Add(componentEditor);
-            }
-
-            _avaliableComponents.Clear();
-            var avaliableComponents = _runtimeLoader.Components;
-            avaliableComponents.RemoveAll(x => Array.Exists(componentsTypes, c => c.Type.Equals(x)));
-            foreach (var item in avaliableComponents)
-                _avaliableComponents.Add(new(item.Name));
+            _inspector.UpdateComponentsEntity(entityReference);
         }
 
-        private void UpdateComponentsOld(EntityReference entityReference)
+        private void CheckAccessors_Clicked(object sender, EventArgs e)
         {
-            var components = entityReference.Entity.GetComponentTypes();
-            _components.Clear();
-            foreach (var component in components)
-                _components.Add(new(component.Type.Name));
-
-            _avaliableComponents.Clear();
-            var avaliableComponents = _runtimeLoader.Components;
-            avaliableComponents.RemoveAll(x => Array.Exists(components, c => c.Type.Equals(x)));
-            foreach (var item in avaliableComponents)
-                _avaliableComponents.Add(new(item.Name));
+            _runtimeLoader.CheckAccessors();
         }
     }
 }

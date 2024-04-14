@@ -128,6 +128,11 @@
                             Clicked="UpdateHierarchyButton_Clicked"
                             HorizontalOptions="Fill" />
 
+                    <Button x:Name="CheckAccessors"
+                            Text="Check Accessors"
+                            Clicked="CheckAccessors_Clicked"
+                            HorizontalOptions="Fill" />
+
 
                 </VerticalStackLayout>
             </ScrollView>
@@ -138,13 +143,9 @@
                        Padding="10"
                        FontSize="Subtitle" />
 
-                <ScrollView VerticalOptions="FillAndExpand"
+                <ScrollView x:Name="InspectorScrollView"
+                            VerticalOptions="FillAndExpand"
                             VerticalScrollBarVisibility="Always">
-                    <VerticalStackLayout x:Name="NewInspectorListView"
-                                         VerticalOptions="FillAndExpand"
-                                         HorizontalOptions="FillAndExpand">
-
-                    </VerticalStackLayout>
                 </ScrollView>
 
                 <Picker x:Name="InspectorAvaliableComponents"

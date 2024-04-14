@@ -6,6 +6,7 @@ namespace Delta.Runtime;
 public interface IRuntime : IDisposable
 {
     public IRuntimeContext Context { get; }
+    public event Action? RuntimeCall;
     public bool Running { get; set; }
     public void RunOnce();
     public void CreateTestScene();

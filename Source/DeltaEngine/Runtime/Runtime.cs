@@ -9,10 +9,13 @@ using System.Threading;
 
 namespace Delta.Runtime;
 
-public class Runtime : IRuntime, IDisposable
+public sealed class Runtime : IRuntime, IDisposable
 {
     public IRuntimeContext Context { get; }
+    public event Action? RuntimeCall;
 
+    private readonly EventWaitHandle _loopRunning = new(false, EventResetMode.ManualReset);
+    private readonly EventWaitHandle _loopEnded = new(true, EventResetMode.ManualReset);
     private bool _disposed = false;
     private bool _firstRun = false;
 
@@ -32,6 +35,70 @@ public class Runtime : IRuntime, IDisposable
 
         IRuntimeContext.Current = Context;
     }
+
+    internal bool _running = false;
+    public bool Running
+    {
+        get => _running;
+        set
+        {
+            if (value == _running)
+                return;
+
+            if (value)
+            {
+                _loopEnded.WaitOne();
+                _loopRunning.Set();
+            }
+            else
+            {
+                _loopRunning.Reset();
+                _loopEnded.WaitOne();
+            }
+            _running = value;
+        }
+    }
+
+    private void Loop()
+    {
+        while (!_disposed)
+        {
+            _loopRunning.WaitOne();
+            _loopEnded.Reset();
+
+            if (_disposed)
+                break;
+
+            InternalRun();
+            _loopEnded.Set();
+            RuntimeCall?.Invoke();
+        }
+    }
+
+    private void InternalRun()
+    {
+        if (_scene == null)
+        {
+            throw new InvalidOperationException("No loaded scenes to run");
+        }
+
+        World.SharedJobScheduler ??= new JobScheduler(new JobScheduler.Config()
+        {
+            ThreadPrefixName = "Arch.Multithreading",
+            ThreadCount = 0,
+            MaxExpectedConcurrentJobs = 64,
+            StrictAllocationMode = false,
+        });
+
+        _scene.Run();
+        if (_firstRun)
+        {
+            _firstRun = false;
+            _scene._world.TrimExcess();
+            GC.Collect();
+        }
+    }
+
 
     public void CreateScene()
     {
@@ -81,82 +148,18 @@ public class Runtime : IRuntime, IDisposable
         using var pause = Pause;
     }
 
-    private void Loop()
-    {
-        while (!_disposed)
-        {
-            loopStart.WaitOne();
-            loopEnded.Reset();
-
-            if (_disposed)
-                break;
-
-            InternalRun();
-            loopEnded.Set();
-        }
-    }
-
-    private void InternalRun()
-    {
-        if (_scene == null)
-        {
-            throw new InvalidOperationException("No loaded scenes to run");
-        }
-
-        World.SharedJobScheduler ??= new JobScheduler(new JobScheduler.Config()
-        {
-            ThreadPrefixName = "Arch.Multithreading",
-            ThreadCount = 0,
-            MaxExpectedConcurrentJobs = 64,
-            StrictAllocationMode = false,
-        });
-
-        _scene.Run();
-        if (_firstRun)
-        {
-            _firstRun = false;
-            _scene._world.TrimExcess();
-            GC.Collect();
-        }
-    }
-
     public Scene? GetCurrentScene() => _scene;
 
     public void Dispose()
     {
         using var _ = Pause;
-
+        RuntimeCall = null;
         World.SharedJobScheduler?.Dispose();
         World.SharedJobScheduler = null;
         _scene?.Dispose();
         _disposed = true;
     }
 
-    public readonly EventWaitHandle loopStart = new(false, EventResetMode.ManualReset);
-    public readonly EventWaitHandle loopEnded = new(true, EventResetMode.ManualReset);
-
-    internal bool _running = false;
-    public bool Running
-    {
-        get => _running;
-        set
-        {
-            if (value == _running)
-                return;
-
-            if (value)
-            {
-                loopEnded.WaitOne();
-                loopStart.Set();
-            }
-            else
-            {
-                loopStart.Reset();
-                loopEnded.WaitOne();
-            }
-            _running = value;
-        }
-    }
 
     public PauseHandle Pause => new(this, true);
     public PauseHandle Run => new(this, false);

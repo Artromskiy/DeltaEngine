@@ -1,9 +1,11 @@
-﻿using Arch.Core;
+﻿using Arch.Core.Extensions;
+using Delta.ECS.Components;
 using Delta.Runtime;
 using Delta.Scripting;
 using Microsoft.CodeAnalysis;
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
 
 namespace DeltaEditorLib.Scripting
@@ -11,16 +13,15 @@ namespace DeltaEditorLib.Scripting
     public class RuntimeLoader
     {
         private readonly IProjectPath _projectPath;
-
-        private readonly List<object> _instantiatedObjects = [];
+        private readonly CompileHelper _compileHelper;
 
         private AssemblyLoadContext LoadContext;
         private AssemblyLoadContext.ContextualReflectionScope _scope;
-        private readonly CompileHelper _compileHelper;
 
         private readonly HashSet<WeakReference<AssemblyLoadContext>> _oldAlcs = [];
-
         private readonly HashSet<Type> _components = [];
+
+        public event Action? RuntimeLoaderCall;
 
         public IRuntime Runtime { get; private set; }
         public IAccessorsContainer AccessorsContainer { get; private set; }
@@ -37,6 +38,7 @@ namespace DeltaEditorLib.Scripting
             AccessorsContainer = (Activator.CreateInstance(AccessorsContainerType()) as IAccessorsContainer)!;
 
             Runtime = new Runtime(_projectPath);
+            Runtime.RuntimeCall += RuntimeCallRise;
         }
 
         public void ReloadRuntime()
@@ -51,6 +53,7 @@ namespace DeltaEditorLib.Scripting
             AccessorsContainer = (Activator.CreateInstance(AccessorsContainerType()) as IAccessorsContainer)!;
 
             Runtime = new Runtime(_projectPath);
+            Runtime.RuntimeCall += RuntimeCallRise;
             return;
         }
 
@@ -107,6 +110,39 @@ namespace DeltaEditorLib.Scripting
         {
             return assembly.GetTypes().
                 Where(type => type.GetCustomAttribute<ComponentAttribute>() != null);
+        }
+
+        public unsafe void CheckAccessors()
+        {
+            using var _ = Runtime.Pause;
+            var withTransform = Runtime.GetEntities().Where(e => e.Entity.Has<Transform>());
+            foreach (var item in withTransform)
+            {
+                ref var tr = ref item.Entity.Get<Transform>();
+                var ptr = new nint(Unsafe.AsPointer(ref tr));
+                Queue<string> queue = new(["position", "X"]);
+                Set<float>(tr.GetType(), ptr, queue, 10);
+            }
+        }
+
+        private unsafe void Set<T>(Type type, nint ptr, Queue<string> paths, T value)
+        {
+            if (paths.Count == 0)
+            {
+                if (typeof(T) == type)
+                    Unsafe.AsRef<T>(ptr.ToPointer()) = value;
+                return;
+            }
+            var path = paths.Dequeue();
+            var accessor = AccessorsContainer.AllAccessors[type];
+            ptr = accessor.GetFieldPtr(ptr, path);
+            type = accessor.GetFieldType(path);
+            Set(type, ptr, paths, value);
+        }
+
+        private void RuntimeCallRise()
+        {
+            RuntimeLoaderCall?.Invoke();
         }
 
         public void OpenProjectFolder()

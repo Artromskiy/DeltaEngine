@@ -1,13 +1,10 @@
 ﻿using Delta.Files;
-using Delta.Scripting;
 using System.Numerics;
 
 namespace DeltaEditor
 {
     public class ComponentEditor : ContentView
     {
-        //private readonly HashSet<object> _processedObjects = [];
-        //private readonly IAccessorsContainer _accessors;
         private ComponentEditor(View view)
         {
             Content = view;
@@ -25,12 +22,9 @@ namespace DeltaEditor
         private static View? GenerateEditor(object obj, string propertyName, IAccessorsContainer accessors, HashSet<object> visited)
         {
             if (visited.Contains(obj) || !obj.GetType().IsPublic)
-            {
                 return null;
-            }
 
             visited.Add(obj);
-
 
             accessors.AllAccessors.TryGetValue(obj.GetType(), out var accessor);
             List<View> views = [];
@@ -41,6 +35,7 @@ namespace DeltaEditor
                 if (editorForProp != null)
                     views.Add(editorForProp);
             }
+
             StackLayout? stackLayout = null;
             if (views.Count != 0)
             {
@@ -48,16 +43,7 @@ namespace DeltaEditor
                 foreach (var view in views)
                     stackLayout.Children.Add(view);
             }
-            /*
-            foreach (var property in obj.GetType().GetProperties())
-                if (property.CanWrite && property.CanRead && (property.GetGetMethod()?.IsPublic == true || property.IsDefined(typeof(EditableAttribute))))
-                    stackLayout.Children.Add(CreateEditorForProperty(property.Name, property.GetValue(obj)));
-            */
-            /*
-            foreach (var field in obj.GetType().GetFields())
-                if ((!field.IsStatic && field.IsPublic) || field.IsDefined(typeof(EditableAttribute), false))
-                    stackLayout.Children.Add(CreateEditorForProperty(field.Name, field.GetValue(obj)));
-            */
+
             return stackLayout;
         }
 
@@ -96,15 +82,15 @@ namespace DeltaEditor
                 return new Entry { Text = value?.ToString() };
         }
 
-
         private static HorizontalStackLayout Vector3View(Vector3 vector)
         {
             var stackLayout = new HorizontalStackLayout();
-            stackLayout.Children.Add(new Entry { Text = vector.X.ToString() });
-            stackLayout.Children.Add(new Entry { Text = vector.Y.ToString() });
-            stackLayout.Children.Add(new Entry { Text = vector.Z.ToString() });
+            stackLayout.Add(new Entry { Text = vector.X.ToString() });
+            stackLayout.Add(new Entry { Text = vector.Y.ToString() });
+            stackLayout.Add(new Entry { Text = vector.Z.ToString() });
             return stackLayout;
         }
+
         private static HorizontalStackLayout Vector2View(Vector2 vector)
         {
             var stackLayout = new HorizontalStackLayout();

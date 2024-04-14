@@ -26,7 +26,8 @@ namespace DeltaEditorLib.Scripting
         private static readonly CSharpCompilationOptions _compilationOptions = new
         (
             OutputKind.DynamicallyLinkedLibrary,
-            optimizationLevel: OptimizationLevel.Release
+            optimizationLevel: OptimizationLevel.Release,
+            allowUnsafe: true
         );
 
 

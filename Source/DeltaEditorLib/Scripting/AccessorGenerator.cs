@@ -1,21 +1,15 @@
-﻿using Delta.ECS.Components;
-using Delta.Scripting;
+﻿using Delta.Scripting;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using System.Numerics;
 using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.Serialization;
 using System.Text;
 
-public delegate ref object FieldAccessor(ref object obj);
-public delegate ref Return FieldAccessor<Return, Assing>(ref Assing obj);
 
 public interface IAccessor
 {
-    public FieldAccessor<Return, Access> GetFieldAccessor<Return, Access>(string name);
     public Type GetFieldType(string name);
-    public object GetFieldValue(ref object obj, string name);
+    public object GetFieldValue(ref readonly object obj, string name);
+    public nint GetFieldPtr(nint ptr, string name);
     public ReadOnlySpan<string> FieldNames { get; }
 }
 
@@ -74,8 +68,6 @@ namespace DeltaEditorLib.Scripting
             }
             code.Append("};").AppendLine();
 
-            GenerateCaster(code);
-
             foreach (var type in types)
                 GenerateAccessorClass(code, type);
             code.AppendLine().
@@ -104,9 +96,9 @@ namespace DeltaEditorLib.Scripting
 
             //GenerateDictionary(code, fields, type);
             GenerateFieldNamesGetter(code, fields, type);
-            GenerateAccessorGetter(code, fields, type);
             GenerateFieldValueGetter(code, fields, type);
             GenerateFieldTypeGetter(code, fields, type);
+            GenerateFieldPointerGetter(code, fields, type);
 
             foreach (var field in fields)
             {
@@ -116,19 +108,6 @@ namespace DeltaEditorLib.Scripting
             code.AppendLine().
             Append('}').
             AppendLine();
-        }
-
-        private static void GenerateCaster(StringBuilder sb)
-        {
-            sb.Append("""
-                            
-                private static FieldAccessor<Return, Access> Caster<Return, Access, Return1, Access1>(FieldAccessor<Return1, Access1> accessorSource)
-                {
-                    return Invoke;
-                    ref Return Invoke(ref Access a) => ref Unsafe.As<Return1, Return>(ref accessorSource(ref Unsafe.As<Access, Access1>(ref a)));
-                }
-
-                """);
         }
 
         private static void GenerateFieldAccessor(StringBuilder sb, FieldInfo fieldInfo)
@@ -147,22 +126,6 @@ namespace DeltaEditorLib.Scripting
                 Append(fieldInfo.ReflectedType.Name).
                 Append(" obj);").
                 AppendLine();
-        }
-
-        private static void GenerateAccessorGetter(StringBuilder sb, IEnumerable<FieldInfo> fieldInfos, Type accessor)
-        {
-            sb.Append("public FieldAccessor<Return, Access> GetFieldAccessor<Return, Access>(string name)");
-            sb.AppendLine().Append('{').AppendLine();
-            sb.Append("return name switch");
-            sb.AppendLine().Append('{').AppendLine();
-            foreach (var field in fieldInfos)
-            {
-                sb.Append('"').Append(field.Name).Append('"').Append("=> Caster<Return, Access, ").
-                    Append($"{field.FieldType.Name}, {accessor.Name}>({GetSetMethodName(field)}),").AppendLine();
-            }
-            sb.Append("_=>throw new InvalidOperationException($\"Field {name} of type {typeof(Return)} not found in type {typeof(Access)}\")");
-            sb.AppendLine().Append("};").AppendLine();
-            sb.AppendLine().Append('}').AppendLine();
         }
 
         public static void GenerateFieldTypeGetter(StringBuilder sb, IEnumerable<FieldInfo> fieldInfos, Type accessor)
@@ -184,7 +147,7 @@ namespace DeltaEditorLib.Scripting
         public static void GenerateFieldValueGetter(StringBuilder sb, IEnumerable<FieldInfo> fieldInfos, Type accessor)
         {
             sb.AppendLine();
-            sb.Append("public object GetFieldValue(ref object obj, string name)");
+            sb.Append("public object GetFieldValue(ref readonly object obj, string name)");
             sb.AppendLine().Append('{').AppendLine();
             sb.Append("switch (name)");
             sb.AppendLine().Append('{').AppendLine();
@@ -212,6 +175,24 @@ namespace DeltaEditorLib.Scripting
             sb.Append("];");
             sb.Append("public ReadOnlySpan<string> FieldNames => new(_fieldNames);").AppendLine();
         }
+
+        private static void GenerateFieldPointerGetter(StringBuilder sb, IEnumerable<FieldInfo> fieldInfos, Type accessor)
+        {
+            sb.AppendLine();
+            sb.Append("public unsafe nint GetFieldPtr(nint ptr, string name)");
+            sb.AppendLine().Append('{').AppendLine();
+            sb.Append($"ref var obj = ref Unsafe.AsRef<{accessor.Name}>(ptr.ToPointer());").AppendLine();
+            sb.Append("return name switch");
+            sb.AppendLine().Append('{').AppendLine();
+            foreach (var field in fieldInfos)
+            {
+                sb.Append('"').Append(field.Name).Append('"').Append($"=> new nint(Unsafe.AsPointer(ref {GetSetMethodName(field)}(ref obj))),").AppendLine();
+            }
+            sb.Append("_ => throw new InvalidOperationException($\"Field with name {name} of type {typeof(Transform)} not found\")").AppendLine();
+            sb.AppendLine().Append("};").AppendLine();
+            sb.AppendLine().Append('}').AppendLine();
+        }
+
         private static string GetSetMethodName(FieldInfo fieldInfo) => "GetSet" + fieldInfo.Name;
         private static string AccessorClassName(Type type) => type.Name + "Accessor";
         private static void GenerateUsings(StringBuilder sb, IEnumerable<string> namespaces)
@@ -222,19 +203,5 @@ namespace DeltaEditorLib.Scripting
                 sb.Append("using ").Append(n).Append(';').AppendLine();
         }
 
-        public static ref Vector3 GetSetposition(ref Transform obj) => ref obj.position;
-        public static ref object GetSetField(ref object obj) => ref Unsafe.NullRef<object>();
-        public static Dictionary<string, FieldAccessor> FieldAccessors = new()
-        {
-
-                {"asdasd", new((ref object o) => ref Unsafe.As<Vector3, object>(ref GetSetposition(ref Unsafe.As<object, Transform>(ref o))))}
-
-        };
-
-        private static void Do()
-        {
-            FieldAccessor fa = GetSetField;
-            FieldAccessor fa2 = new((ref object o) => ref Unsafe.As<Vector3, object>(ref GetSetposition(ref Unsafe.As<object, Transform>(ref o))));
-        }
     }
 }

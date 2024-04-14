@@ -2,33 +2,14 @@
 using Arch.Core.Extensions;
 using Delta.ECS.Components;
 using Delta.Runtime;
+using Silk.NET.Vulkan;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using static TransformAccessor;
+using System.Runtime.InteropServices;
 
 
-object o = new Transform() { position = Vector3.Zero };
-Transform tr = new Transform() { position = Vector3.One };
-Vector3 pos = Vector3.UnitX;
-ref var fieldRef = ref TransformAccessor.GetSetPosObj(ref o);
-var fieldValue = fieldRef;
-Console.WriteLine(fieldRef.GetType());
-Console.WriteLine(fieldValue.GetType());
 
-Console.WriteLine(fieldRef.ToString());
-Console.WriteLine(fieldValue.ToString());
-
-fieldRef = Vector3.One;
-
-Console.WriteLine(fieldRef.GetType());
-Console.WriteLine(fieldValue.GetType());
-
-Console.WriteLine(fieldRef.ToString());
-Console.WriteLine(fieldValue.ToString());
-
-Console.WriteLine(fieldRef.GetType());
-Console.WriteLine(o.ToString());
 //try
 {
     using var eng = new Runtime(new EditorPaths(Directory.GetCurrentDirectory()));
@@ -82,6 +63,7 @@ public interface IAccessor
     public FieldAccessor<Return, Access> GetFieldAccessor<Return, Access>(string name);
     public Type GetFieldType(string name);
     public object GetFieldValue(ref object obj, string name);
+    public unsafe void* GetFieldPtr(void* ptr, string name);
 }
 
 public interface IAccessorsContainer
@@ -132,6 +114,26 @@ static class AccessorsCommandGenerator<T>
         var obj = Activator.CreateInstance(genericObj);
         return obj;
     }
+
+    private static unsafe void Set(Type t, void* ptr, Queue<string> paths, object value)
+    {
+        var path = paths.Dequeue();
+        var fieldType = container.AllAccessors[t].GetFieldType(path);
+        var fieldPtr = container.AllAccessors[t].GetFieldPtr(ptr, path);
+        Set(fieldType, fieldPtr, paths, value);
+        nint n = 10;
+        n.ToPointer();
+    }
+    /*
+    public static unsafe void* GetFieldPtr(void* ptr, string name)
+    {
+        var obj = Unsafe.AsRef<Transform>(ptr);
+        return name switch
+        {
+            "position" => 
+        }
+    }
+    */
 
 }
 

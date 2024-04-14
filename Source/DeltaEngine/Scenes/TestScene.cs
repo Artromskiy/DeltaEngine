@@ -35,7 +35,7 @@ internal static class TestScene
         scene.AddJob(new MoveTransformsJob(scene._world, scene.DeltaTime));
         scene.AddJob(new Renderer(scene._world, "TestScene"));
         scene.AddJob(new RemoveDirtyJob(scene._world));
-        //scene.AddJob(new FpsDropper(60, scene.DeltaTime));
+        scene.AddJob(new FpsDropper(60, scene.DeltaTime));
         return scene;
     }
 
