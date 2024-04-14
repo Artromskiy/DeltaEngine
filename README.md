@@ -20,5 +20,8 @@ To know which libraries and other third-party solutions used see [**Third-party*
 
 
 Here's fourth letter :)
-
 ![image](https://github.com/Artromskiy/DeltaEngine/assets/47901401/442aabe0-061f-4497-aec7-f45e5c2b7bb1)
+
+Editor wip
+![image](https://github.com/Artromskiy/DeltaEngine/assets/47901401/c9ef1b42-5504-4191-b614-07a620dd166a)
+
