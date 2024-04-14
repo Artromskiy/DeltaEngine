@@ -1,6 +1,7 @@
 ﻿using Delta.Runtime;
 using DeltaEditorLib.Scripting;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 
 namespace DeltaEditor
 {
@@ -11,7 +12,7 @@ namespace DeltaEditor
             string[] arguments = Environment.GetCommandLineArgs();
             bool projectExist = arguments.Length > 1 && Directory.Exists(arguments[1]);
             string projectPath = projectExist ? arguments[1] : Directory.CreateTempSubdirectory().FullName;
-
+            Thread.CurrentThread.CurrentUICulture = new CultureInfo("en");
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()

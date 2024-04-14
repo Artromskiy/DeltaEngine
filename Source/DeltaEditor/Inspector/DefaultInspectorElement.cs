@@ -16,6 +16,7 @@ namespace DeltaEditor.Inspector
             _fieldName = new() { Text = path[^1] };
             //_field = [_fieldName];
             _elements = [_fieldName];
+            _elements.Padding = new Thickness(3);
             _inspectorElements = [];
             var fieldType = parameters.AccessorsContainer.GetFieldType(parameters.ComponentType, path);
             var accessor = parameters.AccessorsContainer.AllAccessors[fieldType];

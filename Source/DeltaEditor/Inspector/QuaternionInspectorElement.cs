@@ -1,33 +1,29 @@
 ﻿using Arch.Core;
-using Arch.Core.Utils;
-using DeltaEditor.Inspector;
 using DeltaEditorLib.Scripting;
-using System.ComponentModel;
 using System.Numerics;
 
-namespace DeltaEditor
+namespace DeltaEditor.Inspector
 {
-    internal class Vector3InspectorElement : ContentView, IInspectorElement
+    internal class QuaternionInspectorElement : ContentView, IInspectorElement
     {
         private readonly Label _fieldName;
         private readonly HorizontalStackLayout _field;
-        
+
         private readonly List<IInspectorElement> _inspectorElements;
 
-        public Vector3InspectorElement(InspectorElementParam parameters, HashSet<Type> visited, List<string> path)
+        public QuaternionInspectorElement(InspectorElementParam parameters, HashSet<Type> visited, List<string> path)
         {
             var type = parameters.AccessorsContainer.GetFieldType(parameters.ComponentType, path);
-            if (type != typeof(Vector3))
-                throw new InvalidOperationException("not Vector3");
-
-            _fieldName = new() { Text = path[^1] };
+            if (type != typeof(Quaternion))
+                throw new InvalidOperationException($"Type of field is not{nameof(Quaternion)} in path {string.Join(",", path)}");
+            _fieldName = new() { Text = path[^1], VerticalTextAlignment = TextAlignment.Center };
             _field = [_fieldName];
             _inspectorElements = [];
             var fieldType = parameters.AccessorsContainer.GetFieldType(parameters.ComponentType, path);
             var accessor = parameters.AccessorsContainer.AllAccessors[fieldType];
             foreach (var item in accessor.FieldNames)
             {
-                var element = InspectorElementFactory.CreateInspectorElement(parameters, visited, new(path) { item });
+                var element = new EditorField(parameters, new(path) { item });
                 _inspectorElements.Add(element);
                 _field.Add(element);
             }

@@ -1,10 +1,9 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
-using DeltaEditor.Inspector;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 
-namespace DeltaEditor
+namespace DeltaEditor.Inspector
 {
     internal class InspectorView : ContentView
     {
@@ -30,18 +29,30 @@ namespace DeltaEditor
         public void UpdateComponentsEntity(EntityReference entityReference)
         {
             SelectedEntity = entityReference;
+            UpdateComponentsData();
+        }
 
-            _inspectorStack.Clear();
-            _componentEditors.Clear();
-            AvaliableComponents.Clear();
-
-            if (!SelectedEntity.IsAlive())
+        public void UpdateComponentsData()
+        {
+            if (!SelectedEntity.IsAlive()) // Dead entity
             {
-                CurrentArch = null;
+                ClearHandledEntityData();
+                ClearInspector();
                 return;
             }
-            CurrentArch = SelectedEntity.Entity.GetArchetype();
+            if(CurrentArch != SelectedEntity.Entity.GetArchetype()) // Arch changed
+            {
+                CurrentArch = SelectedEntity.Entity.GetArchetype();
+                ClearInspector();
+                RebuildInspectorComponents();
+                RebuildComponentAdder();
+            }
+            foreach (var item in _componentEditors)
+                item.UpdateData(SelectedEntity);
+        }
 
+        private void RebuildInspectorComponents()
+        {
             foreach (var type in SelectedEntity.Entity.GetComponentTypes())
             {
                 if (!_accessorsContainer.AllAccessors.ContainsKey(type))
@@ -50,22 +61,22 @@ namespace DeltaEditor
                 _inspectorStack.Add(componentEditor);
                 _componentEditors.Add(componentEditor);
             }
-            UpdateComponentsData();
-            UpdateComponentAdder();
         }
 
-        public void UpdateComponentsData()
+        private void ClearHandledEntityData()
         {
-            if (!SelectedEntity.IsAlive() || SelectedEntity.Entity.GetArchetype() != CurrentArch)
-            {
-                UpdateComponentsEntity(EntityReference.Null);
-                return;
-            }
-            foreach (var item in _componentEditors)
-                item.UpdateData(SelectedEntity);
+            SelectedEntity = EntityReference.Null;
+            CurrentArch = null;
         }
 
-        private void UpdateComponentAdder()
+        private void ClearInspector()
+        {
+            _inspectorStack.Clear();
+            _componentEditors.Clear();
+            AvaliableComponents.Clear();
+        }
+
+        private void RebuildComponentAdder()
         {
             foreach (var item in _components)
                 if (!Array.Exists(SelectedEntity.Entity.GetComponentTypes(), c => c.Type.Equals(c)))
@@ -78,7 +89,5 @@ namespace DeltaEditor
                 _inspectors[type] = inspector = InspectorElementFactory.CreateComponentInspector(new(type, _accessorsContainer));
             return inspector;
         }
-
-
     }
 }

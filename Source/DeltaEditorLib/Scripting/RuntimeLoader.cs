@@ -21,7 +21,12 @@ namespace DeltaEditorLib.Scripting
         private readonly HashSet<WeakReference<AssemblyLoadContext>> _oldAlcs = [];
         private readonly HashSet<Type> _components = [];
 
-        public event Action? RuntimeLoaderCall;
+        private readonly HashSet<Func<Task>> UICallLoopTasks = [];
+        public event Func<Task> OnUICallLoop
+        {
+            add=> UICallLoopTasks.Add(value);
+            remove=> UICallLoopTasks.Remove(value);
+        }
 
         public IRuntime Runtime { get; private set; }
         public IAccessorsContainer AccessorsContainer { get; private set; }
@@ -38,7 +43,7 @@ namespace DeltaEditorLib.Scripting
             AccessorsContainer = (Activator.CreateInstance(AccessorsContainerType()) as IAccessorsContainer)!;
 
             Runtime = new Runtime(_projectPath);
-            Runtime.RuntimeCall += RuntimeCallRise;
+            Runtime.RuntimeCall += RuntimeLoop;
         }
 
         public void ReloadRuntime()
@@ -53,7 +58,7 @@ namespace DeltaEditorLib.Scripting
             AccessorsContainer = (Activator.CreateInstance(AccessorsContainerType()) as IAccessorsContainer)!;
 
             Runtime = new Runtime(_projectPath);
-            Runtime.RuntimeCall += RuntimeCallRise;
+            Runtime.RuntimeCall += RuntimeLoop;
             return;
         }
 
@@ -65,7 +70,6 @@ namespace DeltaEditorLib.Scripting
             var accessorsDll = _compileHelper.CompileAccessors(components);
             LoadContext.LoadFromAssemblyPath(accessorsDll);
         }
-
 
         private AssemblyLoadContext NewLoadContext()
         {
@@ -140,9 +144,30 @@ namespace DeltaEditorLib.Scripting
             Set(type, ptr, paths, value);
         }
 
-        private void RuntimeCallRise()
+        private bool _runtimeRunning;
+        public bool RuntimeRunning
         {
-            RuntimeLoaderCall?.Invoke();
+            set
+            {
+                if(_runtimeRunning = value)
+                    Runtime.Running = true;
+            }
+        }
+
+        private async void RuntimeLoop()
+        {
+            Runtime.Running = false;
+            try
+            {
+                if (UICallLoopTasks.Count != 0)
+                    await Task.WhenAll(UICallLoopTasks.Select(t => t.Invoke())).ContinueWith((x) => { Runtime.Running = _runtimeRunning; });
+                else
+                    Runtime.Running = _runtimeRunning;
+            }
+            catch
+            {
+                Runtime.Running = _runtimeRunning;
+            }
         }
 
         public void OpenProjectFolder()

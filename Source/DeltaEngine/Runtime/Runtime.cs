@@ -71,6 +71,7 @@ public sealed class Runtime : IRuntime, IDisposable
 
             InternalRun();
             _loopEnded.Set();
+
             RuntimeCall?.Invoke();
         }
     }

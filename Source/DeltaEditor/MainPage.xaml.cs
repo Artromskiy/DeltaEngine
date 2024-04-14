@@ -18,7 +18,6 @@ namespace DeltaEditor
 
         private readonly InspectorView _inspector;
 
-
         public MainPage(RuntimeLoader runtimeLoader, IProjectPath projectData)
         {
             _runtimeLoader = runtimeLoader;
@@ -28,7 +27,7 @@ namespace DeltaEditor
             HierarchyListView.ItemsSource = _entities;
             InspectorAvaliableComponents.ItemsSource = _inspector.AvaliableComponents;
             InspectorScrollView.Content = _inspector;
-            _runtimeLoader.RuntimeLoaderCall += UpdateInspectors;
+            _runtimeLoader.OnUICallLoop += UpdateInspectors;
         }
 
         private void CreateScene(object sender, EventArgs e)
@@ -38,12 +37,13 @@ namespace DeltaEditor
 
         private void RunScene(object sender, ToggledEventArgs e)
         {
-            Runtime.Running = e.Value;
+            var value = e.Value;
+            _runtimeLoader.RuntimeRunning = value;
         }
 
         private void SaveScene(object sender, EventArgs e)
         {
-            Runtime.SaveScene("scene");
+            _runtimeLoader.Runtime.SaveScene("scene");
         }
 
         private void TryCompile(object sender, EventArgs e)
@@ -92,9 +92,9 @@ namespace DeltaEditor
             }
         }
 
-        private void UpdateInspectors()
+        private Task UpdateInspectors()
         {
-            MainThread.InvokeOnMainThreadAsync(_inspector.UpdateComponentsData).Wait();
+            return MainThread.InvokeOnMainThreadAsync(_inspector.UpdateComponentsData);
         }
 
         private void HierarchyListView_ItemSelected(object sender, SelectedItemChangedEventArgs e)
