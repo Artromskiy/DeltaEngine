@@ -1,6 +1,6 @@
 **Third-party technologies in use:**
 
-Silk.NET bindings library  (https://github.com/dotnet/Silk.NET)
+Silk.NET bindings  (https://github.com/dotnet/Silk.NET)
 
 Arch ECS library (https://github.com/genaray/Arch)
 
