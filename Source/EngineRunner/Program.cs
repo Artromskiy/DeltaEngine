@@ -1,12 +1,5 @@
-﻿using Arch.Core;
-using Arch.Core.Extensions;
-using Delta.ECS.Components;
-using Delta.Runtime;
-using Silk.NET.Vulkan;
+﻿using Delta.Runtime;
 using System.Diagnostics;
-using System.Numerics;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 
 
@@ -70,7 +63,7 @@ public interface IAccessorsContainer
 {
     public Dictionary<Type, IAccessor> AllAccessors { get; }
 
-    public FieldAccessor<O, T> GetFieldAccessor<O,T>(string name, ref O o)
+    public FieldAccessor<O, T> GetFieldAccessor<O, T>(string name, ref O o)
     {
         return default;
     }
@@ -96,9 +89,9 @@ public struct SetCommand<T, Field>
     }
 }
 
-static class AccessorsCommandGenerator<T>
+internal static class AccessorsCommandGenerator<T>
 {
-    private static Dictionary<Type, SetCommand<T, object>> generatedCommands = [];
+    private static readonly Dictionary<Type, SetCommand<T, object>> generatedCommands = [];
     public static IAccessorsContainer container;
 
     public static void SetValue(ref T component, Queue<string> paths, object value)

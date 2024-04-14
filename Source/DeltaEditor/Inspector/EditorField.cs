@@ -69,7 +69,7 @@ namespace DeltaEditor.Inspector
         private void SetFieldValueFloat(EntityReference entity)
         {
             var text = _fieldData.Text;
-            if(float.TryParse(text, out float result))
+            if (float.TryParse(text, out float result))
             {
                 var container = _parameters.AccessorsContainer;
                 container.SetComponentFieldValue(entity, _parameters.ComponentType, _path, result);

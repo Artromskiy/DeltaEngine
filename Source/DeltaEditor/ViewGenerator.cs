@@ -13,7 +13,7 @@ namespace DeltaEditor
         public static ComponentEditor? Create(object component, IAccessorsContainer accessors)
         {
             HashSet<object> visited = [];
-            var editor  = GenerateEditor(component, component.GetType().Name, accessors, visited);
+            var editor = GenerateEditor(component, component.GetType().Name, accessors, visited);
             if (editor != null)
                 return new ComponentEditor(editor);
             return null;

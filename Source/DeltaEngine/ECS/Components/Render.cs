@@ -47,7 +47,7 @@ public struct Render : IEquatable<Render>, IDirty, IComparable<Render>
     }
 
     [MethodImpl(Inl)]
-    public static bool operator ==(Render left, Render right)=> left.Equals(right);
+    public static bool operator ==(Render left, Render right) => left.Equals(right);
     [MethodImpl(Inl)]
-    public static bool operator !=(Render left, Render right)=> !(left == right);
+    public static bool operator !=(Render left, Render right) => !(left == right);
 }

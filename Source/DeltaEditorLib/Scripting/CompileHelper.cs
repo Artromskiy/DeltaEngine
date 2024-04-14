@@ -5,7 +5,6 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CodeAnalysis.Text;
 using System.Diagnostics;
-using System.IO;
 using System.Reflection;
 
 namespace DeltaEditorLib.Scripting

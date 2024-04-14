@@ -1,7 +1,5 @@
 ﻿using Arch.Core;
-using Arch.Core.Utils;
 using DeltaEditorLib.Scripting;
-using System.ComponentModel;
 using System.Numerics;
 
 namespace DeltaEditor.Inspector
@@ -19,7 +17,7 @@ namespace DeltaEditor.Inspector
             if (type != typeof(Vector3))
                 throw new InvalidOperationException($"Type of field is not{nameof(Vector3)} in path {string.Join(",", path)}");
 
-            _fieldName = new() { Text = path[^1] , VerticalTextAlignment = TextAlignment.Center };
+            _fieldName = new() { Text = path[^1], VerticalTextAlignment = TextAlignment.Center };
             _field = [_fieldName];
             _inspectorElements = [];
             var fieldType = parameters.AccessorsContainer.GetFieldType(parameters.ComponentType, path);

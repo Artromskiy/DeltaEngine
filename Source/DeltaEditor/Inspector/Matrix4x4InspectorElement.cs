@@ -1,12 +1,6 @@
 ﻿using Arch.Core;
 using DeltaEditorLib.Scripting;
-using Microsoft.Maui.Controls;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DeltaEditor.Inspector
 {
@@ -41,7 +35,7 @@ namespace DeltaEditor.Inspector
                 var element = new EditorField(parameters, new(path) { item }, false);
                 _grid.Add(element, index % 4, index / 4);
                 _inspectorElements.Add(element);
-                
+
                 index++;
             }
 

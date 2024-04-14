@@ -4,7 +4,6 @@ using Arch.Core.Extensions.Dangerous;
 using Arch.Core.Utils;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Security.Principal;
 
 namespace DeltaEditorLib.Scripting
 {

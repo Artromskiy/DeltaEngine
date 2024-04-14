@@ -1,6 +1,4 @@
-﻿using Arch.Core;
-
-namespace DeltaEditor.Inspector
+﻿namespace DeltaEditor.Inspector
 {
     internal record InspectorElementParam(Type ComponentType, IAccessorsContainer AccessorsContainer);
 }

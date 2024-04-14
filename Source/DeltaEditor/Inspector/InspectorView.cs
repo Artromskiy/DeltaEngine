@@ -40,7 +40,7 @@ namespace DeltaEditor.Inspector
                 ClearInspector();
                 return;
             }
-            if(CurrentArch != SelectedEntity.Entity.GetArchetype()) // Arch changed
+            if (CurrentArch != SelectedEntity.Entity.GetArchetype()) // Arch changed
             {
                 CurrentArch = SelectedEntity.Entity.GetArchetype();
                 ClearInspector();

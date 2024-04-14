@@ -24,7 +24,7 @@ namespace DeltaEditor.Inspector
             IInspectorElement result;
             if (type == typeof(Vector3))
                 result = new Vector3InspectorElement(parameters, visited, path);
-            else if(type == typeof(Vector4))
+            else if (type == typeof(Vector4))
                 result = new Vector4InspectorElement(parameters, visited, path);
             else if (type == typeof(Quaternion))
                 result = new QuaternionInspectorElement(parameters, visited, path);

@@ -24,8 +24,8 @@ namespace DeltaEditorLib.Scripting
         private readonly HashSet<Func<Task>> UICallLoopTasks = [];
         public event Func<Task> OnUICallLoop
         {
-            add=> UICallLoopTasks.Add(value);
-            remove=> UICallLoopTasks.Remove(value);
+            add => UICallLoopTasks.Add(value);
+            remove => UICallLoopTasks.Remove(value);
         }
 
         public IRuntime Runtime { get; private set; }
@@ -149,7 +149,7 @@ namespace DeltaEditorLib.Scripting
         {
             set
             {
-                if(_runtimeRunning = value)
+                if (_runtimeRunning = value)
                     Runtime.Running = true;
             }
         }
