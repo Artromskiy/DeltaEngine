@@ -2,7 +2,7 @@
 
 namespace DeltaEditor.Inspector
 {
-    internal interface IInspectorElement : IView
+    internal interface INode : IView
     {
         public void UpdateData(EntityReference entity);
     }

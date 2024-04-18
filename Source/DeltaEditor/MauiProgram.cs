@@ -2,6 +2,7 @@
 using DeltaEditorLib.Scripting;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
+using UraniumUI;
 
 namespace DeltaEditor
 {
@@ -21,6 +22,8 @@ namespace DeltaEditor
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 })
+                .UseUraniumUI()
+                .UseUraniumUIMaterial()
                 .Services
                 .AddSingleton<IProjectPath>(new EditorPaths(projectPath))
                 .AddSingleton<RuntimeLoader>()

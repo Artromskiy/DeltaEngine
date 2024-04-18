@@ -7,7 +7,7 @@ namespace DeltaEditor.Inspector
 {
     internal class InspectorView : ContentView
     {
-        private readonly List<IInspectorElement> _componentEditors = [];
+        private readonly List<INode> _componentEditors = [];
         private readonly VerticalStackLayout _inspectorStack;
         public readonly ObservableCollection<InspectorAvaliableComponent> AvaliableComponents = [];
 
@@ -17,7 +17,7 @@ namespace DeltaEditor.Inspector
         private EntityReference SelectedEntity = EntityReference.Null;
         private Archetype? CurrentArch;
 
-        private readonly Dictionary<Type, IInspectorElement> _inspectors = [];
+        private readonly Dictionary<Type, INode> _inspectors = [];
         public InspectorView(IAccessorsContainer accessorsContainer, IEnumerable<Type> components)
         {
             _accessorsContainer = accessorsContainer;
@@ -61,6 +61,7 @@ namespace DeltaEditor.Inspector
                 _inspectorStack.Add(componentEditor);
                 _componentEditors.Add(componentEditor);
             }
+            Content.Unfocus();
         }
 
         private void ClearHandledEntityData()
@@ -71,6 +72,8 @@ namespace DeltaEditor.Inspector
 
         private void ClearInspector()
         {
+            //foreach (var item in _componentEditors)
+            //    item.UnfocusRecursive();
             _inspectorStack.Clear();
             _componentEditors.Clear();
             AvaliableComponents.Clear();
@@ -83,10 +86,10 @@ namespace DeltaEditor.Inspector
                     AvaliableComponents.Add(new(item.Name));
         }
 
-        private IInspectorElement GetOrCreateInspector(Type type)
+        private INode GetOrCreateInspector(Type type)
         {
             if (!_inspectors.TryGetValue(type, out var inspector))
-                _inspectors[type] = inspector = InspectorElementFactory.CreateComponentInspector(new(type, _accessorsContainer));
+                _inspectors[type] = inspector = NodeFactory.CreateComponentInspector(new(type, _accessorsContainer, []));
             return inspector;
         }
     }

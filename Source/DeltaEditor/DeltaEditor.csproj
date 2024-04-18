@@ -81,9 +81,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove=".editorconfig" />
+  </ItemGroup>
+
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
     <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
+    <PackageReference Include="UraniumUI" Version="2.9.0-pre.2" />
+    <PackageReference Include="UraniumUI.Material" Version="2.9.0-pre.2" />
   </ItemGroup>
 
   <ItemGroup>
