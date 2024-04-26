@@ -1,33 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static DeltaEditor.Inspector.Node;
-
-namespace DeltaEditor.Inspector;
+﻿namespace DeltaEditor.Inspector;
 
 internal static class NodeConst
 {
+    public const double ComponentHeaderTextSize = 15f;
     public const double NodeHeight = 30;
-
-    public static double SizeModeToSize(FieldSizeMode sizeMode)
-    {
-        return sizeMode switch
-        {
-            FieldSizeMode.Default => 80,
-            FieldSizeMode.Large => 120,
-            FieldSizeMode.Small => 40,
-            FieldSizeMode.ExtraSmall => 30,
-            _ => throw new NotImplementedException(),
-        };
-    }
+    public static readonly Color BackColor = Color.FromRgba(0, 0, 0, 0);
+    public static readonly Color BorderColor = Color.FromRgb(15, 15, 15);
 }
 
 internal enum FieldSizeMode
 {
     Default,
-    Large,
     Small,
-    ExtraSmall
+    ExtraSmall,
+    Large,
+    ExtraLarge,
 }

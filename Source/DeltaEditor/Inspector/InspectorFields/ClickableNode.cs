@@ -1,17 +1,18 @@
-﻿namespace DeltaEditor.Inspector.InspectorFields;
+﻿
+namespace DeltaEditor.Inspector.InspectorFields;
 
-internal abstract class FieldNode<T> : Node<T>
+internal abstract class ClickableNode<T> : Node<T>
 {
     private readonly HorizontalStackLayout _stack;
-    protected readonly Entry _fieldData = new()
+    protected readonly Button _fieldData = new()
     {
-        VerticalTextAlignment = TextAlignment.Center,
         MaximumHeightRequest = NodeHeight,
         MinimumHeightRequest = NodeHeight,
-        BackgroundColor = NodeConst.BackColor,
+        Margin = 0,
+        Padding = 0
     };
 
-    public FieldNode(NodeData parameters, bool withName) : base(parameters)
+    public ClickableNode(NodeData parameters, bool withName) : base(parameters)
     {
         if (withName)
             _stack = [_fieldName, _fieldData];
@@ -23,7 +24,6 @@ internal abstract class FieldNode<T> : Node<T>
         ValueMode = FieldSizeMode.Default;
         Content = _stack;
     }
-
 
     public FieldSizeMode ValueMode
     {

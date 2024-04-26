@@ -74,7 +74,6 @@
             </Grid>
         </Frame>
 
-
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -87,9 +86,8 @@
 
             <VerticalStackLayout Grid.Column="0"
                                  MinimumWidthRequest="300"
-                                 VerticalOptions="FillAndExpand"
-                                 BackgroundColor="{StaticResource PrimaryDarkest}">
-                <Label Text="Hierarchy"
+                                 VerticalOptions="FillAndExpand">
+                    <Label Text="Hierarchy"
                        Padding="10"
                        FontSize="Subtitle" />
 
@@ -128,12 +126,6 @@
                             Clicked="UpdateHierarchyButton_Clicked"
                             HorizontalOptions="Fill" />
 
-                    <Button x:Name="CheckAccessors"
-                            Text="Check Accessors"
-                            Clicked="CheckAccessors_Clicked"
-                            HorizontalOptions="Fill" />
-
-
                 </VerticalStackLayout>
             </ScrollView>
 
@@ -148,10 +140,6 @@
                             VerticalScrollBarVisibility="Always">
                 </ScrollView>
 
-                <Picker x:Name="InspectorAvaliableComponents"
-                        ItemDisplayBinding="{Binding Name}"
-                        Title="Add Component"
-                        HorizontalOptions="Center" />
 
             </VerticalStackLayout>
 

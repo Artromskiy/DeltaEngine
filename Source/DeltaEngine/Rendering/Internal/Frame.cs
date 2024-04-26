@@ -183,7 +183,7 @@ internal class Frame : IDisposable
         foreach (var (rend, count) in renders)
         {
             var itemShader = rend._shader;
-            var itemMesh = rend.Mesh;
+            var itemMesh = rend.mesh;
 
             if (itemShader.guid != currentShader) // shader switch
             {

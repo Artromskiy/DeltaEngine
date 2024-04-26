@@ -12,7 +12,7 @@ namespace Delta.Rendering;
 
 internal abstract unsafe partial class BaseRenderer : IDisposable, ISystem
 {
-    private static readonly Api _api = new();
+    private readonly Api _api;
     private readonly Window* _window;
     internal readonly RenderBase _rendererData;
 
@@ -38,6 +38,7 @@ internal abstract unsafe partial class BaseRenderer : IDisposable, ISystem
     public unsafe BaseRenderer(string appName)
     {
         _appName = appName;
+        _api = new();
         _window = RenderHelper.CreateWindow(_api.sdl, _appName);
         _rendererData = new RenderBase(_api, _window, deviceExtensions, _appName, targetFormat);
         swapChain = new SwapChain(_api, _rendererData, GetSdlWindowSize(), Buffering, _rendererData.format);

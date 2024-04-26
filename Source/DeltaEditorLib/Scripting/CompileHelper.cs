@@ -12,14 +12,16 @@ namespace DeltaEditorLib.Scripting
     internal class CompileHelper(IProjectPath projectPath)
     {
         private const string CsSearch = "*.cs";
-        private const string ScriptsDllName = "Scripts.dll";
-
-        private const string AccessorsDllName = "Accessors.dll";
+        private const string dllExt = ".dll";
+        private const string Scripts = "Scripts";
+        private const string Accessors = "Accessors";
+        private const string ScriptsPathSuffix = Scripts + dllExt;
+        private const string AccessorsPathSuffix = Accessors + dllExt;
 
         private readonly IProjectPath _projectPath = projectPath;
-        private readonly string dllPath = Path.Combine(projectPath.RootDirectory, ScriptsDllName);
-        private string RandomDllName => Path.Combine(_projectPath.RootDirectory, Path.GetRandomFileName() + ScriptsDllName);
-
+        private string RandomScriptsDllName => Path.Combine(_projectPath.RootDirectory, Path.GetRandomFileName() + ScriptsPathSuffix);
+        private string RandomAccessorsDllName => Path.Combine(_projectPath.RootDirectory, Path.GetRandomFileName() + AccessorsPathSuffix);
+        private string RandomPdbName => Path.Combine(_projectPath.RootDirectory, Path.GetRandomFileName() + ".pdb");
 
         private static readonly CSharpParseOptions _parseOptions = new(LanguageVersion.CSharp12);
         private static readonly CSharpCompilationOptions _compilationOptions = new
@@ -41,10 +43,10 @@ namespace DeltaEditorLib.Scripting
 
             var references = GetReferences(trees);
 
-            var compilation = CSharpCompilation.Create(ScriptsDllName, trees, references, _compilationOptions);
+            var compilation = CSharpCompilation.Create(Scripts, trees, references, _compilationOptions);
 
-            var dllPath = RandomDllName;
-            var result = compilation.Emit(dllPath);
+            var dllPath = RandomScriptsDllName;
+            var result = compilation.Emit(dllPath, RandomPdbName);
 
             LogCompilation(result);
 
@@ -53,24 +55,22 @@ namespace DeltaEditorLib.Scripting
 
         public string CompileAccessors(HashSet<Type> components)
         {
-            AccessorGenerator generator = new();
-            var code = generator.GenerateAccessors(components);
+            var code = AccessorGenerator.GenerateAccessors(components);
             SyntaxTree[] trees = [CSharpSyntaxTree.ParseText(SourceText.From(code), _parseOptions)];
 
             var references = GetReferences(trees);
 
-            var compilation = CSharpCompilation.Create(AccessorsDllName, trees, references, _compilationOptions);
+            var compilation = CSharpCompilation.Create(Accessors, trees, references, _compilationOptions);
 
-            var dllPath = RandomDllName;
-            var result = compilation.Emit(dllPath);
+            var dllPath = RandomAccessorsDllName;
+            var result = compilation.Emit(dllPath, RandomPdbName);
 
             LogCompilation(result);
 
             return dllPath;
         }
 
-
-        private List<MetadataReference> GetReferences(IEnumerable<SyntaxTree> trees)
+        private static List<MetadataReference> GetReferences(IEnumerable<SyntaxTree> trees)
         {
             MetadataReference mscorlib = MetadataReference.CreateFromFile(typeof(object).Assembly.Location);
             MetadataReference engineLib = MetadataReference.CreateFromFile(typeof(IRuntime).Assembly.Location);
@@ -97,7 +97,7 @@ namespace DeltaEditorLib.Scripting
         private static void LogCompilation(EmitResult result)
         {
             foreach (var item in result.Diagnostics)
-                Debug.WriteLine(item.GetMessage());
+                Debug.Assert(false, item.GetMessage());
         }
     }
 }

@@ -25,27 +25,6 @@ internal static class NodeFactory
         return createFunc(nodeData);
     }
 
-    private static INode CreateNodeOld(Type type, NodeData nodeData)
-    {
-        INode result;
-        if (type == typeof(Vector3))
-            result = new Vector3Node(nodeData);
-        else if (type == typeof(Vector4))
-            result = new Vector4Node(nodeData);
-        else if (type == typeof(Quaternion))
-            result = new QuaternionNode(nodeData);
-        else if (type == typeof(Matrix4x4))
-            result = new Matrix4Node(nodeData);
-        else if (type == typeof(float))
-            result = new FloatNode(nodeData);
-        else if (type == typeof(int))
-            result = new IntNode(nodeData);
-        else if (type == typeof(string))
-            result = new StringNode(nodeData);
-        else
-            result = new ContainerNode(nodeData);
-        return result;
-    }
 
     private static readonly Dictionary<Type, Func<NodeData, INode>> _typeToNode = new()
     {
@@ -56,6 +35,7 @@ internal static class NodeFactory
         { typeof(float), (n) => new FloatNode(n) },
         { typeof(int), (n) => new IntNode(n) },
         { typeof(string), (n) => new StringNode(n) },
+        { typeof(Guid), (n) => new GuidNode(n) },
     };
 
     public static INode CreateComponentInspector(NodeData parameters) => new ComponentNode(parameters);

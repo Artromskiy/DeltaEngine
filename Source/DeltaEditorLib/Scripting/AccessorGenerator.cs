@@ -1,6 +1,7 @@
 ﻿using Delta.Scripting;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using System.Collections.Frozen;
 using System.Reflection;
 using System.Text;
 
@@ -15,18 +16,18 @@ public interface IAccessor
 
 public interface IAccessorsContainer
 {
-    public Dictionary<Type, IAccessor> AllAccessors { get; }
+    public FrozenDictionary<Type, IAccessor> AllAccessors { get; }
 }
 
 namespace DeltaEditorLib.Scripting
 {
     internal class AccessorGenerator
     {
-        public string GenerateAccessors(HashSet<Type> componentTypes)
+        public static string GenerateAccessors(HashSet<Type> componentTypes)
         {
             HashSet<Type> visitedTypes = [];
             foreach (var item in componentTypes)
-                if (item.IsPublic && !item.IsGenericType)
+                if (item.IsPublic)
                     GetAvaliableTypes(item, visitedTypes);
             var code = GenerateAccessorClasses(visitedTypes);
             code = CSharpSyntaxTree.ParseText(code).GetRoot().NormalizeWhitespace().SyntaxTree.GetText().ToString();
@@ -55,18 +56,19 @@ namespace DeltaEditorLib.Scripting
         {
             StringBuilder code = new();
             var fields = SelectFields(types.Select(t => t.GetFields()).SelectMany(f => f));
-            var namespaces = fields.Select(f => f.FieldType.Namespace).Concat(types.Select(t => t.Namespace));
-            GenerateUsings(code, namespaces);
+            var namespaces = fields.Select(f => f.FieldType.Namespace).Concat(types.Select(t => t.Namespace)).ToHashSet();
+            GenerateUsings(code, namespaces!);
             code.Append($"public class AccessorsContainer: {nameof(IAccessorsContainer)}").AppendLine().
                 Append('{').AppendLine();
-            code.Append($"public Dictionary<Type, {nameof(IAccessor)}> AllAccessors ").Append("{ get; } = new()").AppendLine().
+            code.Append($"public FrozenDictionary<Type, {nameof(IAccessor)}> AllAccessors ").
+                Append("{ get; }").Append($" = new Dictionary<Type, {nameof(IAccessor)}>()").AppendLine().
                 Append('{').AppendLine();
             foreach (var item in types)
             {
-                code.Append('{').Append($"typeof({item.Name}), new {AccessorClassName(item)}()").Append("},").
+                code.Append('{').Append($"typeof({GetFormattedName(item)}), new {GetAccessorName(item)}()").Append("},").
                     AppendLine();
             }
-            code.Append("};").AppendLine();
+            code.Append("}.ToFrozenDictionary();").AppendLine();
 
             foreach (var type in types)
                 GenerateAccessorClass(code, type);
@@ -79,7 +81,7 @@ namespace DeltaEditorLib.Scripting
         {
             return fields.
                 Where(f =>
-                !f.FieldType.IsGenericType &&
+                //!f.FieldType.IsGenericType &&
                 f.FieldType.IsPublic &&
                 !f.IsStatic &&
                 (f.IsPublic || f.IsDefined(typeof(EditableAttribute), false)));
@@ -89,20 +91,19 @@ namespace DeltaEditorLib.Scripting
         {
             var fields = SelectFields(type.GetFields());
 
-            code.Append("private class ").Append(AccessorClassName(type)).Append($": {nameof(IAccessor)}");
+            code.Append("private class ").Append(GetAccessorName(type)).Append($": {nameof(IAccessor)}");
             code.AppendLine();
             code.Append('{');
             code.AppendLine();
 
-            //GenerateDictionary(code, fields, type);
-            GenerateFieldNamesGetter(code, fields, type);
+            GenerateFieldNamesGetter(code, fields);
             GenerateFieldValueGetter(code, fields, type);
-            GenerateFieldTypeGetter(code, fields, type);
+            GenerateFieldTypeGetter(code, fields);
             GenerateFieldPointerGetter(code, fields, type);
 
             foreach (var field in fields)
             {
-                GenerateFieldAccessor(code, field);
+                GenerateFieldAccessor(code, field, type);
             }
 
             code.AppendLine().
@@ -110,7 +111,7 @@ namespace DeltaEditorLib.Scripting
             AppendLine();
         }
 
-        private static void GenerateFieldAccessor(StringBuilder sb, FieldInfo fieldInfo)
+        private static void GenerateFieldAccessor(StringBuilder sb, FieldInfo fieldInfo, Type container)
         {
             sb.Append("[UnsafeAccessor(UnsafeAccessorKind.Field, Name = \"").
                 Append(fieldInfo.Name).
@@ -118,17 +119,17 @@ namespace DeltaEditorLib.Scripting
                 AppendLine();
 
             sb.Append("public extern static ref ").
-                Append(fieldInfo.FieldType.Name).
+                Append(GetFormattedName(fieldInfo.FieldType)).
                 Append(' ').
                 Append(GetSetMethodName(fieldInfo)).
                 Append('(').
                 Append("ref ").
-                Append(fieldInfo.ReflectedType.Name).
+                Append(GetFormattedName(container)).
                 Append(" obj);").
                 AppendLine();
         }
 
-        public static void GenerateFieldTypeGetter(StringBuilder sb, IEnumerable<FieldInfo> fieldInfos, Type accessor)
+        public static void GenerateFieldTypeGetter(StringBuilder sb, IEnumerable<FieldInfo> fieldInfos)
         {
             sb.AppendLine();
             sb.Append("public Type GetFieldType(string name)");
@@ -137,14 +138,14 @@ namespace DeltaEditorLib.Scripting
             sb.AppendLine().Append('{').AppendLine();
             foreach (var field in fieldInfos)
             {
-                sb.Append('"').Append(field.Name).Append('"').Append($"=> typeof({field.FieldType.Name}),").AppendLine();
+                sb.Append('"').Append(field.Name).Append('"').Append($"=> typeof({GetFormattedName(field.FieldType)}),").AppendLine();
             }
             sb.Append("_ => throw new InvalidOperationException($\"Field with name {name} of type {typeof(Transform)} not found\")").AppendLine();
             sb.AppendLine().Append("};").AppendLine();
             sb.AppendLine().Append('}').AppendLine();
         }
 
-        public static void GenerateFieldValueGetter(StringBuilder sb, IEnumerable<FieldInfo> fieldInfos, Type accessor)
+        public static void GenerateFieldValueGetter(StringBuilder sb, IEnumerable<FieldInfo> fieldInfos, Type type)
         {
             sb.AppendLine();
             sb.Append("public object GetFieldValue(ref readonly object obj, string name)");
@@ -155,7 +156,7 @@ namespace DeltaEditorLib.Scripting
             {
                 sb.Append($"case \"{field.Name}\":").AppendLine();
                 sb.Append('{').AppendLine();
-                sb.Append($"var val = ({accessor.Name})obj;").AppendLine();
+                sb.Append($"var val = ({GetFormattedName(type)})obj;").AppendLine();
                 sb.Append($"return {GetSetMethodName(field)}(ref val);").AppendLine();
                 sb.Append('}').AppendLine();
             }
@@ -164,7 +165,7 @@ namespace DeltaEditorLib.Scripting
             sb.AppendLine().Append('}').AppendLine();
         }
 
-        private static void GenerateFieldNamesGetter(StringBuilder sb, IEnumerable<FieldInfo> fieldInfos, Type accessor)
+        private static void GenerateFieldNamesGetter(StringBuilder sb, IEnumerable<FieldInfo> fieldInfos)
         {
             sb.AppendLine();
             sb.Append("private readonly string[] _fieldNames = ").Append('[');
@@ -176,12 +177,12 @@ namespace DeltaEditorLib.Scripting
             sb.Append("public ReadOnlySpan<string> FieldNames => new(_fieldNames);").AppendLine();
         }
 
-        private static void GenerateFieldPointerGetter(StringBuilder sb, IEnumerable<FieldInfo> fieldInfos, Type accessor)
+        private static void GenerateFieldPointerGetter(StringBuilder sb, IEnumerable<FieldInfo> fieldInfos, Type type)
         {
             sb.AppendLine();
             sb.Append("public unsafe nint GetFieldPtr(nint ptr, string name)");
             sb.AppendLine().Append('{').AppendLine();
-            sb.Append($"ref var obj = ref Unsafe.AsRef<{accessor.Name}>(ptr.ToPointer());").AppendLine();
+            sb.Append($"ref var obj = ref Unsafe.AsRef<{GetFormattedName(type)}>(ptr.ToPointer());").AppendLine();
             sb.Append("return name switch");
             sb.AppendLine().Append('{').AppendLine();
             foreach (var field in fieldInfos)
@@ -193,15 +194,51 @@ namespace DeltaEditorLib.Scripting
             sb.AppendLine().Append('}').AppendLine();
         }
 
-        private static string GetSetMethodName(FieldInfo fieldInfo) => "GetSet" + fieldInfo.Name;
-        private static string AccessorClassName(Type type) => type.Name + "Accessor";
-        private static void GenerateUsings(StringBuilder sb, IEnumerable<string> namespaces)
+        private static string GetSetMethodName(FieldInfo fieldInfo) => "GetSet_" + fieldInfo.Name;
+        //private static string GetAccessorName(Type type) => type.Name + "Accessor";
+        private static void GenerateUsings(StringBuilder sb, HashSet<string> namespaces)
         {
-            sb.Append("using System.Collections.Generic;").AppendLine();
-            sb.Append("using System.Runtime.CompilerServices;").AppendLine();
+            namespaces.Add("System.Collections.Generic");
+            namespaces.Add("System.Runtime.CompilerServices");
+            namespaces.Add("System.Collections.Frozen");
             foreach (var n in namespaces.Distinct())
                 sb.Append("using ").Append(n).Append(';').AppendLine();
         }
 
+        /// <summary>
+        /// Returns the type name. If this is a generic type, appends
+        /// the list of generic type arguments between angle brackets.
+        /// (Does not account for embedded / inner generic arguments.)
+        /// </summary>
+        /// <param name="type">The type.</param>
+        /// <returns>System.String.</returns>
+        private static string GetFormattedName(Type type)
+        {
+            if (type.IsGenericType)
+            {
+                string genericArguments = type.GetGenericArguments()
+                                    .Select(x => GetFormattedName(x))
+                                    .Aggregate((x1, x2) => $"{x1}, {x2}");
+                const string g = "`";
+                return $"{type.Name[..type.Name.IndexOf(g)]}<{genericArguments}>";
+            }
+            return type.Name;
+        }
+        private static string GetAccessorName(Type type)
+        {
+            return $"{GetAccessorNameArguments(type)}Accessor";
+        }
+        private static string GetAccessorNameArguments(Type type)
+        {
+            if (type.IsGenericType)
+            {
+                string genericArguments = type.GetGenericArguments()
+                                    .Select(x => GetFormattedName(x))
+                                    .Aggregate((x1, x2) => $"{x1}_{x2}");
+                const string g = "`";
+                return $"{type.Name[..type.Name.IndexOf(g)]}__{genericArguments}__";
+            }
+            return type.Name;
+        }
     }
 }

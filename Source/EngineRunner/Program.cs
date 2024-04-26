@@ -7,7 +7,7 @@ using System.Diagnostics;
 {
     using var eng = new Runtime(new EditorPaths(Directory.GetCurrentDirectory()));
     eng.CreateTestScene();
-    eng.RunOnce();
+    //eng.RunOnce();
     Stopwatch sw = new();
 
     int c = 0;
@@ -18,7 +18,7 @@ using System.Diagnostics;
     {
         Thread.Yield();
         sw.Restart();
-        eng.RunOnce();
+        //eng.RunOnce();
         sw.Stop();
         ms += sw.Elapsed;
         timer += sw.Elapsed;

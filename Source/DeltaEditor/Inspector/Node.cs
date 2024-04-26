@@ -10,7 +10,8 @@ namespace DeltaEditor.Inspector
             VerticalTextAlignment = TextAlignment.Center,
             HorizontalTextAlignment = TextAlignment.Start,
             MinimumHeightRequest = NodeHeight,
-            MaximumHeightRequest = NodeHeight
+            MaximumHeightRequest = NodeHeight,
+            BackgroundColor = NodeConst.BackColor,
         };
         protected readonly NodeData _nodeData;
         protected virtual bool SuppressTypeCheck => false;
@@ -20,21 +21,23 @@ namespace DeltaEditor.Inspector
             _nodeData = nodeData;
             _fieldName.Text = nodeData.FieldName;
             NameMode = FieldSizeMode.Default;
+            BackgroundColor = NodeConst.BackColor;
         }
         public abstract void UpdateData(EntityReference entity);
 
         public FieldSizeMode NameMode
         {
-            set=> _fieldName.MaximumWidthRequest = _fieldName.MinimumWidthRequest = SizeModeToSize(value);
+            set => _fieldName.MaximumWidthRequest = _fieldName.MinimumWidthRequest = SizeModeToSize(value);
         }
         protected static double SizeModeToSize(FieldSizeMode sizeMode)
         {
             return sizeMode switch
             {
                 FieldSizeMode.Default => 80,
-                FieldSizeMode.Large => 120,
-                FieldSizeMode.Small => 40,
+                FieldSizeMode.Small => 50,
                 FieldSizeMode.ExtraSmall => 30,
+                FieldSizeMode.Large => 200,
+                FieldSizeMode.ExtraLarge => 300,
                 _ => throw new NotImplementedException(),
             };
         }

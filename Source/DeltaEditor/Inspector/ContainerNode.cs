@@ -4,22 +4,23 @@ namespace DeltaEditor.Inspector
 {
     internal class ContainerNode : Node
     {
-        private readonly StackLayout _elements;
+        private readonly StackLayout _stack;
 
         private readonly List<INode> _inspectorElements;
 
         public ContainerNode(NodeData parameters) : base(parameters)
         {
-            _elements = [_fieldName];
-            _elements.Padding = new Thickness(3);
+            _stack = [_fieldName];
+            _stack.Margin = 5;
+            _stack.BackgroundColor = NodeConst.BackColor;
             _inspectorElements = [];
             foreach (var item in _nodeData.FieldNames)
             {
                 var element = NodeFactory.CreateNode(_nodeData.ChildData(item));
                 _inspectorElements.Add(element);
-                _elements.Add(element);
+                _stack.Add(element);
             }
-            Content = _elements;
+            Content = _stack;
         }
 
         public override void UpdateData(EntityReference entity)

@@ -11,7 +11,7 @@ public struct Render : IEquatable<Render>, IDirty, IComparable<Render>
 {
     internal GuidAsset<ShaderData> _shader;
     internal GuidAsset<MaterialData> _material;
-    public GuidAsset<MeshData> Mesh;
+    public GuidAsset<MeshData> mesh;
 
     public readonly GuidAsset<ShaderData> Shader
     {
@@ -31,18 +31,19 @@ public struct Render : IEquatable<Render>, IDirty, IComparable<Render>
         }
     }
 
+
     [MethodImpl(Inl)]
-    public readonly bool Equals(Render other) => _shader.Equals(other._shader) && _material.Equals(other._material) && Mesh.Equals(other.Mesh);
+    public readonly bool Equals(Render other) => _shader.Equals(other._shader) && _material.Equals(other._material) && mesh.Equals(other.mesh);
     [MethodImpl(Inl)]
     public override readonly bool Equals(object? obj) => obj is Render render && Equals(render);
     [MethodImpl(Inl)]
-    public override readonly int GetHashCode() => HashCode.Combine(_shader, _material, Mesh);
+    public override readonly int GetHashCode() => HashCode.Combine(_shader, _material, mesh);
     [MethodImpl(Inl)]
     public readonly int CompareTo(Render other)
     {
         var byShader = _shader.CompareTo(other._shader);
         var byMaterial = _material.CompareTo(other._material);
-        var byMesh = Mesh.CompareTo(other.Mesh);
+        var byMesh = mesh.CompareTo(other.mesh);
         return byShader == 0 ? byMaterial == 0 ? byMesh == 0 ? 1 : byMesh : byMaterial : byShader;
     }
 

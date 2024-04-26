@@ -1,119 +1,103 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
 using Delta.ECS.Components;
-using Delta.Runtime;
 using DeltaEditor.Inspector;
 using DeltaEditorLib.Scripting;
 using System.Collections.ObjectModel;
 
-namespace DeltaEditor
+namespace DeltaEditor;
+
+public partial class MainPage : ContentPage
 {
-    public partial class MainPage : ContentPage
+    private readonly RuntimeLoader _runtimeLoader;
+
+    private readonly ObservableCollection<HierarchyEntityView> _entities = [];
+
+    private readonly InspectorView _inspector;
+
+    public MainPage(RuntimeLoader runtimeLoader)
     {
-        private readonly IProjectPath _projectPath;
-        private readonly RuntimeLoader _runtimeLoader;
-        private IRuntime Runtime => _runtimeLoader.Runtime;
+        _runtimeLoader = runtimeLoader;
+        InitializeComponent();
+        _inspector = new InspectorView(_runtimeLoader);
+        HierarchyListView.ItemsSource = _entities;
+        InspectorScrollView.Content = _inspector;
+        _runtimeLoader.OnUIThreadLoop += _inspector.UpdateComponentsData;
+    }
 
-        private readonly ObservableCollection<HierarchyEntityView> _entities = [];
+    private void CreateScene(object sender, EventArgs e)
+    {
+        _runtimeLoader.OnRuntimeThread += (r) => r.CreateTestScene();
+    }
 
-        private readonly InspectorView _inspector;
+    private void RunScene(object sender, ToggledEventArgs e)
+    {
+        var value = e.Value;
+        //_runtimeLoader.RuntimeRunning = value;
+    }
 
-        public MainPage(RuntimeLoader runtimeLoader, IProjectPath projectData)
+    private void SaveScene(object sender, EventArgs e)
+    {
+        _runtimeLoader.OnRuntimeThread += (r) => r.SaveScene("scene");
+    }
+
+    private void TryCompile(object sender, EventArgs e)
+    {
+        _runtimeLoader.ReloadRuntime();
+        // TODO Inspector clear
+        //_avaliableComponents.Clear();
+    }
+
+
+    private void OpenProjectFolder(object sender, EventArgs e)
+    {
+        _runtimeLoader.OpenProjectFolder();
+    }
+
+    private void PauseButton_Clicked(object sender, EventArgs e)
+    {
+
+    }
+
+    private void NextButton_Clicked(object sender, EventArgs e)
+    {
+
+    }
+
+    private void UpdateHierarchyButton_Clicked(object sender, EventArgs e)
+    {
+        _runtimeLoader.OnUIThread += (r) =>
         {
-            _runtimeLoader = runtimeLoader;
-            _projectPath = projectData;
-            InitializeComponent();
-            _inspector = new InspectorView(_runtimeLoader.AccessorsContainer, _runtimeLoader.Components);
-            HierarchyListView.ItemsSource = _entities;
-            InspectorAvaliableComponents.ItemsSource = _inspector.AvaliableComponents;
-            InspectorScrollView.Content = _inspector;
-            _runtimeLoader.OnUICallLoop += UpdateInspectors;
-        }
-
-        private void CreateScene(object sender, EventArgs e)
-        {
-            Runtime.CreateTestScene();
-        }
-
-        private void RunScene(object sender, ToggledEventArgs e)
-        {
-            var value = e.Value;
-            _runtimeLoader.RuntimeRunning = value;
-        }
-
-        private void SaveScene(object sender, EventArgs e)
-        {
-            _runtimeLoader.Runtime.SaveScene("scene");
-        }
-
-        private void TryCompile(object sender, EventArgs e)
-        {
-            _runtimeLoader.ReloadRuntime();
-            // TODO Inspector clear
-            //_avaliableComponents.Clear();
-        }
-
-
-        private static string EntityReferenceToString(EntityReference entityReference) => $"id: {entityReference.Entity.Id}, ver: {entityReference.Version}";
-
-        private void OpenProjectFolder(object sender, EventArgs e) => _runtimeLoader.OpenProjectFolder();
-
-        private void OnPickerComponentIndexChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void PauseButton_Clicked(object sender, EventArgs e)
-        {
-
-        }
-
-        private void NextButton_Clicked(object sender, EventArgs e)
-        {
-
-        }
-
-        private void UpdateHierarchyButton_Clicked(object sender, EventArgs e)
-        {
-            using var _ = _runtimeLoader.Runtime.Pause;
             _entities.Clear();
-            var entities = _runtimeLoader.Runtime.GetEntities();
+            var entities = r.GetEntities();
             foreach (var entityReference in entities)
             {
                 if (!entityReference.Entity.IsAlive())
                     continue;
-                string name;
-                if (entityReference.Entity.TryGet<EntityName>(out var entityName))
-                    name = entityName.text;
-                else
-                    name = EntityReferenceToString(entityReference);
 
+                string name = EntityString(entityReference);
                 _entities.Add(new HierarchyEntityView(entityReference, name));
             }
-        }
+        };
+    }
 
-        private Task UpdateInspectors()
+    private void HierarchyListView_ItemSelected(object sender, SelectedItemChangedEventArgs e)
+    {
+        _runtimeLoader.OnUIThread += (r) =>
         {
-            return MainThread.InvokeOnMainThreadAsync(_inspector.UpdateComponentsData);
-        }
-
-        private void HierarchyListView_ItemSelected(object sender, SelectedItemChangedEventArgs e)
-        {
-            using var _ = _runtimeLoader.Runtime.Pause;
             var entityReference = _entities[e.SelectedItemIndex].EntityReference;
             if (!entityReference.IsAlive())
                 return;
-            UpdateComponentsNewest(entityReference);
-        }
+            _inspector.UpdateComponentsEntity(r, entityReference);
+        };
+    }
 
-        private void UpdateComponentsNewest(EntityReference entityReference)
-        {
-            _inspector.UpdateComponentsEntity(entityReference);
-        }
+    private static string EntityString(EntityReference entityReference)
+    {
+        var entity = entityReference.Entity;
+        if (entity.TryGet<EntityName>(out var entityName))
+            return entityName.text;
 
-        private void CheckAccessors_Clicked(object sender, EventArgs e)
-        {
-            _runtimeLoader.CheckAccessors();
-        }
+        return $"id: {entity.Id}, ver: {entityReference.Version}";
     }
 }

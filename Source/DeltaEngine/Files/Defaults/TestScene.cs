@@ -2,16 +2,17 @@
 using Arch.Core.Extensions;
 using Delta.ECS;
 using Delta.ECS.Components;
-using Delta.Files.Defaults;
 using Delta.Rendering;
+using Delta.Scenes;
 using Delta.Scripting;
 using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace Delta.Scenes;
+namespace Delta.Files.Defaults;
 internal static class TestScene
 {
     public static Scene Scene => NewScene();
@@ -44,6 +45,8 @@ internal static class TestScene
         CreateManyTriangles(scene, N);
         //CreateOneDelta(scene);
         CreateCamera(scene);
+        CreateEmptyTestComponent(scene);
+        CreateFullTestComponent(scene);
         MarkTransformsDirty(scene);
     }
 
@@ -60,6 +63,26 @@ internal static class TestScene
         {
             projection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(float.DegreesToRadians(90), 1, float.Epsilon, 1000)
             //projection = Matrix4x4.CreateOrthographicLeftHanded(5, 5, float.Epsilon, 1000)
+        });
+        cameraEntity.Add<EntityName>(new("Camera"));
+    }
+
+    private static void CreateEmptyTestComponent(Scene scene)
+    {
+        var testEntity = scene._world.Create();
+        testEntity.Add<EntityName>(new("Empty"));
+        testEntity.Add<TestArraysAndSoOn>(new());
+    }
+
+    private static void CreateFullTestComponent(Scene scene)
+    {
+        var testEntity = scene._world.Create();
+        testEntity.Add<EntityName>(new("Full"));
+        testEntity.Add<TestArraysAndSoOn>(new()
+        {
+            stringsDictionary = [],
+            stringsList = [],
+            stringsSet = []
         });
     }
 
@@ -80,12 +103,12 @@ internal static class TestScene
         Render deltaRend = new()
         {
             Material = material,
-            Mesh = DeltaMesh.Mesh
+            mesh = DeltaMesh.Mesh
         };
         Render triangleRend = new()
         {
             Material = material,
-            Mesh = TriangleMesh.Mesh
+            mesh = TriangleMesh.Mesh
         };
 
         int deltaCount = 0;
@@ -123,12 +146,10 @@ internal static class TestScene
             rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI * 0.5f),
             position = new Vector3(0.5f, 0, 10)
         };
-        Render deltaRend = new() { Material = VCShader.VCMat, Mesh = DeltaMesh.Mesh };
+        Render deltaRend = new() { Material = VCShader.VCMat, mesh = DeltaMesh.Mesh };
         entity.Add(defaultTransform);
         entity.Add(deltaRend);
     }
-
-
 
     private readonly struct MoveTransformsJob(World world, Func<float> deltaTime) : ISystem
     {
@@ -164,16 +185,6 @@ internal static class TestScene
         }
     }
 
-    [Component]
-    private struct MoveToTarget
-    {
-        public Vector3 start;
-        public Vector3 target;
-        public float percent;
-        public float speed;
-        public float startScale;
-        public float targetScale;
-    }
 
     private readonly struct RemoveDirtyJob(World world) : ISystem
     {
@@ -206,4 +217,24 @@ internal static class TestScene
                 Thread.Sleep(TimeSpan.FromSeconds(toSleep));
         }
     }
+}
+
+[Component]
+public struct MoveToTarget
+{
+    public Vector3 start;
+    public Vector3 target;
+    public float percent;
+    public float speed;
+    public float startScale;
+    public float targetScale;
+}
+
+[Component]
+public struct TestArraysAndSoOn
+{
+    //public string[] strings;
+    public List<string> stringsList;
+    public HashSet<string> stringsSet;
+    public Dictionary<string, string> stringsDictionary;
 }

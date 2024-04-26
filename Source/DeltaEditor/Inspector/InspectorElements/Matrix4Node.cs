@@ -14,6 +14,7 @@ namespace DeltaEditor.Inspector.InspectorElements
         {
             _grid = new()
             {
+                BackgroundColor = NodeConst.BackColor,
                 ColumnDefinitions = [new(GridLength.Auto), new(GridLength.Auto), new(GridLength.Auto), new(GridLength.Auto)],
                 RowDefinitions = [new(GridLength.Auto), new(GridLength.Auto), new(GridLength.Auto), new(GridLength.Auto)]
             };
@@ -23,7 +24,7 @@ namespace DeltaEditor.Inspector.InspectorElements
             int index = 0;
             foreach (var item in _nodeData.FieldNames)
             {
-                var element = new InspectorFields.FloatNode(_nodeData.ChildData(item), false) { ValueMode = FieldSizeMode.Small};
+                var element = new InspectorFields.FloatNode(_nodeData.ChildData(item), false) { ValueMode = FieldSizeMode.Small };
                 _grid.Add(element, index % 4, index / 4);
                 _inspectorElements.Add(element);
 

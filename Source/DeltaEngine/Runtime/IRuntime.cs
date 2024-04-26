@@ -7,12 +7,8 @@ public interface IRuntime : IDisposable
 {
     public IRuntimeContext Context { get; }
     public event Action? RuntimeCall;
-    public bool Running { get; set; }
-    public void RunOnce();
     public void CreateTestScene();
     public void CreateScene();
     public void SaveScene(string name);
     public List<EntityReference> GetEntities();
-
-    public PauseHandle Pause { get; }
 }

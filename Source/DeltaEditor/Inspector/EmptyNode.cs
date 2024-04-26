@@ -4,7 +4,7 @@ namespace DeltaEditor.Inspector
 {
     internal class EmptyNode : Node
     {
-        public EmptyNode(NodeData nodeData):base(nodeData)
+        public EmptyNode(NodeData nodeData) : base(nodeData)
         {
             Content = _fieldName;
         }

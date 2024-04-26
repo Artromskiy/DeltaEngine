@@ -6,22 +6,23 @@ namespace DeltaEditor.Inspector.InspectorElements
 {
     internal class QuaternionNode : Node<Quaternion>
     {
-        private readonly HorizontalStackLayout _field;
+        private readonly HorizontalStackLayout _stack;
 
         private readonly string[] names = ["X", "Y", "Z"];
         private readonly List<DummyNode<float>> _inspectorElements;
 
         public QuaternionNode(NodeData parameters) : base(parameters)
         {
-            _field = [_fieldName];
+            _stack = [_fieldName];
+            _stack.BackgroundColor = NodeConst.BackColor;
             _inspectorElements = [];
             foreach (var item in names)
             {
                 var element = new DummyNode<float>(_nodeData.ChildData(item)) { NameMode = FieldSizeMode.ExtraSmall };
                 _inspectorElements.Add(element);
-                _field.Add(element);
+                _stack.Add(element);
             }
-            Content = _field;
+            Content = _stack;
         }
 
         public override void UpdateData(EntityReference entity)

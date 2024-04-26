@@ -15,7 +15,6 @@ internal class Batcher : ISystem
 {
     private readonly Queue<uint> _free;
 
-
     /// <summary>
     /// Contains matrices with world position of each <see cref="Render"/>
     /// </summary>
@@ -25,6 +24,7 @@ internal class Batcher : ISystem
     /// </summary>
     public readonly GpuArray<uint> trsIds; // send to compute to sort trs on device
 
+    // TODO 
     private readonly GpuArray<uint> _trsTransfer; // send to compute to transfer new trs from host to device
 
     private readonly PooledSet<uint> _forceTrsWrite;
@@ -45,6 +45,8 @@ internal class Batcher : ISystem
     private readonly PooledList<(Render rend, uint count)> _renders = [];
 
     private readonly ISystem[] systems;
+
+    private const bool ForceWrites = true;
 
     public Batcher(World world, RenderBase renderBase)
     {
@@ -254,7 +256,7 @@ internal class Batcher : ISystem
             [MethodImpl(Inl)]
             public readonly void Update(Entity entity, ref RendId rendToId)
             {
-                if (!forceWrite.Contains(rendToId.trsId) && !ctx.HasParent<DirtyFlag<Transform>>(entity))
+                if (!ForceWrites && !forceWrite.Contains(rendToId.trsId) && !ctx.HasParent<DirtyFlag<Transform>>(entity))
                     return;
                 trsArray[rendToId.trsId] = ctx.GetWorldRecursive(entity);
                 transfer.Value!.Add(rendToId.trsId);
@@ -268,7 +270,7 @@ internal class Batcher : ISystem
             [MethodImpl(Inl)]
             public readonly void Update(Entity entity, ref RendId rendToId)
             {
-                if (!forceWrite.Contains(rendToId.trsId) && !ctx.HasParent<DirtyFlag<Transform>>(entity))
+                if (!ForceWrites && !forceWrite.Contains(rendToId.trsId) && !ctx.HasParent<DirtyFlag<Transform>>(entity))
                     return;
                 trsArray[rendToId.trsId] = ctx.GetParentWorldMatrix(entity);
                 transfer.Value!.Add(rendToId.trsId);

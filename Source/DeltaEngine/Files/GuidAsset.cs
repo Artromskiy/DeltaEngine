@@ -22,13 +22,14 @@ public readonly struct GuidAsset<T> : IGuid, IEquatable<GuidAsset<T>>, IComparab
     public static implicit operator T(GuidAsset<T> guidAsset) => IRuntimeContext.Current.AssetImporter.GetAsset(guidAsset);
 
     [MethodImpl(Inl)]
-    public readonly bool Equals(GuidAsset<T> other) => guid.Equals(other.guid);
-    [MethodImpl(Inl)]
-    public override bool Equals(object? obj) => obj is GuidAsset<T> asset && Equals(asset);
+    public readonly int CompareTo(GuidAsset<T> other) => guid.CompareTo(other.guid);
+
     [MethodImpl(Inl)]
     public override readonly int GetHashCode() => guid.GetHashCode();
     [MethodImpl(Inl)]
-    public readonly int CompareTo(GuidAsset<T> other) => guid.CompareTo(other.guid);
+    public readonly bool Equals(GuidAsset<T> other) => guid.Equals(other.guid);
+    [MethodImpl(Inl)]
+    public override bool Equals(object? obj) => obj is GuidAsset<T> asset && Equals(asset);
 
     [MethodImpl(Inl)]
     public static bool operator ==(GuidAsset<T> left, GuidAsset<T> right) => left.Equals(right);

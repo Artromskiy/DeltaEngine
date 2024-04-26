@@ -2,6 +2,7 @@
 using System;
 
 namespace Delta;
+
 public interface IAssetImporter
 {
     public GuidAsset<T> CreateAsset<T>(string name, T asset) where T : class, IAsset;

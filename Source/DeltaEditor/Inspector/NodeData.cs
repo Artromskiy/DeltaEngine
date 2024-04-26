@@ -1,24 +1,33 @@
 ﻿using Arch.Core;
+using Delta.Runtime;
 using DeltaEditorLib.Scripting;
 using System.Runtime.InteropServices;
 
 namespace DeltaEditor.Inspector
 {
-    public class NodeData(Type component, IAccessorsContainer accessors, List<string> path)
+    public class NodeData(RootData root, PathData path)
     {
-        private readonly Type _component = component;
-        private readonly List<string> _path = path;
-        private readonly IAccessorsContainer _accessors = accessors;
-        private readonly string _componentName = component.Name;
+        public readonly RootData rootData = root;
+        public readonly PathData pathData = path;
 
-        public Type Component => _component;
-        public string FieldName => Path.Length == 0? _componentName : Path[^1];
-        public IAccessorsContainer Accessors => _accessors;
-        public Type FieldType => _accessors.GetFieldType(_component, Path);
+        public Type Component => rootData.Component;
+        public string FieldName => Path.Length == 0 ? rootData.componentName : Path[^1];
+        public IAccessorsContainer Accessors => rootData.Accessors;
+        public Type FieldType => rootData.Accessors.GetFieldType(rootData.Component, Path);
+        public ReadOnlySpan<string> Path => pathData.Path;
+        public ReadOnlySpan<string> FieldNames => rootData.Accessors.AllAccessors[rootData.Accessors.GetFieldType(rootData.Component, Path)].FieldNames;
+        public NodeData ChildData(string fieldName) => new(rootData, new([.. Path, fieldName]));
+        public T GetData<T>(EntityReference entity) => rootData.Accessors.GetComponentFieldValue<T>(entity, rootData.Component, Path);
+        public void SetData<T>(EntityReference entity, T data) => rootData.Accessors.SetComponentFieldValue(entity, rootData.Component, Path, data);
+        public IRuntimeContext Context => rootData.Context;
+    }
+    public record RootData(Type Component, IAccessorsContainer Accessors, IRuntimeContext Context)
+    {
+        public readonly string componentName = Component.Name;
+    }
+    public class PathData(List<string> path)
+    {
+        private readonly List<string> _path = path;
         public ReadOnlySpan<string> Path => CollectionsMarshal.AsSpan(_path);
-        public ReadOnlySpan<string> FieldNames => _accessors.AllAccessors[_accessors.GetFieldType(_component, Path)].FieldNames;
-        public NodeData ChildData(string fieldName) => new(_component, _accessors, [.. Path, fieldName]);
-        public T GetData<T>(EntityReference entity) => _accessors.GetComponentFieldValue<T>(entity, _component, Path);
-        public void SetData<T>(EntityReference entity, T data) => _accessors.SetComponentFieldValue(entity, _component, Path, data);
     }
 }

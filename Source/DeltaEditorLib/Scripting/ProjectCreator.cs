@@ -9,18 +9,18 @@ namespace DeltaEditorLib.Scripting
         private readonly IRuntime _runtime;
         private readonly IProjectPath _projectPath;
         private readonly IAssetImporter _assetImporter;
-        public ProjectCreator(RuntimeLoader loader)
+        public ProjectCreator(RuntimeLoader loader, IProjectPath projectPath)
         {
-            _runtime = loader.Runtime;
-            _projectPath = _runtime.Context.ProjectPath;
-            _assetImporter = _runtime.Context.AssetImporter;
+            //_runtime = loader._runtime;
+            _projectPath = projectPath;
+            //_assetImporter = _runtime.Context.AssetImporter;
             FullSetup();
         }
 
         public void FullSetup()
         {
             SetupProjectDirectory();
-            CreateTestFiles();
+            //CreateTestFiles();
         }
 
         public void CreateTestFiles()

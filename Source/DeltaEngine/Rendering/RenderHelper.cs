@@ -27,6 +27,7 @@ internal static class RenderHelper
         | WindowFlags.Resizable
         | WindowFlags.AllowHighdpi
         | WindowFlags.Borderless
+        | WindowFlags.SkipTaskbar
    );
 
     public static unsafe Window* CreateWindow(Sdl sdl, string title)
