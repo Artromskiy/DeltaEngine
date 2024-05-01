@@ -5,6 +5,6 @@ namespace Delta.ECS.Components;
 [Component]
 public struct EntityName
 {
-    public string text;
-    public EntityName(string name) => text = name;
+    public string name;
+    public EntityName(string name) => this.name = name;
 }

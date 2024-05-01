@@ -1,8 +1,9 @@
 ﻿using Arch.Core;
-using DeltaEditor.Inspector.InspectorFields;
+using DeltaEditor.Inspector.Internal;
 using System.Numerics;
 
-namespace DeltaEditor.Inspector.InspectorElements;
+namespace DeltaEditor.Inspector.Nodes;
+
 
 internal class QuaternionNode : Node<Quaternion>
 {

@@ -3,7 +3,7 @@ using DeltaEditorLib.Loader;
 using DeltaEditorLib.Scripting;
 using System.Runtime.InteropServices;
 
-namespace DeltaEditor.Inspector;
+namespace DeltaEditor.Inspector.Internal;
 
 public class NodeData(RootData root, PathData path)
 {

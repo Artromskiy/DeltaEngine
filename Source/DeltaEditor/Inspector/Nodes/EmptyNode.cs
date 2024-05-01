@@ -1,6 +1,8 @@
 ﻿using Arch.Core;
+using DeltaEditor.Inspector.Internal;
 
-namespace DeltaEditor.Inspector;
+namespace DeltaEditor.Inspector.Nodes;
+
 
 internal class EmptyNode : Node
 {

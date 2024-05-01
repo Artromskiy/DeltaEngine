@@ -40,7 +40,7 @@ internal class EntityNode : ContentView
             return string.Empty;
         var entity = entityReference.Entity;
         if (entity.TryGet<EntityName>(out var entityName))
-            return entityName.text;
+            return entityName.name;
         return $"id: {entity.Id}, ver: {entityReference.Version}";
     }
 }

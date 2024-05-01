@@ -1,7 +1,7 @@
 ﻿using Delta.Runtime;
 using DeltaEditorLib.Loader;
 using System.Globalization;
-using UraniumUI;
+using Microsoft.Extensions.Logging;
 
 namespace DeltaEditor;
 
@@ -17,8 +17,6 @@ public static class MauiProgram
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
-            .UseUraniumUI()
-            .UseUraniumUIMaterial()
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");

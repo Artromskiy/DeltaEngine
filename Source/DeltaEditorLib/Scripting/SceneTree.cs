@@ -1,6 +1,6 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
-using Delta.ECS;
+using Delta.ECS.Components;
 
 namespace DeltaEditorLib.Scripting;
 

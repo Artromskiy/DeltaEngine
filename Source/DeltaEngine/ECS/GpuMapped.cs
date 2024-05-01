@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using Delta.ECS.Components;
 using Delta.Rendering;
 using Delta.Rendering.Internal;
 using System;
@@ -9,7 +10,6 @@ namespace Delta.ECS;
 internal class GpuMapped<M, C, G> : GpuArray<G>
     where M : struct, IGpuMapper<C, G> // Mapper
     where G : unmanaged                // GpuStruct
-    where C : IDirty                   // Component
 {
     private static readonly M _mapper = new();
 
@@ -210,4 +210,4 @@ public readonly struct DirectMapper<C> : IGpuMapper<C, C> where C : unmanaged
     [MethodImpl(Inl)]
     public readonly C Map(ref C value) => value;
 }
-internal class GpuMappedSystem<C>(World world, RenderBase renderData) : GpuMapped<DirectMapper<C>, C, C>(world, renderData) where C : unmanaged, IDirty { }
+internal class GpuMappedSystem<C>(World world, RenderBase renderData) : GpuMapped<DirectMapper<C>, C, C>(world, renderData) where C : unmanaged { }

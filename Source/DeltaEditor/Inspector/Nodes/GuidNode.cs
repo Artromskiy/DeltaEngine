@@ -1,9 +1,10 @@
 ﻿using Arch.Core;
 using Delta.Runtime;
-using DeltaEditor.Inspector.InspectorFields;
+using DeltaEditor.Inspector.Internal;
 using System.Diagnostics;
 
-namespace DeltaEditor.Inspector.InspectorElements;
+namespace DeltaEditor.Inspector.Nodes;
+
 
 internal class GuidNode : ClickableNode<Guid>
 {

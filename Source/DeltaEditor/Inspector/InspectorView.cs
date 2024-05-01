@@ -2,6 +2,7 @@
 using Arch.Core.Extensions;
 using Delta.Runtime;
 using Delta.Scripting;
+using DeltaEditor.Inspector.Internal;
 using DeltaEditorLib.Loader;
 using DeltaEditorLib.Scripting;
 using System.Collections.Immutable;
@@ -112,7 +113,7 @@ internal class InspectorView : ContentView
                 _componentsToAdd.Add(new(item.Name, item));
     }
 
-    private INode GetOrCreateInspector(IRuntime runtime, Type type)
+    private INode GetOrCreateInspector(IRuntime _, Type type)
     {
         if (!_inspectors.TryGetValue(type, out var inspector))
             _inspectors[type] = inspector = NodeFactory.CreateComponentInspector(new(new(type, _runtimeLoader), new([])));

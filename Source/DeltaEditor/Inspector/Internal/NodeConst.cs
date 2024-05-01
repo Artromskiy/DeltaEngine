@@ -1,4 +1,4 @@
-﻿namespace DeltaEditor.Inspector;
+﻿namespace DeltaEditor.Inspector.Internal;
 
 internal static class NodeConst
 {

@@ -18,6 +18,7 @@ internal class HierarchyView : ContentView
     public void UpdateHierarchy(IRuntime runtime)
     {
         var entities = runtime.GetEntities();
+        entities.Sort((e1, e2) => e2.Entity.Id.CompareTo(e2.Entity.Id));
         ResizeStack(entities.Count);
         for (int i = 0; i < _stack.Children.Count; i++)
             GetNode(i).UpdateEntity(entities[i]);

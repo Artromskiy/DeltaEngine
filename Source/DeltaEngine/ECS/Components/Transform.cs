@@ -4,8 +4,9 @@ using System.Runtime.CompilerServices;
 
 namespace Delta.ECS.Components;
 
+[Dirty]
 [Component(0, true)]
-public struct Transform : IDirty
+public struct Transform
 {
     public Vector3 position;
     public Quaternion rotation;
@@ -18,8 +19,8 @@ public struct Transform : IDirty
     }
 
 
-    [MethodImpl(Inl)]
-    private readonly Matrix4x4 LocalMatrixSlow() => Matrix4x4.CreateFromQuaternion(rotation) * Matrix4x4.CreateScale(scale) * Matrix4x4.CreateTranslation(position);
+    //[MethodImpl(Inl)]
+    //private readonly Matrix4x4 LocalMatrixSlow() => Matrix4x4.CreateFromQuaternion(rotation) * Matrix4x4.CreateScale(scale) * Matrix4x4.CreateTranslation(position);
 
     [MethodImpl(Inl)]
     public static Matrix4x4 ModelMatrix(Vector3 translation, Quaternion rotation, Vector3 scale)

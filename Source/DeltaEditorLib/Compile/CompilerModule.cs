@@ -84,6 +84,6 @@ internal class CompilerModule : ICompilerModule
     private static IEnumerable<Type> GetComponents(Assembly assembly)
     {
         return assembly.GetTypes().
-            Where(type => type.GetCustomAttribute<ComponentAttribute>() != null);
+            Where(type => type.HasAttribute<ComponentAttribute>());
     }
 }

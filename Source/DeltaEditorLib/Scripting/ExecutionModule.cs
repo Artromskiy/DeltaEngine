@@ -11,7 +11,7 @@ internal class ExecutionModule : IExecutionModule
     private readonly IUIThreadGetter? _uiThreadGetter;
 
     private readonly List<Action<IRuntime>> _uiActionsLoop = [];
-    private readonly List<Action<IRuntime>> _uiActions = [];
+    private readonly Queue<Action<IRuntime>> _uiActions = [];
     private readonly ConcurrentQueue<Action<IRuntime>> _runtimeActions = [];
 
     private Action? _uiThreadCallsAction;
@@ -25,7 +25,7 @@ internal class ExecutionModule : IExecutionModule
 
     public event Action<IRuntime> OnUIThread
     {
-        add => _uiActions.Add(value);
+        add => _uiActions.Enqueue(value);
         remove => _ = 0;
     }
 
@@ -44,8 +44,8 @@ internal class ExecutionModule : IExecutionModule
 
     private void Execute()
     {
-        RuntimeThreadCalls();
         UIThreadCall();
+        RuntimeThreadCalls();
     }
 
     private void UIThreadCall()
@@ -68,9 +68,8 @@ internal class ExecutionModule : IExecutionModule
 
     private void UIThreadCalls()
     {
-        foreach (var action in _uiActions)
+        while(_uiActions.TryDequeue(out var action))
             action.Invoke(_runtime);
-        _uiActions.Clear();
 
         foreach (var action in _uiActionsLoop)
             action.Invoke(_runtime);

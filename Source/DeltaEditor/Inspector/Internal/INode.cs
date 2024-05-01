@@ -1,6 +1,6 @@
 ﻿using Arch.Core;
 
-namespace DeltaEditor.Inspector;
+namespace DeltaEditor.Inspector.Internal;
 
 internal interface INode : IView
 {

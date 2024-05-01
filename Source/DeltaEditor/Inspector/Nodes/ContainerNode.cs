@@ -1,23 +1,24 @@
 ﻿using Arch.Core;
-using DeltaEditor.Inspector.InspectorFields;
-using System.Numerics;
+using DeltaEditor.Inspector.Internal;
 
-namespace DeltaEditor.Inspector.InspectorElements;
+namespace DeltaEditor.Inspector.Nodes;
 
-internal class Vector3Node : Node<Vector3>
+
+internal class ContainerNode : Node
 {
-    private readonly HorizontalStackLayout _stack;
+    private readonly StackLayout _stack;
 
     private readonly List<INode> _inspectorElements;
 
-    public Vector3Node(NodeData parameters) : base(parameters)
+    public ContainerNode(NodeData parameters) : base(parameters)
     {
         _stack = [_fieldName];
+        _stack.Margin = 5;
         _stack.BackgroundColor = NodeConst.BackColor;
         _inspectorElements = [];
         foreach (var item in _nodeData.FieldNames)
         {
-            var element = new FloatNode(_nodeData.ChildData(item)) { NameMode = FieldSizeMode.ExtraSmall };
+            var element = NodeFactory.CreateNode(_nodeData.ChildData(item));
             _inspectorElements.Add(element);
             _stack.Add(element);
         }
