@@ -1,13 +1,12 @@
 ﻿using Arch.Core;
 
-namespace DeltaEditor.Inspector
+namespace DeltaEditor.Inspector;
+
+internal class EmptyNode : Node
 {
-    internal class EmptyNode : Node
+    public EmptyNode(NodeData nodeData) : base(nodeData)
     {
-        public EmptyNode(NodeData nodeData) : base(nodeData)
-        {
-            Content = _fieldName;
-        }
-        public override void UpdateData(EntityReference entity) { }
+        Content = _fieldName;
     }
+    public override void UpdateData(EntityReference entity) { }
 }

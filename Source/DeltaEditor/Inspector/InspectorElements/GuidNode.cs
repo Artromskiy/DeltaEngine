@@ -3,42 +3,41 @@ using Delta.Runtime;
 using DeltaEditor.Inspector.InspectorFields;
 using System.Diagnostics;
 
-namespace DeltaEditor.Inspector.InspectorElements
+namespace DeltaEditor.Inspector.InspectorElements;
+
+internal class GuidNode : ClickableNode<Guid>
 {
-    internal class GuidNode : ClickableNode<Guid>
+    private EntityReference cachedEntity;
+    public GuidNode(NodeData parameters, bool withName = true) : base(parameters, withName)
     {
-        private EntityReference cachedEntity;
-        public GuidNode(NodeData parameters, bool withName = true) : base(parameters, withName)
-        {
-            _fieldData.Clicked += OnClick;
-            ValueMode = FieldSizeMode.ExtraLarge;
-        }
+        _fieldData.Clicked += OnClick;
+        ValueMode = FieldSizeMode.ExtraLarge;
+    }
 
-        public override void UpdateData(EntityReference entity)
-        {
-            cachedEntity = entity;
-            Span<byte> guidBytes = stackalloc byte[16];
-            GetData(entity).TryWriteBytes(guidBytes);
-            _fieldData.Text = Convert.ToBase64String(guidBytes);
-        }
+    public override void UpdateData(EntityReference entity)
+    {
+        cachedEntity = entity;
+        Span<byte> guidBytes = stackalloc byte[16];
+        GetData(entity).TryWriteBytes(guidBytes);
+        _fieldData.Text = Convert.ToBase64String(guidBytes);
+    }
 
-        private void OnClick(object? sender, EventArgs eventArgs)
-        {
-            if (!cachedEntity.IsAlive())
-                return;
-            _nodeData.rootData.RuntimeLoader.OnRuntimeThread += OpenFolder;
-        }
+    private void OnClick(object? sender, EventArgs eventArgs)
+    {
+        if (!cachedEntity.IsAlive())
+            return;
+        _nodeData.rootData.RuntimeLoader.OnRuntimeThread += OpenFolder;
+    }
 
-        public void OpenFolder(IRuntime runtime)
+    public void OpenFolder(IRuntime runtime)
+    {
+        string path = runtime.Context.AssetImporter.GetPath(GetData(cachedEntity));
+        try
         {
-            string path = runtime.Context.AssetImporter.GetPath(GetData(cachedEntity));
-            try
-            {
-                string? directory = Path.GetDirectoryName(path);
-                if (Directory.Exists(directory))
-                    Process.Start("explorer.exe", directory);
-            }
-            catch { }
+            string? directory = Path.GetDirectoryName(path);
+            if (Directory.Exists(directory))
+                Process.Start("explorer.exe", directory);
         }
+        catch { }
     }
 }

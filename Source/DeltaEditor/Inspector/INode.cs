@@ -1,9 +1,8 @@
 ﻿using Arch.Core;
 
-namespace DeltaEditor.Inspector
+namespace DeltaEditor.Inspector;
+
+internal interface INode : IView
 {
-    internal interface INode : IView
-    {
-        public void UpdateData(EntityReference entity);
-    }
+    public void UpdateData(EntityReference entity);
 }
