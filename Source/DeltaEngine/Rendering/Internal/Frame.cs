@@ -93,17 +93,6 @@ internal class Frame : IDisposable
 
         descriptorSets.UpdateDescriptorSets();
 
-        // if (_matrices.ChangedBuffer)
-        // {
-        //     RenderHelper.BindBuffersToDescriptorSet(_rendererBase, _instanceDescriptorSet, _matrices.GetBuffer(), 0, DescriptorType.StorageBuffer);
-        //     _matrices.ChangedBuffer = false;
-        // }
-        // if (_ids.ChangedBuffer)
-        // {
-        //     RenderHelper.BindBuffersToDescriptorSet(_rendererBase, _instanceDescriptorSet, _ids.GetBuffer(), 1, DescriptorType.StorageBuffer);
-        //     _matrices.ChangedBuffer = false;
-        // }
-
         RecordCommandBuffer(rendersData, commandBuffer, imageIndex);
 
         var buffer = commandBuffer;

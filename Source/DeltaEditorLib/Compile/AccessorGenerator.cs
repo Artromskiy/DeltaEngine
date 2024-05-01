@@ -1,25 +1,12 @@
 ﻿using Delta.Scripting;
+using DeltaEditorLib.Scripting;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using System.Collections.Frozen;
 using System.Reflection;
 using System.Text;
 
 
-public interface IAccessor
-{
-    public Type GetFieldType(string name);
-    public object GetFieldValue(ref readonly object obj, string name);
-    public nint GetFieldPtr(nint ptr, string name);
-    public ReadOnlySpan<string> FieldNames { get; }
-}
-
-public interface IAccessorsContainer
-{
-    public FrozenDictionary<Type, IAccessor> AllAccessors { get; }
-}
-
-namespace DeltaEditorLib.Scripting
+namespace DeltaEditorLib.Compile
 {
     internal class AccessorGenerator
     {
@@ -201,6 +188,8 @@ namespace DeltaEditorLib.Scripting
             namespaces.Add("System.Collections.Generic");
             namespaces.Add("System.Runtime.CompilerServices");
             namespaces.Add("System.Collections.Frozen");
+            namespaces.Add("DeltaEditorLib.Scripting");
+
             foreach (var n in namespaces.Distinct())
                 sb.Append("using ").Append(n).Append(';').AppendLine();
         }

@@ -1,4 +1,4 @@
-﻿using DeltaEditorLib.Scripting;
+﻿using DeltaEditorLib.Loader;
 
 namespace DeltaEditor;
 

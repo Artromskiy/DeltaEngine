@@ -1,4 +1,5 @@
 ﻿using Delta.Runtime;
+using DeltaEditorLib.Loader;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 
@@ -12,6 +13,9 @@ internal class ExecutionModule : IExecutionModule
     private readonly List<Action<IRuntime>> _uiActionsLoop = [];
     private readonly List<Action<IRuntime>> _uiActions = [];
     private readonly ConcurrentQueue<Action<IRuntime>> _runtimeActions = [];
+
+    private Action? _uiThreadCallsAction;
+    private Action UIThreadCallsAction => _uiThreadCallsAction ??= UIThreadCalls;
 
     public event Action<IRuntime> OnUIThreadLoop
     {
@@ -48,7 +52,7 @@ internal class ExecutionModule : IExecutionModule
     {
         try
         {
-            _uiThreadGetter?.Thread?.Invoke(UIThreadCalls).Wait();
+            _uiThreadGetter?.Thread?.Invoke(UIThreadCallsAction).Wait();
         }
         catch (Exception e)
         {

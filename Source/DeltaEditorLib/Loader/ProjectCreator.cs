@@ -1,8 +1,9 @@
 ﻿using Delta;
 using Delta.Files.Defaults;
 using Delta.Runtime;
+using DeltaEditorLib.Scripting;
 
-namespace DeltaEditorLib.Scripting
+namespace DeltaEditorLib.Loader
 {
     public class ProjectCreator
     {

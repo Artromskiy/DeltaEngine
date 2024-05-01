@@ -7,14 +7,13 @@ using System.Runtime.CompilerServices;
 
 namespace Delta.ECS;
 
-internal struct ChildOf(EntityReference parent)
+public struct ChildOf(EntityReference parent)
 {
     public EntityReference parent = parent;
 }
 
 internal readonly struct WorldContext(World world)
 {
-
     [MethodImpl(Inl)]
     public readonly Matrix4x4 GetParentWorldMatrix(Entity entity)
     {

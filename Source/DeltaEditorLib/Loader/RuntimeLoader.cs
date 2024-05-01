@@ -1,7 +1,9 @@
 ﻿using Delta.Runtime;
+using DeltaEditorLib.Compile;
+using DeltaEditorLib.Scripting;
 using System.Diagnostics;
 
-namespace DeltaEditorLib.Scripting;
+namespace DeltaEditorLib.Loader;
 
 public class RuntimeLoader
 {
@@ -11,7 +13,7 @@ public class RuntimeLoader
     private IExecutionModule _executionModule;
 
     private readonly IUIThreadGetter? _uiThreadGetter;
-    private Runtime _runtime;
+    private IRuntime _runtime;
 
     public IAccessorsContainer Accessors => _compilerModule.Accessors!;
     public List<Type> Components => _compilerModule.Components;

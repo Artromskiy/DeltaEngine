@@ -1,5 +1,6 @@
 ﻿using Delta.Runtime;
 using Delta.Scripting;
+using DeltaEditorLib.Compile;
 using System.Reflection;
 using System.Runtime.Loader;
 

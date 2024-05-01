@@ -8,16 +8,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="PrivateProxy\**" />
+    <EmbeddedResource Remove="PrivateProxy\**" />
+    <None Remove="PrivateProxy\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.9.2" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DeltaEngine\DeltaEngine.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="PrivateProxy\" />
-    <Folder Include="Project\" />
   </ItemGroup>
 
 </Project>

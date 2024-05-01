@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using Delta.Runtime;
 using DeltaEditor.Inspector.InspectorFields;
 using System.Diagnostics;
 
@@ -25,11 +26,12 @@ namespace DeltaEditor.Inspector.InspectorElements
         {
             if (!cachedEntity.IsAlive())
                 return;
-            OpenFolder(_nodeData.Context.AssetImporter.GetPath(GetData(cachedEntity)));
+            _nodeData.rootData.RuntimeLoader.OnRuntimeThread += OpenFolder;
         }
 
-        public void OpenFolder(string path)
+        public void OpenFolder(IRuntime runtime)
         {
+            string path = runtime.Context.AssetImporter.GetPath(GetData(cachedEntity));
             try
             {
                 string? directory = Path.GetDirectoryName(path);

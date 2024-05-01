@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:material="http://schemas.enisn-projects.io/dotnet/maui/uraniumui/material"
              x:Class="DeltaEditor.MainPage">
 
     <ContentPage.MenuBarItems>
@@ -87,18 +88,14 @@
             <VerticalStackLayout Grid.Column="0"
                                  MinimumWidthRequest="300"
                                  VerticalOptions="FillAndExpand">
-                    <Label Text="Hierarchy"
+                <Label Text="Hierarchy"
                        Padding="10"
                        FontSize="Subtitle" />
 
-                <ListView x:Name="HierarchyListView"
-                          ItemSelected="HierarchyListView_ItemSelected">
-                    <ListView.ItemTemplate>
-                        <DataTemplate>
-                            <TextCell Text="{Binding Name}" />
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
+                <ScrollView x:Name="HierarchyScrollView"
+                            VerticalOptions="FillAndExpand"
+                            VerticalScrollBarVisibility="Always">
+                </ScrollView>
 
             </VerticalStackLayout>
 
@@ -123,7 +120,6 @@
 
                     <Button x:Name="UpdateHierarchyButton"
                             Text="Update Hierarchy"
-                            Clicked="UpdateHierarchyButton_Clicked"
                             HorizontalOptions="Fill" />
 
                 </VerticalStackLayout>
@@ -144,7 +140,7 @@
             </VerticalStackLayout>
 
         </Grid>
-<!--
+        <!--
         <Frame x:Name="ProjectFrame"
                Grid.Row="2">
             <Label Text="Project">

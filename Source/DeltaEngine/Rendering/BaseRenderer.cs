@@ -34,6 +34,8 @@ internal abstract unsafe partial class BaseRenderer : IDisposable, ISystem
     private const bool RenderLessMode = false;
 
     private bool _skippedFrame = true;
+    protected FrameDescriptorSets DescriptorSets => CurrentFrame.descriptorSets;
+    private Frame CurrentFrame => _frames.Peek();
 
     public unsafe BaseRenderer(string appName)
     {
@@ -48,7 +50,6 @@ internal abstract unsafe partial class BaseRenderer : IDisposable, ISystem
             _frames.Enqueue(new Frame(_rendererData, renderAssets, swapChain));
     }
 
-    private Frame CurrentFrame => _frames.Peek();
 
     private void Sync()
     {
@@ -93,8 +94,6 @@ internal abstract unsafe partial class BaseRenderer : IDisposable, ISystem
         if (resize)
             OnResize();
     }
-
-    internal FrameDescriptorSets DescriptorSets => CurrentFrame.descriptorSets;
 
     protected void AddSemaphore(Semaphore semaphore) => CurrentFrame.AddSemaphore(semaphore);
     protected void SetRenders(ReadOnlySpan<(Render rend, uint count)> renders)

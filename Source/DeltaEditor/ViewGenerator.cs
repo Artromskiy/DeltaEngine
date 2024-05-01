@@ -1,4 +1,5 @@
 ﻿using Delta.Files;
+using DeltaEditorLib.Scripting;
 using System.Numerics;
 
 namespace DeltaEditor

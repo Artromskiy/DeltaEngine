@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.Text;
 using System.Diagnostics;
 using System.Reflection;
 
-namespace DeltaEditorLib.Scripting
+namespace DeltaEditorLib.Compile
 {
     internal class CompileHelper(IProjectPath projectPath)
     {

@@ -1,9 +1,5 @@
-﻿using Arch.Core;
-using Arch.Core.Extensions;
-using Delta.ECS.Components;
-using DeltaEditor.Inspector;
-using DeltaEditorLib.Scripting;
-using System.Collections.ObjectModel;
+﻿using DeltaEditor.Inspector;
+using DeltaEditorLib.Loader;
 
 namespace DeltaEditor;
 
@@ -11,18 +7,21 @@ public partial class MainPage : ContentPage
 {
     private readonly RuntimeLoader _runtimeLoader;
 
-    private readonly ObservableCollection<HierarchyEntityView> _entities = [];
-
     private readonly InspectorView _inspector;
+    private readonly HierarchyView _hierarchy;
 
     public MainPage(RuntimeLoader runtimeLoader)
     {
         _runtimeLoader = runtimeLoader;
         InitializeComponent();
+        //_hierarchy = new HierarchyView(_runtimeLoader);
+        _hierarchy = new HierarchyView(_runtimeLoader);
         _inspector = new InspectorView(_runtimeLoader);
-        HierarchyListView.ItemsSource = _entities;
         InspectorScrollView.Content = _inspector;
+        HierarchyScrollView.Content = _hierarchy;
         _runtimeLoader.OnUIThreadLoop += _inspector.UpdateComponentsData;
+        _runtimeLoader.OnUIThreadLoop += _hierarchy.UpdateHierarchy;
+        _hierarchy.OnEntitySelected += _inspector.UpdateComponentsEntity;
     }
 
     private void CreateScene(object sender, EventArgs e)
@@ -63,6 +62,7 @@ public partial class MainPage : ContentPage
     {
 
     }
+    /*
 
     private void UpdateHierarchyButton_Clicked(object sender, EventArgs e)
     {
@@ -80,7 +80,6 @@ public partial class MainPage : ContentPage
             }
         };
     }
-
     private void HierarchyListView_ItemSelected(object sender, SelectedItemChangedEventArgs e)
     {
         _runtimeLoader.OnUIThread += (r) =>
@@ -91,7 +90,6 @@ public partial class MainPage : ContentPage
             _inspector.UpdateComponentsEntity(r, entityReference);
         };
     }
-
     private static string EntityString(EntityReference entityReference)
     {
         var entity = entityReference.Entity;
@@ -100,4 +98,5 @@ public partial class MainPage : ContentPage
 
         return $"id: {entity.Id}, ver: {entityReference.Version}";
     }
+    */
 }

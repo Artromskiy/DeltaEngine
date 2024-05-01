@@ -1,4 +1,4 @@
-﻿namespace DeltaEditorLib.Scripting;
+﻿namespace DeltaEditorLib.Loader;
 
 public interface IUIThreadGetter
 {

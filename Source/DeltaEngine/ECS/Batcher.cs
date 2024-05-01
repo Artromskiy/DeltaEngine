@@ -24,7 +24,7 @@ internal class Batcher : ISystem
     /// </summary>
     public readonly GpuArray<uint> trsIds; // send to compute to sort trs on device
 
-    // TODO 
+    // TODO
     private readonly GpuArray<uint> _trsTransfer; // send to compute to transfer new trs from host to device
 
     private readonly PooledSet<uint> _forceTrsWrite;
@@ -40,7 +40,7 @@ internal class Batcher : ISystem
     private static readonly QueryDescription _trsDescriptionTransform = new QueryDescription().WithAll<Render, RendId, Transform>();
     private static readonly QueryDescription _trsDescriptionParent = new QueryDescription().WithAll<Render, RendId, ChildOf>().WithNone<Transform>();
 
-    private readonly RendGroupData _rendGroupData = new();
+    private readonly RenderGroupData _rendGroupData = new();
 
     private readonly PooledList<(Render rend, uint count)> _renders = [];
 
@@ -113,7 +113,7 @@ internal class Batcher : ISystem
         }
     }
 
-    private readonly struct RemoveRender(World world, Queue<uint> freeIds, RendGroupData rendGroupData) : ISystem
+    private readonly struct RemoveRender(World world, Queue<uint> freeIds, RenderGroupData rendGroupData) : ISystem
     {
         [MethodImpl(Inl)]
         public readonly void Execute()
@@ -121,15 +121,15 @@ internal class Batcher : ISystem
             if (!world.Has(_removeDescription))
                 return;
             var remover = new InlineRemover(freeIds, rendGroupData);
-            world.InlineQuery<InlineRemover, RendId, RendGroup>(_removeDescription, ref remover);
-            world.Remove<RendId, RendGroup>(_removeDescription);
+            world.InlineQuery<InlineRemover, RendId, RenderGroup>(_removeDescription, ref remover);
+            world.Remove<RendId, RenderGroup>(_removeDescription);
         }
 
-        private readonly struct InlineRemover(Queue<uint> free, RendGroupData rendGroupData)
-            : IForEach<RendId, RendGroup>
+        private readonly struct InlineRemover(Queue<uint> free, RenderGroupData rendGroupData)
+            : IForEach<RendId, RenderGroup>
         {
             [MethodImpl(Inl)]
-            public readonly void Update(ref RendId id, ref RendGroup group)
+            public readonly void Update(ref RendId id, ref RenderGroup group)
             {
                 rendGroupData.Remove(group);
                 free.Enqueue(id.trsId);
@@ -138,7 +138,7 @@ internal class Batcher : ISystem
     }
 
     private readonly struct AddRender(World world, Queue<uint> free,
-        RendGroupData rendGroupData,
+        RenderGroupData rendGroupData,
         PooledSet<uint> forceUpdate) : ISystem
     {
         private static readonly QueryDescription _addTag = new QueryDescription().WithAll<AddTag>();
@@ -152,21 +152,21 @@ internal class Batcher : ISystem
             // Add not yet registered entities
             // We also tagging all not registered entities
             // and then remove this tag, as it's faster than CommandBuffer
-            world.Add<AddTag, RendId, RendGroup>(_addDescription);
+            world.Add<AddTag, RendId, RenderGroup>(_addDescription);
 
             InlineAdder adder = new(free, rendGroupData, forceUpdate);
-            world.InlineQuery<InlineAdder, Render, RendId, RendGroup>(_addTag, ref adder);
+            world.InlineQuery<InlineAdder, Render, RendId, RenderGroup>(_addTag, ref adder);
             world.Remove<AddTag>(_addTag);
         }
 
         private struct InlineAdder(
             Queue<uint> free,
-            RendGroupData rendGroupData,
+            RenderGroupData rendGroupData,
             PooledSet<uint> forceUpdate)
-            : IForEach<Render, RendId, RendGroup>
+            : IForEach<Render, RendId, RenderGroup>
         {
             [MethodImpl(Inl)]
-            public readonly void Update(ref Render render, ref RendId id, ref RendGroup group)
+            public readonly void Update(ref Render render, ref RendId id, ref RenderGroup group)
             {
                 uint index = free.Dequeue();
                 group = rendGroupData.Add(ref render);
@@ -176,7 +176,7 @@ internal class Batcher : ISystem
         }
     }
 
-    private readonly struct ChangeRender(World world, RendGroupData rendGroupData) : ISystem
+    private readonly struct ChangeRender(World world, RenderGroupData rendGroupData) : ISystem
     {
         [MethodImpl(Inl)]
         public readonly void Execute()
@@ -184,14 +184,14 @@ internal class Batcher : ISystem
             if (!world.Has(_changeDescription))
                 return;
             ChangeWriter writer = new(rendGroupData);
-            world.InlineQuery<ChangeWriter, Render, RendGroup>(_changeDescription, ref writer);
+            world.InlineQuery<ChangeWriter, Render, RenderGroup>(_changeDescription, ref writer);
         }
 
-        private readonly struct ChangeWriter(RendGroupData rendGroupData)
-            : IForEach<Render, RendGroup>
+        private readonly struct ChangeWriter(RenderGroupData rendGroupData)
+            : IForEach<Render, RenderGroup>
         {
             [MethodImpl(Inl)]
-            public readonly void Update(ref Render render, ref RendGroup group)
+            public readonly void Update(ref Render render, ref RenderGroup group)
             {
                 rendGroupData.Remove(group);
                 group = rendGroupData.Add(ref render);
@@ -201,7 +201,7 @@ internal class Batcher : ISystem
 
     private readonly struct SortWriteRender(World world,
         GpuArray<uint> rendersArray,
-        RendGroupData rendGroupData) : ISystem
+        RenderGroupData rendGroupData) : ISystem
     {
         [MethodImpl(Inl)]
         public readonly void Execute()
@@ -217,15 +217,15 @@ internal class Batcher : ISystem
                 index += tmp;
             }
             RenderWriter writer = new(rendersArray.GetWriter(), offsets);
-            world.InlineQuery<RenderWriter, RendGroup, RendId>(_renderDescription, ref writer);
+            world.InlineQuery<RenderWriter, RenderGroup, RendId>(_renderDescription, ref writer);
             ArrayPool<uint>.Shared.Return(offsets);
         }
 
         private readonly struct RenderWriter(GpuArray<uint>.Writer writer, uint[] offsets) :
-            IForEach<RendGroup, RendId>
+            IForEach<RenderGroup, RendId>
         {
             [MethodImpl(Inl)]
-            public readonly void Update(ref RendGroup group, ref RendId id) => writer[offsets[group.id]++] = id.trsId;
+            public readonly void Update(ref RenderGroup group, ref RendId id) => writer[offsets[group.id]++] = id.trsId;
         }
     }
 
@@ -280,24 +280,24 @@ internal class Batcher : ISystem
 
     /// <summary>
     /// Encapsulates containers with info about <see cref="Render"/>s ordering,
-    /// dependent <see cref="RendGroup"/>s and count per each <see cref="RendGroup"/>
+    /// dependent <see cref="RenderGroup"/>s and count per each <see cref="RenderGroup"/>
     /// </summary>
-    private readonly struct RendGroupData()
+    private readonly struct RenderGroupData()
     {
-        public readonly Dictionary<Render, RendGroup> rendToGroup = [];
-        public readonly SortedDictionary<Render, RendGroup> sortedRendToGroup = [];
-        public readonly Dictionary<RendGroup, uint> groupToCount = [];
+        public readonly Dictionary<Render, RenderGroup> rendToGroup = [];
+        public readonly SortedDictionary<Render, RenderGroup> sortedRendToGroup = [];
+        public readonly Dictionary<RenderGroup, uint> groupToCount = [];
 
         /// <summary>
-        /// Creates new <see cref="RendGroup"/> if not present, increments count of entities in this group
+        /// Creates new <see cref="RenderGroup"/> if not present, increments count of entities in this group
         /// </summary>
         /// <param name="render"></param>
         /// <returns>Group to which <paramref name="render"/> corresponds</returns>
-        public readonly RendGroup Add(ref Render render)
+        public readonly RenderGroup Add(ref Render render)
         {
             if (!rendToGroup.TryGetValue(render, out var group))
             {
-                sortedRendToGroup[render] = rendToGroup[render] = group = new RendGroup((uint)rendToGroup.Count);
+                sortedRendToGroup[render] = rendToGroup[render] = group = new RenderGroup((uint)rendToGroup.Count);
                 groupToCount[group] = 0;
             }
             groupToCount[group]++;
@@ -308,7 +308,7 @@ internal class Batcher : ISystem
         /// Decrements count of entities in <paramref name="group"/>
         /// </summary>
         /// <param name="group"></param>
-        public readonly void Remove(RendGroup group) => groupToCount[group]--;
+        public readonly void Remove(RenderGroup group) => groupToCount[group]--;
     }
 
     /// <summary>
@@ -325,12 +325,12 @@ internal class Batcher : ISystem
     /// Specifies id of group to which <see cref="Render"/> refers.
     /// Used to improve performance when sorting <see cref="Render"/>s
     /// </summary>
-    /// <param name="rehash"></param>
-    internal readonly struct RendGroup(uint rehash) : IEquatable<RendGroup>
+    /// <param name="id"></param>
+    internal readonly struct RenderGroup(uint id) : IEquatable<RenderGroup>
     {
-        public readonly uint id = rehash;
-        public bool Equals(RendGroup other) => id == other.id;
-        public override bool Equals(object? obj) => obj is RendGroup group && Equals(group.id);
+        public readonly uint id = id;
+        public bool Equals(RenderGroup other) => id == other.id;
+        public override bool Equals(object? obj) => obj is RenderGroup group && Equals(group.id);
         public override int GetHashCode() => id.GetHashCode();
     }
 }

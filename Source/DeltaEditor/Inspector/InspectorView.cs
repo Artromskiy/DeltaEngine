@@ -1,6 +1,8 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
 using Delta.Runtime;
+using Delta.Scripting;
+using DeltaEditorLib.Loader;
 using DeltaEditorLib.Scripting;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
@@ -43,10 +45,9 @@ namespace DeltaEditor.Inspector
             Content = _inspectorStack;
         }
 
-        public void UpdateComponentsEntity(IRuntime runtime, EntityReference entityReference)
+        public void UpdateComponentsEntity(EntityReference entityReference)
         {
             SelectedEntity = entityReference;
-            UpdateComponentsData(runtime);
         }
 
         public void UpdateComponentsData(IRuntime runtime)
@@ -70,7 +71,14 @@ namespace DeltaEditor.Inspector
 
         private void RebuildInspectorComponents(IRuntime runtime)
         {
-            foreach (var type in SelectedEntity.Entity.GetComponentTypes())
+            var types = SelectedEntity.Entity.GetComponentTypes().ToArray();
+            Array.Sort(types, (x1, x2) =>
+            {
+                var attr1 = x1.Type.GetAttribute<ComponentAttribute>();
+                var attr2 = x2.Type.GetAttribute<ComponentAttribute>();
+                return ComponentAttribute.Compare(attr2, attr1);
+            });
+            foreach (var type in types)
             {
                 if (!_accessors.AllAccessors.ContainsKey(type))
                     continue;
@@ -89,13 +97,16 @@ namespace DeltaEditor.Inspector
 
         private void ClearInspector()
         {
-            _inspectorStack.Clear();
+            if (_inspectorStack.Count != 0)
+                _inspectorStack.Clear();
             _componentEditors.Clear();
-            _componentsToAdd.Clear();
+            if (_componentsToAdd.Count != 0)
+                _componentsToAdd.Clear();
         }
 
         private void RebuildComponentAdder()
         {
+            _componentsToAdd.Add(new InspectorAvaliableComponent(string.Empty, null!));
             foreach (var item in _components)
                 if (!Array.Exists(SelectedEntity.Entity.GetComponentTypes(), c => c.Type.Equals(item)))
                     _componentsToAdd.Add(new(item.Name, item));
@@ -104,20 +115,21 @@ namespace DeltaEditor.Inspector
         private INode GetOrCreateInspector(IRuntime runtime, Type type)
         {
             if (!_inspectors.TryGetValue(type, out var inspector))
-                _inspectors[type] = inspector = NodeFactory.CreateComponentInspector(new(new(type, _accessors, runtime.Context), new([])));
+                _inspectors[type] = inspector = NodeFactory.CreateComponentInspector(new(new(type, _runtimeLoader), new([])));
             return inspector;
         }
 
         private void AddComponentClicked(object? sender, EventArgs eventArgs)
         {
-            if (_addComponentPicker.SelectedItem is not InspectorAvaliableComponent componentType)
+            if (_addComponentPicker.SelectedIndex == 0 || _addComponentPicker.SelectedItem is not InspectorAvaliableComponent componentType)
                 return;
-
             var type = componentType.Type;
+
+            _addComponentPicker.SelectedIndex = 0;
 
             _runtimeLoader.OnRuntimeThread += (r) =>
             {
-                if (SelectedEntity.Entity.IsAlive())
+                if (!SelectedEntity.Entity.IsAlive())
                     return;
 
                 object? component = Activator.CreateInstance(type);

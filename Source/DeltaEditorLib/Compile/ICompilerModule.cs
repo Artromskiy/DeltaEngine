@@ -1,4 +1,6 @@
-﻿namespace DeltaEditorLib.Scripting;
+﻿using DeltaEditorLib.Scripting;
+
+namespace DeltaEditorLib.Compile;
 
 internal interface ICompilerModule
 {
