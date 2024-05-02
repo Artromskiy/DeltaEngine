@@ -57,6 +57,7 @@ internal class CompileHelper(IProjectPath projectPath)
     {
         var code = AccessorGenerator.GenerateAccessors(components);
         SyntaxTree[] trees = [CSharpSyntaxTree.ParseText(SourceText.From(code), _parseOptions)];
+        var refTuples = VariadicsGenerator.GenerateVariadics(30);
 
         var references = GetReferences(trees);
 
