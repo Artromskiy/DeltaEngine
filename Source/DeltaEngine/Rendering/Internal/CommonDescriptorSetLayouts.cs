@@ -1,4 +1,5 @@
-﻿using Silk.NET.Vulkan;
+﻿using Delta.Utilities;
+using Silk.NET.Vulkan;
 using System;
 
 namespace Delta.Rendering.Internal;

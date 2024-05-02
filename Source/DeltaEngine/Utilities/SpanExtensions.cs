@@ -1,6 +1,7 @@
-﻿using System;
+﻿using Delta.Utilities;
+using System;
 
-namespace Delta;
+namespace Delta.Utilities;
 
 internal static class SpanExtensions
 {
@@ -45,24 +46,24 @@ internal static class SpanExtensions
     public static bool Exist<T>(this Span<T> span, Predicate<T> match) where T : struct
     {
         ReadOnlySpan<T> ro = span;
-        return Exist(ro, match);
+        return ro.Exist(match);
     }
     public static bool Exist<T>(this Span<T> span, Predicate<T> match, out T result) where T : struct
     {
         ReadOnlySpan<T> ro = span;
-        return Exist(ro, match, out result);
+        return ro.Exist(match, out result);
     }
 
     public static T Find<T>(this Span<T> span, Predicate<T> match) where T : struct
     {
         ReadOnlySpan<T> ro = span;
-        return Find(ro, match);
+        return ro.Find(match);
     }
 
     public static int FindIndex<T>(this Span<T> span, Predicate<T> match) where T : struct
     {
         ReadOnlySpan<T> ro = span;
-        return FindIndex(ro, match);
+        return ro.FindIndex(match);
     }
 
     public static unsafe void CopyTo<T>(this T[] array, T* pointer) where T : unmanaged

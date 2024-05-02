@@ -2,6 +2,7 @@
 using Arch.Core.Utils;
 using Delta.ECS.Components;
 using Delta.Scripting;
+using Delta.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;

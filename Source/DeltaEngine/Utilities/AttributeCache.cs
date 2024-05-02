@@ -1,0 +1,24 @@
+﻿using System;
+using System.Collections.Concurrent;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+
+namespace Delta.Utilities;
+
+public static class AttributeCache
+{
+    private static readonly ConditionalWeakTable<Type, ConcurrentDictionary<Type, object?>> _typeToAttributesCache = [];
+
+    private static ConcurrentDictionary<Type, object?> GetDictionaryOfAttributes(Type type) => _typeToAttributesCache.GetOrCreateValue(type);
+    public static A? GetAttribute<A>(this Type type) where A : Attribute
+    {
+        var attributeType = typeof(A);
+        var dictionary = GetDictionaryOfAttributes(type);
+        return dictionary.GetOrAdd(attributeType, AttributeGetter<A>, type) as A;
+    }
+    public static A? GetAttribute<A, T>() where A : Attribute => typeof(T).GetAttribute<A>();
+    public static bool HasAttribute<A, T>() where A : Attribute => typeof(T).GetAttribute<A>() != null;
+    public static bool HasAttribute<A>(this Type type) where A : Attribute => type.GetAttribute<A>() != null;
+
+    private static A? AttributeGetter<A>(Type attributeType, Type objectType) where A : Attribute => objectType.GetCustomAttribute<A>(false);
+}

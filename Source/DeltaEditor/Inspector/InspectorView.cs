@@ -1,7 +1,9 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
+using Arch.Core.Utils;
 using Delta.Runtime;
 using Delta.Scripting;
+using Delta.Utilities;
 using DeltaEditor.Inspector.Internal;
 using DeltaEditorLib.Loader;
 using DeltaEditorLib.Scripting;
@@ -72,14 +74,11 @@ internal class InspectorView : ContentView
 
     private void RebuildInspectorComponents(IRuntime runtime)
     {
-        var types = SelectedEntity.Entity.GetComponentTypes().ToArray();
-        Array.Sort(types, (x1, x2) =>
-        {
-            var attr1 = x1.Type.GetAttribute<ComponentAttribute>();
-            var attr2 = x2.Type.GetAttribute<ComponentAttribute>();
-            return ComponentAttribute.Compare(attr2, attr1);
-        });
-        foreach (var type in types)
+        var types = SelectedEntity.Entity.GetComponentTypes();
+        Span<ComponentType> typesSpan = stackalloc ComponentType[types.Length];
+        types.CopyTo(typesSpan);
+        typesSpan.Sort(NullSafeAttributeComparer<ComponentAttribute>.Default);
+        foreach (var type in typesSpan)
         {
             if (!_accessors.AllAccessors.ContainsKey(type))
                 continue;

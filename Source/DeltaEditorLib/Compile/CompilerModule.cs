@@ -1,5 +1,6 @@
 ﻿using Delta.Runtime;
 using Delta.Scripting;
+using Delta.Utilities;
 using DeltaEditorLib.Compile;
 using System.Reflection;
 using System.Runtime.Loader;
@@ -84,6 +85,6 @@ internal class CompilerModule : ICompilerModule
     private static IEnumerable<Type> GetComponents(Assembly assembly)
     {
         return assembly.GetTypes().
-            Where(type => type.HasAttribute<ComponentAttribute>());
+            Where(type => type.GetCustomAttribute<ComponentAttribute>() != null);
     }
 }

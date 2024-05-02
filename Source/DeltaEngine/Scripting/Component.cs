@@ -2,8 +2,8 @@
 
 namespace Delta.Scripting;
 
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
-public class ComponentAttribute : Attribute
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
+public class ComponentAttribute : Attribute, IComparable<ComponentAttribute>
 {
     public readonly bool builtIn;
     public readonly int order;
@@ -19,25 +19,13 @@ public class ComponentAttribute : Attribute
         this.builtIn = builtIn;
     }
 
-    public static int Compare(ComponentAttribute? attr1, ComponentAttribute? attr2)
+    public int CompareTo(ComponentAttribute? other)
     {
-        if (attr1 == null || attr2 == null)
-            return NullCompare(attr1, attr2);
+        Debug.Assert(other != null);
 
-        if (attr1.builtIn != attr2.builtIn)
-            return attr1.builtIn.CompareTo(attr2.builtIn);
+        if (builtIn != other.builtIn)
+            return builtIn.CompareTo(other.builtIn);
 
-        return attr1.order.CompareTo(attr2.order);
-    }
-
-    private static int NullCompare(object? obj1, object? obj2)
-    {
-        return (obj1, obj2) switch
-        {
-            (null, null) => 0,
-            (null, _) => 1,
-            (_, null) => -1,
-            _ => 0
-        };
+        return order.CompareTo(other.order);
     }
 }
