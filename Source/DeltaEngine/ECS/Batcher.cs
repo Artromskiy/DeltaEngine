@@ -153,7 +153,6 @@ internal class Batcher : ISystem
             // We also tagging all not registered entities
             // and then remove this tag, as it's faster than CommandBuffer
             world.Add<AddTag, RendId, RenderGroup>(_addDescription);
-
             InlineAdder adder = new(free, rendGroupData, forceUpdate);
             world.InlineQuery<InlineAdder, Render, RendId, RenderGroup>(_addTag, ref adder);
             world.Remove<AddTag>(_addTag);

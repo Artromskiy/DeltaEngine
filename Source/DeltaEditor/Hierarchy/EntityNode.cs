@@ -39,7 +39,7 @@ internal class EntityNode : ContentView
         if (!entityReference.IsAlive())
             return string.Empty;
         var entity = entityReference.Entity;
-        if (entity.TryGet<EntityName>(out var entityName))
+        if (entity.TryGet<EntityName>(out var entityName) && !string.IsNullOrEmpty(entityName.name))
             return entityName.name;
         return $"id: {entity.Id}, ver: {entityReference.Version}";
     }

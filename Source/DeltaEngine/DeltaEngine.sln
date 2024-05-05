@@ -19,7 +19,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeltaEditor", "..\DeltaEdit
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeltaHub", "..\DeltaHub\DeltaHub.csproj", "{A19A56E3-4B15-4FB8-8D9D-4F28B7B3A9C2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeltaEditorLib", "..\DeltaEditorLib\DeltaEditorLib.csproj", "{ABEA9CF9-A78C-457A-AAE8-5291B47B1482}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeltaEditorLib", "..\DeltaEditorLib\DeltaEditorLib.csproj", "{ABEA9CF9-A78C-457A-AAE8-5291B47B1482}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeltaGen", "..\DeltaGen\DeltaGen.csproj", "{485B5794-1A1C-4A56-8A76-0FDB75FB6E9C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeltaGenTest", "..\DeltaGenTest\DeltaGenTest.csproj", "{850CF3F1-D593-432A-A243-0360E0655664}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -77,6 +81,22 @@ Global
 		{ABEA9CF9-A78C-457A-AAE8-5291B47B1482}.Perf|Any CPU.Build.0 = Debug|Any CPU
 		{ABEA9CF9-A78C-457A-AAE8-5291B47B1482}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ABEA9CF9-A78C-457A-AAE8-5291B47B1482}.Release|Any CPU.Build.0 = Release|Any CPU
+		{485B5794-1A1C-4A56-8A76-0FDB75FB6E9C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{485B5794-1A1C-4A56-8A76-0FDB75FB6E9C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{485B5794-1A1C-4A56-8A76-0FDB75FB6E9C}.DebugPerf|Any CPU.ActiveCfg = Debug|Any CPU
+		{485B5794-1A1C-4A56-8A76-0FDB75FB6E9C}.DebugPerf|Any CPU.Build.0 = Debug|Any CPU
+		{485B5794-1A1C-4A56-8A76-0FDB75FB6E9C}.Perf|Any CPU.ActiveCfg = Debug|Any CPU
+		{485B5794-1A1C-4A56-8A76-0FDB75FB6E9C}.Perf|Any CPU.Build.0 = Debug|Any CPU
+		{485B5794-1A1C-4A56-8A76-0FDB75FB6E9C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{485B5794-1A1C-4A56-8A76-0FDB75FB6E9C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{850CF3F1-D593-432A-A243-0360E0655664}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{850CF3F1-D593-432A-A243-0360E0655664}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{850CF3F1-D593-432A-A243-0360E0655664}.DebugPerf|Any CPU.ActiveCfg = Debug|Any CPU
+		{850CF3F1-D593-432A-A243-0360E0655664}.DebugPerf|Any CPU.Build.0 = Debug|Any CPU
+		{850CF3F1-D593-432A-A243-0360E0655664}.Perf|Any CPU.ActiveCfg = Debug|Any CPU
+		{850CF3F1-D593-432A-A243-0360E0655664}.Perf|Any CPU.Build.0 = Debug|Any CPU
+		{850CF3F1-D593-432A-A243-0360E0655664}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{850CF3F1-D593-432A-A243-0360E0655664}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
