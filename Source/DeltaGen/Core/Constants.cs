@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace DeltaGen.Core;
+﻿namespace DeltaGen.Core;
 internal class Constants
 {
     public const int VariadicCount = 25;
+
+    public const string GenerateAttributes = "DELTA_GEN_ATTRIBUTES";
 }

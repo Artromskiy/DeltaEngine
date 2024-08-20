@@ -18,9 +18,9 @@
     <Configurations>Debug;Release;DebugPerf;Perf</Configurations>
     <AnalysisLevel>latest</AnalysisLevel>
   </PropertyGroup>
-
+  
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>$(DefineConstants);ASSERT</DefineConstants>
+    <DefineConstants>$(DefineConstants);ASSERT;DELTA_GEN_ATTRIBUTES</DefineConstants>
     <DebugType>portable</DebugType>
     <GenerateAssemblyInfo>True</GenerateAssemblyInfo>
   </PropertyGroup>
@@ -30,17 +30,20 @@
     <Optimize>True</Optimize>
     <DebugType>portable</DebugType>
     <GenerateAssemblyInfo>True</GenerateAssemblyInfo>
+    <DefineConstants>$(DefineConstants);DELTA_GEN_ATTRIBUTES</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugPerf|AnyCPU'">
     <Optimize>False</Optimize>
     <DebugType>portable</DebugType>
     <GenerateAssemblyInfo>True</GenerateAssemblyInfo>
+    <DefineConstants>$(DefineConstants);DELTA_GEN_ATTRIBUTES</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DebugType>portable</DebugType>
     <GenerateAssemblyInfo>True</GenerateAssemblyInfo>
+    <DefineConstants>$(DefineConstants);DELTA_GEN_ATTRIBUTES</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -60,17 +63,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="shaders\" />
+    <ProjectReference Include="..\DeltaGen\DeltaGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
+  
   <ItemGroup>
+    <Folder Include="shaders\" />
     <Content Include="shaders\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Remove="Collections\**" />
-    <EmbeddedResource Remove="Collections\**" />
-    <None Remove="Collections\**" />
   </ItemGroup>
   
   <ItemGroup>
@@ -78,7 +78,7 @@
       <Static>True</Static>
     </Using>
 
-    <Using Include="Delta.Attributes">
+    <Using Include="Delta.InlineConstants">
       <Static>True</Static>
     </Using>
 

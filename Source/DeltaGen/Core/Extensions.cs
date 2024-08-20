@@ -1,6 +1,8 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
+using System.Linq;
 using System.Text;
 
 namespace DeltaGen.Core;
@@ -36,6 +38,37 @@ internal static class Extensions
         };
     }
 
+    public static string TypeDeclaration(this INamedTypeSymbol symbol)
+    {
+        return $"{SyntaxFacts.GetText(symbol.DeclaredAccessibility)} partial {symbol.TypeModifiers()} {symbol.Name}";
+    }
+
+    public static bool IsAllContentsPartial(this INamedTypeSymbol symbol)
+    {
+        var current = symbol;
+        while (current != null)
+        {
+            if (!symbol.ToFullDisplayName().Contains("partial "))
+                return false;
+            current = symbol.ContainingType;
+        }
+        return true;
+    }
+
+    public static bool IsAllPartialToRoot(this BaseTypeDeclarationSyntax syntax, out BaseTypeDeclarationSyntax? nonPartial)
+    {
+        nonPartial = syntax;
+        while (nonPartial != null)
+        {
+            if (!nonPartial.Modifiers.Any(x => x.IsKind(SyntaxKind.PartialKeyword)))
+                return false;
+
+            var parent = syntax.Parent as BaseTypeDeclarationSyntax;
+            nonPartial = parent == nonPartial ? null : parent;
+        }
+        return true;
+    }
+
     public static string ToDisplayString(this RefKind symbol) => symbol == RefKind.None ? string.Empty : symbol == RefKind.In ? "in" : "ref";
 
     public static RefKind ValidParameterModifier(this INamedTypeSymbol symbol)
@@ -43,7 +76,7 @@ internal static class Extensions
         return symbol.TypeKind switch
         {
             TypeKind.Class => RefKind.None,
-            TypeKind.Struct => symbol.IsReadOnly? RefKind.RefReadOnly: RefKind.Ref,
+            TypeKind.Struct => symbol.IsReadOnly ? RefKind.RefReadOnly : RefKind.Ref,
             _ => throw new System.Exception(),
         };
     }

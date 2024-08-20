@@ -6,10 +6,36 @@ namespace DeltaGenTest;
 [System]
 internal partial record struct TestSystemClass
 {
+    [System]
+    internal partial struct InnerTest
+    {
+        [SystemCall]
+        private void Some(int a, string b)
+        {
+            
+        }
+
+        internal partial struct InnerTest2
+        {
+            [System]
+            internal partial struct InnerTest
+            {
+                [SystemCall]
+                private void Some(int a, string b)
+                {
+
+                }
+            }
+        }
+    }
+
+
+
+
     [SystemCall]
     private void DoOne(ref int k)
     {
-        Update
+        //Update
     }
 
     [SystemCall]

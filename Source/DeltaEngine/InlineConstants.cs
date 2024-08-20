@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 namespace Delta;
-internal static class Attributes
+internal struct InlineConstants
 {
     public const MethodImplOptions Inl = MethodImplOptions.AggressiveInlining;
     public const MethodImplOptions NoInl = MethodImplOptions.NoInlining;

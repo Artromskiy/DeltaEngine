@@ -7,9 +7,9 @@ namespace DeltaEditorLib.Loader;
 
 public class ProjectCreator
 {
-    private readonly IRuntime _runtime;
+    //private readonly IRuntime _runtime;
     private readonly IProjectPath _projectPath;
-    private readonly IAssetImporter _assetImporter;
+    //private readonly IAssetImporter _assetImporter;
     public ProjectCreator(RuntimeLoader loader, IProjectPath projectPath)
     {
         //_runtime = loader._runtime;
@@ -26,9 +26,11 @@ public class ProjectCreator
 
     public void CreateTestFiles()
     {
+        /*
         TestCompileFiles.CreateTestScript(_projectPath.RootDirectory);
         _assetImporter.CreateAsset("deltaMesh", Defaults.Delta);
         _assetImporter.CreateAsset("traingleMesh", Defaults.Triangle);
+        */
     }
 
     private void SetupProjectDirectory()

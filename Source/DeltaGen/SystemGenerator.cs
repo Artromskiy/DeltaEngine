@@ -10,13 +10,11 @@ using System.Linq;
 namespace DeltaGen;
 
 [Generator]
-public sealed class GlobalGen : IIncrementalGenerator
+public sealed class SystemGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        context.RegisterPostInitializationOutput(OnPostInitOutput);
         var attributeName = new SystemAttribute().ShortName;
-
         var classDeclarations = context.SyntaxProvider.CreateSyntaxProvider
         (
             (s, _) => IsTypeWithAttribute(s, attributeName),
@@ -32,9 +30,7 @@ public sealed class GlobalGen : IIncrementalGenerator
 
     private static bool IsTypeWithAttribute(SyntaxNode syntaxNode, string attributeSearch)
     {
-        if (syntaxNode.Parent is BaseTypeDeclarationSyntax) // only top level types
-            return false;
-        if (syntaxNode is not BaseTypeDeclarationSyntax type) // only types
+        if (syntaxNode is not BaseTypeDeclarationSyntax type)
             return false;
         return type.AttributeLists.Any(l => l.Attributes.Any(a => a.Name.ToFullString() == attributeSearch));
     }
@@ -47,6 +43,12 @@ public sealed class GlobalGen : IIncrementalGenerator
         {
             if (type == null)
                 continue;
+            if(!type.IsAllPartialToRoot(out var nonPartial))
+            {
+                ctx.ReportNotPartial(nonPartial!.Identifier.GetLocation());
+                continue;
+            }
+            
             var symbol = compilation.GetSemanticModel(type.SyntaxTree).GetDeclaredSymbol(type)!;
             SystemTemplate template = new(new(symbol, nameof(SystemCallAttribute)));
             ctx.AddSource(template);

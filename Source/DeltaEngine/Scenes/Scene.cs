@@ -88,7 +88,8 @@ public sealed class Scene : IDisposable, IAsset
     {
         World.Destroy(_world);
         foreach (var item in _jobs)
-            using (item as IDisposable) ;
+            if (item is IDisposable disposable)
+                disposable.Dispose();
         _jobs.Clear();
     }
 }

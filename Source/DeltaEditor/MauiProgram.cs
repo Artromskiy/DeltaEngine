@@ -12,7 +12,7 @@ public static class MauiProgram
         string[] arguments = Environment.GetCommandLineArgs();
         bool projectExist = arguments.Length > 1 && Directory.Exists(arguments[1]);
         string projectPath = projectExist ? arguments[1] : Directory.CreateTempSubdirectory().FullName;
-        Thread.CurrentThread.CurrentUICulture = new CultureInfo("en");
+        //Thread.CurrentThread.CurrentUICulture = new CultureInfo("en");
 
         var builder = MauiApp.CreateBuilder();
         builder

@@ -22,9 +22,33 @@ internal record SystemModel : Model
     public string TypeAccessability => SyntaxFacts.GetText(TypeSymbol.DeclaredAccessibility);
     public IEnumerable<string> MutTypes => SystemCalls.SelectMany(s => s.MutParametersTypes).Distinct();
     public IEnumerable<string> ReadTypes => SystemCalls.SelectMany(s => s.ReadParametersTypes).Distinct();
-    public IEnumerable<string> Namespaces => SystemCalls.SelectMany(s => s.Parameters.Select(s=>s.Type.ContainingNamespace.ToDisplayString())).Distinct();
+    public IEnumerable<string> Namespaces => SystemCalls.SelectMany(s => s.Parameters.Select(s => s.Type.ContainingNamespace.ToDisplayString())).Distinct();
     public RefKind ParameterModifier => TypeSymbol.ValidParameterModifier();
     public string ParameterModifierString => TypeSymbol.ValidParameterModifier().ToDisplayString();
+    public IEnumerable<INamedTypeSymbol> ContainingTypes()
+    {
+        List<INamedTypeSymbol> symbols = [];
+        var current = TypeSymbol.ContainingType;
+        while(current != null)
+        {
+            symbols.Add(current);
+            current = current.ContainingType;
+        }
+        symbols.Reverse();
+        return symbols;
+    }
+    public int ContainingTypesCount()
+    {
+        int count = 0;
+        var current = TypeSymbol.ContainingType;
+        while (current != null)
+        {
+            count++;
+            current = current.ContainingType;
+        }
+        return count;
+    }
+
     public string TypeName => TypeSymbol.Name;
     public string TypeFileName => $"{TypeSymbol.Name}File";
     public override string Name
