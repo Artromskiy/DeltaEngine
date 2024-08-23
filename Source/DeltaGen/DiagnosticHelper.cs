@@ -4,8 +4,8 @@ using Microsoft.CodeAnalysis;
 namespace DeltaGen;
 internal static class DiagnosticHelper
 {
-    const string Prefix = "DE";
-    const string id0001 = $"{Prefix}0001";
+    private const string Prefix = "DE";
+    private const string id0001 = $"{Prefix}0001";
 
     public static void ReportNotPartial(this SourceProductionContext ctx, Location location)
     {

@@ -1,3 +1,3 @@
 ﻿namespace Delta.Runtime;
 
-internal record DefaultRuntimeContext(IProjectPath ProjectPath, IAssetImporter AssetImporter) : IRuntimeContext;
+internal record DefaultRuntimeContext(IProjectPath ProjectPath, IAssetCollection AssetImporter, ISceneManager SceneManager, IGraphicsModule GraphicsModule) : IRuntimeContext;

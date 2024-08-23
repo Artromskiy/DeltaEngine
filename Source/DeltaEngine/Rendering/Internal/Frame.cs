@@ -1,10 +1,10 @@
-﻿using Delta.ECS.Components;
-using Delta.Rendering.Internal;
+﻿using Delta.ECS;
+using Delta.ECS.Components;
 using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;
 
-namespace Delta.Rendering;
+namespace Delta.Rendering.Internal;
 internal class Frame : IDisposable
 {
     private readonly RenderBase _rendererBase;
@@ -15,9 +15,11 @@ internal class Frame : IDisposable
     private Semaphore renderFinished;
     private Fence renderFinishedFence;
 
-    private CommandBuffer commandBuffer;
+    private CommandBuffer _commandBuffer;
 
-    public readonly FrameDescriptorSets descriptorSets;
+    private readonly Dictionary<IRenderBatcher, DescriptorSets> _batchedSets = [];
+
+    //public readonly DescriptorSets DescriptorSets;
 
 
     private Semaphore _syncSemaphore;
@@ -33,11 +35,10 @@ internal class Frame : IDisposable
         _renderAssets = renderAssets;
         _swapChain = swapChain;
 
-        descriptorSets = new FrameDescriptorSets(renderBase);
+        //DescriptorSets = new DescriptorSets(renderBase);
 
         FenceCreateInfo fenceInfo = new(StructureType.FenceCreateInfo, null, FenceCreateFlags.SignaledBit);
         SemaphoreCreateInfo semaphoreInfo = new(StructureType.SemaphoreCreateInfo);
-
 
         CommandBufferAllocateInfo allocInfo = new()
         {
@@ -47,7 +48,7 @@ internal class Frame : IDisposable
             CommandBufferCount = 1,
         };
 
-        _ = _rendererBase.vk.AllocateCommandBuffers(_rendererBase.deviceQ, allocInfo, out commandBuffer);
+        _ = _rendererBase.vk.AllocateCommandBuffers(_rendererBase.deviceQ, allocInfo, out _commandBuffer);
         _ = _rendererBase.vk.CreateSemaphore(_rendererBase.deviceQ, semaphoreInfo, null, out imageAvailable);
         _ = _rendererBase.vk.CreateSemaphore(_rendererBase.deviceQ, semaphoreInfo, null, out renderFinished);
         _ = _rendererBase.vk.CreateFence(_rendererBase.deviceQ, fenceInfo, null, out renderFinishedFence);
@@ -55,27 +56,35 @@ internal class Frame : IDisposable
 
     public unsafe void Dispose()
     {
-        _rendererBase.vk.FreeCommandBuffers(_rendererBase.deviceQ, _rendererBase.deviceQ.graphicsCmdPool, 1, in commandBuffer);
+        _rendererBase.vk.FreeCommandBuffers(_rendererBase.deviceQ, _rendererBase.deviceQ.graphicsCmdPool, 1, in _commandBuffer);
         _rendererBase.vk.DestroySemaphore(_rendererBase.deviceQ, imageAvailable, null);
         _rendererBase.vk.DestroySemaphore(_rendererBase.deviceQ, renderFinished, null);
         _rendererBase.vk.DestroyFence(_rendererBase.deviceQ, renderFinishedFence, null);
 
-        descriptorSets.Dispose();
+        foreach (var item in _batchedSets)
+            item.Value.Dispose();
+        _batchedSets.Clear();
+        //DescriptorSets.Dispose();
     }
-
-    public void Sync()
+    public void CopyBatchersData(CommandBuffer commandBuffer)
     {
-        _rendererBase.vk.WaitForFences(_rendererBase.deviceQ, 1, renderFinishedFence, true, ulong.MaxValue);
+        foreach (var item in _batchedSets)
+            item.Value.CopyBatcherData(item.Key, commandBuffer);
     }
-
+    public void Sync() => _rendererBase.vk.WaitForFences(_rendererBase.deviceQ, 1, renderFinishedFence, true, ulong.MaxValue);
     public bool Synced() => _rendererBase.vk.GetFenceStatus(_rendererBase.deviceQ, renderFinishedFence) == Result.Success;
-
-    public void AddSemaphore(Semaphore semaphore)
+    public void AddSemaphore(Semaphore semaphore) => _syncSemaphore = semaphore;
+    public void AddBatcher(IRenderBatcher renderBatcher)
     {
-        _syncSemaphore = semaphore;
+        _batchedSets.Add(renderBatcher, new DescriptorSets(_rendererBase));
+    }
+    public void RemoveBatcher(IRenderBatcher renderBatcher)
+    {
+        if (_batchedSets.Remove(renderBatcher, out var sets))
+            sets.Dispose();
     }
 
-    public unsafe void Draw(List<(Render render, uint count)> rendersData, out bool resize)
+    public unsafe void Draw(out bool resize)
     {
         //_rendererData.vk.WaitForFences(_rendererData.deviceQueues.device, 1, renderFinishedFence, true, ulong.MaxValue);
 
@@ -89,13 +98,16 @@ internal class Frame : IDisposable
             return;
 
         _rendererBase.vk.ResetFences(_rendererBase.deviceQ, 1, renderFinishedFence);
-        _rendererBase.vk.ResetCommandBuffer(commandBuffer, 0);
+        _rendererBase.vk.ResetCommandBuffer(_commandBuffer, 0);
 
-        descriptorSets.UpdateDescriptorSets();
+        foreach (var item in _batchedSets)
+            item.Value.UpdateDescriptorSets();
+        BeginRecordCommandBuffer(imageIndex);
+        foreach (var item in _batchedSets)
+            RecordCommandBuffer(item.Value);
+        EndRecordCommandBuffer();
 
-        RecordCommandBuffer(rendersData, commandBuffer, imageIndex);
-
-        var buffer = commandBuffer;
+        var buffer = _commandBuffer;
         var syncSemaphore = _syncSemaphore;
 
         var waitStages = stackalloc PipelineStageFlags[] { PipelineStageFlags.ColorAttachmentOutputBit, PipelineStageFlags.ColorAttachmentOutputBit };
@@ -130,7 +142,7 @@ internal class Frame : IDisposable
             _ = res;
     }
 
-    private unsafe void RecordCommandBuffer(List<(Render rend, uint count)> renders, CommandBuffer commandBuffer, uint imageIndex)
+    private unsafe void BeginRecordCommandBuffer(uint imageIndex)
     {
         CommandBufferBeginInfo beginInfo = new(StructureType.CommandBufferBeginInfo);
         ClearValue clearColor = new(new ClearColorValue(0.05f, 0.05f, 0.05f, 1));
@@ -151,25 +163,25 @@ internal class Frame : IDisposable
             MinDepth = 0.0f,
             MaxDepth = 1.0f
         };
-        _ = _rendererBase.vk.BeginCommandBuffer(commandBuffer, &beginInfo);
+        _ = _rendererBase.vk.BeginCommandBuffer(_commandBuffer, &beginInfo);
 
-        _rendererBase.vk.CmdBeginRenderPass(commandBuffer, &renderPassInfo, SubpassContents.Inline);
-        _rendererBase.vk.CmdSetViewport(commandBuffer, 0, 1, &viewport);
-        _rendererBase.vk.CmdSetScissor(commandBuffer, 0, 1, &renderRect);
+        _rendererBase.vk.CmdBeginRenderPass(_commandBuffer, &renderPassInfo, SubpassContents.Inline);
+        _rendererBase.vk.CmdSetViewport(_commandBuffer, 0, 1, &viewport);
+        _rendererBase.vk.CmdSetScissor(_commandBuffer, 0, 1, &renderRect);
+    }
 
+    private unsafe void RecordCommandBuffer(DescriptorSets frameDescriptorSets)
+    {
         Guid currentShader = Guid.Empty;
         //Guid currentMaterial = Guid.Empty;
         Guid currentMesh = Guid.Empty;
         VertexAttribute attributeMask = (VertexAttribute)(-1);
         uint indicesCount = 0;
 
-        //var matrices = _instanceDescriptorSet;
+        frameDescriptorSets.BindDescriptorSets(_commandBuffer);
 
-        descriptorSets.BindDescriptorSets(commandBuffer);
-
-        //_rendererBase.vk.CmdBindDescriptorSets(commandBuffer, PipelineBindPoint.Graphics, _rendererBase.pipelineLayout, 0, 1, &matrices, 0, 0);
         uint firstInstance = 0;
-        foreach (var (rend, count) in renders)
+        foreach (var (rend, count) in frameDescriptorSets.RenderList)
         {
             var itemShader = rend._shader;
             var itemMesh = rend.mesh;
@@ -177,7 +189,7 @@ internal class Frame : IDisposable
             if (itemShader.guid != currentShader) // shader switch
             {
                 (var pipeline, attributeMask) = _renderAssets.GetPipelineAndAttributes(itemShader);
-                _rendererBase.vk.CmdBindPipeline(commandBuffer, PipelineBindPoint.Graphics, pipeline);
+                _rendererBase.vk.CmdBindPipeline(_commandBuffer, PipelineBindPoint.Graphics, pipeline);
                 currentShader = itemShader.guid;
             }
 
@@ -187,15 +199,18 @@ internal class Frame : IDisposable
             {
                 (var vertices, var indices, indicesCount) = _renderAssets.GetVertexIndexBuffersAndCount(itemMesh, attributeMask);
 
-                _rendererBase.vk.CmdBindVertexBuffers(commandBuffer, 0, 1, vertices, 0);
-                _rendererBase.vk.CmdBindIndexBuffer(commandBuffer, indices, 0, IndexType.Uint32);
+                _rendererBase.vk.CmdBindVertexBuffers(_commandBuffer, 0, 1, vertices, 0);
+                _rendererBase.vk.CmdBindIndexBuffer(_commandBuffer, indices, 0, IndexType.Uint32);
             }
-            _rendererBase.vk.CmdDrawIndexed(commandBuffer, indicesCount, count, 0, 0, firstInstance);
+            _rendererBase.vk.CmdDrawIndexed(_commandBuffer, indicesCount, count, 0, 0, firstInstance);
             firstInstance += count;
         }
 
-        _rendererBase.vk.CmdEndRenderPass(commandBuffer);
+    }
 
-        _ = _rendererBase.vk.EndCommandBuffer(commandBuffer);
+    private void EndRecordCommandBuffer()
+    {
+        _rendererBase.vk.CmdEndRenderPass(_commandBuffer);
+        _ = _rendererBase.vk.EndCommandBuffer(_commandBuffer);
     }
 }

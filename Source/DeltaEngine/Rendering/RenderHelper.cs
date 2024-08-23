@@ -1,4 +1,5 @@
 ﻿using Delta.Files;
+using Delta.Rendering.Collections;
 using Delta.Rendering.Internal;
 using Delta.Utilities;
 using Silk.NET.Core;
@@ -103,20 +104,20 @@ internal static class RenderHelper
         CommandBuffer cmdBuffer) where T : unmanaged
     {
         destination.EnsureSize(source.Size);
-        data.CopyBuffer(source.GetBuffer(), source.Size, destination.GetBuffer(), destination.Size, cmdBuffer);
+        data.CopyBuffer(source.Buffer, source.Size, destination.GetBuffer(), destination.Size, cmdBuffer);
     }
 
     internal static unsafe void CopyBuffer<T>(this RenderBase data, GpuArray<T> source, DynamicBuffer destination,
         Fence fence, Semaphore semaphore, CommandBuffer cmdBuffer) where T : unmanaged
     {
         destination.EnsureSize(source.Size);
-        data.CopyBuffer(source.GetBuffer(), source.Size, destination.GetBuffer(), destination.Size, fence, semaphore, cmdBuffer);
+        data.CopyBuffer(source.Buffer, source.Size, destination.GetBuffer(), destination.Size, fence, semaphore, cmdBuffer);
     }
     internal static unsafe void CopyBuffer<T>(this RenderBase data, GpuArray<T> source, DynamicBuffer destination,
         Fence fence, CommandBuffer cmdBuffer) where T : unmanaged
     {
         destination.EnsureSize(source.Size);
-        data.CopyBuffer(source.GetBuffer(), source.Size, destination.GetBuffer(), destination.Size, fence, cmdBuffer);
+        data.CopyBuffer(source.Buffer, source.Size, destination.GetBuffer(), destination.Size, fence, cmdBuffer);
     }
 
 
@@ -134,7 +135,7 @@ internal static class RenderHelper
     {
         destination.EnsureSize(source.Size);
         BufferCopy copy = new(0, 0, Math.Min(source.Size, destination.Size));
-        data.vk.CmdCopyBuffer(cmdBuffer, source.GetBuffer(), destination.GetBuffer(), 1, &copy);
+        data.vk.CmdCopyBuffer(cmdBuffer, source.Buffer, destination.GetBuffer(), 1, &copy);
     }
 
     public static unsafe void EndCmdBuffer(this RenderBase data, Queue queue, CommandBuffer cmdBuffer, Fence fence, Semaphore semaphore)

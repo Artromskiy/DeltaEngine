@@ -14,8 +14,8 @@ namespace DeltaEditor.Inspector;
 
 internal class InspectorView : ContentView
 {
-    private readonly List<INode> _componentEditors = [];
-    private readonly ObservableCollection<InspectorAvaliableComponent> _componentsToAdd = [];
+    private readonly Dictionary<Type, INode> _currentComponentInspectors = [];
+    private readonly ObservableCollection<InspectorAvaliableComponent> _addComponentList = [];
     private readonly VerticalStackLayout _inspectorStack;
     private readonly Picker _addComponentPicker;
 
@@ -27,7 +27,7 @@ internal class InspectorView : ContentView
     private EntityReference SelectedEntity = EntityReference.Null;
     private Archetype? CurrentArch;
 
-    private readonly Dictionary<Type, INode> _inspectors = [];
+    private readonly Dictionary<Type, INode> _loadedComponentInspectors = [];
     public InspectorView(RuntimeLoader runtimeLoader)
     {
         _runtimeLoader = runtimeLoader;
@@ -36,7 +36,7 @@ internal class InspectorView : ContentView
         _inspectorStack = [];
         _addComponentPicker = new()
         {
-            ItemsSource = _componentsToAdd,
+            ItemsSource = _addComponentList,
             Title = "Add Component",
             HorizontalOptions = new LayoutOptions(LayoutAlignment.Center, false),
         };
@@ -68,8 +68,14 @@ internal class InspectorView : ContentView
             RebuildInspectorComponents(runtime);
             RebuildComponentAdder();
         }
-        foreach (var item in _componentEditors)
-            item.UpdateData(SelectedEntity);
+        foreach (var item in _currentComponentInspectors)
+        {
+            bool changed = item.Value.UpdateData(SelectedEntity);
+            if (changed && item.Key.HasAttribute<DirtyAttribute>())
+            {
+                // TODO mark dirty
+            }
+        }
     }
 
     private void RebuildInspectorComponents(IRuntime runtime)
@@ -84,7 +90,7 @@ internal class InspectorView : ContentView
                 continue;
             var componentEditor = GetOrCreateInspector(runtime, type);
             _inspectorStack.Add(componentEditor);
-            _componentEditors.Add(componentEditor);
+            _currentComponentInspectors.Add(type, componentEditor);
         }
         _inspectorStack.Add(_addComponentPicker);
     }
@@ -99,23 +105,23 @@ internal class InspectorView : ContentView
     {
         if (_inspectorStack.Count != 0)
             _inspectorStack.Clear();
-        _componentEditors.Clear();
-        if (_componentsToAdd.Count != 0)
-            _componentsToAdd.Clear();
+        _currentComponentInspectors.Clear();
+        if (_addComponentList.Count != 0)
+            _addComponentList.Clear();
     }
 
     private void RebuildComponentAdder()
     {
-        _componentsToAdd.Add(new InspectorAvaliableComponent(string.Empty, null!));
+        _addComponentList.Add(new InspectorAvaliableComponent(string.Empty, null!));
         foreach (var item in _components)
             if (!Array.Exists(SelectedEntity.Entity.GetComponentTypes(), c => c.Type.Equals(item)))
-                _componentsToAdd.Add(new(item.Name, item));
+                _addComponentList.Add(new(item.Name, item));
     }
 
     private INode GetOrCreateInspector(IRuntime _, Type type)
     {
-        if (!_inspectors.TryGetValue(type, out var inspector))
-            _inspectors[type] = inspector = NodeFactory.CreateComponentInspector(new(new(type, _runtimeLoader), new([])));
+        if (!_loadedComponentInspectors.TryGetValue(type, out var inspector))
+            _loadedComponentInspectors[type] = inspector = NodeFactory.CreateComponentInspector(new(new(type, _runtimeLoader), new([])));
         return inspector;
     }
 

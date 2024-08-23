@@ -5,8 +5,8 @@ namespace DeltaGen.Templates;
 
 internal class SystemCallTemplate(SystemCallModel model) : Template<SystemCallModel>(model)
 {
-    const string WorldParameter = "world";
-    const string SystemParameter = "system";
+    private const string WorldParameter = "world";
+    private const string SystemParameter = "system";
     public override string ToString() =>
 $$"""
 
@@ -63,5 +63,5 @@ $$"""
             _ => $"{Instance}{Model.MethodName}({Join("{0} t{1}Component", ", ", Model.ArgumentModifiers, Model.ParametersIndices)});",
         };
     }
-    private  string Instance => Model.MethodSymbol.IsStatic ? string.Empty : $"{SystemParameter}.";
+    private string Instance => Model.MethodSymbol.IsStatic ? string.Empty : $"{SystemParameter}.";
 }

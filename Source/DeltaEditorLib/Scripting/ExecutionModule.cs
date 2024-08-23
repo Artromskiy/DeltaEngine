@@ -68,7 +68,7 @@ internal class ExecutionModule : IExecutionModule
 
     private void UIThreadCalls()
     {
-        while(_uiActions.TryDequeue(out var action))
+        while (_uiActions.TryDequeue(out var action))
             action.Invoke(_runtime);
 
         foreach (var action in _uiActionsLoop)

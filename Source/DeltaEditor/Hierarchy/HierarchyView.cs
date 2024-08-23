@@ -37,18 +37,18 @@ internal class HierarchyView : ContentView
 
     private void RemoveNodeAt(int index)
     {
-        GetNode(index).OnClicked -= OnClicked;
+        GetNode(index).OnClicked -= SelectEntity;
         _stack.RemoveAt(index);
     }
 
     private void AddNewNode()
     {
         EntityNode node = new(EntityReference.Null);
-        node.OnClicked += OnClicked;
+        node.OnClicked += SelectEntity;
         _stack.Add(node);
     }
 
-    private void OnClicked(EntityNode node)
+    private void SelectEntity(EntityNode node)
     {
         for (int i = 0; i < _stack.Children.Count; i++)
             GetNode(i).Selected = false;

@@ -1,7 +1,9 @@
 ﻿using Arch.Core;
+using Arch.Core.Extensions;
 using Collections.Pooled;
 using Delta.ECS.Components;
 using Delta.Rendering;
+using Delta.Rendering.Collections;
 using Delta.Rendering.Internal;
 using System;
 using System.Buffers;
@@ -11,26 +13,23 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Delta.ECS;
-internal class Batcher : ISystem
+internal class SceneBatcher : IRenderBatcher
 {
     private readonly Queue<uint> _free;
 
-    /// <summary>
-    /// Contains matrices with world position of each <see cref="Render"/>
-    /// </summary>
-    public readonly GpuArray<Matrix4x4> trs;
-    /// <summary>
-    /// Contains indices to elements of <see cref="trs"/> ordered by <see cref="Render"/>
-    /// </summary>
-    public readonly GpuArray<uint> trsIds; // send to compute to sort trs on device
+    public GpuArray<GpuCameraData> Camera { get; private set; }
+    public GpuArray<Matrix4x4> Transforms { get; private set; }
+    public GpuArray<uint> TransformIds { get; private set; }
 
     // TODO
-    private readonly GpuArray<uint> _trsTransfer; // send to compute to transfer new trs from host to device
+    private readonly GpuArray<uint> TransformIdsToTransfer; // send to compute to transfer new trs from host to device
 
     private readonly PooledSet<uint> _forceTrsWrite;
     private readonly List<uint> _transferIndicesSet;
 
     private readonly World _world;
+
+    private static readonly QueryDescription _cameraDescription = new QueryDescription().WithAll<Camera, Transform>();
 
     private static readonly QueryDescription _removeDescription = new QueryDescription().WithAll<RendId>().WithNone<Render>();
     private static readonly QueryDescription _addDescription = new QueryDescription().WithAll<Render>().WithNone<RendId>();
@@ -48,27 +47,39 @@ internal class Batcher : ISystem
 
     private const bool ForceWrites = true;
 
-    public Batcher(World world, RenderBase renderBase)
+    public SceneBatcher(World world, RenderBase renderBase)
     {
         _world = world;
-        trsIds = new GpuArray<uint>(renderBase, 1);
-        trs = new GpuArray<Matrix4x4>(renderBase, 1);
+        Camera = new GpuArray<GpuCameraData>(renderBase, 1);
+        TransformIds = new GpuArray<uint>(renderBase, 1);
+        Transforms = new GpuArray<Matrix4x4>(renderBase, 1);
 
-        _trsTransfer = new GpuArray<uint>(renderBase, 1);
+        TransformIdsToTransfer = new GpuArray<uint>(renderBase, 1);
 
         _transferIndicesSet = [];
         _forceTrsWrite = [];
-        _free = new Queue<uint>((int)trs.Length);
-        for (uint i = 0; i < trs.Length; i++)
+        _free = new Queue<uint>((int)Transforms.Length);
+        for (uint i = 0; i < Transforms.Length; i++)
             _free.Enqueue(i);
         systems =
         [
              new RemoveRender(_world, _free, _rendGroupData),
              new AddRender(_world, _free, _rendGroupData, _forceTrsWrite),
              new ChangeRender(_world, _rendGroupData),
-             new SortWriteRender(_world, trsIds, _rendGroupData),
-             new WriteTrs(_world, trs, _transferIndicesSet, _forceTrsWrite)
+             new SortWriteRender(_world, TransformIds, _rendGroupData),
+             new WriteTrs(_world, Transforms, _transferIndicesSet, _forceTrsWrite),
+             new WriteCamera(_world, Camera)
         ];
+    }
+
+    public void Dispose()
+    {
+        Camera.Dispose();
+        TransformIds.Dispose();
+        Transforms.Dispose();
+        TransformIdsToTransfer.Dispose();
+        _forceTrsWrite.Dispose();
+        _renders.Dispose();
     }
 
     public void Execute()
@@ -84,12 +95,15 @@ internal class Batcher : ISystem
                 item.Execute();
     }
 
-    public ReadOnlySpan<(Render rend, uint count)> GetRendGroups()
+    public ReadOnlySpan<(Render rend, uint count)> RendGroups
     {
-        _renders.Clear();
-        foreach (var item in _rendGroupData.sortedRendToGroup)
-            _renders.Add((item.Key, _rendGroupData.groupToCount[item.Value]));
-        return _renders.Span;
+        get
+        {
+            _renders.Clear();
+            foreach (var item in _rendGroupData.sortedRendToGroup)
+                _renders.Add((item.Key, _rendGroupData.groupToCount[item.Value]));
+            return _renders.Span;
+        }
     }
 
     /// <summary>
@@ -103,10 +117,10 @@ internal class Batcher : ISystem
         var delta = countToAdd - wholeFree;
         if (delta > 0)
         {
-            var length = trs.Length;
+            var length = Transforms.Length;
             var newLength = BitOperations.RoundUpToPowerOf2((uint)(length + delta));
-            trs.Resize(newLength);
-            trsIds.Resize(newLength);
+            Transforms.Resize(newLength);
+            TransformIds.Resize(newLength);
             _free.EnsureCapacity((int)newLength);
             for (uint i = length; i < newLength; i++)
                 _free.Enqueue(i);
@@ -215,12 +229,12 @@ internal class Batcher : ISystem
                 offsets[item.Value.id] = index;
                 index += tmp;
             }
-            RenderWriter writer = new(rendersArray.GetWriter(), offsets);
+            RenderWriter writer = new(rendersArray.Writer, offsets);
             world.InlineQuery<RenderWriter, RenderGroup, RendId>(_renderDescription, ref writer);
             ArrayPool<uint>.Shared.Return(offsets);
         }
 
-        private readonly struct RenderWriter(GpuArray<uint>.Writer writer, uint[] offsets) :
+        private readonly struct RenderWriter(GpuArray<uint>.GpuWriter writer, uint[] offsets) :
             IForEach<RenderGroup, RendId>
         {
             [MethodImpl(Inl)]
@@ -235,7 +249,7 @@ internal class Batcher : ISystem
         [MethodImpl(Inl)]
         public readonly void Execute()
         {
-            var writer = trs.GetWriter();
+            var writer = trs.Writer;
             WorldContext ctx = new(world);
             TrsWriterWithTransform trsWithTransform = new(ctx, writer, _threadTransfer, forceWrite);
             TrsWriterWithParent trsWithParent = new(ctx, writer, _threadTransfer, forceWrite);
@@ -248,7 +262,7 @@ internal class Batcher : ISystem
             }
         }
 
-        private readonly struct TrsWriterWithTransform(WorldContext ctx, GpuArray<Matrix4x4>.Writer trsArray,
+        private readonly struct TrsWriterWithTransform(WorldContext ctx, GpuArray<Matrix4x4>.GpuWriter trsArray,
             ThreadLocal<PooledList<uint>> transfer, PooledSet<uint> forceWrite) :
             IForEachWithEntity<RendId>
         {
@@ -262,7 +276,7 @@ internal class Batcher : ISystem
             }
         }
 
-        private readonly struct TrsWriterWithParent(WorldContext ctx, GpuArray<Matrix4x4>.Writer trsArray,
+        private readonly struct TrsWriterWithParent(WorldContext ctx, GpuArray<Matrix4x4>.GpuWriter trsArray,
             ThreadLocal<PooledList<uint>> transfer, PooledSet<uint> forceWrite) :
             IForEachWithEntity<RendId>
         {
@@ -274,6 +288,18 @@ internal class Batcher : ISystem
                 trsArray[rendToId.trsId] = ctx.GetParentWorldMatrix(entity);
                 transfer.Value!.Add(rendToId.trsId);
             }
+        }
+    }
+
+    private readonly struct WriteCamera(World world, GpuArray<GpuCameraData> _cameraArray) : ISystem
+    {
+        public void Execute()
+        {
+            var writer = _cameraArray.Writer;
+            if (world.CountEntities(_cameraDescription) != 0)
+                world.Query(_cameraDescription, (entity) => writer[0] = GetCameraData(entity));
+            else
+                writer[0] = GpuCameraData.DefaultCamera();
         }
     }
 
@@ -312,9 +338,8 @@ internal class Batcher : ISystem
 
     /// <summary>
     /// Specifies unique id of <see cref="Render"/>.
-    /// This value used directly to update TRS buffer
     /// </summary>
-    /// <param name="trsId"></param>
+    /// <param name="trsId">index of Transform in TRS buffer</param>
     private readonly struct RendId(uint trsId)
     {
         public readonly uint trsId = trsId;
@@ -331,5 +356,12 @@ internal class Batcher : ISystem
         public bool Equals(RenderGroup other) => id == other.id;
         public override bool Equals(object? obj) => obj is RenderGroup group && Equals(group.id);
         public override int GetHashCode() => id.GetHashCode();
+    }
+
+    private static GpuCameraData GetCameraData(Entity entity)
+    {
+        var matrix = entity.GetWorldMatrix();
+        var camera = entity.Get<Camera>();
+        return new GpuCameraData(camera, matrix);
     }
 }

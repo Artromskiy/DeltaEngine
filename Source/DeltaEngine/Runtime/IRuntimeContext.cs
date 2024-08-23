@@ -4,8 +4,10 @@ namespace Delta.Runtime;
 
 public interface IRuntimeContext
 {
-    public IAssetImporter AssetImporter { get; }
+    public IAssetCollection AssetImporter { get; }
     public IProjectPath ProjectPath { get; }
+    public ISceneManager SceneManager { get; }
+    public IGraphicsModule GraphicsModule { get; }
 
     private static IRuntimeContext? _current;
     internal static IRuntimeContext Current

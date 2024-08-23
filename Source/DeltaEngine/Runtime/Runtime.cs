@@ -1,6 +1,8 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
 using Delta.Files.Defaults;
+using Delta.Rendering;
+using Delta.Rendering.Internal;
 using Delta.Scenes;
 using Schedulers;
 using System;
@@ -21,12 +23,22 @@ public sealed class Runtime : IRuntime, IDisposable
     private Scene? _scene;
 
     private readonly Thread _runtimeThread;
+    private JobScheduler.Config _jobConfig = new()
+    {
+        ThreadPrefixName = "Arch.Multithreading",
+        ThreadCount = 0,
+        MaxExpectedConcurrentJobs = 64,
+        StrictAllocationMode = false,
+    };
 
     public Runtime(IProjectPath projectPath)
     {
         var path = projectPath;
-        var assimp = new AssetImporter(path);
-        Context = new DefaultRuntimeContext(path, assimp);
+        var assets = new AssetCollection(path);
+        ISceneManager sceneManager = null;//new SceneManager();
+        var graphics = new DummyGraphics();// GraphicsModule("Delta Editor");
+
+        Context = new DefaultRuntimeContext(path, assets, sceneManager, graphics);
 
         _runtimeThread = new Thread(Loop);
         _runtimeThread.Name = "RuntimeThread." + _runtimeThread.ManagedThreadId;
@@ -42,8 +54,11 @@ public sealed class Runtime : IRuntime, IDisposable
             if (_disposed)
                 break;
 
+            World.SharedJobScheduler ??= new JobScheduler(_jobConfig);
             RunScene();
+            //IRuntimeContext.Current.SceneManager.Execute();
             RuntimeCall?.Invoke();
+            IRuntimeContext.Current.GraphicsModule.Execute();
         }
 
         World.SharedJobScheduler?.Dispose();
@@ -56,15 +71,8 @@ public sealed class Runtime : IRuntime, IDisposable
         if (_scene == null)
             return;
 
-        World.SharedJobScheduler ??= new JobScheduler(new JobScheduler.Config()
-        {
-            ThreadPrefixName = "Arch.Multithreading",
-            ThreadCount = 0,
-            MaxExpectedConcurrentJobs = 64,
-            StrictAllocationMode = false,
-        });
-
         _scene.Run();
+
         if (_firstRun)
         {
             _firstRun = false;
@@ -84,7 +92,6 @@ public sealed class Runtime : IRuntime, IDisposable
     {
         _scene?.Dispose();
         _scene = TestScene.Scene;
-        // DO NOT DELETE. Somehow we can get "device lost" without prerender
     }
 
     public List<EntityReference> GetEntities()
@@ -110,7 +117,6 @@ public sealed class Runtime : IRuntime, IDisposable
     {
         IRuntimeContext.Current.AssetImporter.CreateAsset<Scene>(name, _scene);
     }
-
 
     public Scene? GetCurrentScene() => _scene;
 

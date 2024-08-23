@@ -14,7 +14,6 @@ public partial class MainPage : ContentPage
     {
         _runtimeLoader = runtimeLoader;
         InitializeComponent();
-        //_hierarchy = new HierarchyView(_runtimeLoader);
         _hierarchy = new HierarchyView(_runtimeLoader);
         _inspector = new InspectorView(_runtimeLoader);
         InspectorScrollView.Content = _inspector;
@@ -32,7 +31,7 @@ public partial class MainPage : ContentPage
     private void RunScene(object sender, ToggledEventArgs e)
     {
         var value = e.Value;
-        //_runtimeLoader.RuntimeRunning = value;
+        // _runtimeLoader.OnRuntimeThread+=r=>r.
     }
 
     private void SaveScene(object sender, EventArgs e)
@@ -62,6 +61,13 @@ public partial class MainPage : ContentPage
     {
 
     }
+
+
+    private void ImportFbx_Clicked(object sender, EventArgs e)
+    {
+        //var filePick = await FilePicker.Default.PickAsync();
+    }
+
     /*
 
     private void UpdateHierarchyButton_Clicked(object sender, EventArgs e)

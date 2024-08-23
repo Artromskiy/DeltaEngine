@@ -18,8 +18,8 @@ internal class DummyNode<T> : FieldNode<T>
 
     }
 
-    public override void UpdateData(EntityReference entity)
+    public override bool UpdateData(EntityReference entity)
     {
-
+        return false;
     }
 }

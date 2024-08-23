@@ -34,9 +34,11 @@ internal class Matrix4Node : Node<Matrix4x4>
         Content = _field;
     }
 
-    public override void UpdateData(EntityReference entity)
+    public override bool UpdateData(EntityReference entity)
     {
+        bool changed = false;
         foreach (var inspectorElement in _inspectorElements)
-            inspectorElement.UpdateData(entity);
+            changed|=inspectorElement.UpdateData(entity);
+        return changed;
     }
 }

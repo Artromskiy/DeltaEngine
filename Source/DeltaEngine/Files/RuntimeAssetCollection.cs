@@ -9,8 +9,8 @@ internal class RuntimeAssetCollection
 {
     private readonly Dictionary<Guid, string> _assetPaths = [];
     private readonly Dictionary<string, Guid> _pathToGuid = [];
+
     private readonly string _currentFolder;
-    private const string MetaEnding = ".meta";
 
     public RuntimeAssetCollection()
     {
@@ -21,25 +21,31 @@ internal class RuntimeAssetCollection
     {
         var guid = Guid.NewGuid();
 
-        string path = AssetImporter.GetNextAvailableFilename(Path.Combine(_currentFolder, guid.ToString()));
+        string path = FileHelper.CreateIndexedFile(_currentFolder, guid);
         if (_pathToGuid.ContainsKey(path))
             return new GuidAsset<T>();
 
-        var meta = new Meta(guid);
-
         Serialization.Serialize(path, asset);
-
-        Serialization.Serialize($"{path}{MetaEnding}", meta);
 
         _assetPaths.Add(guid, path);
         _pathToGuid.Add(path, guid);
         return new GuidAsset<T>(guid);
     }
 
-    public string GetPath(Guid guid)
+    public GuidAsset<T> CreateAsset<T>(T asset, string extension) where T : class, IAsset
     {
-        if (!_assetPaths.TryGetValue(guid, out string? result))
-            result = string.Empty;
-        return result;
+        var guid = Guid.NewGuid();
+
+        string path = FileHelper.CreateIndexedFile(_currentFolder, guid, extension);
+        if (_pathToGuid.ContainsKey(path))
+            return new GuidAsset<T>();
+
+        Serialization.Serialize(path, asset);
+
+        _assetPaths.Add(guid, path);
+        _pathToGuid.Add(path, guid);
+        return new GuidAsset<T>(guid);
     }
+
+    public string GetPath(Guid guid) => _assetPaths.TryGetValue(guid, out string? result) ? result : string.Empty;
 }

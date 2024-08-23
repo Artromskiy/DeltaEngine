@@ -1,6 +1,6 @@
-﻿using Delta.Runtime;
+﻿using CommunityToolkit.Maui;
+using Delta.Runtime;
 using DeltaEditorLib.Loader;
-using System.Globalization;
 using Microsoft.Extensions.Logging;
 
 namespace DeltaEditor;
@@ -12,11 +12,11 @@ public static class MauiProgram
         string[] arguments = Environment.GetCommandLineArgs();
         bool projectExist = arguments.Length > 1 && Directory.Exists(arguments[1]);
         string projectPath = projectExist ? arguments[1] : Directory.CreateTempSubdirectory().FullName;
-        //Thread.CurrentThread.CurrentUICulture = new CultureInfo("en");
 
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
+            .UseMauiCommunityToolkit()
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");

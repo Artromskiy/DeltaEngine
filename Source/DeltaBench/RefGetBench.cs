@@ -1,7 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
 using System.Runtime.CompilerServices;
-using Delta;
-using Silk.NET.Assimp;
 
 namespace DeltaBench
 {
@@ -12,23 +10,23 @@ namespace DeltaBench
             public float Value;
             public float Value1
             {
-                [MethodImpl(MethodImplOptions.AggressiveInlining| MethodImplOptions.AggressiveOptimization)]
+                [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
                 readonly get => Value;
-                [MethodImpl(MethodImplOptions.AggressiveInlining| MethodImplOptions.AggressiveOptimization)]
+                [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
                 set => Value = value;
             }
             public float Value2
             {
-                [MethodImpl(MethodImplOptions.AggressiveInlining| MethodImplOptions.AggressiveOptimization)]
+                [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
                 readonly get => Value1;
-                [MethodImpl(MethodImplOptions.AggressiveInlining| MethodImplOptions.AggressiveOptimization)]
+                [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
                 set => Value1 = value;
             }
             public float Value3
             {
-                [MethodImpl(MethodImplOptions.AggressiveInlining| MethodImplOptions.AggressiveOptimization)]
+                [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
                 readonly get => Value2;
-                [MethodImpl(MethodImplOptions.AggressiveInlining| MethodImplOptions.AggressiveOptimization)]
+                [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
                 set => Value2 = value;
             }
         }
@@ -53,15 +51,14 @@ namespace DeltaBench
             }
         }
 
-        ContainerGet g0;
-        ContainerGet g1;
-        ContainerGet g2;
-        ContainerGet g3;
-
-        ContainerGet ga0;
-        ContainerGet ga1;
-        ContainerGet ga2;
-        ContainerGet ga3;
+        private ContainerGet g0;
+        private ContainerGet g1;
+        private ContainerGet g2;
+        private ContainerGet g3;
+        private ContainerGet ga0;
+        private ContainerGet ga1;
+        private ContainerGet ga2;
+        private ContainerGet ga3;
 
 
         [GlobalSetup]

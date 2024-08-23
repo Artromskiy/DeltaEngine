@@ -29,7 +29,7 @@ internal record SystemModel : Model
     {
         List<INamedTypeSymbol> symbols = [];
         var current = TypeSymbol.ContainingType;
-        while(current != null)
+        while (current != null)
         {
             symbols.Add(current);
             current = current.ContainingType;

@@ -71,11 +71,13 @@ internal class ComponentNode : Node
         Content = _border;
     }
 
-    public override void UpdateData(EntityReference entity)
+    public override bool UpdateData(EntityReference entity)
     {
         _cachedEntity = entity;
+        bool changed = false;
         foreach (var inspectorElement in _inspectorElements)
-            inspectorElement.UpdateData(_cachedEntity);
+            changed |= inspectorElement.UpdateData(_cachedEntity);
+        return changed;
     }
 
     public void Remove(object? sender, EventArgs eventArgs)

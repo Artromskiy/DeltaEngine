@@ -1,12 +1,14 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
 using Delta.ECS.Components;
+using DeltaEditor.Inspector.Internal;
 
 namespace DeltaEditor.Hierarchy;
 
 internal class EntityNode : ContentView
 {
     private readonly Label Name = new();
+
     public EntityReference Entity { get; private set; }
 
     public event Action<EntityNode>? OnClicked;
@@ -29,7 +31,7 @@ internal class EntityNode : ContentView
 
     public bool Selected
     {
-        set => BackgroundColor = value ? Color.FromRgb(20, 5, 30) : Color.FromRgba(0, 0, 0, 0);
+        set => BackgroundColor = value ? NodeConst.SelectedColor : NodeConst.NotSelectedColor;
     }
 
     private void OnTapped(object? sender, TappedEventArgs eventArgs) => OnClicked?.Invoke(this);

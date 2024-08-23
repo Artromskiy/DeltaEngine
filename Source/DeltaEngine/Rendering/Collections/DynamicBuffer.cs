@@ -5,7 +5,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using Buffer = Silk.NET.Vulkan.Buffer;
 
-namespace Delta.Rendering;
+namespace Delta.Rendering.Collections;
 internal class DynamicBuffer
 {
     protected readonly RenderBase _renderBase;
@@ -27,7 +27,7 @@ internal class DynamicBuffer
         _size = sizeBytes;
         CreateBuffer(ref _size, out _buffer, out _memory);
         _copyFence = RenderHelper.CreateFence(_renderBase, false);
-        _cmdBuffer = RenderHelper.CreateCommandBuffer(_renderBase, _renderBase.deviceQ.transferCmdPool);
+        _cmdBuffer = _renderBase.CreateCommandBuffer(_renderBase.deviceQ.transferCmdPool);
     }
 
     public Buffer GetBuffer() => _buffer;
@@ -72,7 +72,7 @@ internal class DynamicBuffer
         var sourceSize = array.Size;
         if (sourceSize > _size)
             Resize(sourceSize);
-        CopyBuffer(array.GetBuffer(), sourceSize, _buffer, sourceSize);
+        CopyBuffer(array.Buffer, sourceSize, _buffer, sourceSize);
     }
 
     public unsafe void EnsureSize(ulong size)

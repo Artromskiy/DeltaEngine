@@ -9,7 +9,7 @@ using Buffer = Silk.NET.Vulkan.Buffer;
 namespace Delta.Rendering;
 internal class RenderAssets : IDisposable
 {
-    private readonly Dictionary<GuidAsset<ShaderData>, (Pipeline pipeline, VertexAttribute mask)> _renderToPipe;
+    private readonly Dictionary<GuidAsset<ShaderData>, (Pipeline pipeline, VertexAttribute mask)> _renderToPipeline;
     private readonly Dictionary<GuidAsset<MeshData>, MeshHandler> _renderToMeshHandler;
 
     private readonly RenderBase _renderBase;
@@ -17,14 +17,14 @@ internal class RenderAssets : IDisposable
     public RenderAssets(RenderBase renderBase)
     {
         _renderBase = renderBase;
-        _renderToPipe = [];
+        _renderToPipeline = [];
         _renderToMeshHandler = [];
     }
 
     public (Pipeline pipeline, VertexAttribute mask) GetPipelineAndAttributes(GuidAsset<ShaderData> shader)
     {
-        if (!_renderToPipe.TryGetValue(shader, out var pipe))
-            _renderToPipe[shader] = pipe = (RenderHelper.CreateGraphicsPipeline(shader.GetAsset(), _renderBase, out var mask), mask);
+        if (!_renderToPipeline.TryGetValue(shader, out var pipe))
+            _renderToPipeline[shader] = pipe = (RenderHelper.CreateGraphicsPipeline(shader.GetAsset(), _renderBase, out var mask), mask);
         return pipe;
     }
 
@@ -56,7 +56,7 @@ internal class RenderAssets : IDisposable
     {
         unsafe
         {
-            foreach (var item in _renderToPipe)
+            foreach (var item in _renderToPipeline)
                 _renderBase.vk.DestroyPipeline(_renderBase.deviceQ, item.Value.pipeline, null);
             foreach (var item in _renderToMeshHandler)
             {
@@ -66,7 +66,7 @@ internal class RenderAssets : IDisposable
                 _renderBase.vk.FreeMemory(_renderBase.deviceQ, item.Value.indicesMemory, null);
             }
         }
-        _renderToPipe.Clear();
+        _renderToPipeline.Clear();
         _renderToMeshHandler.Clear();
     }
 

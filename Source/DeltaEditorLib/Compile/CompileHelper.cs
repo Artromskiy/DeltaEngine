@@ -11,12 +11,13 @@ namespace DeltaEditorLib.Compile;
 
 internal class CompileHelper(IProjectPath projectPath)
 {
+    private const string Underscore = "_";
     private const string CsSearch = "*.cs";
     private const string dllExt = ".dll";
     private const string Scripts = "Scripts";
     private const string Accessors = "Accessors";
-    private const string ScriptsPathSuffix = Scripts + dllExt;
-    private const string AccessorsPathSuffix = Accessors + dllExt;
+    private const string ScriptsPathSuffix = Underscore + Scripts + dllExt;
+    private const string AccessorsPathSuffix = Underscore + Accessors + dllExt;
 
     private readonly IProjectPath _projectPath = projectPath;
     private string RandomScriptsDllName => Path.Combine(_projectPath.RootDirectory, Path.GetRandomFileName() + ScriptsPathSuffix);

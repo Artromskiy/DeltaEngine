@@ -1,9 +1,9 @@
 ﻿using Delta.Files;
 using System;
 
-namespace Delta;
+namespace Delta.Runtime;
 
-public interface IAssetImporter
+public interface IAssetCollection
 {
     public GuidAsset<T> CreateAsset<T>(string name, T asset) where T : class, IAsset;
     public GuidAsset<T> CreateRuntimeAsset<T>(T asset) where T : class, IAsset;

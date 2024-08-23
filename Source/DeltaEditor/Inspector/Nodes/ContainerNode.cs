@@ -25,9 +25,11 @@ internal class ContainerNode : Node
         Content = _stack;
     }
 
-    public override void UpdateData(EntityReference entity)
+    public override bool UpdateData(EntityReference entity)
     {
+        bool changed = false;
         foreach (var inspectorElement in _inspectorElements)
-            inspectorElement.UpdateData(entity);
+            changed|=inspectorElement.UpdateData(entity);
+        return changed;
     }
 }

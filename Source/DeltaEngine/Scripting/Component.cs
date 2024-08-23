@@ -7,17 +7,14 @@ public class ComponentAttribute : Attribute, IComparable<ComponentAttribute>
 {
     public readonly bool builtIn;
     public readonly int order;
-
-    public ComponentAttribute(int order = 0) : this(order, false)
-    {
-        this.order = order;
-    }
-
     internal ComponentAttribute(int order, bool builtIn)
     {
         this.order = order;
         this.builtIn = builtIn;
     }
+
+    public ComponentAttribute(int order = 0) : this(order, false) { }
+
 
     public int CompareTo(ComponentAttribute? other)
     {

@@ -5,7 +5,6 @@ using System.Diagnostics;
 
 namespace DeltaEditor.Inspector.Nodes;
 
-
 internal class GuidNode : ClickableNode<Guid>
 {
     private EntityReference cachedEntity;
@@ -15,12 +14,14 @@ internal class GuidNode : ClickableNode<Guid>
         ValueMode = FieldSizeMode.ExtraLarge;
     }
 
-    public override void UpdateData(EntityReference entity)
+    public override bool UpdateData(EntityReference entity)
     {
+        bool changed = false;
         cachedEntity = entity;
         Span<byte> guidBytes = stackalloc byte[16];
         GetData(entity).TryWriteBytes(guidBytes);
         _fieldData.Text = Convert.ToBase64String(guidBytes);
+        return changed;
     }
 
     private void OnClick(object? sender, EventArgs eventArgs)

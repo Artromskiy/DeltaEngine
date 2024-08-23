@@ -1,7 +1,4 @@
-﻿using Delta;
-using Delta.Files.Defaults;
-using Delta.Runtime;
-using DeltaEditorLib.Scripting;
+﻿using Delta.Runtime;
 
 namespace DeltaEditorLib.Loader;
 

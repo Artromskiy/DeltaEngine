@@ -21,4 +21,8 @@
     <ProjectReference Include="..\DeltaEngine\DeltaEngine.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Import\" />
+  </ItemGroup>
+
 </Project>

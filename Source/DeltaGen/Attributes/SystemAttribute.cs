@@ -1,5 +1,4 @@
 ﻿using DeltaGen.Core;
-using System;
 
 namespace DeltaGen.Attributes;
 

@@ -10,5 +10,5 @@ internal class EmptyNode : Node
     {
         Content = _fieldName;
     }
-    public override void UpdateData(EntityReference entity) { }
+    public override bool UpdateData(EntityReference entity) => false;
 }

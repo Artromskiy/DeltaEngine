@@ -26,17 +26,20 @@ internal static class VertexAttributeExtensions
 {
     private static int GetAttributeSize(int location)
     {
+        const int float4 = 4 * 4;
+        const int float3 = 4 * 3;
+        const int float2 = 4 * 2;
         return location switch
         {
-            0 => 4 * 3,  // position3
-            1 => 4 * 2,  // position2
-            2 => 4 * 4,  // color
-            3 => 4 * 2,  // uv
-            4 => 4 * 3,  // normal
-            5 => 4 * 3,  // binormal
-            6 => 4 * 3,  // tangent
-            7 => 4 * 3,  // bitangent
-            _ => 4 * 4,  // default for user data
+            0 => float3,  // position3
+            1 => float2,  // position2
+            2 => float4,  // color
+            3 => float2,  // uv
+            4 => float3,  // normal
+            5 => float3,  // binormal
+            6 => float3,  // tangent
+            7 => float3,  // bitangent
+            _ => float4,  // default for user data
         };
     }
 

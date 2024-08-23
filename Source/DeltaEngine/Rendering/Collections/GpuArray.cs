@@ -5,7 +5,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using Buffer = Silk.NET.Vulkan.Buffer;
 
-namespace Delta.Rendering;
+namespace Delta.Rendering.Collections;
 internal unsafe class GpuArray<T> : IDisposable where T : unmanaged
 {
     private nint _pData;
@@ -33,7 +33,7 @@ internal unsafe class GpuArray<T> : IDisposable where T : unmanaged
         ulong size = (ulong)(sizeof(T) * _length);
         CreateBuffer(ref size, out _buffer, out _memory, out _pData);
         _fence = RenderHelper.CreateFence(_renderBase, false);
-        _cmdBuffer = RenderHelper.CreateCommandBuffer(_renderBase, _renderBase.deviceQ.transferCmdPool);
+        _cmdBuffer = _renderBase.CreateCommandBuffer(_renderBase.deviceQ.transferCmdPool);
         _size = size;
     }
 
@@ -47,16 +47,16 @@ internal unsafe class GpuArray<T> : IDisposable where T : unmanaged
             Unsafe.WriteUnaligned(Unsafe.AsPointer(ref destination), value);
         }
     }
-    internal Buffer GetBuffer() => _buffer;
-    public Writer GetWriter() => new(_length, _pData);
-    public Span<T> GetSpan() => new(_pData.ToPointer(), (int)_length);
+    internal Buffer Buffer => _buffer;
+    public GpuWriter Writer => new(_length, _pData);
+    public Span<T> Span => new(_pData.ToPointer(), (int)_length);
 
     /// <summary>
     /// Fastest way to write directly to gpu memory
     /// </summary>
     /// <param name="length"></param>
     /// <param name="pData"></param>
-    public readonly struct Writer(uint length, nint pData)
+    public readonly struct GpuWriter(uint length, nint pData)
     {
         private readonly uint _length = length;
         private readonly nint _pData = pData;

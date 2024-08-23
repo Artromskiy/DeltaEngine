@@ -1,6 +1,5 @@
 ﻿using Arch.Core;
 using Delta.ECS.Components;
-using Delta.Scripting;
 using System;
 using System.Numerics;
 using System.Runtime.CompilerServices;

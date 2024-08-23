@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 
-namespace Delta.Rendering;
+namespace Delta.Rendering.Collections;
 internal class GpuSet<T> : GpuArray<T> where T : unmanaged
 {
     private readonly HashSet<T> _values;

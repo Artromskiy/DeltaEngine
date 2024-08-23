@@ -1,7 +1,4 @@
-﻿using Delta.Scripting;
-using System;
-
-namespace Delta.ECS;
+﻿namespace Delta.ECS;
 
 public interface ISystem
 {

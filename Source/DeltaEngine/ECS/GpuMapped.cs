@@ -1,6 +1,6 @@
 ﻿using Arch.Core;
 using Delta.ECS.Components;
-using Delta.Rendering;
+using Delta.Rendering.Collections;
 using Delta.Rendering.Internal;
 using System;
 using System.Runtime.CompilerServices;
@@ -40,7 +40,7 @@ internal class GpuMapped<M, C, G> : GpuArray<G>
 
         _world.Add<VersId<C>>(_all);
         Count = _world.CountEntities(_all);
-        InlineCreator creator = new(GetWriter());
+        InlineCreator creator = new(Writer);
         _world.InlineQuery<InlineCreator, C, VersId<C>>(_withId, ref creator);
         Array.Fill(_taken, true, 1, Count);
         _lastFree = (uint)Count + 1;
@@ -68,7 +68,7 @@ internal class GpuMapped<M, C, G> : GpuArray<G>
     [MethodImpl(Inl)]
     public (uint, uint) UpdateDirty()
     {
-        InlineUpdater updater = new(GetWriter());
+        InlineUpdater updater = new(Writer);
         _world.InlineParallelQuery<InlineUpdater, C, VersId<C>>(_withIdDirty, ref updater);
         InlineMinMax range = new();
         _world.InlineQuery<InlineMinMax, VersId<C>>(_withIdDirty, ref range);
@@ -171,7 +171,7 @@ internal class GpuMapped<M, C, G> : GpuArray<G>
         public static void ThrowOnVersion(uint version) => throw new ArgumentException($"Attempt to get not persistent item by version {version}");
     }
 
-    private struct InlineCreator(Writer writer) : IForEach<C, VersId<C>>
+    private struct InlineCreator(GpuWriter writer) : IForEach<C, VersId<C>>
     {
         private uint index = 0;
         public void Update(ref C cmp, ref VersId<C> vers)
@@ -182,7 +182,7 @@ internal class GpuMapped<M, C, G> : GpuArray<G>
         }
     }
 
-    private struct InlineUpdater(Writer writer) : IForEach<C, VersId<C>>
+    private struct InlineUpdater(GpuWriter writer) : IForEach<C, VersId<C>>
     {
         [MethodImpl(Inl)]
         public readonly void Update(ref C cmp, ref VersId<C> vers)

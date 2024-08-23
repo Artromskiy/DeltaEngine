@@ -29,8 +29,8 @@ internal record SystemCallModel : Model
     private bool HasNoneDescription => MethodSymbol.GetAttributes().Any(a => a.AttributeClass?.Name == nameof(NoneAttribute));
     private bool HasOnlyDescription => MethodSymbol.GetAttributes().Any(a => a.AttributeClass?.Name == nameof(OnlyAttribute));
 
-    public IEnumerable<string>? AllDescription => !HasAllDescription?
-        ParametersTypes.Distinct():
+    public IEnumerable<string>? AllDescription => !HasAllDescription ?
+        ParametersTypes.Distinct() :
         ParametersTypes.Concat(GetAttributeGenericArguments(nameof(AllAttribute)))?.Distinct();
     public IEnumerable<string>? AnyDescription => GetAttributeGenericArguments(nameof(AnyAttribute))?.Distinct();
     public IEnumerable<string>? NoneDescription => GetAttributeGenericArguments(nameof(NoneAttribute))?.Distinct();

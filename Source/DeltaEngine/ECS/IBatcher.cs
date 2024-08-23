@@ -1,5 +1,5 @@
 ﻿using Delta.ECS.Components;
-using Delta.Rendering;
+using Delta.Rendering.Collections;
 using System;
 using System.Numerics;
 

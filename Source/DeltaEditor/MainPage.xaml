@@ -18,12 +18,11 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="0" />
         </Grid.RowDefinitions>
-        <Frame x:Name="TopMenu"
+        <Border x:Name="TopMenu"
                Grid.Row="0"
                HorizontalOptions="FillAndExpand"
                BackgroundColor="{StaticResource PrimaryDarkest}"
                Padding="0"
-               CornerRadius="0"
                Margin="0">
             <Grid HorizontalOptions="Center">
                 <Grid.ColumnDefinitions>
@@ -73,7 +72,7 @@
                              MinimumWidthRequest="0"
                              Grid.Column="2" />
             </Grid>
-        </Frame>
+        </Border>
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
@@ -120,6 +119,11 @@
 
                     <Button x:Name="UpdateHierarchyButton"
                             Text="Update Hierarchy"
+                            HorizontalOptions="Fill" />
+
+                    <Button x:Name="ImportFbx"
+                            Text="Import Fbx"
+                            Clicked="ImportFbx_Clicked"
                             HorizontalOptions="Fill" />
 
                 </VerticalStackLayout>

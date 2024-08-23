@@ -11,12 +11,14 @@ internal class IntNode : FieldNode<int>
 
     }
 
-    public override void UpdateData(EntityReference entity)
+    public override bool UpdateData(EntityReference entity)
     {
-        if (!_fieldData.IsFocused)
+        bool changed = _fieldData.IsFocused;
+        if (!changed)
             _fieldData.Text = GetData(entity).ToString();
         else
             TrySetValue(entity);
+        return changed;
     }
 
     private void TrySetValue(EntityReference entity)

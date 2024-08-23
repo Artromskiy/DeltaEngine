@@ -6,6 +6,9 @@ internal static class NodeConst
     public const double NodeHeight = 30;
     public static readonly Color BackColor = Color.FromRgba(0, 0, 0, 0);
     public static readonly Color BorderColor = Color.FromRgb(15, 15, 15);
+
+    public static readonly Color SelectedColor = Color.FromRgb(20, 5, 30);
+    public static readonly Color NotSelectedColor = Color.FromRgba(0, 0, 0, 0);
 }
 
 internal enum FieldSizeMode

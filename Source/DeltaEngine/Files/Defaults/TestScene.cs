@@ -2,7 +2,7 @@
 using Arch.Core.Extensions;
 using Delta.ECS;
 using Delta.ECS.Components;
-using Delta.Rendering;
+using Delta.Runtime;
 using Delta.Scenes;
 using Delta.Scripting;
 using System;
@@ -33,8 +33,9 @@ internal static class TestScene
     {
         var scene = new Scene();
         InitWorldSimple(scene);
+        var graphics = IRuntimeContext.Current.GraphicsModule;
+        graphics.AddRenderBatcher(new SceneBatcher(scene._world, graphics.RenderData));
         scene.AddJob(new MoveTransformsJob(scene._world, scene.DeltaTime));
-        scene.AddJob(new Renderer(scene._world, "TestScene"));
         scene.AddJob(new RemoveDirtyJob(scene._world));
         scene.AddJob(new FpsDropper(60, scene.DeltaTime));
         return scene;

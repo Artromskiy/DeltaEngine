@@ -26,22 +26,28 @@ internal class QuaternionNode : Node<Quaternion>
         Content = _stack;
     }
 
-    public override void UpdateData(EntityReference entity)
+    public override bool UpdateData(EntityReference entity)
     {
         var quatRotation = GetData(entity);
         var euler = Degrees(quatRotation);
+        bool changed = false;
         for (int i = 0; i < _inspectorElements.Count; i++)
         {
             var element = _inspectorElements[i];
-            if (element.FocusedField && string.IsNullOrEmpty(element.Value))
-                euler[i] = default;
-            else if (element.FocusedField && float.TryParse(element.Value, out var value))
-                euler[i] = value;
-            else if (!element.FocusedField)
+            if (element.FocusedField)
+            {
+                if (string.IsNullOrEmpty(element.Value))
+                    euler[i] = default;
+                else if (float.TryParse(element.Value, out var parsed))
+                    euler[i] = parsed;
+                changed = true;
+            }
+            else
                 element.Value = euler[i].ToString("0.00");
         }
         quatRotation = ToQuaternion(euler);
         SetData(entity, quatRotation);
+        return changed;
     }
 
     public static Quaternion ToQuaternion(Vector3 v)
@@ -50,7 +56,6 @@ internal class QuaternionNode : Node<Quaternion>
         (float sy, float cy) = MathF.SinCos(v.Z);
         (float sp, float cp) = MathF.SinCos(v.Y);
         (float sr, float cr) = MathF.SinCos(v.X);
-
         return new Quaternion
         {
             W = (cr * cp * cy) + (sr * sp * sy),

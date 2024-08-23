@@ -25,7 +25,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeltaGen", "..\DeltaGen\Del
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeltaGenTest", "..\DeltaGenTest\DeltaGenTest.csproj", "{850CF3F1-D593-432A-A243-0360E0655664}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeltaBench", "..\DeltaBench\DeltaBench.csproj", "{6260E519-D493-4526-B4E9-FCA4AFB65A0F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeltaBench", "..\DeltaBench\DeltaBench.csproj", "{6260E519-D493-4526-B4E9-FCA4AFB65A0F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleModelImporter", "..\ConsoleModelImporter\ConsoleModelImporter.csproj", "{3E274157-E313-491F-A604-7D4A7D56DE94}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -107,6 +109,14 @@ Global
 		{6260E519-D493-4526-B4E9-FCA4AFB65A0F}.Perf|Any CPU.Build.0 = Debug|Any CPU
 		{6260E519-D493-4526-B4E9-FCA4AFB65A0F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6260E519-D493-4526-B4E9-FCA4AFB65A0F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E274157-E313-491F-A604-7D4A7D56DE94}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E274157-E313-491F-A604-7D4A7D56DE94}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E274157-E313-491F-A604-7D4A7D56DE94}.DebugPerf|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E274157-E313-491F-A604-7D4A7D56DE94}.DebugPerf|Any CPU.Build.0 = Debug|Any CPU
+		{3E274157-E313-491F-A604-7D4A7D56DE94}.Perf|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E274157-E313-491F-A604-7D4A7D56DE94}.Perf|Any CPU.Build.0 = Debug|Any CPU
+		{3E274157-E313-491F-A604-7D4A7D56DE94}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E274157-E313-491F-A604-7D4A7D56DE94}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

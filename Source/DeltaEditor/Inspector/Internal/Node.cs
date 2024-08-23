@@ -23,7 +23,7 @@ internal abstract class Node : ContentView, INode
         NameMode = FieldSizeMode.Default;
         BackgroundColor = NodeConst.BackColor;
     }
-    public abstract void UpdateData(EntityReference entity);
+    public abstract bool UpdateData(EntityReference entity);
 
     public FieldSizeMode NameMode
     {

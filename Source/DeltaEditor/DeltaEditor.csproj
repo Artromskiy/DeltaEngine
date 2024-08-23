@@ -1,7 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <!--
     <TargetFrameworks>net8.0-maccatalyst</TargetFrameworks>
+    -->
     <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net8.0-windows10.0.19041.0</TargetFrameworks>
     <!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
     <!-- <TargetFrameworks>$(TargetFrameworks);net8.0-tizen</TargetFrameworks> -->
@@ -86,6 +88,7 @@
 
 
   <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Maui" Version="9.0.3" />
     <PackageReference Include="Microsoft.Maui.Controls" Version="9.0.0-preview.7.24407.4" />
     <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.0-preview.7.24407.4" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
@@ -99,6 +102,13 @@
 
   <ItemGroup>
     <Folder Include="Properties\PublishProfiles\" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Folder Include="Resources\Meshes\" />
+    <Content Include="Resources\Meshes\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

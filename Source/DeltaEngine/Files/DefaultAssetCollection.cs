@@ -21,4 +21,12 @@ internal class DefaultAssetCollection<T> : IAssetCollection<T> where T : class, 
         var path = IRuntimeContext.Current.AssetImporter.GetPath(guid);
         return Serialization.Deserialize<T>(path);
     }
+
+    public List<GuidAsset<T>> GetAssets()
+    {
+        List<GuidAsset<T>> guidAssets = [];
+        foreach (var item in _guidToAssetRef)
+            guidAssets.Add(new GuidAsset<T>(item.Key));
+        return guidAssets;
+    }
 }

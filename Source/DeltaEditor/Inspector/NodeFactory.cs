@@ -1,6 +1,6 @@
 ﻿using DeltaEditor.Inspector.Internal;
-using System.Numerics;
 using DeltaEditor.Inspector.Nodes;
+using System.Numerics;
 
 namespace DeltaEditor.Inspector;
 

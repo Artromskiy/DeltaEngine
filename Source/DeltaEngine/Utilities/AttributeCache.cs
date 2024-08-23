@@ -8,7 +8,6 @@ namespace Delta.Utilities;
 public static class AttributeCache
 {
     private static readonly ConditionalWeakTable<Type, ConcurrentDictionary<Type, object?>> _typeToAttributesCache = [];
-
     private static ConcurrentDictionary<Type, object?> GetDictionaryOfAttributes(Type type) => _typeToAttributesCache.GetOrCreateValue(type);
     public static A? GetAttribute<A>(this Type type) where A : Attribute
     {

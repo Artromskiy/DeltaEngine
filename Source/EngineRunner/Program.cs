@@ -1,13 +1,11 @@
 ﻿using Delta.Runtime;
 using System.Diagnostics;
 
-
-
-//try
+try
 {
     using var eng = new Runtime(new EditorPaths(Directory.GetCurrentDirectory()));
     eng.CreateTestScene();
-    
+
     //eng.RunOnce();
     Stopwatch sw = new();
 
@@ -17,8 +15,6 @@ using System.Diagnostics;
 
     while (true)
     {
-        Thread.Yield();
-        continue;
         sw.Restart();
         //eng.RunOnce();
         sw.Stop();
@@ -31,9 +27,6 @@ using System.Diagnostics;
             Console.WriteLine();
             Console.WriteLine((int)(1.0 / el.TotalSeconds)); // FPS of main thread
             Console.WriteLine();
-            foreach (var item in eng.GetCurrentScene().GetMetrics())
-                Console.WriteLine($"{item.Key}: {(item.Value / 100).TotalMilliseconds:0.00}ms");
-            eng.GetCurrentScene().ClearMetrics();
             ms = TimeSpan.Zero;
             c = 0;
         }
@@ -44,13 +37,11 @@ using System.Diagnostics;
         }
     }
 }
-//catch (Exception e)
-//{
-//    Console.WriteLine(e);
-//}
+catch (Exception e)
+{
+    Console.WriteLine(e);
+}
 Console.ReadLine();
-
-
 
 public delegate ref R FieldAccessor<R, A>(ref A obj);
 public interface IAccessor

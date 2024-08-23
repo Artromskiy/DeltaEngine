@@ -12,7 +12,7 @@ internal partial record struct TestSystemClass
         [SystemCall]
         private void Some(int a, string b)
         {
-            
+
         }
 
         internal partial struct InnerTest2

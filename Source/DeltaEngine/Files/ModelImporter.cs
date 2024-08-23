@@ -8,7 +8,7 @@ using System.IO;
 
 namespace Delta.Files;
 
-internal class ModelImporter : IDisposable
+public class ModelImporter : IDisposable
 {
     private static readonly Assimp _assimp = Assimp.GetApi();
     private const PostProcessSteps importMode = PostProcessSteps.Triangulate | PostProcessSteps.GenerateNormals | PostProcessSteps.JoinIdenticalVertices;
@@ -22,18 +22,25 @@ internal class ModelImporter : IDisposable
         List<(MeshData meshData, string name)> meshDatas = [];
         ProcessScene(scene->MRootNode, scene, meshDatas);
         foreach (var (meshData, name) in meshDatas)
-            IRuntimeContext.Current.AssetImporter.CreateAsset($"{fileName}.{name}.Mesh", meshData);
+            IRuntimeContext.Current.AssetImporter.CreateAsset($"{fileName}.{name}.mesh", meshData);
     }
 
-    private unsafe void ProcessScene(Node* node, Scene* scene, List<(MeshData meshData, string name)> meshDatas)
+    public static unsafe List<(MeshData meshData, string name)> ImportAndGet(string path)
     {
-        for (var i = 0; i < node->MNumMeshes; i++)
-            meshDatas.Add(ProcessMesh(scene->MMeshes[node->MMeshes[i]], scene));
-        for (var i = 0; i < node->MNumChildren; i++)
-            ProcessScene(node->MChildren[i], scene, meshDatas);
+        var fileName = Path.GetFileNameWithoutExtension(path);
+        Scene* scene = _assimp.ImportFile(path, (uint)importMode);
+        List<(MeshData meshData, string name)> meshDatas = [];
+        ProcessScene(scene->MRootNode, scene, meshDatas);
+        return meshDatas;
     }
 
-    private unsafe (MeshData data, string name) ProcessMesh(Mesh* mesh, Scene* scene)
+    private static unsafe void ProcessScene(Node* node, Scene* scene, List<(MeshData meshData, string name)> meshDatas)
+    {
+        for (var i = 0; i < scene->MNumMeshes; i++)
+            meshDatas.Add(ProcessMesh(scene->MMeshes[i]));
+    }
+
+    private static unsafe (MeshData data, string name) ProcessMesh(Mesh* mesh)
     {
         uint indicesCount = 0;
         for (uint i = 0; i < mesh->MNumFaces; i++)
@@ -49,18 +56,12 @@ internal class ModelImporter : IDisposable
             indexNum += count;
         }
         int vertexCount = (int)mesh->MNumVertices;
-        byte[][] meshData = new byte[16][];
-        if (mesh->MVertices != null)
-            meshData[VertexAttribute.Pos3.Location()] = new Span<byte>(mesh->MNormals, vertexCount * VertexAttribute.Pos3.Size()).ToArray();
-        if (mesh->MNormals != null)
-            meshData[VertexAttribute.Norm.Location()] = new Span<byte>(mesh->MNormals, vertexCount * VertexAttribute.Norm.Size()).ToArray();
-        if (mesh->MBitangents != null)
-            meshData[VertexAttribute.Bitan.Location()] = new Span<byte>(mesh->MBitangents, vertexCount * VertexAttribute.Bitan.Size()).ToArray();
-        if (mesh->MTangents != null)
-            meshData[VertexAttribute.Tan.Location()] = new Span<byte>(mesh->MTangents, vertexCount * VertexAttribute.Tan.Size()).ToArray();
-        if (mesh->MColors[0] != null)
-            meshData[VertexAttribute.Col.Location()] = new Span<byte>(mesh->MColors[0], vertexCount * VertexAttribute.Col.Size()).ToArray();
-
-        return (new MeshData(vertexCount, indices.ToArray(), meshData), mesh->MName);
+        var meshData = new MeshData(vertexCount, indices.ToArray());
+        meshData.SetData(VertexAttribute.Pos3, mesh->MVertices);
+        meshData.SetData(VertexAttribute.Norm, mesh->MNormals);
+        meshData.SetData(VertexAttribute.Bitan, mesh->MBitangents);
+        meshData.SetData(VertexAttribute.Tan, mesh->MTangents);
+        meshData.SetData(VertexAttribute.Col, mesh->MColors[0]);
+        return (meshData, mesh->MName);
     }
 }

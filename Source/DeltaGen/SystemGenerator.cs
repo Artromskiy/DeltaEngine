@@ -43,12 +43,12 @@ public sealed class SystemGenerator : IIncrementalGenerator
         {
             if (type == null)
                 continue;
-            if(!type.IsAllPartialToRoot(out var nonPartial))
+            if (!type.IsAllPartialToRoot(out var nonPartial))
             {
                 ctx.ReportNotPartial(nonPartial!.Identifier.GetLocation());
                 continue;
             }
-            
+
             var symbol = compilation.GetSemanticModel(type.SyntaxTree).GetDeclaredSymbol(type)!;
             SystemTemplate template = new(new(symbol, nameof(SystemCallAttribute)));
             ctx.AddSource(template);

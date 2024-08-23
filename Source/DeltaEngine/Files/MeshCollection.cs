@@ -27,6 +27,14 @@ internal class MeshCollection : IAssetCollection<MeshData>
         return meshData;
     }
 
+    public List<GuidAsset<MeshData>> GetAssets()
+    {
+        List<GuidAsset<MeshData>> assets = [];
+        foreach (var item in _meshDataMap)
+            assets.Add(new GuidAsset<MeshData>(item.Key));
+        return assets;
+    }
+
     private static MeshData LoadMesh(Guid guid)
     {
         return Serialization.Deserialize<MeshData>(IRuntimeContext.Current.AssetImporter.GetPath(guid));
