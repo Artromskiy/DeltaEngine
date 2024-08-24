@@ -4,12 +4,13 @@ using Collections.Pooled;
 using Delta.ECS.Components;
 using Delta.Rendering;
 using Delta.Rendering.Collections;
-using Delta.Rendering.Internal;
+using Delta.Runtime;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace Delta.ECS;
@@ -27,7 +28,7 @@ internal class SceneBatcher : IRenderBatcher
     private readonly PooledSet<uint> _forceTrsWrite;
     private readonly List<uint> _transferIndicesSet;
 
-    private readonly World _world;
+    //private readonly World _world;
 
     private static readonly QueryDescription _cameraDescription = new QueryDescription().WithAll<Camera, Transform>();
 
@@ -41,15 +42,19 @@ internal class SceneBatcher : IRenderBatcher
 
     private readonly RenderGroupData _rendGroupData = new();
 
-    private readonly PooledList<(Render rend, uint count)> _renders = [];
-
-    private readonly ISystem[] systems;
+    private readonly List<(Render rend, uint count)> _renders = [];
 
     private const bool ForceWrites = true;
+    private readonly RemoveRender _removeRender;
+    private readonly AddRender _addRender;
+    private readonly ChangeRender _changeRender;
+    private readonly SortWriteRender _sortWriteRender;
+    private readonly WriteTrs _writeTrs;
+    private readonly WriteCamera _writeCamera;
 
-    public SceneBatcher(World world, RenderBase renderBase)
+    public SceneBatcher()
     {
-        _world = world;
+        var renderBase = IRuntimeContext.Current.GraphicsModule.RenderData;
         Camera = new GpuArray<GpuCameraData>(renderBase, 1);
         TransformIds = new GpuArray<uint>(renderBase, 1);
         Transforms = new GpuArray<Matrix4x4>(renderBase, 1);
@@ -61,15 +66,13 @@ internal class SceneBatcher : IRenderBatcher
         _free = new Queue<uint>((int)Transforms.Length);
         for (uint i = 0; i < Transforms.Length; i++)
             _free.Enqueue(i);
-        systems =
-        [
-             new RemoveRender(_world, _free, _rendGroupData),
-             new AddRender(_world, _free, _rendGroupData, _forceTrsWrite),
-             new ChangeRender(_world, _rendGroupData),
-             new SortWriteRender(_world, TransformIds, _rendGroupData),
-             new WriteTrs(_world, Transforms, _transferIndicesSet, _forceTrsWrite),
-             new WriteCamera(_world, Camera)
-        ];
+
+        _removeRender = new RemoveRender(_free, _rendGroupData);
+        _addRender = new AddRender(_free, _rendGroupData, _forceTrsWrite);
+        _changeRender = new ChangeRender(_rendGroupData);
+        _sortWriteRender = new SortWriteRender(TransformIds, _rendGroupData);
+        _writeTrs = new WriteTrs(Transforms, _transferIndicesSet, _forceTrsWrite);
+        _writeCamera = new WriteCamera(Camera);
     }
 
     public void Dispose()
@@ -79,7 +82,15 @@ internal class SceneBatcher : IRenderBatcher
         Transforms.Dispose();
         TransformIdsToTransfer.Dispose();
         _forceTrsWrite.Dispose();
-        _renders.Dispose();
+        _renders.Clear();
+    }
+
+    private void OnSceneChanged()
+    {
+        _rendGroupData.Clear();
+        _free.Clear();
+        for (uint i = 0; i < Transforms.Length; i++)
+            _free.Enqueue(i);
     }
 
     public void Execute()
@@ -90,9 +101,12 @@ internal class SceneBatcher : IRenderBatcher
 
         BufferResize();
 
-        foreach (var item in systems)
-            using (item as IDisposable)
-                item.Execute();
+        _removeRender.Execute();
+        _addRender.Execute();
+        _changeRender.Execute();
+        _sortWriteRender.Execute();
+        _writeTrs.Execute();
+        _writeCamera.Execute();
     }
 
     public ReadOnlySpan<(Render rend, uint count)> RendGroups
@@ -102,7 +116,7 @@ internal class SceneBatcher : IRenderBatcher
             _renders.Clear();
             foreach (var item in _rendGroupData.sortedRendToGroup)
                 _renders.Add((item.Key, _rendGroupData.groupToCount[item.Value]));
-            return _renders.Span;
+            return CollectionsMarshal.AsSpan(_renders);
         }
     }
 
@@ -111,8 +125,9 @@ internal class SceneBatcher : IRenderBatcher
     /// </summary>
     private void BufferResize()
     {
-        var countToAdd = _world.CountEntities(_addDescription);
-        var countToRemove = _world.CountEntities(_removeDescription);
+        var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
+        var countToAdd = world.CountEntities(_addDescription);
+        var countToRemove = world.CountEntities(_removeDescription);
         var wholeFree = _free.Count + countToRemove;
         var delta = countToAdd - wholeFree;
         if (delta > 0)
@@ -127,11 +142,12 @@ internal class SceneBatcher : IRenderBatcher
         }
     }
 
-    private readonly struct RemoveRender(World world, Queue<uint> freeIds, RenderGroupData rendGroupData) : ISystem
+    private readonly struct RemoveRender(Queue<uint> freeIds, RenderGroupData rendGroupData) : ISystem
     {
         [MethodImpl(Inl)]
         public readonly void Execute()
         {
+            var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
             if (!world.Has(_removeDescription))
                 return;
             var remover = new InlineRemover(freeIds, rendGroupData);
@@ -151,7 +167,7 @@ internal class SceneBatcher : IRenderBatcher
         }
     }
 
-    private readonly struct AddRender(World world, Queue<uint> free,
+    private readonly struct AddRender(Queue<uint> free,
         RenderGroupData rendGroupData,
         PooledSet<uint> forceUpdate) : ISystem
     {
@@ -161,6 +177,7 @@ internal class SceneBatcher : IRenderBatcher
         [MethodImpl(Inl)]
         public readonly void Execute()
         {
+            var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
             if (!world.Has(_addDescription))
                 return;
             // Add not yet registered entities
@@ -189,11 +206,12 @@ internal class SceneBatcher : IRenderBatcher
         }
     }
 
-    private readonly struct ChangeRender(World world, RenderGroupData rendGroupData) : ISystem
+    private readonly struct ChangeRender(RenderGroupData rendGroupData) : ISystem
     {
         [MethodImpl(Inl)]
         public readonly void Execute()
         {
+            var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
             if (!world.Has(_changeDescription))
                 return;
             ChangeWriter writer = new(rendGroupData);
@@ -212,13 +230,14 @@ internal class SceneBatcher : IRenderBatcher
         }
     }
 
-    private readonly struct SortWriteRender(World world,
+    private readonly struct SortWriteRender(
         GpuArray<uint> rendersArray,
         RenderGroupData rendGroupData) : ISystem
     {
         [MethodImpl(Inl)]
         public readonly void Execute()
         {
+            var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
             var offsets = ArrayPool<uint>.Shared.Rent(rendGroupData.rendToGroup.Count);
             foreach (var item in rendGroupData.groupToCount)
                 offsets[item.Key.id] = item.Value;
@@ -242,13 +261,14 @@ internal class SceneBatcher : IRenderBatcher
         }
     }
 
-    private readonly struct WriteTrs(World world, GpuArray<Matrix4x4> trs, List<uint> trsTransferIndices, PooledSet<uint> forceWrite) : ISystem
+    private readonly struct WriteTrs(GpuArray<Matrix4x4> trs, List<uint> trsTransferIndices, PooledSet<uint> forceWrite) : ISystem
     {
         private readonly ThreadLocal<PooledList<uint>> _threadTransfer = new(() => new PooledList<uint>(ClearMode.Never), true);
 
         [MethodImpl(Inl)]
         public readonly void Execute()
         {
+            var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
             var writer = trs.Writer;
             WorldContext ctx = new(world);
             TrsWriterWithTransform trsWithTransform = new(ctx, writer, _threadTransfer, forceWrite);
@@ -291,10 +311,11 @@ internal class SceneBatcher : IRenderBatcher
         }
     }
 
-    private readonly struct WriteCamera(World world, GpuArray<GpuCameraData> _cameraArray) : ISystem
+    private readonly struct WriteCamera(GpuArray<GpuCameraData> _cameraArray) : ISystem
     {
         public void Execute()
         {
+            var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
             var writer = _cameraArray.Writer;
             if (world.CountEntities(_cameraDescription) != 0)
                 world.Query(_cameraDescription, (entity) => writer[0] = GetCameraData(entity));
@@ -318,7 +339,7 @@ internal class SceneBatcher : IRenderBatcher
         /// </summary>
         /// <param name="render"></param>
         /// <returns>Group to which <paramref name="render"/> corresponds</returns>
-        public readonly RenderGroup Add(ref Render render)
+        public readonly RenderGroup Add(ref readonly Render render)
         {
             if (!rendToGroup.TryGetValue(render, out var group))
             {
@@ -334,6 +355,12 @@ internal class SceneBatcher : IRenderBatcher
         /// </summary>
         /// <param name="group"></param>
         public readonly void Remove(RenderGroup group) => groupToCount[group]--;
+        public readonly void Clear()
+        {
+            rendToGroup.Clear();
+            sortedRendToGroup.Clear();
+            groupToCount.Clear();
+        }
     }
 
     /// <summary>

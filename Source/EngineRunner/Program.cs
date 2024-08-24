@@ -4,7 +4,7 @@ using System.Diagnostics;
 try
 {
     using var eng = new Runtime(new EditorPaths(Directory.GetCurrentDirectory()));
-    eng.CreateTestScene();
+    eng.Context.SceneManager.CreateTestScene();
 
     //eng.RunOnce();
     Stopwatch sw = new();
@@ -33,7 +33,7 @@ try
         if (timer.TotalSeconds >= 20)
         {
             timer = TimeSpan.Zero;
-            eng.CreateTestScene();
+            eng.Context.SceneManager.CreateTestScene();
         }
     }
 }

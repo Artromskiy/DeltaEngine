@@ -25,7 +25,7 @@ public partial class MainPage : ContentPage
 
     private void CreateScene(object sender, EventArgs e)
     {
-        _runtimeLoader.OnRuntimeThread += (r) => r.CreateTestScene();
+        _runtimeLoader.OnRuntimeThread += (r) => r.Context.SceneManager.CreateTestScene();
     }
 
     private void RunScene(object sender, ToggledEventArgs e)
@@ -36,7 +36,7 @@ public partial class MainPage : ContentPage
 
     private void SaveScene(object sender, EventArgs e)
     {
-        _runtimeLoader.OnRuntimeThread += (r) => r.SaveScene("scene");
+        _runtimeLoader.OnRuntimeThread += (r) => r.Context.SceneManager.SaveScene("scene");
     }
 
     private void TryCompile(object sender, EventArgs e)

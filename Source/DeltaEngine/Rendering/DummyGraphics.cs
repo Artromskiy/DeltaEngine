@@ -1,4 +1,5 @@
 ﻿using Delta.ECS;
+using Delta.ECS.Components;
 using Delta.Rendering.Internal;
 using Delta.Runtime;
 using System;
@@ -10,4 +11,7 @@ internal class DummyGraphics : IGraphicsModule
     void IGraphicsModule.AddRenderBatcher(IRenderBatcher renderBatcher) { }
     void IGraphicsModule.RemoveRenderBatcher(IRenderBatcher renderBatcher) { }
     void IGraphicsModule.Execute() { }
+
+    public void DrawGizmos(Render render, Transform transform) { }
+    public void DrawMesh(Render render, Transform transform) { }
 }

@@ -11,6 +11,8 @@ namespace Delta.Rendering.Internal;
 internal sealed class RenderBase : IDisposable
 {
     public readonly Vk vk;
+    public readonly Sdl sdl;
+    public readonly unsafe Window* window;
     public readonly Instance instance;
     public readonly SurfaceKHR surface;
     public readonly PhysicalDevice gpu;
@@ -34,20 +36,20 @@ internal sealed class RenderBase : IDisposable
     public readonly CommonDescriptorSetLayouts descriptorSetLayouts;
 
     private const string RendererName = "Delta Renderer";
+    private readonly string[] _deviceExtensions = [KhrSwapchain.ExtensionName];
+    private static readonly string[] _validationLayers = ["VK_LAYER_KHRONOS_validation"];
+    private readonly SurfaceFormatKHR _targetFormat = new(Format.B8G8R8A8Srgb, ColorSpaceKHR.SpaceAdobergbLinearExt);
 
-    private static readonly string[] validationLayers =
-    [
-        "VK_LAYER_KHRONOS_validation"
-    ];
-
-    public unsafe RenderBase(Api api, Window* window, string[] deviceExtensions, string appName, SurfaceFormatKHR targetFormat)
+    public unsafe RenderBase(Api api, Window* window, string appName)
     {
         vk = api.vk;
+        sdl = api.sdl;
+        this.window = window;
 
         bool validationSupported = CheckValidationLayerSupport();
         bool debugUtilsSupported = vk.IsInstanceExtensionPresent(ExtDebugUtils.ExtensionName);
         var sdlExtensions = RenderHelper.GetRequiredVulkanExtensions(api.sdl, window);
-        var layers = validationSupported ? validationLayers : [];
+        var layers = validationSupported ? _validationLayers : [];
         var instanceExtensions = new string[debugUtilsSupported ? sdlExtensions.Length + 1 : sdlExtensions.Length];
         Array.Copy(sdlExtensions, instanceExtensions, sdlExtensions.Length);
         instanceExtensions[^1] = debugUtilsSupported ? ExtDebugUtils.ExtensionName : instanceExtensions[^1];
@@ -60,15 +62,15 @@ internal sealed class RenderBase : IDisposable
         _ = vk.TryGetInstanceExtension(instance, out khrsf);
 
         surface = RenderHelper.CreateSurface(api.sdl, window, instance);
-        gpu = RenderHelper.PickPhysicalDevice(vk, instance, surface, khrsf, deviceExtensions);
+        gpu = RenderHelper.PickPhysicalDevice(vk, instance, surface, khrsf, _deviceExtensions);
 
         memoryProperties = vk.GetPhysicalDeviceMemoryProperties(gpu);
 
-        deviceQ = RenderHelper.CreateLogicalDevice(vk, gpu, surface, khrsf, deviceExtensions);
+        deviceQ = RenderHelper.CreateLogicalDevice(vk, gpu, surface, khrsf, _deviceExtensions);
 
         swapChainSupport = new SwapChainSupportDetails(gpu, surface, khrsf);
 
-        format = RenderHelper.ChooseSwapSurfaceFormat(swapChainSupport.Formats, targetFormat);
+        format = RenderHelper.ChooseSwapSurfaceFormat(swapChainSupport.Formats, _targetFormat);
 
         descriptorPool = RenderHelper.CreateDescriptorPool(this);
 
@@ -102,7 +104,7 @@ internal sealed class RenderBase : IDisposable
         vk.EnumerateInstanceLayerProperties(ref layerCount, null);
         Span<LayerProperties> availableLayers = stackalloc LayerProperties[(int)layerCount];
         vk.EnumerateInstanceLayerProperties(&layerCount, availableLayers);
-        foreach (var item in validationLayers)
+        foreach (var item in _validationLayers)
             if (!availableLayers.Exist(layer => Marshal.PtrToStringAnsi((nint)layer.LayerName) == item))
                 return false;
         return true;

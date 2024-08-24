@@ -1,28 +1,25 @@
 ﻿using Delta.ECS;
+using Delta.ECS.Components;
 using Delta.Rendering.Internal;
 using Delta.Runtime;
 using Delta.Utilities;
 using Silk.NET.SDL;
 using Silk.NET.Vulkan;
-using Silk.NET.Vulkan.Extensions.KHR;
 using System;
 using System.Collections.Generic;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 
 namespace Delta.Rendering;
 
-internal unsafe partial class GraphicsModule : IGraphicsModule, IDisposable, ISystem
+internal partial class GraphicsModule : IGraphicsModule, IDisposable
 {
     private readonly Api _api;
-    private readonly Window* _window;
+    private readonly unsafe Window* _window;
     public RenderBase RenderData { get; private set; }
 
     private readonly string _appName;
 
     private SwapChain _swapChain;
-
-    private readonly string[] _deviceExtensions = [KhrSwapchain.ExtensionName];
-    private readonly SurfaceFormatKHR _targetFormat = new(Format.B8G8R8A8Srgb, ColorSpaceKHR.SpaceAdobergbLinearExt);
 
     private readonly RenderAssets _renderAssets;
 
@@ -35,6 +32,10 @@ internal unsafe partial class GraphicsModule : IGraphicsModule, IDisposable, ISy
     private bool _skippedFrame = true;
 
     private readonly HashSet<IRenderBatcher> _renderBatchers = [];
+
+    //private readonly SceneBatcher _sceneBatcher;
+    //private readonly TempRenderBatcher _gizmosBatcher;
+    //private readonly TempRenderBatcher _instantBatcher;
 
     private Frame CurrentFrame => _frames.Peek();
 
@@ -49,8 +50,8 @@ internal unsafe partial class GraphicsModule : IGraphicsModule, IDisposable, ISy
         _appName = appName;
         _api = new();
         _window = RenderHelper.CreateWindow(_api.sdl, _appName);
-        RenderData = new RenderBase(_api, _window, _deviceExtensions, _appName, _targetFormat);
-        _swapChain = new SwapChain(_api, RenderData, GetSdlWindowSize(), Buffering, RenderData.format);
+        RenderData = new RenderBase(_api, _window, _appName);
+        _swapChain = new SwapChain(_api, RenderData, Buffering, RenderData.format);
         _renderAssets = new RenderAssets(RenderData);
 
         for (int i = 0; i < _swapChain.imageCount; i++)
@@ -59,6 +60,8 @@ internal unsafe partial class GraphicsModule : IGraphicsModule, IDisposable, ISy
         _copyCmdBuffer = RenderHelper.CreateCommandBuffer(RenderData, RenderData.deviceQ.transferCmdPool);
         _copyFence = RenderHelper.CreateFence(RenderData, true);
         _copySemaphore = RenderHelper.CreateSemaphore(RenderData);
+
+        //_sceneBatcher = new SceneBatcher();
     }
 
     public void AddRenderBatcher(IRenderBatcher renderBatcher)
@@ -77,11 +80,11 @@ internal unsafe partial class GraphicsModule : IGraphicsModule, IDisposable, ISy
 
     public void Execute()
     {
-        PreDraw();
+        Sync();
         Draw();
     }
 
-    private void PreDraw()
+    private void Sync()
     {
         _api.sdl.PumpEvents();
         if (!_skippedFrame)
@@ -151,20 +154,11 @@ internal unsafe partial class GraphicsModule : IGraphicsModule, IDisposable, ISy
         //_api.sdl.Dispose();
     }
 
-
-    private unsafe (int w, int h) GetSdlWindowSize()
-    {
-        int w, h;
-        w = h = 0;
-        _api.sdl.VulkanGetDrawableSize(_window, ref w, ref h);
-        return (w, h);
-    }
-
     private void OnResize()
     {
         _swapChain.Dispose();
         RenderData.UpdateSupportDetails();
-        _swapChain = new SwapChain(_api, RenderData, GetSdlWindowSize(), 3, RenderData.format);
+        _swapChain = new SwapChain(_api, RenderData, 3, RenderData.format);
 
         if (_swapChain.imageCount == _frames.Count)
         {
@@ -178,4 +172,7 @@ internal unsafe partial class GraphicsModule : IGraphicsModule, IDisposable, ISy
         for (int i = 0; i < _swapChain.imageCount; i++)
             _frames.Enqueue(new Frame(RenderData, _renderAssets, _swapChain));
     }
+
+    public void DrawGizmos(Render render, Transform transform) => throw new NotImplementedException();
+    public void DrawMesh(Render render, Transform transform) => throw new NotImplementedException();
 }

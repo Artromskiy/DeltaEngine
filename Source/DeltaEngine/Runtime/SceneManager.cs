@@ -1,27 +1,28 @@
 ﻿using Arch.Core;
+using Arch.Core.Extensions;
+using Delta.Files.Defaults;
 using Delta.Scenes;
-using Schedulers;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Delta.Runtime;
 internal class SceneManager : ISceneManager
 {
     private Scene? _scene;
-    private bool _firstRun = false;
-    private JobScheduler.Config _jobConfig = new()
+    public Scene? CurrentScene
     {
-        ThreadPrefixName = "Arch.Multithreading",
-        ThreadCount = 0,
-        MaxExpectedConcurrentJobs = 64,
-        StrictAllocationMode = false,
-    };
+        get => _scene;
+        private set => OnSceneChanged?.Invoke(_scene = value);
+    }
+    public event Action<Scene?>? OnSceneChanged;
 
+    private bool _firstRun = false;
     public void Execute()
     {
         if (_scene == null)
             return;
 
-        World.SharedJobScheduler ??= new JobScheduler(_jobConfig);
         _scene.Run();
 
         if (_firstRun)
@@ -32,15 +33,43 @@ internal class SceneManager : ISceneManager
         }
     }
 
+    public List<EntityReference> GetEntities()
+    {
+        if (_scene == null || _scene._world == null)
+            return [];
+
+        var archetypes = _scene._world.Archetypes;
+        List<EntityReference> references = [];
+        foreach (var item in archetypes)
+            foreach (var chunk in item)
+                references.AddRange(chunk.Entities[..chunk.Size].Select(e => e.Reference()));
+        return references;
+    }
+
     public void LoadScene(string path)
     {
         _scene?.Dispose();
         _scene = IRuntimeContext.Current.AssetImporter.GetAsset<Scene>(path);
-        _firstRun = false;
+        OnSceneChanged?.Invoke(_scene);
+        _firstRun = true;
     }
 
     public void SaveScene(string name)
     {
         IRuntimeContext.Current.AssetImporter.CreateAsset<Scene>(name, _scene);
+    }
+
+    public void CreateScene()
+    {
+        _scene?.Dispose();
+        _scene = new Scene();
+        OnSceneChanged?.Invoke(_scene);
+    }
+
+    public void CreateTestScene()
+    {
+        _scene?.Dispose();
+        _scene = TestScene.Scene;
+        OnSceneChanged?.Invoke(_scene);
     }
 }

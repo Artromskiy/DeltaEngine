@@ -19,7 +19,7 @@ internal class SwapChain : IDisposable
 
     private readonly RenderBase data;
 
-    public unsafe SwapChain(Api api, RenderBase data, (int w, int h) size, uint trgImageCount, SurfaceFormatKHR targetFormat)
+    public unsafe SwapChain(Api api, RenderBase data, uint trgImageCount, SurfaceFormatKHR targetFormat)
     {
         this.data = data;
         var swSupport = data.swapChainSupport;
@@ -27,7 +27,10 @@ internal class SwapChain : IDisposable
 
         format = RenderHelper.ChooseSwapSurfaceFormat(swSupport.Formats, targetFormat);
         var presentMode = PresentModeKHR.MailboxKhr; // swSupport.PresentModes.Contains(PresentModeKHR.ImmediateKhr) ? PresentModeKHR.ImmediateKhr : PresentModeKHR.FifoKhr;
-        extent = RenderHelper.ChooseSwapExtent(size.w, size.h, swSupport.Capabilities);
+
+        int w = 0, h = 0;
+        api.sdl.VulkanGetDrawableSize(data.window, ref w, ref h);
+        extent = RenderHelper.ChooseSwapExtent(w, h, swSupport.Capabilities);
 
         uint maxImageCount = swSupport.Capabilities.MaxImageCount;
         maxImageCount = maxImageCount == 0 ? int.MaxValue : maxImageCount;
