@@ -10,7 +10,7 @@ internal class MauiThreadGetter : IUIThreadGetter
         {
             if (_thread == null && Application.Current != null)
                 _thread = Application.Current.Dispatcher.DispatchAsync;
-                //_thread = MainThread.InvokeOnMainThreadAsync;
+            //_thread = MainThread.InvokeOnMainThreadAsync;
             return _thread;
         }
     }

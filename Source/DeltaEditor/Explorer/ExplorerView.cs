@@ -1,6 +1,6 @@
 ﻿using Delta.Runtime;
-using Microsoft.Maui.Layouts;
 using DeltaEditorLib.Loader;
+using Microsoft.Maui.Layouts;
 
 namespace DeltaEditor.Explorer
 {
@@ -42,7 +42,7 @@ namespace DeltaEditor.Explorer
 
         private void SelectFile(ExplorerFileView explorerFileView)
         {
-            if(_selectedExplorerFileView != null)
+            if (_selectedExplorerFileView != null)
                 _selectedExplorerFileView.Selected = false;
             _selectedExplorerFileView = explorerFileView;
             _selectedExplorerFileView.Selected = true;

@@ -1,6 +1,4 @@
-﻿using DeltaEditor.Inspector.Internal;
-
-namespace DeltaEditor.Explorer
+﻿namespace DeltaEditor.Explorer
 {
     internal class ExplorerFileView : ContentView
     {

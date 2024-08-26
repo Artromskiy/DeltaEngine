@@ -9,7 +9,7 @@ internal class HierarchyView : ContentView
 {
     public event Action<EntityReference>? OnEntitySelected;
     private readonly VerticalStackLayout _hierarchyStack;
-    private readonly Button _addNewEntity = new(){Text = "Add Entity"};
+    private readonly Button _addNewEntity = new() { Text = "Add Entity" };
     private readonly Button _removeEntity = new() { Text = "Remove Entity" };
     private readonly VerticalStackLayout _entityNodeStack = [];
     private readonly RuntimeLoader _runtimeLoader;
@@ -76,7 +76,7 @@ internal class HierarchyView : ContentView
 
     private void SelectEntity(EntityNode node)
     {
-        if(_selectedNode != null)
+        if (_selectedNode != null)
             _selectedNode.Selected = false;
 
         _selectedNode = node;

@@ -32,8 +32,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\DeltaEditorLib\DeltaEditorLib.csproj" />
+    <ProjectReference Include="..\DeltaEngine\DeltaEngine.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Update="HierarchyControl.axaml.cs">
       <DependentUpon>HierarchyControl.axaml</DependentUpon>
+    </Compile>
+    <Compile Update="Inspector\Nodes\CompositeNodeControl.axaml.cs">
+      <DependentUpon>CompositeNodeControl.axaml</DependentUpon>
     </Compile>
   </ItemGroup>
 

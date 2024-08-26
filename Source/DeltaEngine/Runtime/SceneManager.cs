@@ -58,7 +58,7 @@ internal class SceneManager : ISceneManager
 
     public void SaveScene(string name)
     {
-        if(_scene != null)
+        if (_scene != null)
             IRuntimeContext.Current.AssetImporter.CreateAsset<Scene>(name, _scene);
     }
 

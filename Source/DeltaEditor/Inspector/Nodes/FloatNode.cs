@@ -7,7 +7,7 @@ namespace DeltaEditor.Inspector.Nodes;
 
 internal class FloatNode : FieldNode<float>
 {
-    const string FloatFormat = "0.00";
+    private const string FloatFormat = "0.00";
     public FloatNode(NodeData parameters, bool withName = true) : base(parameters, withName) { }
 
     public override bool UpdateData(EntityReference entity)

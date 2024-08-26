@@ -3,7 +3,6 @@ using Delta.ECS;
 using Delta.Files;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Text.Json.Serialization;
 
 namespace Delta.Scenes;

@@ -6,7 +6,9 @@
              mc:Ignorable="d" d:DesignWidth="455" d:DesignHeight="20"
              x:Class="DeltaEditorAvalonia.ComponentNodeControl">
 
-  <Grid Background="Magenta">
+  <Grid x:Name="MainGrid"
+        x:FieldModifier="private"
+        Background="Magenta">
     <Grid.RowDefinitions>
       <RowDefinition Height="20"/>
       <RowDefinition Height="Auto"/>
@@ -24,11 +26,16 @@
 
       <!--Collapse/Expand-->
       <Button Grid.Column="0"
+              x:Name="CollapseButton"
+              x:FieldModifier="private"
+              Click="OnCollapseClick"
               CornerRadius="0,0,3,0"
               Padding = "0"
               Width="20"
               Height="20">
-        <Svg Path="/Assets/Icons/expand.svg"
+        <Svg x:Name="CollapseIcon"
+             x:FieldModifier="private"
+             Path="/Assets/Icons/expand.svg"
              Margin="3"/>
       </Button>
       
@@ -39,6 +46,7 @@
       
       <!--Component Name-->
       <Label x:Name="ComponentName"
+             x:FieldModifier="private"
              Grid.Column="2"
              Padding="0"
              FontWeight="Bold"
@@ -49,9 +57,10 @@
       
     </Grid>
     
-    <Border Grid.Row="1"
-            x:Name="BorderContent">
-    </Border>
+    <Grid Grid.Row="1"
+            x:Name="ChildrenGrid"
+            x:FieldModifier="private">
+    </Grid>
     
   </Grid>
 </UserControl>
