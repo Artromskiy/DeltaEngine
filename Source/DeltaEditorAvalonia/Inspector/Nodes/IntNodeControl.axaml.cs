@@ -6,8 +6,8 @@ namespace DeltaEditorAvalonia;
 
 public partial class IntNodeControl : UserControl, INode
 {
-    public IntNodeControl()=> InitializeComponent();
-    public IntNodeControl(NodeData nodeData):this()
+    public IntNodeControl() => InitializeComponent();
+    public IntNodeControl(NodeData nodeData) : this()
     {
 
     }

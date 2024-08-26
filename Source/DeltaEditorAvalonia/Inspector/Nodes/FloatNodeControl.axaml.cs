@@ -6,9 +6,9 @@ namespace DeltaEditorAvalonia;
 
 public partial class FloatNodeControl : UserControl, INode
 {
-    public FloatNodeControl()=> InitializeComponent();
+    public FloatNodeControl() => InitializeComponent();
 
-    public FloatNodeControl(NodeData nodeData):this()
+    public FloatNodeControl(NodeData nodeData) : this()
     {
 
     }

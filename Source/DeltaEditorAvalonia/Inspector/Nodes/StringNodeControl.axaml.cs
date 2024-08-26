@@ -6,8 +6,8 @@ namespace DeltaEditorAvalonia;
 
 public partial class StringNodeControl : UserControl, INode
 {
-    public StringNodeControl()=> InitializeComponent();
-    public StringNodeControl(NodeData nodeData):this()
+    public StringNodeControl() => InitializeComponent();
+    public StringNodeControl(NodeData nodeData) : this()
     {
 
     }

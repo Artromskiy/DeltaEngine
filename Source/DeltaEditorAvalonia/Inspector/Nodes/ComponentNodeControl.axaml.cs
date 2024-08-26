@@ -53,7 +53,7 @@ internal partial class ComponentNodeControl : UserControl, INode
     public ComponentNodeControl() => InitializeComponent();
     public ComponentNodeControl(NodeData nodeData) : this()
     {
-        //FieldName.Content = nodeData.FieldName;
+        ComponentName.Content = nodeData.FieldName;
         int fieldsCount = nodeData.FieldNames.Length;
         ChildrenGrid.ColumnDefinitions = [];
         for (int i = 0; i < fieldsCount; i++)

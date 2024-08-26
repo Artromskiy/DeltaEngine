@@ -7,7 +7,7 @@ namespace DeltaEditorAvalonia;
 public partial class QuaternionNodeControl : UserControl, INode
 {
     public QuaternionNodeControl() => InitializeComponent();
-    public QuaternionNodeControl(NodeData nodeData):this()
+    public QuaternionNodeControl(NodeData nodeData) : this()
     {
 
     }

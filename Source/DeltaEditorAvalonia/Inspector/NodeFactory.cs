@@ -1,7 +1,7 @@
-﻿using System;
+﻿using DeltaEditorAvalonia.Inspector.Internal;
+using System;
 using System.Collections.Generic;
 using System.Numerics;
-using DeltaEditorAvalonia.Inspector.Internal;
 namespace DeltaEditorAvalonia.Inspector;
 
 internal static class NodeFactory
@@ -29,8 +29,8 @@ internal static class NodeFactory
     private static readonly Dictionary<Type, Func<NodeData, INode>> _typeToNode = new()
     {
         { typeof(Vector3), (n) => new Vector3NodeControl(n) },
-        //{ typeof(Vector4), (n) => new Vector4Node(n) },
-        //{ typeof(Quaternion), (n) => new QuaternionNode(n) },
+        { typeof(Vector4), (n) => new Vector4NodeControl(n) },
+        { typeof(Quaternion), (n) => new QuaternionNodeControl(n) },
         //{ typeof(Matrix4x4), (n) => new Matrix4Node(n) },
         { typeof(float), (n) => new FloatNodeControl(n) },
         { typeof(int), (n) => new IntNodeControl(n) },

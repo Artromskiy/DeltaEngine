@@ -6,8 +6,8 @@ namespace DeltaEditorAvalonia;
 
 public partial class Vector3NodeControl : UserControl, INode
 {
-    public Vector3NodeControl()=> InitializeComponent();
-    public Vector3NodeControl(NodeData nodeData) :this()
+    public Vector3NodeControl() => InitializeComponent();
+    public Vector3NodeControl(NodeData nodeData) : this()
     {
 
     }
