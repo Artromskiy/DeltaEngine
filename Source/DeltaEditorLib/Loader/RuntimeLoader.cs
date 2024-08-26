@@ -21,19 +21,19 @@ public class RuntimeLoader
     public IAccessorsContainer Accessors => _compilerModule.Accessors!;
     public List<Type> Components => _compilerModule.Components;
 
-    public event Action<IRuntime> OnUIThreadLoop
+    public event Action<IRuntimeContext> OnUIThreadLoop
     {
         add => _executionModule.OnUIThreadLoop += value;
         remove => _executionModule.OnUIThreadLoop -= value;
     }
 
-    public event Action<IRuntime> OnUIThread
+    public event Action<IRuntimeContext> OnUIThread
     {
         add => _executionModule.OnUIThread += value;
         remove => _executionModule.OnUIThread -= value;
     }
 
-    public event Action<IRuntime> OnRuntimeThread
+    public event Action<IRuntimeContext> OnRuntimeThread
     {
         add => _executionModule.OnRuntimeThread += value;
         remove => _executionModule.OnRuntimeThread -= value;

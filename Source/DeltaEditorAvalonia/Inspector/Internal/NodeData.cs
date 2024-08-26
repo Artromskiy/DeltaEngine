@@ -1,4 +1,6 @@
 ﻿using Arch.Core;
+using Avalonia.Controls;
+using DeltaEditor.Tools;
 using DeltaEditorLib.Loader;
 using DeltaEditorLib.Scripting;
 using System;
@@ -21,6 +23,47 @@ public class NodeData(RootData root, PathData path)
     public NodeData ChildData(string fieldName) => new(rootData, new([.. Path, fieldName]));
     public T GetData<T>(EntityReference entity) => rootData.Accessors.GetComponentFieldValue<T>(entity, rootData.Component, Path);
     public void SetData<T>(EntityReference entity, T data) => rootData.Accessors.SetComponentFieldValue(entity, rootData.Component, Path, data);
+
+
+    public bool UpdateFloat(TextBox fieldData, EntityReference entity)
+    {
+        bool changed = fieldData.IsFocused;
+        if (!changed)
+            fieldData.Text = GetData<float>(entity).LookupString();
+        else
+        {
+            if (string.IsNullOrEmpty(fieldData.Text))
+                SetData<float>(entity, default);
+            else if (float.TryParse(fieldData.Text, out float result))
+                SetData(entity, result);
+        }
+        return changed;
+    }
+
+    public bool UpdateString(TextBox FieldData, EntityReference entity)
+    {
+        bool changed = FieldData.IsFocused;
+        if (!changed)
+            FieldData.Text = GetData<string>(entity);
+        else
+            SetData(entity, FieldData.Text);
+        return changed;
+    }
+
+    public bool UpdateInt(TextBox fieldData, EntityReference entity)
+    {
+        bool changed = fieldData.IsFocused;
+        if (!changed)
+            fieldData.Text = GetData<int>(entity).LookupString();
+        else
+        {
+            if (string.IsNullOrEmpty(fieldData.Text))
+                SetData(entity, default(int));
+            else if (int.TryParse(fieldData.Text, out int result))
+                SetData(entity, result);
+        }
+        return changed;
+    }
 }
 
 public record RootData(Type Component, RuntimeLoader RuntimeLoader)

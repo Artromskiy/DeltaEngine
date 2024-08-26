@@ -25,11 +25,15 @@ public partial class InspectorControl : UserControl
     private readonly IAccessorsContainer _accessors;
     private readonly ImmutableArray<Type> _components;
 
-    public InspectorControl() => InitializeComponent();
-    public InspectorControl(RuntimeLoader runtimeLoader)
+    public InspectorControl()
     {
-        _accessors = runtimeLoader.Accessors;
-        _components = [.. runtimeLoader.Components];
+        InitializeComponent();
+
+        if (Design.IsDesignMode)
+            return;
+
+        _accessors = Program.RuntimeLoader.Accessors;
+        _components = [.. Program.RuntimeLoader.Components];
     }
 
     public void SetSelectedEntity(EntityReference entityReference)

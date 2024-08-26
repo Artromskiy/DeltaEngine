@@ -69,7 +69,8 @@
     <Border Grid.Row="2"
             Background="Cyan">
       <ScrollViewer VerticalScrollBarVisibility="Visible">
-        <StackPanel>
+        <StackPanel x:Name="EntityNodeStack"
+                    x:FieldModifier="private">
 
           <uc:HierarchyNodeControl/>
 

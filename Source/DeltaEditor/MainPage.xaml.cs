@@ -33,18 +33,18 @@ public partial class MainPage : ContentPage
 
     private void CreateScene(object sender, EventArgs e)
     {
-        _runtimeLoader.OnRuntimeThread += (r) => r.Context.SceneManager.CreateTestScene();
+        _runtimeLoader.OnRuntimeThread += ctx => ctx.SceneManager.CreateTestScene();
     }
 
     private void RunScene(object sender, ToggledEventArgs e)
     {
         var value = e.Value;
-        _runtimeLoader.OnRuntimeThread += r => r.Context.SceneManager.Running = value;
+        _runtimeLoader.OnRuntimeThread += ctx => ctx.SceneManager.Running = value;
     }
 
     private void SaveScene(object sender, EventArgs e)
     {
-        _runtimeLoader.OnRuntimeThread += (r) => r.Context.SceneManager.SaveScene("scene");
+        _runtimeLoader.OnRuntimeThread += ctx => ctx.SceneManager.SaveScene("scene");
     }
 
     private void TryCompile(object sender, EventArgs e)

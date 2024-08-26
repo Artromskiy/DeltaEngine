@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using DeltaEditorAvalonia.Inspector;
 using DeltaEditorAvalonia.Inspector.Internal;
+using System.Collections.Generic;
 
 namespace DeltaEditorAvalonia;
 
@@ -23,6 +24,8 @@ internal partial class ComponentNodeControl : UserControl, INode
 
     private const string CollapseSvgPath = "/Assets/Icons/collapse.svg";
     private const string ExpandSvgPath = "/Assets/Icons/expand.svg";
+
+    private readonly List<INode> _fields = [];
 
     public Grid? ComponentGrid
     {
@@ -60,14 +63,19 @@ internal partial class ComponentNodeControl : UserControl, INode
             ChildrenGrid.ColumnDefinitions.Add(new ColumnDefinition(1, GridUnitType.Star));
         for (int i = 0; i < fieldsCount; i++)
         {
-            var element = (Control)NodeFactory.CreateNode(nodeData.ChildData(nodeData.FieldNames[i]));
-            element[Grid.RowProperty] = i;
-            ChildrenGrid.Children.Add(element);
+            var node = NodeFactory.CreateNode(nodeData.ChildData(nodeData.FieldNames[i]));
+            var control = (Control)node;
+            _fields.Add(node);
+            control[Grid.RowProperty] = i;
+            ChildrenGrid.Children.Add(control);
         }
     }
+
     public bool UpdateData(EntityReference entity)
     {
-        throw new System.NotImplementedException();
+        bool changed = false;
+        foreach (var field in _fields)
+            changed |= field.UpdateData(entity);
+        return changed;
     }
-
 }

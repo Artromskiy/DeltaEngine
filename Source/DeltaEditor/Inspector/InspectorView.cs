@@ -54,7 +54,7 @@ internal class InspectorView : ContentView
         SelectedEntity = entityReference;
     }
 
-    public void UpdateInspector(IRuntime runtime)
+    public void UpdateInspector(IRuntimeContext ctx)
     {
         Stopwatch sw = Stopwatch.StartNew();
         if (!SelectedEntity.IsAlive()) // Dead entity
@@ -67,7 +67,7 @@ internal class InspectorView : ContentView
         {
             CurrentArch = SelectedEntity.Entity.GetArchetype();
             ClearInspector();
-            RebuildInspectorComponents(runtime);
+            RebuildInspectorComponents(ctx);
             RebuildComponentAdder();
         }
         foreach (var item in _currentComponentInspectors)
@@ -82,7 +82,7 @@ internal class InspectorView : ContentView
         var elapsed = sw.ElapsedMilliseconds;
     }
 
-    private void RebuildInspectorComponents(IRuntime runtime)
+    private void RebuildInspectorComponents(IRuntimeContext ctx)
     {
         var types = SelectedEntity.Entity.GetComponentTypes();
         Span<ComponentType> typesSpan = stackalloc ComponentType[types.Length];
@@ -92,7 +92,7 @@ internal class InspectorView : ContentView
         {
             if (!_accessors.AllAccessors.ContainsKey(type))
                 continue;
-            var componentEditor = GetOrCreateInspector(runtime, type);
+            var componentEditor = GetOrCreateInspector(ctx, type);
             _inspectorStack.Add(componentEditor);
             _currentComponentInspectors.Add(type, componentEditor);
         }
@@ -122,7 +122,7 @@ internal class InspectorView : ContentView
                 _addComponentList.Add(new(item.Name, item));
     }
 
-    private INode GetOrCreateInspector(IRuntime _, Type type)
+    private INode GetOrCreateInspector(IRuntimeContext _, Type type)
     {
         if (!_loadedComponentInspectors.TryGetValue(type, out var inspector))
             _loadedComponentInspectors[type] = inspector = NodeFactory.CreateComponentInspector(new(new(type, _runtimeLoader), new([])));

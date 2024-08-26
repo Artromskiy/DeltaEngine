@@ -37,11 +37,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="HierarchyControl.axaml.cs">
+    <Compile Update="Hierarchy\HierarchyControl.axaml.cs">
       <DependentUpon>HierarchyControl.axaml</DependentUpon>
     </Compile>
     <Compile Update="Inspector\Nodes\CompositeNodeControl.axaml.cs">
       <DependentUpon>CompositeNodeControl.axaml</DependentUpon>
+    </Compile>
+    <Compile Update="Inspector\Nodes\QuaternionNodeControl.axaml.cs">
+      <DependentUpon>QuaternionNodeControl.axaml</DependentUpon>
     </Compile>
   </ItemGroup>
 

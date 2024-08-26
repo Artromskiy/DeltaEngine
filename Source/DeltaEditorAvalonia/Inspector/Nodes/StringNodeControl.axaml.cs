@@ -6,13 +6,11 @@ namespace DeltaEditorAvalonia;
 
 public partial class StringNodeControl : UserControl, INode
 {
+    private readonly NodeData _nodeData;
     public StringNodeControl() => InitializeComponent();
     public StringNodeControl(NodeData nodeData) : this()
     {
-
+        _nodeData = nodeData;
     }
-    public bool UpdateData(EntityReference entity)
-    {
-        throw new System.NotImplementedException();
-    }
+    public bool UpdateData(EntityReference entity) => _nodeData.UpdateString(FieldData, entity);
 }

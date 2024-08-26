@@ -5,7 +5,7 @@ namespace DeltaEditorLib.Loader;
 
 public interface IRuntimeScheduler
 {
-    public event Action<IRuntime> OnUIThreadLoop;
-    public event Action<IRuntime> OnUIThread;
-    public event Action<IRuntime> OnRuntimeThread;
+    public event Action<IRuntimeContext> OnUIThreadLoop;
+    public event Action<IRuntimeContext> OnUIThread;
+    public event Action<IRuntimeContext> OnRuntimeThread;
 }

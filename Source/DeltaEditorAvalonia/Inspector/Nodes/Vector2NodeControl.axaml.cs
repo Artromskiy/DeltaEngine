@@ -6,13 +6,15 @@ namespace DeltaEditorAvalonia;
 
 public partial class Vector2NodeControl : UserControl, INode
 {
+    private readonly NodeData _nodeData;
     public Vector2NodeControl() => InitializeComponent();
     public Vector2NodeControl(NodeData nodeData) : this()
     {
-
+        _nodeData = nodeData;
     }
     public bool UpdateData(EntityReference entity)
     {
-        throw new System.NotImplementedException();
+        return _nodeData.UpdateFloat(FieldDataX, entity) |
+               _nodeData.UpdateFloat(FieldDataY, entity);
     }
 }

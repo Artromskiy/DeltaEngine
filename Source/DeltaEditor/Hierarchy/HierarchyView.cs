@@ -27,10 +27,10 @@ internal class HierarchyView : ContentView
         Content = _hierarchyStack;
     }
 
-    public void UpdateHierarchy(IRuntime runtime)
+    public void UpdateHierarchy(IRuntimeContext ctx)
     {
         Stopwatch sw = Stopwatch.StartNew();
-        var entities = runtime.Context.SceneManager.GetEntities();
+        var entities = ctx.SceneManager.GetEntities();
         entities.Sort((e1, e2) => e1.Entity.Id.CompareTo(e2.Entity.Id));
         ResizeStack(entities.Count);
         for (int i = 0; i < _entityNodeStack.Children.Count; i++)
@@ -44,7 +44,7 @@ internal class HierarchyView : ContentView
 
     private void CreateNewEntity(object? sender, EventArgs e)
     {
-        _runtimeLoader.OnRuntimeThread += r => r.Context.SceneManager.CurrentScene.AddEntity();
+        _runtimeLoader.OnRuntimeThread += ctx => ctx.SceneManager.CurrentScene.AddEntity();
     }
 
     private void RemoveSelectedEntity(object? sender, EventArgs e)
@@ -52,7 +52,7 @@ internal class HierarchyView : ContentView
         if (_selectedNode == null)
             return;
         var toRemove = _selectedNode.Entity;
-        _runtimeLoader.OnRuntimeThread += r => r.Context.SceneManager.CurrentScene.RemoveEntity(toRemove);
+        _runtimeLoader.OnRuntimeThread += ctx => ctx.SceneManager.CurrentScene.RemoveEntity(toRemove);
         Deselect();
     }
 

@@ -20,12 +20,12 @@ namespace DeltaEditor.Explorer
             Content = _grid;
         }
 
-        public void UpdateExplorer(IRuntime runtime)
+        public void UpdateExplorer(IRuntimeContext ctx)
         {
             if (!isDirty)
                 return;
 
-            _currentPath ??= runtime.Context.ProjectPath.RootDirectory;
+            _currentPath ??= ctx.ProjectPath.RootDirectory;
             _grid.Clear();
             var directories = Directory.EnumerateFileSystemEntries(_currentPath);
             foreach (var path in directories)

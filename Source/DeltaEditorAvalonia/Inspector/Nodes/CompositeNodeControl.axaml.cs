@@ -2,12 +2,14 @@ using Arch.Core;
 using Avalonia.Controls;
 using DeltaEditorAvalonia.Inspector;
 using DeltaEditorAvalonia.Inspector.Internal;
+using System.Collections.Generic;
 
 namespace DeltaEditorAvalonia;
 
 public partial class CompositeNodeControl : UserControl, INode
 {
     public CompositeNodeControl() => InitializeComponent();
+    private readonly List<INode> _fields = [];
 
     public CompositeNodeControl(NodeData nodeData) : this()
     {
@@ -26,6 +28,9 @@ public partial class CompositeNodeControl : UserControl, INode
 
     public bool UpdateData(EntityReference entity)
     {
-        throw new System.NotImplementedException();
+        bool changed = false;
+        foreach (var field in _fields)
+            changed |= field.UpdateData(entity);
+        return changed;
     }
 }

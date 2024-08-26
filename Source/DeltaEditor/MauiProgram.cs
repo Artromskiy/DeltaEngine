@@ -9,10 +9,7 @@ public static class MauiProgram
 {
     public static MauiApp CreateMauiApp()
     {
-        string[] arguments = Environment.GetCommandLineArgs();
-        bool hasDirectory = arguments.Length > 1 && Directory.Exists(arguments[1]);
-        string directoryPath = hasDirectory ? arguments[1] : Directory.CreateTempSubdirectory().FullName;
-
+        string directoryPath  = ProjectCreator.GetExecutableDirectory();
         var projectPath = new EditorPaths(directoryPath);
         ProjectCreator.CreateProject(projectPath);
 

@@ -5,16 +5,25 @@
              mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="20"
              x:Class="DeltaEditorAvalonia.HierarchyNodeControl">
 
-  <Border Background="Magenta"
+  <Border x:Name="MainBorder"
+          x:FieldModifier="private"
+          Background="Magenta"
           Height="20">
+    
     <StackPanel Orientation="Horizontal">
+      
       <Border Width="25"/>
       <Svg Path="/Assets/Icons/entity.svg"
            Margin="3"/>
-      <Label FontSize="12"
-             VerticalContentAlignment="Center">
-        Entity
+      
+      <!--Entity Name-->
+      <Label x:Name="NodeName"
+             x:FieldModifier="private"
+             FontSize="12"
+             VerticalContentAlignment="Center"
+             Content="Entity">
       </Label>
+      
     </StackPanel>
   </Border>
   

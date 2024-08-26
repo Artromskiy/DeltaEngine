@@ -27,6 +27,8 @@
           X
         </Label>
         <TextBox Grid.Column="1"
+                 x:Name="FieldDataX"
+                 x:FieldModifier="private"
                  FontSize="12"
                  CornerRadius="0,3,3,0"
                  BorderThickness="0,0,1,0"
@@ -49,6 +51,8 @@
           Y
         </Label>
         <TextBox Grid.Column="1"
+                 x:Name="FieldDataY"
+                 x:FieldModifier="private"
                  FontSize="12"
                  CornerRadius="0,3,3,0"
                  BorderThickness="0,0,1,0"
@@ -71,6 +75,8 @@
           Z
         </Label>
         <TextBox Grid.Column="1"
+                 x:Name="FieldDataZ"
+                 x:FieldModifier="private"
                  FontSize="12"
                  CornerRadius="0,3,3,0"
                  BorderThickness="0,0,1,0"
