@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:uc="clr-namespace:DeltaEditorAvalonia;assembly=DeltaEditorAvalonia"
              mc:Ignorable="d" d:DesignWidth="455" d:DesignHeight="612"
-             x:Class="DeltaEditorAvalonia.InspectorControl">
+             x:Class="DeltaEditorAvalonia.HierarchyControl">
 
   <Grid Background="Magenta">
     <Grid.RowDefinitions>
@@ -14,19 +14,18 @@
     </Grid.RowDefinitions>
 
     <!--Menu Name-->
-    <Grid Grid.Row="0"
-      Margin="5,0,0,0">
+    <Grid Margin="5,0,0,0">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="20"/>
         <ColumnDefinition Width="*"/>
       </Grid.ColumnDefinitions>
       <Svg Grid.Column="0"
            Margin="3"
-           Path="/Assets/Icons/inspector.svg"/>
+           Path="/Assets/Icons/hierarchy.svg"/>
       <Label Grid.Column="1"
              FontWeight="Bold"
              FontSize="12">
-        Insector
+        Hierarchy
       </Label>
     </Grid>
 
@@ -34,34 +33,36 @@
           Margin="5,0,0,0">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="Auto"/>
-        <ColumnDefinition Width="Auto"/>
         <ColumnDefinition Width="*"/>
+        <ColumnDefinition Width="Auto"/>
       </Grid.ColumnDefinitions>
-      <Border Grid.Column="0"
-              Width="20">
-        
-      </Border>
-      <!--Entity Icon-->
-      <Border Grid.Column="1"
+
+      <!--Add Entity etc-->
+      <Button Grid.Column="0"
               Width="20"
               Height="20"
-              BorderThickness="0,0,0,0"
-              BorderBrush="Black"
+              FontSize="12"
+              Background="Transparent"
               Padding="3">
-        <Svg Path="/Assets/Icons/entity.svg"/>
-      </Border>
+        <Svg Path="/Assets/Icons/add.svg"/>
+      </Button>
 
-      <!--Name field-->
-      <TextBox Grid.Column="2"
+      <!--Search field-->
+      <TextBox Grid.Column="1"
                MinHeight="0"
-               Height="20"
-               CornerRadius="0,0,0,0"
+               CornerRadius="3,0,0,3"
                BorderBrush="Black"
                FontSize="12"
                Padding="5,0,0,0"
-               BorderThickness="0,0,0,0"
+               BorderThickness="1,1,0,1"
                VerticalContentAlignment="Center"
-               Watermark="Name"/>
+               Watermark="Search"/>
+      <Border Grid.Column="2"
+              Padding="3"
+              BorderBrush="Black"
+              BorderThickness="0,1,0,1">
+        <Svg Path="/Assets/Icons/search.svg"/>
+      </Border>
     </Grid>
 
     <!--Entities-->
@@ -69,12 +70,13 @@
             Background="Cyan">
       <ScrollViewer VerticalScrollBarVisibility="Visible">
         <StackPanel>
-          
-          <uc:ComponentNodeControl/>
+
+          <uc:HierarchyNodeControl/>
 
         </StackPanel>
       </ScrollViewer>
     </Border>
 
   </Grid>
+
 </UserControl>

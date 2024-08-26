@@ -12,7 +12,7 @@
         ExtendClientAreaTitleBarHeightHint="-1"
         SystemDecorations="Full"
         RequestedThemeVariant="Default">
-  
+
   <Grid>
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
@@ -31,13 +31,13 @@
         <RowDefinition Height="*" />
       </Grid.RowDefinitions>
 
-        <uc:InspectorControl>
-          
-        </uc:InspectorControl>
+      <uc:HierarchyControl>
+
+      </uc:HierarchyControl>
 
       <ScrollViewer Grid.Column="1">
-          <StackPanel Orientation="Vertical"
-                    Spacing="25">
+        <StackPanel Orientation="Vertical"
+                  Spacing="25">
 
           <Button x:Name="CreateSceneButton"
                   Content="Create new scene"/>
@@ -57,16 +57,7 @@
         </StackPanel>
       </ScrollViewer>
 
-      <StackPanel Grid.Column="2"
-                  Orientation="Vertical">
-        <Label Content="Inspector"
-               Padding="10"/>
-
-        <ScrollViewer x:Name="InspectorScrollView"
-                    VerticalScrollBarVisibility="Visible">
-        </ScrollViewer>
-
-      </StackPanel>
+      <uc:InspectorControl Grid.Column="2"/>
 
     </Grid>
 
@@ -88,6 +79,6 @@
       </ScrollViewer>
 
     </Grid>
-    
+
   </Grid>
 </Window>

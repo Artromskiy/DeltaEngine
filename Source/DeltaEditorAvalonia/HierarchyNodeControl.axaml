@@ -1,0 +1,21 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="20"
+             x:Class="DeltaEditorAvalonia.HierarchyNodeControl">
+
+  <Border Background="Magenta"
+          Height="20">
+    <StackPanel Orientation="Horizontal">
+      <Border Width="25"/>
+      <Svg Path="/Assets/Icons/entity.svg"
+           Margin="3"/>
+      <Label FontSize="12"
+             VerticalContentAlignment="Center">
+        Entity
+      </Label>
+    </StackPanel>
+  </Border>
+  
+</UserControl>

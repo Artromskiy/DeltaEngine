@@ -1,0 +1,52 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:uc="clr-namespace:DeltaEditorAvalonia;assembly=DeltaEditorAvalonia"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="DeltaEditorAvalonia.TestTransform">
+
+  <Grid Background="Magenta">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="20"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <Grid Grid.Row="0"
+          Margin="5,0,0,0">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="20"/>
+        <ColumnDefinition Width="20"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+
+      <!--Collapse/Expand-->
+      <Svg Grid.Column="0"
+           Margin="3"
+           Path="/Assets/Icons/expand.svg"/>
+
+      <!--Component Icon-->
+      <Svg Grid.Column="1"
+           Margin="3"
+           Path="/Assets/Icons/file.svg"/>
+
+      <!--Component Name-->
+      <Label Grid.Column="2"
+             FontWeight="Bold"
+             FontSize="12">
+        Transform
+      </Label>
+    </Grid>
+    <Grid Grid.Row="1">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="*"/>
+        <RowDefinition Height="*"/>
+        <RowDefinition Height="*"/>
+      </Grid.RowDefinitions>
+      <uc:Vector3NodeControl Grid.Row="0"/>
+      <uc:Vector3NodeControl Grid.Row="1"/>
+      <uc:Vector3NodeControl Grid.Row="2"/>
+    </Grid>
+
+  </Grid>
+</UserControl>

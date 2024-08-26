@@ -2,9 +2,9 @@ using Avalonia.Controls;
 
 namespace DeltaEditorAvalonia;
 
-public partial class EditorBar : UserControl
+public partial class HierarchyControl : UserControl
 {
-    public EditorBar()
+    public HierarchyControl()
     {
         InitializeComponent();
     }
