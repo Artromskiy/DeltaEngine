@@ -24,18 +24,17 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Folder Include="Assets\" />
-    <Folder Include="InspectorNodes\" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
     <AvaloniaResource Include="Assets\Icons\**" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <Compile Update="HierarchyControl.axaml.cs">
       <DependentUpon>HierarchyControl.axaml</DependentUpon>
     </Compile>
   </ItemGroup>
-  
+
 </Project>

@@ -9,9 +9,12 @@
       <ColumnDefinition Width="*"/>
       <ColumnDefinition Width="3*"/>
     </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="20"/>
+    </Grid.RowDefinitions>
     <Label Grid.Column="0"
            VerticalContentAlignment="Center"
-           Padding="20,0,0,0"
+           Padding="25,0,0,0"
            FontSize="12">
       fieldName
     </Label>
@@ -28,7 +31,7 @@
           <ColumnDefinition Width="Auto"/>
           <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
-        
+
         <Label Grid.Column="0"
                FontSize="12"
                HorizontalAlignment="Right"
@@ -37,8 +40,13 @@
         </Label>
         <TextBox Grid.Column="1"
                  FontSize="12"
+                 CornerRadius="0,3,3,0"
+                 BorderThickness="0,0,1,0"
+                 Padding="5,0,0,0"
+                 MinHeight="0"
+                 Height="20"
                  VerticalContentAlignment="Center">
-          0.381
+          1,33
         </TextBox>
       </Grid>
 
@@ -57,11 +65,16 @@
         </Label>
         <TextBox Grid.Column="1"
                  FontSize="12"
+                 CornerRadius="0,3,3,0"
+                 BorderThickness="0,0,1,0"
+                 Padding="5,0,0,0"
+                 MinHeight="0"
+                 Height="20"
                  VerticalContentAlignment="Center">
-          0.381
+          3,14
         </TextBox>
       </Grid>
-      
+
       <!--Z-->
       <Grid Grid.Column="2">
         <Grid.ColumnDefinitions>
@@ -77,8 +90,13 @@
         </Label>
         <TextBox Grid.Column="1"
                  FontSize="12"
+                 CornerRadius="0,3,3,0"
+                 BorderThickness="0,0,1,0"
+                 Padding="5,0,0,0"
+                 MinHeight="0"
+                 Height="20"
                  VerticalContentAlignment="Center">
-          0.381
+          1
         </TextBox>
       </Grid>
 

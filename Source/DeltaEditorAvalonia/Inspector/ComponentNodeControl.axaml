@@ -12,33 +12,46 @@
       <RowDefinition Height="Auto"/>
     </Grid.RowDefinitions>
     
-    <Grid Grid.Row="0"
-          Margin="5,0,0,0">
+    <Grid Grid.Row="0">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="20"/>
         <ColumnDefinition Width="20"/>
         <ColumnDefinition Width="*"/>
       </Grid.ColumnDefinitions>
-      
+      <Grid.RowDefinitions>
+        <RowDefinition Height="20"/>
+      </Grid.RowDefinitions>
+
       <!--Collapse/Expand-->
       <Button Grid.Column="0"
-              Padding = "3">
-        <Svg Path="/Assets/Icons/expand.svg"/>
+              CornerRadius="0,0,3,0"
+              Padding = "0"
+              Width="20"
+              Height="20">
+        <Svg Path="/Assets/Icons/expand.svg"
+             Margin="3"/>
       </Button>
+      
       <!--Component Icon-->
       <Svg Grid.Column="1"
            Margin="3"
            Path="/Assets/Icons/file.svg"/>
       
       <!--Component Name-->
-      <Label x:Name="Name"
+      <Label x:Name="ComponentName"
              Grid.Column="2"
+             Padding="0"
              FontWeight="Bold"
-             FontSize="12">
-        Transform
+             FontSize="12"
+             VerticalContentAlignment="Center">
+        Component
       </Label>
+      
     </Grid>
-
+    
+    <Border Grid.Row="1"
+            x:Name="BorderContent">
+    </Border>
     
   </Grid>
 </UserControl>

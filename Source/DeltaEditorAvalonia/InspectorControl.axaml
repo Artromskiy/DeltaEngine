@@ -14,8 +14,7 @@
     </Grid.RowDefinitions>
 
     <!--Menu Name-->
-    <Grid Grid.Row="0"
-      Margin="5,0,0,0">
+    <Grid Grid.Row="0">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="20"/>
         <ColumnDefinition Width="*"/>
@@ -30,8 +29,7 @@
       </Label>
     </Grid>
 
-    <Grid Grid.Row="1"
-          Margin="5,0,0,0">
+    <Grid Grid.Row="1">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="Auto"/>
         <ColumnDefinition Width="Auto"/>
@@ -69,8 +67,12 @@
             Background="Cyan">
       <ScrollViewer VerticalScrollBarVisibility="Visible">
         <StackPanel>
-          
-          <uc:ComponentNodeControl/>
+
+          <uc:ComponentNodeControl>
+            <uc:ComponentNodeControl.ComponentContent>
+              <uc:FloatNodeControl/>
+            </uc:ComponentNodeControl.ComponentContent>
+          </uc:ComponentNodeControl>
 
         </StackPanel>
       </ScrollViewer>
