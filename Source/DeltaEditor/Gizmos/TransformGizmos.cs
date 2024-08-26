@@ -1,10 +1,5 @@
 ﻿using Arch.Core;
 using Delta.Runtime;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DeltaEditor.Gizmos
 {

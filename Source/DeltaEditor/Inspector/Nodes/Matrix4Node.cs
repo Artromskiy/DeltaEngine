@@ -38,7 +38,7 @@ internal class Matrix4Node : Node<Matrix4x4>
     {
         bool changed = false;
         foreach (var inspectorElement in _inspectorElements)
-            changed|=inspectorElement.UpdateData(entity);
+            changed |= inspectorElement.UpdateData(entity);
         return changed;
     }
 }

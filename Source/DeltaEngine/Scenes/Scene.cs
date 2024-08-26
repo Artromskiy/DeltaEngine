@@ -15,7 +15,6 @@ public sealed class Scene : IDisposable, IAsset
     private readonly List<ISystem> _jobs;
 
     private float _deltaTime;
-    private readonly Stopwatch _sceneSw = new();
 
     public Scene()
     {
@@ -23,15 +22,11 @@ public sealed class Scene : IDisposable, IAsset
         _jobs = [];
     }
 
-    public void Run()
+    public void Run(float deltaTime)
     {
-        _sceneSw.Restart();
-
+        _deltaTime = deltaTime;
         foreach (var item in _jobs)
             item.Execute();
-
-        _sceneSw.Stop();
-        _deltaTime = (float)_sceneSw.Elapsed.TotalSeconds;
     }
 
     public float DeltaTime() => _deltaTime;
@@ -51,12 +46,9 @@ public sealed class Scene : IDisposable, IAsset
         _world.Create();
     }
 
-    public void RemoveEntity()
+    public void RemoveEntity(Entity entity)
     {
-        var all = QueryDescription.Null;
-        Span<Entity> e = stackalloc Entity[_world.CountEntities(all)];
-        _world.GetEntities(all, e);
-        _world.Destroy(e[0]);
+        _world.Destroy(entity);
     }
 
     public void Dispose()

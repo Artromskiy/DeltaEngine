@@ -1,0 +1,73 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="455" d:DesignHeight="612"
+             x:Class="DeltaEditorAvalonia.InspectorControl">
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="20"/>
+      <RowDefinition Height="20"/>
+      <RowDefinition Height="*"/>
+    </Grid.RowDefinitions>
+    
+    <!--Menu Name-->
+    <Label Grid.Row="0"
+           FontWeight="Bold"
+           FontSize="12">
+      Hierarchy
+    </Label>
+    
+    <Grid Grid.Row="1">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+      
+      <!--Add Entity etc-->
+      <Button Grid.Column="0"
+              Width="20"
+              Height="20"
+              FontSize="12"
+              VerticalContentAlignment="Center"
+              HorizontalContentAlignment="Center"
+              FontWeight="Bold"
+              Padding="0">
+        +
+      </Button>
+      
+      <!--Search field-->
+      <TextBox Grid.Column="1"
+               MinHeight="0"
+               FontSize="10"
+               Padding="5,0,0,0"
+               VerticalContentAlignment="Center">
+        Search
+      </TextBox>
+    </Grid>
+    
+    <!--Entities-->
+    <Border Grid.Row="2"
+            Background="Cyan">
+      <ScrollViewer
+        VerticalScrollBarVisibility="Visible">
+        <StackPanel Spacing="-1">
+          
+          <Border Background="Magenta"
+                  Height="20">
+            <StackPanel Orientation="Horizontal">
+              <Border Width="20"/>
+              <Label FontSize="12"
+                     VerticalContentAlignment="Center">
+                lol
+              </Label>
+            </StackPanel>
+          </Border>
+          
+        </StackPanel>
+      </ScrollViewer>
+    </Border>
+    
+  </Grid>
+              
+</UserControl>

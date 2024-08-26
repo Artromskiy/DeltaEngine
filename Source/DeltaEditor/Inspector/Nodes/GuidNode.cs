@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Delta.Runtime;
 using DeltaEditor.Inspector.Internal;
+using DeltaEditor.Tools;
 using System.Diagnostics;
 
 namespace DeltaEditor.Inspector.Nodes;
@@ -16,12 +17,9 @@ internal class GuidNode : ClickableNode<Guid>
 
     public override bool UpdateData(EntityReference entity)
     {
-        bool changed = false;
         cachedEntity = entity;
-        Span<byte> guidBytes = stackalloc byte[16];
-        GetData(entity).TryWriteBytes(guidBytes);
-        _fieldData.Text = Convert.ToBase64String(guidBytes);
-        return changed;
+        _fieldData.Text = GetData(entity).LookupString();
+        return false;
     }
 
     private void OnClick(object? sender, EventArgs eventArgs)

@@ -1,0 +1,93 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:uc="clr-namespace:DeltaEditorAvalonia;assembly=DeltaEditorAvalonia"
+        mc:Ignorable="d" d:DesignWidth="1920" d:DesignHeight="1200"
+        x:Class="DeltaEditorAvalonia.MainWindow"
+        Title="DeltaEditorAvalonia"
+        
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="PreferSystemChrome"
+        ExtendClientAreaTitleBarHeightHint="-1"
+        SystemDecorations="Full"
+        RequestedThemeVariant="Default">
+  
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+    <uc:EditorBar Grid.Row="0"/>
+
+    <Grid Grid.Row="1">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="*" />
+      </Grid.RowDefinitions>
+
+        <uc:InspectorControl>
+          
+        </uc:InspectorControl>
+
+      <ScrollViewer Grid.Column="1">
+          <StackPanel Orientation="Vertical"
+                    Spacing="25">
+
+          <Button x:Name="CreateSceneButton"
+                  Content="Create new scene"/>
+
+          <Button x:Name="SaveSceneButton"
+                  Content="Save scene"/>
+
+          <Button x:Name="CompileButton"
+                  Content="Try compile project"/>
+
+          <Button x:Name="UpdateHierarchyButton"
+                  Content="Update Hierarchy"/>
+
+          <Button x:Name="ImportFbx"
+                  Content="Import Fbx"/>
+
+        </StackPanel>
+      </ScrollViewer>
+
+      <StackPanel Grid.Column="2"
+                  Orientation="Vertical">
+        <Label Content="Inspector"
+               Padding="10"/>
+
+        <ScrollViewer x:Name="InspectorScrollView"
+                    VerticalScrollBarVisibility="Visible">
+        </ScrollViewer>
+
+      </StackPanel>
+
+    </Grid>
+
+    <Grid Grid.Row="2">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="40" />
+        <RowDefinition Height="*" />
+      </Grid.RowDefinitions>
+
+      <Label Grid.Row="0"
+             Content="Explorer"/>
+
+      <ScrollViewer Grid.Row="1"
+                  x:Name="ExplorerScrollView"
+                  VerticalScrollBarVisibility="Visible">
+      </ScrollViewer>
+
+    </Grid>
+    
+  </Grid>
+</Window>

@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using DeltaEditor.Inspector.Internal;
+using DeltaEditor.Tools;
 
 namespace DeltaEditor.Inspector.Nodes;
 
@@ -15,7 +16,7 @@ internal class IntNode : FieldNode<int>
     {
         bool changed = _fieldData.IsFocused;
         if (!changed)
-            _fieldData.Text = GetData(entity).ToString();
+            _fieldData.Text = GetData(entity).LookupString();
         else
             TrySetValue(entity);
         return changed;

@@ -10,8 +10,11 @@ public static class MauiProgram
     public static MauiApp CreateMauiApp()
     {
         string[] arguments = Environment.GetCommandLineArgs();
-        bool projectExist = arguments.Length > 1 && Directory.Exists(arguments[1]);
-        string projectPath = projectExist ? arguments[1] : Directory.CreateTempSubdirectory().FullName;
+        bool hasDirectory = arguments.Length > 1 && Directory.Exists(arguments[1]);
+        string directoryPath = hasDirectory ? arguments[1] : Directory.CreateTempSubdirectory().FullName;
+
+        var projectPath = new EditorPaths(directoryPath);
+        ProjectCreator.CreateProject(projectPath);
 
         var builder = MauiApp.CreateBuilder();
         builder
@@ -24,7 +27,7 @@ public static class MauiProgram
             })
             .Services
             .AddSingleton<IUIThreadGetter>(new MauiThreadGetter())
-            .AddSingleton<IProjectPath>(new EditorPaths(projectPath))
+            .AddSingleton<IProjectPath>(projectPath)
             .AddSingleton<RuntimeLoader>()
             .AddSingleton<MainPage>();
 #if DEBUG
@@ -33,8 +36,6 @@ public static class MauiProgram
 #endif
         MauiApp app = builder.Build();
 
-        if (!projectExist)
-            new ProjectCreator(app.Services.GetService<RuntimeLoader>()!, app.Services.GetService<IProjectPath>()!).FullSetup();
 
         return app;
     }

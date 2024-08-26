@@ -4,6 +4,7 @@ internal static class NodeConst
 {
     public const double ComponentHeaderTextSize = 15f;
     public const double NodeHeight = 30;
+    public const double Spacing = 10;
     public static readonly Color BackColor = Color.FromRgba(0, 0, 0, 0);
     public static readonly Color BorderColor = Color.FromRgb(15, 15, 15);
 

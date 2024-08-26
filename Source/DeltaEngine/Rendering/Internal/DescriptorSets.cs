@@ -42,8 +42,8 @@ internal class DescriptorSets : IDisposable
             _descriptorSets[i] = CreateDescriptorSet(i);
 
         _matrices = new(_renderBase, Instance, RendConst.MatricesBinding, DescriptorType.StorageBuffer);
-        _ids = new(_renderBase, Instance, RendConst.IdsBinding,DescriptorType.StorageBuffer);
-        _materials = new(_renderBase, Material, RendConst.MaterialBinding,DescriptorType.StorageBuffer);
+        _ids = new(_renderBase, Instance, RendConst.IdsBinding, DescriptorType.StorageBuffer);
+        _materials = new(_renderBase, Material, RendConst.MaterialBinding, DescriptorType.StorageBuffer);
         _camera = new(_renderBase, Scene, RendConst.CameraBinding, DescriptorType.StorageBuffer);
     }
 

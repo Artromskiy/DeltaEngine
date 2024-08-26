@@ -35,11 +35,11 @@ internal static class TestScene
         var scene = new Scene();
         InitWorldSimple(scene);
         var graphics = IRuntimeContext.Current.GraphicsModule;
-        if(graphics is not DummyGraphics)
+        if (graphics is not DummyGraphics)
             graphics.AddRenderBatcher(new SceneBatcher());
         scene.AddJob(new MoveTransformsJob(scene._world, scene.DeltaTime));
         //scene.AddJob(new RemoveDirtyJob(scene._world));
-        scene.AddJob(new FpsDropper(60, scene.DeltaTime));
+        //scene.AddJob(new FpsDropper(60, scene.DeltaTime));
         return scene;
     }
 

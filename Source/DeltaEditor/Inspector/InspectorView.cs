@@ -9,6 +9,7 @@ using DeltaEditorLib.Loader;
 using DeltaEditorLib.Scripting;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 namespace DeltaEditor.Inspector;
 
@@ -53,8 +54,9 @@ internal class InspectorView : ContentView
         SelectedEntity = entityReference;
     }
 
-    public void UpdateComponentsData(IRuntime runtime)
+    public void UpdateInspector(IRuntime runtime)
     {
+        Stopwatch sw = Stopwatch.StartNew();
         if (!SelectedEntity.IsAlive()) // Dead entity
         {
             ClearHandledEntityData();
@@ -76,6 +78,8 @@ internal class InspectorView : ContentView
                 // TODO mark dirty
             }
         }
+        sw.Stop();
+        var elapsed = sw.ElapsedMilliseconds;
     }
 
     private void RebuildInspectorComponents(IRuntime runtime)

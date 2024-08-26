@@ -2,9 +2,10 @@
 using Arch.Core.Extensions;
 using Arch.Core.Extensions.Dangerous;
 using Arch.Core.Utils;
+using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-
 namespace DeltaEditorLib.Scripting;
 
 public static class AccessorContainerExtensions

@@ -1,19 +1,22 @@
 ﻿using Delta.Runtime;
 using DeltaEditorLib.Compile;
 using DeltaEditorLib.Scripting;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 
 namespace DeltaEditorLib.Loader;
 
 public class RuntimeLoader
 {
     private readonly IProjectPath _projectPath;
+    private IRuntime _runtime;
 
     private readonly ICompilerModule _compilerModule;
-    private IExecutionModule _executionModule;
+    private IRuntimeScheduler _executionModule;
 
     private readonly IUIThreadGetter? _uiThreadGetter;
-    private IRuntime _runtime;
 
     public IAccessorsContainer Accessors => _compilerModule.Accessors!;
     public List<Type> Components => _compilerModule.Components;
@@ -45,7 +48,7 @@ public class RuntimeLoader
 
         _compilerModule.Recompile();
         _runtime = new Runtime(_projectPath);
-        _executionModule = new ExecutionModule(_runtime, _uiThreadGetter);
+        _executionModule = new RuntimeScheduler(_runtime, _uiThreadGetter);
     }
 
     public void ReloadRuntime()
@@ -56,7 +59,7 @@ public class RuntimeLoader
         _compilerModule.Recompile();
 
         _runtime = new Runtime(_projectPath);
-        _executionModule = new ExecutionModule(_runtime, _uiThreadGetter);
+        _executionModule = new RuntimeScheduler(_runtime, _uiThreadGetter);
     }
 
     public void OpenProjectFolder()

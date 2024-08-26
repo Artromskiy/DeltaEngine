@@ -1,25 +1,31 @@
 ﻿using Delta.Runtime;
-
+using System.Collections.Generic;
+using System.IO;
 namespace DeltaEditorLib.Loader;
 
-public class ProjectCreator
+public static class ProjectCreator
 {
-    private readonly IProjectPath _projectPath;
-    public ProjectCreator(IProjectPath projectPath)
+    public static void CreateProject(IProjectPath projectPath)
     {
-        _projectPath = projectPath;
-        SetupProjectDirectory();
+        if (IsDirectoryEmpty(projectPath.RootDirectory))
+            SetupProjectDirectory(projectPath);
     }
 
-    private void SetupProjectDirectory()
+    private static void SetupProjectDirectory(IProjectPath projectPath)
     {
-        Directory.CreateDirectory(_projectPath.AssetsDirectory);
-        Directory.CreateDirectory(_projectPath.ScriptsDirectory);
-        Directory.CreateDirectory(_projectPath.ResourcesDirectory);
-        Directory.CreateDirectory(_projectPath.ProjectDirectory);
-        Directory.CreateDirectory(_projectPath.DllDirectory);
+        Directory.CreateDirectory(projectPath.AssetsDirectory);
+        Directory.CreateDirectory(projectPath.ScriptsDirectory);
+        Directory.CreateDirectory(projectPath.ResourcesDirectory);
+        Directory.CreateDirectory(projectPath.ProjectDirectory);
+        Directory.CreateDirectory(projectPath.DllsDirectory);
 
-        File.Create(_projectPath.ScenesFile).Dispose();
-        File.Create(_projectPath.SettingsFile).Dispose();
+        File.Create(projectPath.ScenesFile).Dispose();
+        File.Create(projectPath.SettingsFile).Dispose();
+    }
+
+    private static bool IsDirectoryEmpty(string path)
+    {
+        using IEnumerator<string> en = Directory.EnumerateFileSystemEntries(path).GetEnumerator();
+        return !en.MoveNext();
     }
 }

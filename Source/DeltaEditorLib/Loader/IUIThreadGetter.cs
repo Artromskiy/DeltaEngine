@@ -1,4 +1,6 @@
-﻿namespace DeltaEditorLib.Loader;
+﻿using System;
+using System.Threading.Tasks;
+namespace DeltaEditorLib.Loader;
 
 public interface IUIThreadGetter
 {

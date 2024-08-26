@@ -1,11 +1,14 @@
 ﻿using Delta.Runtime;
 using DeltaEditorLib.Loader;
+using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
 
 namespace DeltaEditorLib.Scripting;
 
-internal class ExecutionModule : IExecutionModule
+internal class RuntimeScheduler : IRuntimeScheduler
 {
     private readonly IRuntime _runtime;
     private readonly IUIThreadGetter? _uiThreadGetter;
@@ -14,8 +17,6 @@ internal class ExecutionModule : IExecutionModule
     private readonly Queue<Action<IRuntime>> _uiActions = [];
     private readonly ConcurrentQueue<Action<IRuntime>> _runtimeActions = [];
 
-    private Action? _uiThreadCallsAction;
-    private Action UIThreadCallsAction => _uiThreadCallsAction ??= UIThreadCalls;
 
     public event Action<IRuntime> OnUIThreadLoop
     {
@@ -35,7 +36,7 @@ internal class ExecutionModule : IExecutionModule
         remove => _ = 0;
     }
 
-    public ExecutionModule(IRuntime runtime, IUIThreadGetter? uiThreadGetter)
+    public RuntimeScheduler(IRuntime runtime, IUIThreadGetter? uiThreadGetter)
     {
         _runtime = runtime;
         _uiThreadGetter = uiThreadGetter;
@@ -52,7 +53,15 @@ internal class ExecutionModule : IExecutionModule
     {
         try
         {
-            _uiThreadGetter?.Thread?.Invoke(UIThreadCallsAction).Wait();
+            if (_uiActions.Count == 0 && _uiActionsLoop.Count == 0)
+                return;
+
+            _uiThreadGetter?.Thread?.Invoke(UIThreadCalls)?.Wait();
+            // Somehow ui can stop respond
+            // if game thread asks to update ui too freaquently
+            // Maybe rendering not blocks other threads
+            // and just endlessly waits for ui
+            Thread.Sleep(1);
         }
         catch (Exception e)
         {

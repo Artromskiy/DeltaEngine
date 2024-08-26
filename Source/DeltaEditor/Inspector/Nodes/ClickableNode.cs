@@ -20,6 +20,7 @@ internal abstract class ClickableNode<T> : Node<T>
             _stack = [_fieldName, _fieldData];
         else
             _stack = [_fieldData];
+        _stack.Spacing = NodeConst.Spacing;
         _stack.BackgroundColor = NodeConst.BackColor;
         _stack.VerticalOptions = new LayoutOptions(LayoutAlignment.Center, true);
         _stack.HorizontalOptions = new LayoutOptions(LayoutAlignment.Start, true);

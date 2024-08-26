@@ -1,4 +1,6 @@
-﻿using DeltaEditor.Inspector;
+﻿using DeltaEditor.Explorer;
+using DeltaEditor.Hierarchy;
+using DeltaEditor.Inspector;
 using DeltaEditorLib.Loader;
 
 namespace DeltaEditor;
@@ -9,6 +11,7 @@ public partial class MainPage : ContentPage
 
     private readonly InspectorView _inspector;
     private readonly HierarchyView _hierarchy;
+    private readonly ExplorerView _explorer;
 
     public MainPage(RuntimeLoader runtimeLoader)
     {
@@ -16,10 +19,15 @@ public partial class MainPage : ContentPage
         InitializeComponent();
         _hierarchy = new HierarchyView(_runtimeLoader);
         _inspector = new InspectorView(_runtimeLoader);
+        _explorer = new ExplorerView(_runtimeLoader);
         InspectorScrollView.Content = _inspector;
         HierarchyScrollView.Content = _hierarchy;
-        _runtimeLoader.OnUIThreadLoop += _inspector.UpdateComponentsData;
+        ExplorerScrollView.Content = _explorer;
+
+        _runtimeLoader.OnUIThreadLoop += _inspector.UpdateInspector;
         _runtimeLoader.OnUIThreadLoop += _hierarchy.UpdateHierarchy;
+        _runtimeLoader.OnUIThreadLoop += _explorer.UpdateExplorer;
+
         _hierarchy.OnEntitySelected += _inspector.UpdateComponentsEntity;
     }
 
@@ -31,7 +39,7 @@ public partial class MainPage : ContentPage
     private void RunScene(object sender, ToggledEventArgs e)
     {
         var value = e.Value;
-        // _runtimeLoader.OnRuntimeThread+=r=>r.
+        _runtimeLoader.OnRuntimeThread += r => r.Context.SceneManager.Running = value;
     }
 
     private void SaveScene(object sender, EventArgs e)

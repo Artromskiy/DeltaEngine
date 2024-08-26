@@ -7,7 +7,7 @@ public interface IProjectPath
     public string AssetsDirectory { get; }
     public string ScriptsDirectory { get; }
     public string ResourcesDirectory { get; }
-    public string DllDirectory { get; }
+    public string DllsDirectory { get; }
     public string ProjectDirectory { get; }
 
     public string SettingsFile { get; }

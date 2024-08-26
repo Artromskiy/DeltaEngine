@@ -1,10 +1,13 @@
 ﻿using Delta.Runtime;
 using Delta.Scripting;
-using DeltaEditorLib.Compile;
+using DeltaEditorLib.Scripting;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
 
-namespace DeltaEditorLib.Scripting;
+namespace DeltaEditorLib.Compile;
 
 internal class CompilerModule : ICompilerModule
 {

@@ -16,14 +16,14 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="40" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="0" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <Border x:Name="TopMenu"
-               Grid.Row="0"
-               HorizontalOptions="FillAndExpand"
-               BackgroundColor="{StaticResource PrimaryDarkest}"
-               Padding="0"
-               Margin="0">
+        <Border Grid.Row="0"
+                x:Name="TopMenu"
+                HorizontalOptions="FillAndExpand"
+                BackgroundColor="{StaticResource PrimaryDarkest}"
+                Padding="0"
+                Margin="0">
             <Grid HorizontalOptions="Center">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -144,14 +144,29 @@
             </VerticalStackLayout>
 
         </Grid>
-        <!--
-        <Frame x:Name="ProjectFrame"
-               Grid.Row="2">
-            <Label Text="Project">
 
-            </Label>
-        </Frame>
--->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            
+            <Label Text="Explorer"
+                   Grid.Row="0"
+                   Padding="10"
+                   FontSize="Subtitle" />
+
+            <ScrollView x:Name="ExplorerScrollView"
+                        Grid.Row="1"
+                        VerticalOptions="FillAndExpand"
+                        VerticalScrollBarVisibility="Always">
+            </ScrollView>
+
+        </Grid>
+
     </Grid>
 
 </ContentPage>

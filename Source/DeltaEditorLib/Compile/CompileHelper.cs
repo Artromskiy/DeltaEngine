@@ -4,7 +4,11 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CodeAnalysis.Text;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Reflection;
 
 namespace DeltaEditorLib.Compile;
@@ -14,15 +18,16 @@ internal class CompileHelper(IProjectPath projectPath)
     private const string Underscore = "_";
     private const string CsSearch = "*.cs";
     private const string dllExt = ".dll";
+    private const string pdbExt = ".pdb";
     private const string Scripts = "Scripts";
     private const string Accessors = "Accessors";
     private const string ScriptsPathSuffix = Underscore + Scripts + dllExt;
     private const string AccessorsPathSuffix = Underscore + Accessors + dllExt;
 
     private readonly IProjectPath _projectPath = projectPath;
-    private string RandomScriptsDllName => Path.Combine(_projectPath.RootDirectory, Path.GetRandomFileName() + ScriptsPathSuffix);
-    private string RandomAccessorsDllName => Path.Combine(_projectPath.RootDirectory, Path.GetRandomFileName() + AccessorsPathSuffix);
-    private string RandomPdbName => Path.Combine(_projectPath.RootDirectory, Path.GetRandomFileName() + ".pdb");
+    private string RandomScriptsDllName => Path.Combine(_projectPath.DllsDirectory, Path.GetRandomFileName() + ScriptsPathSuffix);
+    private string RandomAccessorsDllName => Path.Combine(_projectPath.DllsDirectory, Path.GetRandomFileName() + AccessorsPathSuffix);
+    private string RandomPdbName => Path.Combine(_projectPath.DllsDirectory, Path.GetRandomFileName() + pdbExt);
 
     private static readonly CSharpParseOptions _parseOptions = new(LanguageVersion.CSharp12);
     private static readonly CSharpCompilationOptions _compilationOptions = new
@@ -35,7 +40,7 @@ internal class CompileHelper(IProjectPath projectPath)
 
     public string CompileScripts()
     {
-        var sourceFiles = Directory.EnumerateFiles(_projectPath.RootDirectory, CsSearch, SearchOption.AllDirectories);
+        var sourceFiles = Directory.EnumerateFiles(_projectPath.ScriptsDirectory, CsSearch, SearchOption.AllDirectories);
         var trees = sourceFiles.Select(x =>
         {
             using var stream = File.OpenRead(x);

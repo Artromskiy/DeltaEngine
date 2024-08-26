@@ -5,7 +5,7 @@ using System;
 using System.Numerics;
 
 namespace Delta.ECS;
-internal interface IRenderBatcher:IDisposable
+internal interface IRenderBatcher : IDisposable
 {
     /// <summary>
     /// Contains matrices with world position of each <see cref="Render"/>

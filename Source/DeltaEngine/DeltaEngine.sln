@@ -29,6 +29,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeltaBench", "..\DeltaBench
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleModelImporter", "..\ConsoleModelImporter\ConsoleModelImporter.csproj", "{3E274157-E313-491F-A604-7D4A7D56DE94}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeltaEditorAvalonia", "..\DeltaEditorAvalonia\DeltaEditorAvalonia.csproj", "{098436C9-D95A-4101-8F7A-534F83D62085}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -117,6 +119,14 @@ Global
 		{3E274157-E313-491F-A604-7D4A7D56DE94}.Perf|Any CPU.Build.0 = Release|Any CPU
 		{3E274157-E313-491F-A604-7D4A7D56DE94}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3E274157-E313-491F-A604-7D4A7D56DE94}.Release|Any CPU.Build.0 = Release|Any CPU
+		{098436C9-D95A-4101-8F7A-534F83D62085}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{098436C9-D95A-4101-8F7A-534F83D62085}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{098436C9-D95A-4101-8F7A-534F83D62085}.DebugPerf|Any CPU.ActiveCfg = Debug|Any CPU
+		{098436C9-D95A-4101-8F7A-534F83D62085}.DebugPerf|Any CPU.Build.0 = Debug|Any CPU
+		{098436C9-D95A-4101-8F7A-534F83D62085}.Perf|Any CPU.ActiveCfg = Debug|Any CPU
+		{098436C9-D95A-4101-8F7A-534F83D62085}.Perf|Any CPU.Build.0 = Debug|Any CPU
+		{098436C9-D95A-4101-8F7A-534F83D62085}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{098436C9-D95A-4101-8F7A-534F83D62085}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

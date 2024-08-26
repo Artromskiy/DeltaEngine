@@ -23,6 +23,7 @@ internal abstract class FieldNode<T> : Node<T>
         _stack.BackgroundColor = NodeConst.BackColor;
         _stack.VerticalOptions = new LayoutOptions(LayoutAlignment.Center, true);
         _stack.HorizontalOptions = new LayoutOptions(LayoutAlignment.Start, true);
+        _stack.Spacing = NodeConst.Spacing;
         ValueMode = FieldSizeMode.Default;
         Content = _stack;
     }

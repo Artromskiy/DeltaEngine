@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using DeltaEditor.Inspector.Internal;
+using DeltaEditor.Tools;
 using System.Numerics;
 
 namespace DeltaEditor.Inspector.Nodes;
@@ -43,7 +44,7 @@ internal class QuaternionNode : Node<Quaternion>
                 changed = true;
             }
             else
-                element.Value = euler[i].ToString("0.00");
+                element.Value = euler[i].LookupString();
         }
         quatRotation = ToQuaternion(euler);
         SetData(entity, quatRotation);

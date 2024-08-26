@@ -15,15 +15,17 @@ internal class SceneManager : ISceneManager
         get => _scene;
         private set => OnSceneChanged?.Invoke(_scene = value);
     }
+    public bool Running { get; set; }
+
     public event Action<Scene?>? OnSceneChanged;
 
     private bool _firstRun = false;
-    public void Execute()
+    public void Execute(float deltaTime)
     {
-        if (_scene == null)
+        if (_scene == null || !Running)
             return;
 
-        _scene.Run();
+        _scene.Run(deltaTime);
 
         if (_firstRun)
         {
@@ -56,7 +58,8 @@ internal class SceneManager : ISceneManager
 
     public void SaveScene(string name)
     {
-        IRuntimeContext.Current.AssetImporter.CreateAsset<Scene>(name, _scene);
+        if(_scene != null)
+            IRuntimeContext.Current.AssetImporter.CreateAsset<Scene>(name, _scene);
     }
 
     public void CreateScene()

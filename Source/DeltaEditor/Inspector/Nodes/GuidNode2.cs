@@ -5,7 +5,7 @@ using System.Diagnostics;
 
 namespace DeltaEditor.Inspector.Nodes;
 
-internal class GuidNode2: NodeWithPicker<Guid>
+internal class GuidNode2 : NodeWithPicker<Guid>
 {
     private EntityReference cachedEntity;
     public GuidNode2(NodeData parameters, bool withName = true) : base(parameters, withName)

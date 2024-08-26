@@ -1,12 +1,10 @@
-﻿using Delta.Rendering.Collections;
+﻿using Delta.ECS.Components;
 using Delta.Rendering;
-using System;
-using Delta.ECS.Components;
-using System.Numerics;
+using Delta.Rendering.Collections;
 using Delta.Rendering.Internal;
+using System;
 using System.Collections.Generic;
-using Arch.Core;
-using Arch.Core.Extensions;
+using System.Numerics;
 using System.Runtime.InteropServices;
 
 namespace Delta.ECS;
@@ -35,7 +33,7 @@ internal class TempRenderBatcher : IRenderBatcher
         Transforms.Dispose();
     }
 
-    public void Draw(Render render, Matrix4x4 matrix)=> _tempRenders.Add((render, matrix));
+    public void Draw(Render render, Matrix4x4 matrix) => _tempRenders.Add((render, matrix));
 
     public void Execute()
     {

@@ -29,7 +29,7 @@ internal class ContainerNode : Node
     {
         bool changed = false;
         foreach (var inspectorElement in _inspectorElements)
-            changed|=inspectorElement.UpdateData(entity);
+            changed |= inspectorElement.UpdateData(entity);
         return changed;
     }
 }

@@ -15,6 +15,7 @@ internal class Vector3Node : Node<Vector3>
     {
         _stack = [_fieldName];
         _stack.BackgroundColor = NodeConst.BackColor;
+        _stack.Spacing = NodeConst.Spacing;
         _inspectorElements = [];
         foreach (var item in _nodeData.FieldNames)
         {
@@ -29,7 +30,7 @@ internal class Vector3Node : Node<Vector3>
     {
         bool changed = false;
         foreach (var inspectorElement in _inspectorElements)
-            changed|= inspectorElement.UpdateData(entity);
+            changed |= inspectorElement.UpdateData(entity);
         return changed;
     }
 }

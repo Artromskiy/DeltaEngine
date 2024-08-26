@@ -120,7 +120,6 @@ internal static class RenderHelper
         data.CopyBuffer(source.Buffer, source.Size, destination.GetBuffer(), destination.Size, fence, cmdBuffer);
     }
 
-
     public static unsafe void BeginCmdBuffer(this RenderBase data, CommandBuffer cmdBuffer)
     {
         CommandBufferBeginInfo beginInfo = new()

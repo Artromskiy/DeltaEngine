@@ -2,6 +2,7 @@
 using Arch.Core.Extensions;
 using Delta.ECS.Components;
 using DeltaEditor.Inspector.Internal;
+using DeltaEditor.Tools;
 
 namespace DeltaEditor.Hierarchy;
 
@@ -43,6 +44,6 @@ internal class EntityNode : ContentView
         var entity = entityReference.Entity;
         if (entity.TryGet<EntityName>(out var entityName) && !string.IsNullOrEmpty(entityName.name))
             return entityName.name;
-        return $"id: {entity.Id}, ver: {entityReference.Version}";
+        return entityReference.LookupString();
     }
 }

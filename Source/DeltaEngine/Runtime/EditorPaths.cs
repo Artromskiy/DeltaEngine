@@ -12,6 +12,7 @@ public class EditorPaths(string path) : IProjectPath
 
     private const string Settings = nameof(Settings);
     private const string Scenes = nameof(Scenes);
+    private const string Dlls = nameof(Dlls);
 
     private const string json = nameof(json);
 
@@ -22,8 +23,10 @@ public class EditorPaths(string path) : IProjectPath
     public string ScriptsDirectory { get; } = Path.Combine(path, Assets, Scripts);
 
     public string ProjectDirectory { get; } = Path.Combine(path, Project);
+    public string DllsDirectory { get; } = Path.Combine(path, Dlls);
 
 
     public string SettingsFile { get; } = Path.ChangeExtension(Path.Combine(path, Project, Settings), json);
     public string ScenesFile { get; } = Path.ChangeExtension(Path.Combine(path, Project, Scenes), json);
+
 }

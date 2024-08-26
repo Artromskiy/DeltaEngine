@@ -1,4 +1,6 @@
 ﻿using DeltaEditorLib.Scripting;
+using System;
+using System.Collections.Generic;
 
 namespace DeltaEditorLib.Compile;
 
