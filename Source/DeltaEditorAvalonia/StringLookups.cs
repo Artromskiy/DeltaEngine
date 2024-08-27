@@ -13,6 +13,8 @@ namespace DeltaEditor.Tools
 
         public static string LookupString(this float value)
         {
+            _lookupFloat.Clear();
+            return value.ToString(FloatFormat);
             if (!_lookupFloat.TryGetValue(value, out var result))
                 _lookupFloat[value] = result = value.ToString(FloatFormat);
             return result;

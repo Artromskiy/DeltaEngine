@@ -2,32 +2,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:uc="clr-namespace:DeltaEditorAvalonia;assembly=DeltaEditorAvalonia"
              mc:Ignorable="d" d:DesignWidth="455" d:DesignHeight="20"
              x:Class="DeltaEditorAvalonia.IntNodeControl">
-  <Grid Height="20"
-        ColumnDefinitions="*,3*"
-        RowDefinitions="20">
-    <Label Grid.Column="0"
-           x:Name="FieldName"
-           x:FieldModifier="private"
-           VerticalContentAlignment="Center"
-           Padding="25,0,0,0"
-           FontSize="12">
-      fieldName
-    </Label>
 
-    <TextBox Grid.Column="1"
-             x:Name="FieldData"
-             x:FieldModifier="private"
-             FontSize="12"
-             CornerRadius="0,3,3,0"
-             BorderThickness="0,0,1,0"
-             Padding="5,0,0,0"
-             MinHeight="0"
-             Height="20"
-             VerticalContentAlignment="Center">
-      42
-    </TextBox>
+  <uc:NamedTextField x:Name="Field"
+                     FieldName="fieldName"
+                     x:FieldModifier="private"
+                     Data="42"
+                     Cursor="SizeWestEast"/>
 
-  </Grid>
 </UserControl>

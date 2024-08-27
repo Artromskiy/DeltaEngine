@@ -5,7 +5,6 @@ using System.Numerics;
 
 namespace DeltaEditor.Inspector.Nodes;
 
-
 internal class QuaternionNode : Node<Quaternion>
 {
     private readonly HorizontalStackLayout _stack;

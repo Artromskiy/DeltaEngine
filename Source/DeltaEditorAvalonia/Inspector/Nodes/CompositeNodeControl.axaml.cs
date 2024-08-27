@@ -15,14 +15,16 @@ public partial class CompositeNodeControl : UserControl, INode
     {
         FieldName.Content = nodeData.FieldName;
         int fieldsCount = nodeData.FieldNames.Length;
-        ChildrenGrid.ColumnDefinitions = [];
+        ChildrenGrid.RowDefinitions = [];
         for (int i = 0; i < fieldsCount; i++)
-            ChildrenGrid.ColumnDefinitions.Add(new ColumnDefinition(1, GridUnitType.Star));
+            ChildrenGrid.RowDefinitions.Add(new RowDefinition(1, GridUnitType.Star));
         for (int i = 0; i < fieldsCount; i++)
         {
-            var element = (Control)NodeFactory.CreateNode(nodeData.ChildData(nodeData.FieldNames[i]));
-            element[Grid.RowProperty] = i;
-            ChildrenGrid.Children.Add(element);
+            var node = NodeFactory.CreateNode(nodeData.ChildData(nodeData.FieldNames[i]));
+            var control = (Control)node;
+            _fields.Add(node);
+            control[Grid.RowProperty] = i;
+            ChildrenGrid.Children.Add(control);
         }
     }
 

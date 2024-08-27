@@ -58,9 +58,9 @@ internal partial class ComponentNodeControl : UserControl, INode
     {
         ComponentName.Content = nodeData.FieldName;
         int fieldsCount = nodeData.FieldNames.Length;
-        ChildrenGrid.ColumnDefinitions = [];
+        ChildrenGrid.RowDefinitions = [];
         for (int i = 0; i < fieldsCount; i++)
-            ChildrenGrid.ColumnDefinitions.Add(new ColumnDefinition(1, GridUnitType.Star));
+            ChildrenGrid.RowDefinitions.Add(new RowDefinition(1, GridUnitType.Star));
         for (int i = 0; i < fieldsCount; i++)
         {
             var node = NodeFactory.CreateNode(nodeData.ChildData(nodeData.FieldNames[i]));
@@ -74,8 +74,11 @@ internal partial class ComponentNodeControl : UserControl, INode
     public bool UpdateData(EntityReference entity)
     {
         bool changed = false;
-        foreach (var field in _fields)
-            changed |= field.UpdateData(entity);
+
+        if (!Collapsed)
+            foreach (var field in _fields)
+                changed |= field.UpdateData(entity);
+
         return changed;
     }
 }

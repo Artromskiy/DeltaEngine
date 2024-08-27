@@ -69,12 +69,14 @@
         <StackPanel x:Name="InspectorStack"
                     x:FieldModifier="private">
           
+          <!--Test Transform-->
+          
           <!--
           <uc:ComponentNodeControl Collapsed="False"
-                                   RowsDefs="20,20,20">
+                                   RowsDefs="*,*,*">
             <uc:ComponentNodeControl.Rows>
-              <uc:Vector2NodeControl Grid.Row="0"/>
-              <uc:FloatNodeControl Grid.Row="1"/>
+              <uc:Vector3NodeControl Grid.Row="0"/>
+              <uc:QuaternionNodeControl Grid.Row="1"/>
               <uc:Vector3NodeControl Grid.Row="2"/>
             </uc:ComponentNodeControl.Rows>
           </uc:ComponentNodeControl>

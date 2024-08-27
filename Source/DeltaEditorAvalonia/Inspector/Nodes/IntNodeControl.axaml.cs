@@ -11,7 +11,7 @@ public partial class IntNodeControl : UserControl, INode
     public IntNodeControl() => InitializeComponent();
     public IntNodeControl(NodeData nodeData) : this()
     {
-        _nodeData = nodeData;
+        Field.FieldName= (_nodeData = nodeData).FieldName;
     }
-    public bool UpdateData(EntityReference entity) => _nodeData.UpdateInt(FieldData, entity);
+    public bool UpdateData(EntityReference entity) => _nodeData.UpdateInt(Field.FieldData, entity);
 }

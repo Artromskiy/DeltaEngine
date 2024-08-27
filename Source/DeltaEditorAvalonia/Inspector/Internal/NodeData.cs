@@ -14,6 +14,8 @@ public class NodeData(RootData root, PathData path)
     public readonly RootData rootData = root;
     public readonly PathData pathData = path;
 
+    public NodeData(RootData root) : this(root, new([])) { }
+
     public Type Component => rootData.Component;
     public string FieldName => Path.Length == 0 ? rootData.componentName : Path[^1];
     public IAccessorsContainer Accessors => rootData.Accessors;
@@ -66,10 +68,10 @@ public class NodeData(RootData root, PathData path)
     }
 }
 
-public record RootData(Type Component, RuntimeLoader RuntimeLoader)
+public record RootData(Type Component, IAccessorsContainer Accessors)
 {
     public readonly string componentName = Component.Name;
-    public IAccessorsContainer Accessors = RuntimeLoader.Accessors;
+    public IAccessorsContainer Accessors = Accessors;
 }
 public class PathData(List<string> path)
 {

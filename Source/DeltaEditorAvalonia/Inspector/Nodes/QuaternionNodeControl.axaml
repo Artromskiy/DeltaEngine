@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:uc="clr-namespace:DeltaEditorAvalonia;assembly=DeltaEditorAvalonia"
              mc:Ignorable="d" d:DesignWidth="455" d:DesignHeight="20"
              x:Class="DeltaEditorAvalonia.QuaternionNodeControl">
 
@@ -9,85 +10,38 @@
         ColumnDefinitions="*,3*"
         RowDefinitions="20">
     <Label Grid.Column="0"
+           x:Name="FieldName"
+           x:FieldModifier="private"
            VerticalContentAlignment="Center"
            Padding="25,0,0,0"
            FontSize="12">
       fieldName
     </Label>
+    
     <Grid Grid.Column="1"
           ColumnDefinitions="*,*,*">
-      <!--X-->
-      <Grid Grid.Column="0"
-            ColumnDefinitions="Auto,*">
 
-        <Label Grid.Column="0"
-               FontSize="12"
-               HorizontalAlignment="Right"
-               VerticalContentAlignment="Center">
-          X
-        </Label>
-        <TextBox Grid.Column="1"
-                 x:Name="FieldDataX"
-                 x:FieldModifier="private"
-                 FontSize="12"
-                 CornerRadius="0,3,3,0"
-                 BorderThickness="0,0,1,0"
-                 Padding="5,0,0,0"
-                 MinHeight="0"
-                 Height="20"
-                 VerticalContentAlignment="Center">
-          1,33
-        </TextBox>
-      </Grid>
+      <!--X-->
+      <uc:NamedTextField FieldName="X"
+                         Data="6,28"
+                         Grid.Column="0"
+                         x:Name="FieldX"
+                         x:FieldModifier="private"/>
 
       <!--Y-->
-      <Grid Grid.Column="1"
-            ColumnDefinitions="Auto,*">
-
-        <Label Grid.Column="0"
-               FontSize="12"
-               HorizontalAlignment="Right"
-               VerticalContentAlignment="Center">
-          Y
-        </Label>
-        <TextBox Grid.Column="1"
-                 x:Name="FieldDataY"
-                 x:FieldModifier="private"
-                 FontSize="12"
-                 CornerRadius="0,3,3,0"
-                 BorderThickness="0,0,1,0"
-                 Padding="5,0,0,0"
-                 MinHeight="0"
-                 Height="20"
-                 VerticalContentAlignment="Center">
-          3,14
-        </TextBox>
-      </Grid>
+      <uc:NamedTextField FieldName="Y"
+                         Data="1"
+                         Grid.Column="1"
+                         x:Name="FieldY"
+                         x:FieldModifier="private"/>
 
       <!--Z-->
-      <Grid Grid.Column="2"
-            ColumnDefinitions="Auto,*">
-
-        <Label Grid.Column="0"
-               FontSize="12"
-               HorizontalAlignment="Right"
-               VerticalContentAlignment="Center">
-          Z
-        </Label>
-        <TextBox Grid.Column="1"
-                 x:Name="FieldDataZ"
-                 x:FieldModifier="private"
-                 FontSize="12"
-                 CornerRadius="0,3,3,0"
-                 BorderThickness="0,0,1,0"
-                 Padding="5,0,0,0"
-                 MinHeight="0"
-                 Height="20"
-                 VerticalContentAlignment="Center">
-          1
-        </TextBox>
-      </Grid>
-
+      <uc:NamedTextField FieldName="Z"
+                         Data="1"
+                         Grid.Column="2"
+                         x:Name="FieldZ"
+                         x:FieldModifier="private"/>
+      
     </Grid>
   </Grid>
 </UserControl>

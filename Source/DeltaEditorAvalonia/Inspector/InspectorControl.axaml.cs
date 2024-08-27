@@ -5,8 +5,8 @@ using Avalonia.Controls;
 using Delta.Runtime;
 using Delta.Scripting;
 using Delta.Utilities;
+using DeltaEditorAvalonia.Inspector;
 using DeltaEditorAvalonia.Inspector.Internal;
-using DeltaEditorLib.Loader;
 using DeltaEditorLib.Scripting;
 using System;
 using System.Collections.Generic;
@@ -41,7 +41,7 @@ public partial class InspectorControl : UserControl
         SelectedEntity = entityReference;
     }
 
-    public void UpdateInspector(IRuntime runtime)
+    public void UpdateInspector(IRuntimeContext ctx)
     {
         if (!SelectedEntity.IsAlive()) // Dead entity
         {
@@ -53,7 +53,7 @@ public partial class InspectorControl : UserControl
         {
             CurrentArch = SelectedEntity.Entity.GetArchetype();
             ClearInspector();
-            RebuildInspectorComponents(runtime);
+            RebuildInspectorComponents(ctx);
             //RebuildComponentAdder();
         }
         foreach (var item in _currentComponentInspectors)
@@ -66,7 +66,7 @@ public partial class InspectorControl : UserControl
         }
     }
 
-    private void RebuildInspectorComponents(IRuntime runtime)
+    private void RebuildInspectorComponents(IRuntimeContext ctx)
     {
         var types = SelectedEntity.Entity.GetComponentTypes();
         Span<ComponentType> typesSpan = stackalloc ComponentType[types.Length];
@@ -76,7 +76,7 @@ public partial class InspectorControl : UserControl
         {
             if (!_accessors.AllAccessors.ContainsKey(type))
                 continue;
-            var componentEditor = GetOrCreateInspector(runtime, type);
+            var componentEditor = GetOrCreateInspector(ctx, type);
             InspectorStack.Children.Add((Control)componentEditor);
             _currentComponentInspectors.Add(type, componentEditor);
         }
@@ -98,11 +98,14 @@ public partial class InspectorControl : UserControl
         //    _addComponentList.Clear();
     }
 
-    private INode GetOrCreateInspector(IRuntime _, Type type)
+    private INode GetOrCreateInspector(IRuntimeContext ctx, Type type)
     {
-        //if (!_loadedComponentInspectors.TryGetValue(type, out var inspector))
-        //    _loadedComponentInspectors[type] = inspector = NodeFactory.CreateComponentInspector(new(new(type, _runtimeLoader), new([])));
-        //return inspector;
-        return null;
+        if (!_loadedComponentInspectors.TryGetValue(type, out var inspector))
+        {
+            var rootData = new RootData(type, _accessors);
+            var nodeData = new NodeData(rootData);
+            _loadedComponentInspectors[type] = inspector = NodeFactory.CreateComponentInspector(nodeData);
+        }
+        return inspector;
     }
 }

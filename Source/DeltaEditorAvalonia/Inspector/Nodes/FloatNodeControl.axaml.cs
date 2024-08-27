@@ -11,7 +11,7 @@ public partial class FloatNodeControl : UserControl, INode
     public FloatNodeControl() => InitializeComponent();
     public FloatNodeControl(NodeData nodeData) : this()
     {
-
+        Field.FieldName = (_nodeData = nodeData).FieldName;
     }
-    public bool UpdateData(EntityReference entity) => _nodeData.UpdateFloat(FieldData, entity);
+    public bool UpdateData(EntityReference entity) => _nodeData.UpdateFloat(Field.FieldData, entity);
 }

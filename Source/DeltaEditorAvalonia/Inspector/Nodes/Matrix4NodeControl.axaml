@@ -3,13 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:uc="clr-namespace:DeltaEditorAvalonia;assembly=DeltaEditorAvalonia"
-             mc:Ignorable="d" d:DesignWidth="455" d:DesignHeight="20"
-             x:Class="DeltaEditorAvalonia.FloatNodeControl">
-  
-  <uc:NamedTextField x:Name="Field"
-                     FieldName="fieldName"
-                     x:FieldModifier="private"
-                     Data="1.6180339887498948482"
-                     Cursor="SizeWestEast"/>
-
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="DeltaEditorAvalonia.Matrix4NodeControl">
+  Welcome to Avalonia!
 </UserControl>

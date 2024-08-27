@@ -10,7 +10,7 @@ public partial class StringNodeControl : UserControl, INode
     public StringNodeControl() => InitializeComponent();
     public StringNodeControl(NodeData nodeData) : this()
     {
-        _nodeData = nodeData;
+        Field.FieldName = (_nodeData = nodeData).FieldName;
     }
-    public bool UpdateData(EntityReference entity) => _nodeData.UpdateString(FieldData, entity);
+    public bool UpdateData(EntityReference entity) =>  _nodeData.UpdateString(Field.FieldData, entity);
 }

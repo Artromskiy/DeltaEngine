@@ -1,11 +1,9 @@
 using Arch.Core;
 using Avalonia.Controls;
-using DeltaEditorAvalonia.Inspector.Internal;
-using System.Numerics;
-using System;
-using System.Threading.Channels;
-using System.Xml.Linq;
 using DeltaEditor.Tools;
+using DeltaEditorAvalonia.Inspector.Internal;
+using System;
+using System.Numerics;
 
 namespace DeltaEditorAvalonia;
 
@@ -15,16 +13,16 @@ public partial class QuaternionNodeControl : UserControl, INode
     public QuaternionNodeControl() => InitializeComponent();
     public QuaternionNodeControl(NodeData nodeData) : this()
     {
-        _nodeData = nodeData;
+        FieldName.Content = (_nodeData = nodeData).FieldName;
     }
 
     public bool UpdateData(EntityReference entity)
     {
         var quatRotation = _nodeData.GetData<Quaternion>(entity);
         var euler = Degrees(quatRotation);
-        bool changed = SetField(FieldDataX, ref euler.X) |
-                       SetField(FieldDataY, ref euler.Y) |
-                       SetField(FieldDataZ, ref euler.Z);
+        bool changed = SetField(FieldX.FieldData, ref euler.X) |
+                       SetField(FieldY.FieldData, ref euler.Y) |
+                       SetField(FieldZ.FieldData, ref euler.Z);
         quatRotation = ToQuaternion(euler);
         _nodeData.SetData(entity, quatRotation);
         return changed;

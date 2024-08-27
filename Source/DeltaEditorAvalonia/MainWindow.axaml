@@ -27,7 +27,7 @@
       <ScrollViewer Grid.Column="1">
         <StackPanel Orientation="Vertical"
                   Spacing="25">
-          <!--
+          
           <Button x:Name="CreateSceneButton"
                   Content="Create new scene"/>
 
@@ -42,7 +42,7 @@
 
           <Button x:Name="ImportFbx"
                   Content="Import Fbx"/>
-        -->
+        
         </StackPanel>
       </ScrollViewer>
 

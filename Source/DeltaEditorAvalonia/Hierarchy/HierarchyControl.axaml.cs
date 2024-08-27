@@ -18,9 +18,9 @@ public partial class HierarchyControl : UserControl
             return;
     }
 
-    public void UpdateHierarchy(IRuntime runtime)
+    public void UpdateHierarchy(IRuntimeContext ctx)
     {
-        var entities = runtime.Context.SceneManager.GetEntities();
+        var entities = ctx.SceneManager.GetEntities();
         entities.Sort((e1, e2) => e1.Entity.Id.CompareTo(e2.Entity.Id));
         ResizeStack(entities.Count);
         for (int i = 0; i < EntityNodeStack.Children.Count; i++)

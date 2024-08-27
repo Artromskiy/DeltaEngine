@@ -13,24 +13,24 @@ internal class RuntimeScheduler : IRuntimeScheduler
     private readonly IRuntime _runtime;
     private readonly IUIThreadGetter? _uiThreadGetter;
 
-    private readonly List<Action<IRuntime>> _uiActionsLoop = [];
-    private readonly Queue<Action<IRuntime>> _uiActions = [];
-    private readonly ConcurrentQueue<Action<IRuntime>> _runtimeActions = [];
+    private readonly List<Action<IRuntimeContext>> _uiActionsLoop = [];
+    private readonly Queue<Action<IRuntimeContext>> _uiActions = [];
+    private readonly ConcurrentQueue<Action<IRuntimeContext>> _runtimeActions = [];
 
 
-    public event Action<IRuntime> OnUIThreadLoop
+    public event Action<IRuntimeContext> OnUIThreadLoop
     {
         add => _uiActionsLoop.Add(value);
         remove => _uiActionsLoop.Remove(value);
     }
 
-    public event Action<IRuntime> OnUIThread
+    public event Action<IRuntimeContext> OnUIThread
     {
         add => _uiActions.Enqueue(value);
         remove => _ = 0;
     }
 
-    public event Action<IRuntime> OnRuntimeThread
+    public event Action<IRuntimeContext> OnRuntimeThread
     {
         add => _runtimeActions.Enqueue(value);
         remove => _ = 0;
@@ -61,7 +61,7 @@ internal class RuntimeScheduler : IRuntimeScheduler
             // if game thread asks to update ui too freaquently
             // Maybe rendering not blocks other threads
             // and just endlessly waits for ui
-            Thread.Sleep(1);
+            //Thread.Sleep(1);
         }
         catch (Exception e)
         {
@@ -72,15 +72,15 @@ internal class RuntimeScheduler : IRuntimeScheduler
     private void RuntimeThreadCalls()
     {
         while (_runtimeActions.TryDequeue(out var action))
-            action.Invoke(_runtime);
+            action.Invoke(_runtime.Context);
     }
 
     private void UIThreadCalls()
     {
         while (_uiActions.TryDequeue(out var action))
-            action.Invoke(_runtime);
+            action.Invoke(_runtime.Context);
 
         foreach (var action in _uiActionsLoop)
-            action.Invoke(_runtime);
+            action.Invoke(_runtime.Context);
     }
 }

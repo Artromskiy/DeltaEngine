@@ -75,23 +75,29 @@
                   Spacing="-1"
                   VerticalAlignment="Center">
         <!--Play-->
-        <Button CornerRadius="3,0,0,3"
-                BorderBrush="Black"
-                Width="30"
-                Height="20"
-                Padding="3">
+        <ToggleButton x:Name="PlayButton"
+                      x:FieldModifier="private"
+                      CornerRadius="3,0,0,3"
+                      BorderBrush="Black"
+                      Width="30"
+                      Height="20"
+                      Padding="3">
           <Svg Path="/Assets/Icons/play.svg"/>
-        </Button>
+        </ToggleButton>
         <!--Pause-->
-        <Button CornerRadius="0"
-                BorderBrush="Black"
-                Width="30"
-                Height="20"
-                Padding="3">
+        <ToggleButton x:Name="PauseButton"
+                      x:FieldModifier="private"
+                      CornerRadius="0"
+                      BorderBrush="Black"
+                      Width="30"
+                      Height="20"
+                      Padding="3">
           <Svg Path="/Assets/Icons/pause.svg"/>
-        </Button>
+        </ToggleButton>
         <!--Next-->
-        <Button CornerRadius="0,3,3,0"
+        <Button x:Name="NextButton"
+                x:FieldModifier="private"
+                CornerRadius="0,3,3,0"
                 BorderBrush="Black"
                 Width="30"
                 Height="20"

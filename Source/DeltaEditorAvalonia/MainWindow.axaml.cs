@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 
 namespace DeltaEditorAvalonia;
 
@@ -7,6 +8,9 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        if (Design.IsDesignMode)
+            return;
+
         //Program.RuntimeLoader
 
         Program.RuntimeLoader.OnUIThreadLoop += Inspector.UpdateInspector;
@@ -14,5 +18,11 @@ public partial class MainWindow : Window
         //Program.RuntimeLoader.OnUIThreadLoop += _explorer.UpdateExplorer;
 
         Hierarchy.OnEntitySelected += Inspector.SetSelectedEntity;
+        CreateSceneButton.Click += Button_Click;
+    }
+
+    public void Button_Click(object? sender, RoutedEventArgs e)
+    {
+        Program.RuntimeLoader.OnRuntimeThread += ctx => ctx.SceneManager.CreateTestScene();
     }
 }

@@ -85,7 +85,7 @@ internal class ComponentNode : Node
         _nodeData.rootData.RuntimeLoader.OnRuntimeThread += RemoveComponent;
     }
 
-    private void RemoveComponent(IRuntime runtime)
+    private void RemoveComponent(IRuntimeContext _)
     {
         _cachedEntity.Entity.RemoveRange(Component.GetComponentType(_nodeData.Component));
     }

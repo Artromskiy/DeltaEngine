@@ -31,9 +31,9 @@ internal class GuidNode2 : NodeWithPicker<Guid>
         _nodeData.rootData.RuntimeLoader.OnRuntimeThread += OpenFolder;
     }
 
-    public void OpenFolder(IRuntime runtime)
+    public void OpenFolder(IRuntimeContext ctx)
     {
-        string path = runtime.Context.AssetImporter.GetPath(GetData(cachedEntity));
+        string path = ctx.AssetImporter.GetPath(GetData(cachedEntity));
         try
         {
             string? directory = Path.GetDirectoryName(path);
