@@ -1,6 +1,6 @@
 ﻿using Delta.ECS;
 using Delta.ECS.Components;
-using Delta.Rendering.Internal;
+using Delta.Rendering.SdlRendering;
 
 namespace Delta.Runtime;
 public interface IGraphicsModule

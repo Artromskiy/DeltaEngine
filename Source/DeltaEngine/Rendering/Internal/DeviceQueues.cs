@@ -1,10 +1,9 @@
-﻿using Delta.Rendering.Internal;
-using Delta.Utilities;
+﻿using Delta.Utilities;
 using Silk.NET.Core.Native;
 using Silk.NET.Vulkan;
 using System;
 
-namespace Delta.Rendering;
+namespace Delta.Rendering.Internal;
 internal readonly struct DeviceQueues : IDisposable
 {
     private readonly Vk _vk;
@@ -22,12 +21,14 @@ internal readonly struct DeviceQueues : IDisposable
     public readonly CommandPool transferCmdPool;
 
     public readonly QueueFamilyIndiciesDetails queueIndicesDetails;
+    public readonly Gpu gpu;
 
     public static implicit operator Device(DeviceQueues deviceQueues) => deviceQueues.device;
 
-    public unsafe DeviceQueues(Vk vk, PhysicalDevice gpu, QueueFamilyIndiciesDetails indices, string[] deviceExtensions)
+    public unsafe DeviceQueues(Vk vk, Gpu gpu, QueueFamilyIndiciesDetails indices, ReadOnlySpan<string> deviceExtensions)
     {
         _vk = vk;
+        this.gpu = gpu;
         queueIndicesDetails = indices;
         Span<(uint queueFamily, uint count)> uniqueFamilyIndices = stackalloc (uint, uint)[4];
         uniqueFamilyIndices = uniqueFamilyIndices[..indices.GetUniqueFamilies(uniqueFamilyIndices)];
@@ -51,7 +52,7 @@ internal readonly struct DeviceQueues : IDisposable
             PQueueCreateInfos = uniqueQueueFam,
             PEnabledFeatures = &deviceFeatures,
             EnabledExtensionCount = (uint)deviceExtensions.Length,
-            PpEnabledExtensionNames = (byte**)SilkMarshal.StringArrayToPtr(deviceExtensions),
+            PpEnabledExtensionNames = (byte**)SilkMarshal.StringArrayToPtr(deviceExtensions.ToArray()),
             EnabledLayerCount = 0
         };
         _ = vk.CreateDevice(gpu, &createInfo, null, out device);

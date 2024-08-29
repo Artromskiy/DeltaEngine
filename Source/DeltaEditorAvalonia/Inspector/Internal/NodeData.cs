@@ -5,6 +5,7 @@ using DeltaEditorLib.Loader;
 using DeltaEditorLib.Scripting;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Runtime.InteropServices;
 
 namespace DeltaEditorAvalonia.Inspector.Internal;
@@ -36,7 +37,7 @@ public class NodeData(RootData root, PathData path)
         {
             if (string.IsNullOrEmpty(fieldData.Text))
                 SetData<float>(entity, default);
-            else if (float.TryParse(fieldData.Text, out float result))
+            else if (float.TryParse(fieldData.Text, CultureInfo.InvariantCulture, out float result))
                 SetData(entity, result);
         }
         return changed;

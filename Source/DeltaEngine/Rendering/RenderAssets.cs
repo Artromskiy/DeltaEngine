@@ -1,5 +1,6 @@
 ﻿using Delta.Files;
 using Delta.Rendering.Internal;
+using Delta.Rendering.SdlRendering;
 using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;
@@ -12,20 +13,29 @@ internal class RenderAssets : IDisposable
     private readonly Dictionary<GuidAsset<ShaderData>, (Pipeline pipeline, VertexAttribute mask)> _renderToPipeline;
     private readonly Dictionary<GuidAsset<MeshData>, MeshHandler> _renderToMeshHandler;
 
-    private readonly RenderBase _renderBase;
+    private readonly Vk _vk;
+    private readonly DeviceQueues _deviceQ;
+    private readonly PipelineLayout _pipelineLayout;
+    private readonly RenderPass _renderPass;
 
     public RenderAssets(RenderBase renderBase)
     {
-        _renderBase = renderBase;
+        _vk = renderBase.vk;
+        _deviceQ = renderBase.deviceQ;
+        _pipelineLayout = renderBase.pipelineLayout;
+        _renderPass = renderBase.renderPass;
         _renderToPipeline = [];
         _renderToMeshHandler = [];
     }
 
     public (Pipeline pipeline, VertexAttribute mask) GetPipelineAndAttributes(GuidAsset<ShaderData> shader)
     {
-        if (!_renderToPipeline.TryGetValue(shader, out var pipe))
-            _renderToPipeline[shader] = pipe = (RenderHelper.CreateGraphicsPipeline(shader.GetAsset(), _renderBase, out var mask), mask);
-        return pipe;
+        if (!_renderToPipeline.TryGetValue(shader, out var maskedPipeline))
+        {
+            var pipeline = RenderHelper.CreateGraphicsPipeline(_vk, _deviceQ, _pipelineLayout, _renderPass, shader, out var mask);
+            _renderToPipeline[shader] = maskedPipeline = (pipeline, mask);
+        }
+        return maskedPipeline;
     }
 
     public (Buffer vertices, Buffer indices) GetVertexIndexBuffers(GuidAsset<MeshData> mesh, VertexAttribute vertexMask)
@@ -33,8 +43,8 @@ internal class RenderAssets : IDisposable
         if (!_renderToMeshHandler.TryGetValue(mesh, out var meshHandler))
         {
             var meshAsset = mesh.GetAsset();
-            var (vertexBuffer, vertexMemory) = RenderHelper.CreateVertexBuffer(_renderBase, meshAsset, vertexMask);
-            var (indexBuffer, indexMemory) = RenderHelper.CreateIndexBuffer(_renderBase, meshAsset);
+            var (vertexBuffer, vertexMemory) = RenderHelper.CreateVertexBuffer(_vk, _deviceQ, meshAsset, vertexMask);
+            var (indexBuffer, indexMemory) = RenderHelper.CreateIndexBuffer(_vk, _deviceQ, meshAsset);
             _renderToMeshHandler[mesh] = meshHandler = new(vertexBuffer, vertexMemory, indexBuffer, indexMemory, meshAsset.GetIndicesCount());
         }
         return (meshHandler.vertices, meshHandler.indices);
@@ -45,8 +55,8 @@ internal class RenderAssets : IDisposable
         if (!_renderToMeshHandler.TryGetValue(mesh, out var meshHandler))
         {
             var meshAsset = mesh.GetAsset();
-            var (vertexBuffer, vertexMemory) = RenderHelper.CreateVertexBuffer(_renderBase, meshAsset, vertexMask);
-            var (indexBuffer, indexMemory) = RenderHelper.CreateIndexBuffer(_renderBase, meshAsset);
+            var (vertexBuffer, vertexMemory) = RenderHelper.CreateVertexBuffer(_vk, _deviceQ, meshAsset, vertexMask);
+            var (indexBuffer, indexMemory) = RenderHelper.CreateIndexBuffer(_vk, _deviceQ, meshAsset);
             _renderToMeshHandler[mesh] = meshHandler = new(vertexBuffer, vertexMemory, indexBuffer, indexMemory, meshAsset.GetIndicesCount());
         }
         return (meshHandler.vertices, meshHandler.indices, meshHandler.indicesCount);
@@ -57,13 +67,13 @@ internal class RenderAssets : IDisposable
         unsafe
         {
             foreach (var item in _renderToPipeline)
-                _renderBase.vk.DestroyPipeline(_renderBase.deviceQ, item.Value.pipeline, null);
+                _vk.DestroyPipeline(_deviceQ, item.Value.pipeline, null);
             foreach (var item in _renderToMeshHandler)
             {
-                _renderBase.vk.DestroyBuffer(_renderBase.deviceQ, item.Value.vertices, null);
-                _renderBase.vk.DestroyBuffer(_renderBase.deviceQ, item.Value.indices, null);
-                _renderBase.vk.FreeMemory(_renderBase.deviceQ, item.Value.verticesMemory, null);
-                _renderBase.vk.FreeMemory(_renderBase.deviceQ, item.Value.indicesMemory, null);
+                _vk.DestroyBuffer(_deviceQ, item.Value.vertices, null);
+                _vk.DestroyBuffer(_deviceQ, item.Value.indices, null);
+                _vk.FreeMemory(_deviceQ, item.Value.verticesMemory, null);
+                _vk.FreeMemory(_deviceQ, item.Value.indicesMemory, null);
             }
         }
         _renderToPipeline.Clear();

@@ -55,11 +55,11 @@ internal class SceneBatcher : IRenderBatcher
     public SceneBatcher()
     {
         var renderBase = IRuntimeContext.Current.GraphicsModule.RenderData;
-        Camera = new GpuArray<GpuCameraData>(renderBase, 1);
-        TransformIds = new GpuArray<uint>(renderBase, 1);
-        Transforms = new GpuArray<Matrix4x4>(renderBase, 1);
+        Camera = new GpuArray<GpuCameraData>(renderBase.vk, renderBase.deviceQ, 1);
+        TransformIds = new GpuArray<uint>(renderBase.vk, renderBase.deviceQ, 1);
+        Transforms = new GpuArray<Matrix4x4>(renderBase.vk, renderBase.deviceQ, 1);
 
-        TransformIdsToTransfer = new GpuArray<uint>(renderBase, 1);
+        TransformIdsToTransfer = new GpuArray<uint>(renderBase.vk, renderBase.deviceQ, 1);
 
         _transferIndicesSet = [];
         _forceTrsWrite = [];

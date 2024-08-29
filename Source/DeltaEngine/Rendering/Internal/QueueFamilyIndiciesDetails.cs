@@ -21,15 +21,15 @@ internal readonly struct QueueFamilyIndiciesDetails
 
     public unsafe QueueFamilyIndiciesDetails(Vk vk, SurfaceKHR surface, PhysicalDevice gpu, KhrSurface khrsf)
     {
-        uint queueFamilityCount = 0;
-        vk.GetPhysicalDeviceQueueFamilyProperties(gpu, &queueFamilityCount, null);
-        Span<QueueFamilyProperties> queueFamilies = stackalloc QueueFamilyProperties[(int)queueFamilityCount];
-        vk.GetPhysicalDeviceQueueFamilyProperties(gpu, &queueFamilityCount, queueFamilies);
+        uint queueFamilyCount = 0;
+        vk.GetPhysicalDeviceQueueFamilyProperties(gpu, &queueFamilyCount, null);
+        Span<QueueFamilyProperties> queueFamilies = stackalloc QueueFamilyProperties[(int)queueFamilyCount];
+        vk.GetPhysicalDeviceQueueFamilyProperties(gpu, &queueFamilyCount, queueFamilies);
 
         int graphicsIndex, presentIndex, transferIndex, computendex;
         graphicsIndex = presentIndex = transferIndex = computendex = -1;
 
-        Span<uint> bookedFamilies = stackalloc uint[(int)queueFamilityCount];
+        Span<uint> bookedFamilies = stackalloc uint[(int)queueFamilyCount];
 
         // Selection of specialized queues
         for (int i = 0; i < queueFamilies.Length; i++)

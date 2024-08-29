@@ -6,9 +6,12 @@ using System.Runtime.CompilerServices;
 using Buffer = Silk.NET.Vulkan.Buffer;
 
 namespace Delta.Rendering.Collections;
+
 internal class DynamicBuffer
 {
-    protected readonly RenderBase _renderBase;
+    protected readonly Vk _vk;
+    protected readonly DeviceQueues _deviceQ;
+
 
     private Buffer _buffer;
     private DeviceMemory _memory;
@@ -21,13 +24,14 @@ internal class DynamicBuffer
     private ulong _size;
     public ulong Size => _size;
 
-    public DynamicBuffer(RenderBase renderBase, ulong sizeBytes)
+    public DynamicBuffer(Vk vk, DeviceQueues deviceQ, ulong sizeBytes)
     {
-        _renderBase = renderBase;
+        _vk = vk;
+        _deviceQ = deviceQ;
         _size = sizeBytes;
         CreateBuffer(ref _size, out _buffer, out _memory);
-        _copyFence = RenderHelper.CreateFence(_renderBase, false);
-        _cmdBuffer = _renderBase.CreateCommandBuffer(_renderBase.deviceQ.transferCmdPool);
+        _copyFence = RenderHelper.CreateFence(vk, deviceQ, false);
+        _cmdBuffer = RenderHelper.CreateCommandBuffer(_vk, _deviceQ, _deviceQ.transferCmdPool);
     }
 
     public Buffer GetBuffer() => _buffer;
@@ -45,16 +49,16 @@ internal class DynamicBuffer
             Flags = default,
         };
 
-        _ = _renderBase.vk.CreateBuffer(_renderBase.deviceQ, createInfo, null, out buffer);
-        var reqs = _renderBase.vk.GetBufferMemoryRequirements(_renderBase.deviceQ, buffer);
+        _ = _vk.CreateBuffer(_deviceQ, createInfo, null, out buffer);
+        var reqs = _vk.GetBufferMemoryRequirements(_deviceQ, buffer);
 
         // Recreate buffer with full size given by requirements
-        _renderBase.vk.DestroyBuffer(_renderBase.deviceQ, buffer, null);
+        _vk.DestroyBuffer(_deviceQ, buffer, null);
         createInfo.Size = reqs.Size;
-        _ = _renderBase.vk.CreateBuffer(_renderBase.deviceQ, createInfo, null, out buffer);
+        _ = _vk.CreateBuffer(_deviceQ, createInfo, null, out buffer);
 
         var memProps = MemoryPropertyFlags.DeviceLocalBit;
-        uint memType = RenderHelper.FindMemoryType(_renderBase, (int)reqs.MemoryTypeBits, memProps);
+        uint memType = _deviceQ.gpu.FindMemoryType((int)reqs.MemoryTypeBits, memProps);
         MemoryAllocateInfo allocateInfo = new()
         {
             SType = StructureType.MemoryAllocateInfo,
@@ -62,8 +66,8 @@ internal class DynamicBuffer
             MemoryTypeIndex = memType
         };
         size = reqs.Size;
-        _ = _renderBase.vk.AllocateMemory(_renderBase.deviceQ, allocateInfo, null, out memory);
-        _ = _renderBase.vk.BindBufferMemory(_renderBase.deviceQ, buffer, memory, 0);
+        _ = _vk.AllocateMemory(_deviceQ, allocateInfo, null, out memory);
+        _ = _vk.BindBufferMemory(_deviceQ, buffer, memory, 0);
     }
 
     [MethodImpl(Inl)]
@@ -86,8 +90,8 @@ internal class DynamicBuffer
     {
         ulong newSize = BitOperations.RoundUpToPowerOf2(size);
         CreateBuffer(ref newSize, out var newBuffer, out var newMemory);
-        _renderBase.vk.DestroyBuffer(_renderBase.deviceQ, _buffer, null);
-        _renderBase.vk.FreeMemory(_renderBase.deviceQ, _memory, null);
+        _vk.DestroyBuffer(_deviceQ, _buffer, null);
+        _vk.FreeMemory(_deviceQ, _memory, null);
         _memory = newMemory;
         _buffer = newBuffer;
         _size = newSize;
@@ -97,18 +101,16 @@ internal class DynamicBuffer
     [MethodImpl(Inl)]
     private unsafe void CopyBuffer(Buffer source, ulong sourceSize, Buffer destionation, ulong destinationSize)
     {
-        Vk vk = _renderBase.vk;
-
         CommandBuffer cmdBuffer = _cmdBuffer;
         CommandBufferBeginInfo beginInfo = new()
         {
             SType = StructureType.CommandBufferBeginInfo,
             Flags = CommandBufferUsageFlags.OneTimeSubmitBit
         };
-        _ = vk.BeginCommandBuffer(cmdBuffer, &beginInfo);
+        _ = _vk.BeginCommandBuffer(cmdBuffer, &beginInfo);
         BufferCopy copy = new(0, 0, Math.Min(sourceSize, destinationSize));
-        vk.CmdCopyBuffer(cmdBuffer, source, destionation, 1, &copy);
-        _ = vk.EndCommandBuffer(cmdBuffer);
+        _vk.CmdCopyBuffer(cmdBuffer, source, destionation, 1, &copy);
+        _ = _vk.EndCommandBuffer(cmdBuffer);
         SubmitInfo submitInfo = new()
         {
             SType = StructureType.SubmitInfo,
@@ -116,12 +118,12 @@ internal class DynamicBuffer
             PCommandBuffers = &cmdBuffer
         };
         var fence = _copyFence;
-        var res = vk.QueueSubmit(_renderBase.deviceQ.graphicsQueue, 1, &submitInfo, fence);
+        var res = _vk.QueueSubmit(_deviceQ.graphicsQueue, 1, &submitInfo, fence);
         _ = res;
         if (res == Result.Success)
-            _ = vk.WaitForFences(_renderBase.deviceQ, 1, &fence, true, ulong.MaxValue);
+            _ = _vk.WaitForFences(_deviceQ, 1, &fence, true, ulong.MaxValue);
 
-        vk.ResetFences(_renderBase.deviceQ, 1, &fence);
-        vk.ResetCommandBuffer(cmdBuffer, 0);
+        _vk.ResetFences(_deviceQ, 1, &fence);
+        _vk.ResetCommandBuffer(cmdBuffer, 0);
     }
 }

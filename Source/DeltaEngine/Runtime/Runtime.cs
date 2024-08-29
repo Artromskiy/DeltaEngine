@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Delta.Rendering;
+using Delta.Rendering.SdlRendering;
 using Schedulers;
 using System;
 using System.Diagnostics;
@@ -29,8 +30,8 @@ public sealed class Runtime : IRuntime, IDisposable
         var path = projectPath;
         var assets = new AssetCollection(path);
         var sceneManager = new SceneManager();
-        //var graphics = new GraphicsModule("Delta Editor");
-        var graphics = new DummyGraphics();
+        var graphics = new GraphicsModule("Delta Editor");
+        //var graphics = new DummyGraphics();
 
         Context = new DefaultRuntimeContext(path, assets, sceneManager, graphics);
 

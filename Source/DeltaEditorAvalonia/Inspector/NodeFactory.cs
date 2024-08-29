@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+
 namespace DeltaEditorAvalonia.Inspector;
 
 internal static class NodeFactory
@@ -31,7 +32,7 @@ internal static class NodeFactory
         { typeof(Vector3), (n) => new Vector3NodeControl(n) },
         { typeof(Vector4), (n) => new Vector4NodeControl(n) },
         { typeof(Quaternion), (n) => new QuaternionNodeControl(n) },
-        //{ typeof(Matrix4x4), (n) => new Matrix4Node(n) },
+        { typeof(Matrix4x4), (n) => new Matrix4NodeControl(n) },
         { typeof(float), (n) => new FloatNodeControl(n) },
         { typeof(int), (n) => new IntNodeControl(n) },
         { typeof(string), (n) => new StringNodeControl(n) },

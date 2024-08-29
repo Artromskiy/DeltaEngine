@@ -1,4 +1,5 @@
 ﻿using Delta.Rendering.Internal;
+using Delta.Rendering.SdlRendering;
 using Silk.NET.Vulkan;
 using System;
 using System.Numerics;
@@ -23,17 +24,20 @@ internal unsafe class GpuArray<T> : IDisposable where T : unmanaged
     public uint Length => _length;
     public ulong Size => _size;
 
-    private readonly RenderBase _renderBase;
+    private readonly DeviceQueues _deviceQ;
+    private readonly Vk _vk;
+    //private readonly RenderBase _renderBase;
 
-    public unsafe GpuArray(RenderBase renderBase, uint length)
+    public unsafe GpuArray(Vk vk, DeviceQueues deviceQ, uint length)
     {
-        _renderBase = renderBase;
+        _vk = vk;
+        _deviceQ = deviceQ;
         _length = Math.Max(1, BitOperations.RoundUpToPowerOf2(length + 1));
 
         ulong size = (ulong)(sizeof(T) * _length);
         CreateBuffer(ref size, out _buffer, out _memory, out _pData);
-        _fence = RenderHelper.CreateFence(_renderBase, false);
-        _cmdBuffer = _renderBase.CreateCommandBuffer(_renderBase.deviceQ.transferCmdPool);
+        _fence = RenderHelper.CreateFence(_vk, _deviceQ, false);
+        _cmdBuffer = RenderHelper.CreateCommandBuffer(_vk, _deviceQ, _deviceQ.transferCmdPool);
         _size = size;
     }
 
@@ -82,7 +86,7 @@ internal unsafe class GpuArray<T> : IDisposable where T : unmanaged
             Memory = _memory,
             Size = _size
         };
-        _renderBase.vk.FlushMappedMemoryRanges(_renderBase.deviceQ, 1, memRng);
+        _vk.FlushMappedMemoryRanges(_deviceQ, 1, memRng);
     }
 
     [MethodImpl(Inl)]
@@ -98,22 +102,22 @@ internal unsafe class GpuArray<T> : IDisposable where T : unmanaged
             Flags = CommandBufferUsageFlags.OneTimeSubmitBit
         };
         var cmdBuffer = _cmdBuffer;
-        _renderBase.vk.BeginCommandBuffer(cmdBuffer, &beginInfo);
-        _renderBase.vk.CmdCopyBuffer(cmdBuffer, _buffer, newBuffer, 1, new BufferCopy(0, 0, Math.Min(_size, newSize)));
-        _renderBase.vk.EndCommandBuffer(cmdBuffer);
+        _vk.BeginCommandBuffer(cmdBuffer, &beginInfo);
+        _vk.CmdCopyBuffer(cmdBuffer, _buffer, newBuffer, 1, new BufferCopy(0, 0, Math.Min(_size, newSize)));
+        _vk.EndCommandBuffer(cmdBuffer);
         SubmitInfo submitInfo = new()
         {
             SType = StructureType.SubmitInfo,
             CommandBufferCount = 1,
             PCommandBuffers = &cmdBuffer
         };
-        _ = _renderBase.vk.QueueSubmit(_renderBase.deviceQ.transferQueue, 1, &submitInfo, _fence);
-        _ = _renderBase.vk.WaitForFences(_renderBase.deviceQ, 1, _fence, true, ulong.MaxValue);
-        _ = _renderBase.vk.ResetCommandBuffer(cmdBuffer, 0);
-        _ = _renderBase.vk.ResetFences(_renderBase.deviceQ, 1, _fence);
-        _renderBase.vk.DestroyBuffer(_renderBase.deviceQ, _buffer, null);
-        _renderBase.vk.UnmapMemory(_renderBase.deviceQ, _memory);
-        _renderBase.vk.FreeMemory(_renderBase.deviceQ, _memory, null);
+        _ = _vk.QueueSubmit(_deviceQ.transferQueue, 1, &submitInfo, _fence);
+        _ = _vk.WaitForFences(_deviceQ, 1, _fence, true, ulong.MaxValue);
+        _ = _vk.ResetCommandBuffer(cmdBuffer, 0);
+        _ = _vk.ResetFences(_deviceQ, 1, _fence);
+        _vk.DestroyBuffer(_deviceQ, _buffer, null);
+        _vk.UnmapMemory(_deviceQ, _memory);
+        _vk.FreeMemory(_deviceQ, _memory, null);
         _memory = newMemory;
         _buffer = newBuffer;
         _size = newSize;
@@ -131,10 +135,10 @@ internal unsafe class GpuArray<T> : IDisposable where T : unmanaged
             SharingMode = SharingMode.Exclusive,
             Flags = default,
         };
-        _ = _renderBase.vk.CreateBuffer(_renderBase.deviceQ, createInfo, null, out buffer);
-        var reqs = _renderBase.vk.GetBufferMemoryRequirements(_renderBase.deviceQ, buffer);
+        _ = _vk.CreateBuffer(_deviceQ, createInfo, null, out buffer);
+        var reqs = _vk.GetBufferMemoryRequirements(_deviceQ, buffer);
         var memProps = MemoryPropertyFlags.HostVisibleBit;
-        uint memType = RenderHelper.FindMemoryType(_renderBase, (int)reqs.MemoryTypeBits, memProps, out var memPropsFound);
+        uint memType = _deviceQ.gpu.FindMemoryType((int)reqs.MemoryTypeBits, memProps, out var memPropsFound);
         MemoryAllocateInfo allocateInfo = new()
         {
             SType = StructureType.MemoryAllocateInfo,
@@ -142,7 +146,7 @@ internal unsafe class GpuArray<T> : IDisposable where T : unmanaged
             MemoryTypeIndex = memType
         };
         size = reqs.Size;
-        _ = _renderBase.vk.AllocateMemory(_renderBase.deviceQ, allocateInfo, null, out memory);
+        _ = _vk.AllocateMemory(_deviceQ, allocateInfo, null, out memory);
         createInfo = new()
         {
             SType = StructureType.BufferCreateInfo,
@@ -152,21 +156,21 @@ internal unsafe class GpuArray<T> : IDisposable where T : unmanaged
             Flags = default,
         };
         _needsToFlush = !memPropsFound.HasFlag(MemoryPropertyFlags.HostCoherentBit);
-        _renderBase.vk.DestroyBuffer(_renderBase.deviceQ, buffer, null);
-        _ = _renderBase.vk.CreateBuffer(_renderBase.deviceQ, createInfo, null, out buffer);
-        _ = _renderBase.vk.BindBufferMemory(_renderBase.deviceQ, buffer, memory, 0);
+        _vk.DestroyBuffer(_deviceQ, buffer, null);
+        _ = _vk.CreateBuffer(_deviceQ, createInfo, null, out buffer);
+        _ = _vk.BindBufferMemory(_deviceQ, buffer, memory, 0);
 
         void* pdata = default;
 
-        _renderBase.vk.MapMemory(_renderBase.deviceQ, memory, 0, reqs.Size, 0, &pdata);
+        _vk.MapMemory(_deviceQ, memory, 0, reqs.Size, 0, &pdata);
 
         data = new(pdata);
     }
 
     public void Dispose()
     {
-        _renderBase.vk.DestroyBuffer(_renderBase.deviceQ, _buffer, null);
-        _renderBase.vk.UnmapMemory(_renderBase.deviceQ, _memory);
-        _renderBase.vk.FreeMemory(_renderBase.deviceQ, _memory, null);
+        _vk.DestroyBuffer(_deviceQ, _buffer, null);
+        _vk.UnmapMemory(_deviceQ, _memory);
+        _vk.FreeMemory(_deviceQ, _memory, null);
     }
 }

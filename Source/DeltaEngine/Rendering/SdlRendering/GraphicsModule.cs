@@ -1,20 +1,16 @@
 ﻿using Delta.ECS;
 using Delta.ECS.Components;
-using Delta.Rendering.Internal;
 using Delta.Runtime;
 using Delta.Utilities;
-using Silk.NET.SDL;
 using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 
-namespace Delta.Rendering;
+namespace Delta.Rendering.SdlRendering;
 
-internal partial class GraphicsModule : IGraphicsModule, IDisposable
+internal class GraphicsModule : IGraphicsModule, IDisposable
 {
-    private readonly Api _api;
-    private readonly unsafe Window* _window;
     public RenderBase RenderData { get; private set; }
 
     private readonly string _appName;
@@ -33,10 +29,6 @@ internal partial class GraphicsModule : IGraphicsModule, IDisposable
 
     private readonly HashSet<IRenderBatcher> _renderBatchers = [];
 
-    //private readonly SceneBatcher _sceneBatcher;
-    //private readonly TempRenderBatcher _gizmosBatcher;
-    //private readonly TempRenderBatcher _instantBatcher;
-
     private Frame CurrentFrame => _frames.Peek();
 
 
@@ -48,20 +40,16 @@ internal partial class GraphicsModule : IGraphicsModule, IDisposable
     public unsafe GraphicsModule(string appName)
     {
         _appName = appName;
-        _api = new();
-        _window = RenderHelper.CreateWindow(_api.sdl, _appName);
-        RenderData = new RenderBase(_api, _window, _appName);
-        _swapChain = new SwapChain(_api, RenderData, Buffering, RenderData.format);
+        RenderData = new RenderBase(_appName);
+        _swapChain = new SwapChain(RenderData, Buffering, RenderData.Format);
         _renderAssets = new RenderAssets(RenderData);
 
         for (int i = 0; i < _swapChain.imageCount; i++)
             _frames.Enqueue(new Frame(RenderData, _renderAssets, _swapChain));
 
-        _copyCmdBuffer = RenderHelper.CreateCommandBuffer(RenderData, RenderData.deviceQ.transferCmdPool);
-        _copyFence = RenderHelper.CreateFence(RenderData, true);
-        _copySemaphore = RenderHelper.CreateSemaphore(RenderData);
-
-        //_sceneBatcher = new SceneBatcher();
+        _copyCmdBuffer = RenderHelper.CreateCommandBuffer(RenderData.vk, RenderData.deviceQ, RenderData.deviceQ.transferCmdPool);
+        _copyFence = RenderHelper.CreateFence(RenderData.vk, RenderData.deviceQ, true);
+        _copySemaphore = RenderHelper.CreateSemaphore(RenderData.vk, RenderData.deviceQ);
     }
 
     public void AddRenderBatcher(IRenderBatcher renderBatcher)
@@ -86,7 +74,7 @@ internal partial class GraphicsModule : IGraphicsModule, IDisposable
 
     private void Sync()
     {
-        _api.sdl.PumpEvents();
+        RenderData.sdl.PumpEvents();
         if (!_skippedFrame)
             _frames.Enqueue(_frames.Dequeue());
 
@@ -120,17 +108,18 @@ internal partial class GraphicsModule : IGraphicsModule, IDisposable
         foreach (var item in _renderBatchers)
             item.Execute();
     }
+
     /// <summary>
     /// Uploads data from global graphics buffers to appropriate frame buffer asyncronously
     /// </summary>
     private void PostSync()
     {
         RenderData.vk.ResetFences(RenderData.deviceQ, 1, _copyFence);
-        RenderData.BeginCmdBuffer(_copyCmdBuffer);
+        RenderHelper.BeginCmdBuffer(RenderData.vk, _copyCmdBuffer);
 
         CurrentFrame.CopyBatchersData(_copyCmdBuffer);
 
-        RenderData.EndCmdBuffer(RenderData.deviceQ.transferQueue, _copyCmdBuffer, _copyFence, _copySemaphore);
+        RenderHelper.EndCmdBuffer(RenderData.vk, RenderData.deviceQ.transferQueue, _copyCmdBuffer, _copyFence, _copySemaphore);
 
         CurrentFrame.AddSemaphore(_copySemaphore);
     }
@@ -149,16 +138,13 @@ internal partial class GraphicsModule : IGraphicsModule, IDisposable
 
         _swapChain.Dispose();
         RenderData.Dispose();
-
-        _api.sdl.DestroyWindow(_window);
-        //_api.sdl.Dispose();
     }
 
     private void OnResize()
     {
         _swapChain.Dispose();
         RenderData.UpdateSupportDetails();
-        _swapChain = new SwapChain(_api, RenderData, 3, RenderData.format);
+        _swapChain = new SwapChain(RenderData, 3, RenderData.Format);
 
         if (_swapChain.imageCount == _frames.Count)
         {

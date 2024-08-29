@@ -3,7 +3,7 @@ using Silk.NET.Vulkan.Extensions.KHR;
 using System;
 using System.Collections.Immutable;
 
-namespace Delta.Rendering.Internal;
+namespace Delta.Rendering.SdlRendering;
 
 internal readonly struct SwapChainSupportDetails
 {

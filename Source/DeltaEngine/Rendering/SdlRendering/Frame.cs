@@ -1,9 +1,10 @@
 ﻿using Delta.ECS;
+using Delta.Rendering.Internal;
 using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;
 
-namespace Delta.Rendering.Internal;
+namespace Delta.Rendering.SdlRendering;
 internal class Frame : IDisposable
 {
     private readonly RenderBase _rendererBase;
@@ -75,7 +76,9 @@ internal class Frame : IDisposable
     public void AddSemaphore(Semaphore semaphore) => _syncSemaphore = semaphore;
     public void AddBatcher(IRenderBatcher renderBatcher)
     {
-        _batchedSets.Add(renderBatcher, new DescriptorSets(_rendererBase));
+        var sets = new DescriptorSets(_rendererBase.vk, _rendererBase.deviceQ,
+            _rendererBase.descriptorPool, _rendererBase.pipelineLayout, _rendererBase.descriptorSetLayouts);
+        _batchedSets.Add(renderBatcher, sets);
     }
     public void RemoveBatcher(IRenderBatcher renderBatcher)
     {

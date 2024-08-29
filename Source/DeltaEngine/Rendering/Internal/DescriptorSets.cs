@@ -1,6 +1,7 @@
 ﻿using Delta.ECS;
 using Delta.ECS.Components;
 using Delta.Rendering.Collections;
+using Delta.Rendering.SdlRendering;
 using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,11 @@ namespace Delta.Rendering.Internal;
 
 internal class DescriptorSets : IDisposable
 {
-    private readonly RenderBase _renderBase;
+    private readonly Vk _vk;
+    private readonly DeviceQueues _deviceQ;
+    private readonly DescriptorPool _descriptorPool;
+    private readonly CommonDescriptorSetLayouts _descriptorSetLayouts;
+    private readonly PipelineLayout _pipelineLayout;
 
     private readonly List<(Render rend, uint count)> _renderList = [];
 
@@ -30,30 +35,32 @@ internal class DescriptorSets : IDisposable
     public DynamicBuffer Materials => _materials;
     public DynamicBuffer Matrices => _matrices;
     public DynamicBuffer Ids => _ids;
+    private CommonDescriptorSetLayouts SetLayouts => _descriptorSetLayouts;
 
-    private CommonDescriptorSetLayouts SetLayouts => _renderBase.descriptorSetLayouts;
-
-    public DescriptorSets(RenderBase renderBase)
+    public DescriptorSets(Vk vk, DeviceQueues deviceQ, DescriptorPool descriptorPool, PipelineLayout pipelineLayout, CommonDescriptorSetLayouts descriptorSetLayouts)
     {
-        _renderBase = renderBase;
-
+        _vk = vk;
+        _deviceQ = deviceQ;
+        _descriptorPool = descriptorPool;
+        _descriptorSetLayouts = descriptorSetLayouts;
+        _pipelineLayout = pipelineLayout;
         _descriptorSets = new DescriptorSet[RendConst.SetsCount];
         for (uint i = 0; i < RendConst.SetsCount; i++)
             _descriptorSets[i] = CreateDescriptorSet(i);
 
-        _matrices = new(_renderBase, Instance, RendConst.MatricesBinding, DescriptorType.StorageBuffer);
-        _ids = new(_renderBase, Instance, RendConst.IdsBinding, DescriptorType.StorageBuffer);
-        _materials = new(_renderBase, Material, RendConst.MaterialBinding, DescriptorType.StorageBuffer);
-        _camera = new(_renderBase, Scene, RendConst.CameraBinding, DescriptorType.StorageBuffer);
+        _matrices = new(_vk, _deviceQ, Instance, RendConst.MatricesBinding, DescriptorType.StorageBuffer);
+        _ids = new(_vk, _deviceQ, Instance, RendConst.IdsBinding, DescriptorType.StorageBuffer);
+        _materials = new(_vk, _deviceQ, Material, RendConst.MaterialBinding, DescriptorType.StorageBuffer);
+        _camera = new(_vk, _deviceQ, Scene, RendConst.CameraBinding, DescriptorType.StorageBuffer);
     }
 
     public void CopyBatcherData(IRenderBatcher batcher, CommandBuffer copyCmdBuffer)
     {
         _renderList.Clear();
         _renderList.AddRange(batcher.RendGroups);
-        _renderBase.CopyCmd(batcher.Transforms, Matrices, copyCmdBuffer);
-        _renderBase.CopyCmd(batcher.TransformIds, Ids, copyCmdBuffer);
-        _renderBase.CopyCmd(batcher.Camera, Camera, copyCmdBuffer);
+        RenderHelper.CopyCmd(_vk, batcher.Transforms, Matrices, copyCmdBuffer);
+        RenderHelper.CopyCmd(_vk, batcher.TransformIds, Ids, copyCmdBuffer);
+        RenderHelper.CopyCmd(_vk, batcher.Camera, Camera, copyCmdBuffer);
     }
 
     private unsafe DescriptorSet CreateDescriptorSet(uint setId)
@@ -62,11 +69,11 @@ internal class DescriptorSets : IDisposable
         DescriptorSetAllocateInfo allocateInfo = new()
         {
             SType = StructureType.DescriptorSetAllocateInfo,
-            DescriptorPool = _renderBase.descriptorPool,
+            DescriptorPool = _descriptorPool,
             DescriptorSetCount = 1,
             PSetLayouts = &setLayout,
         };
-        _ = _renderBase.vk.AllocateDescriptorSets(_renderBase.deviceQ, allocateInfo, out var result);
+        _ = _vk.AllocateDescriptorSets(_deviceQ, allocateInfo, out var result);
         return result;
     }
 
@@ -82,22 +89,22 @@ internal class DescriptorSets : IDisposable
     {
         for (uint i = 0; i < RendConst.SetsCount; i++)
         {
-            _renderBase.vk.CmdBindDescriptorSets(
+            _vk.CmdBindDescriptorSets(
                 commandBuffer,
                 PipelineBindPoint.Graphics,
-                _renderBase.pipelineLayout,
+                _pipelineLayout,
                 i, 1, _descriptorSets[i], 0, 0);
         }
     }
 
     public unsafe void Dispose()
     {
-        _renderBase.vk.FreeDescriptorSets(_renderBase.deviceQ, _renderBase.descriptorPool, _descriptorSets);
+        _vk.FreeDescriptorSets(_deviceQ, _descriptorPool, _descriptorSets);
 
-        _renderBase.vk.DestroyBuffer(_renderBase.deviceQ, _matrices, null);
-        _renderBase.vk.DestroyBuffer(_renderBase.deviceQ, _ids, null);
-        _renderBase.vk.DestroyBuffer(_renderBase.deviceQ, _materials, null);
-        _renderBase.vk.DestroyBuffer(_renderBase.deviceQ, _camera, null);
+        _vk.DestroyBuffer(_deviceQ, _matrices, null);
+        _vk.DestroyBuffer(_deviceQ, _ids, null);
+        _vk.DestroyBuffer(_deviceQ, _materials, null);
+        _vk.DestroyBuffer(_deviceQ, _camera, null);
     }
 
 }

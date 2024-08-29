@@ -8,7 +8,7 @@ internal class BindedDynamicBuffer : DynamicBuffer
     private readonly uint _binding;
     private readonly DescriptorType _descriptorType;
 
-    public BindedDynamicBuffer(RenderBase renderBase, DescriptorSet descriptorSet, uint binding, DescriptorType descriptorType) : base(renderBase, 1)
+    public BindedDynamicBuffer(Vk vk, DeviceQueues deviceQ, DescriptorSet descriptorSet, uint binding, DescriptorType descriptorType) : base(vk, deviceQ, 1)
     {
         _descriptorSet = descriptorSet;
         _binding = binding;
@@ -19,7 +19,7 @@ internal class BindedDynamicBuffer : DynamicBuffer
     {
         if (ChangedBuffer)
         {
-            RenderHelper.UpdateDescriptorSets(_renderBase, _descriptorSet, this, _binding, _descriptorType);
+            RenderHelper.UpdateDescriptorSets(_vk, _deviceQ, _descriptorSet, this, _binding, _descriptorType);
             ChangedBuffer = false;
         }
     }

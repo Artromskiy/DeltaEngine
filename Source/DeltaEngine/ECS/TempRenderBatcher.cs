@@ -1,7 +1,7 @@
 ﻿using Delta.ECS.Components;
 using Delta.Rendering;
 using Delta.Rendering.Collections;
-using Delta.Rendering.Internal;
+using Delta.Rendering.SdlRendering;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -22,10 +22,11 @@ internal class TempRenderBatcher : IRenderBatcher
 
     public TempRenderBatcher(RenderBase renderBase)
     {
-        Camera = new GpuArray<GpuCameraData>(renderBase, 1);
-        TransformIds = new GpuArray<uint>(renderBase, 1);
-        Transforms = new GpuArray<Matrix4x4>(renderBase, 1);
+        Camera = new GpuArray<GpuCameraData>(renderBase.vk, renderBase.deviceQ, 1);
+        TransformIds = new GpuArray<uint>(renderBase.vk, renderBase.deviceQ, 1);
+        Transforms = new GpuArray<Matrix4x4>(renderBase.vk, renderBase.deviceQ, 1);
     }
+
     public void Dispose()
     {
         Camera.Dispose();

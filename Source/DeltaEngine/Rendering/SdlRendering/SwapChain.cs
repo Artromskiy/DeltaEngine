@@ -3,7 +3,7 @@ using Silk.NET.Vulkan.Extensions.KHR;
 using System;
 using System.Collections.Immutable;
 
-namespace Delta.Rendering.Internal;
+namespace Delta.Rendering.SdlRendering;
 internal class SwapChain : IDisposable
 {
     public readonly ImmutableArray<Image> images;
@@ -19,7 +19,7 @@ internal class SwapChain : IDisposable
 
     private readonly RenderBase data;
 
-    public unsafe SwapChain(Api api, RenderBase data, uint trgImageCount, SurfaceFormatKHR targetFormat)
+    public unsafe SwapChain(RenderBase data, uint trgImageCount, SurfaceFormatKHR targetFormat)
     {
         this.data = data;
         var swSupport = data.swapChainSupport;
@@ -29,7 +29,7 @@ internal class SwapChain : IDisposable
         var presentMode = PresentModeKHR.MailboxKhr; // swSupport.PresentModes.Contains(PresentModeKHR.ImmediateKhr) ? PresentModeKHR.ImmediateKhr : PresentModeKHR.FifoKhr;
 
         int w = 0, h = 0;
-        api.sdl.VulkanGetDrawableSize(data.window, ref w, ref h);
+        data.sdl.VulkanGetDrawableSize(data.window, ref w, ref h);
         extent = RenderHelper.ChooseSwapExtent(w, h, swSupport.Capabilities);
 
         uint maxImageCount = swSupport.Capabilities.MaxImageCount;
@@ -61,15 +61,15 @@ internal class SwapChain : IDisposable
             Flags = SwapchainCreateFlagsKHR.None
         };
 
-        _ = api.vk.TryGetDeviceExtension(data.instance, data.deviceQ, out khrSw);
+        _ = data.vk.TryGetDeviceExtension(data.instance, data.deviceQ, out khrSw);
         _ = khrSw.CreateSwapchain(data.deviceQ, creatInfo, null, out swapChain);
         uint imCount = (uint)imageCount;
         _ = khrSw.GetSwapchainImages(data.deviceQ, swapChain, &imCount, null);
         Span<Image> imageSpan = stackalloc Image[(int)imCount];
         _ = khrSw.GetSwapchainImages(data.deviceQ, swapChain, &imCount, imageSpan);
         images = ImmutableArray.Create(imageSpan);
-        imageViews = RenderHelper.CreateImageViews(api, data.deviceQ, [.. images], format.Format);
-        frameBuffers = RenderHelper.CreateFramebuffers(api, data.deviceQ, [.. imageViews], data.renderPass, extent);
+        imageViews = RenderHelper.CreateImageViews(data.vk, data.deviceQ, [.. images], format.Format);
+        frameBuffers = RenderHelper.CreateFramebuffers(data.vk, data.deviceQ, [.. imageViews], data.renderPass, extent);
     }
 
     public unsafe void Dispose()

@@ -7,8 +7,7 @@
              x:Class="DeltaEditorAvalonia.QuaternionNodeControl">
 
   <Grid Height="20"
-        ColumnDefinitions="*,3*"
-        RowDefinitions="20">
+        ColumnDefinitions="*,3*">
     <Label Grid.Column="0"
            x:Name="FieldName"
            x:FieldModifier="private"
@@ -26,21 +25,24 @@
                          Data="6,28"
                          Grid.Column="0"
                          x:Name="FieldX"
-                         x:FieldModifier="private"/>
+                         x:FieldModifier="private"
+                         Cursor="SizeWestEast"/>
 
       <!--Y-->
       <uc:NamedTextField FieldName="Y"
                          Data="1"
                          Grid.Column="1"
                          x:Name="FieldY"
-                         x:FieldModifier="private"/>
+                         x:FieldModifier="private"
+                         Cursor="SizeWestEast"/>
 
       <!--Z-->
       <uc:NamedTextField FieldName="Z"
                          Data="1"
                          Grid.Column="2"
                          x:Name="FieldZ"
-                         x:FieldModifier="private"/>
+                         x:FieldModifier="private"
+                         Cursor="SizeWestEast"/>
       
     </Grid>
   </Grid>

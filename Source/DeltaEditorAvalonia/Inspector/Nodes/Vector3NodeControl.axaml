@@ -7,8 +7,7 @@
              x:Class="DeltaEditorAvalonia.Vector3NodeControl">
   
   <Grid Height="20"
-        ColumnDefinitions="*,3*"
-        RowDefinitions="20">
+        ColumnDefinitions="*,3*">
     
     <Label Grid.Column="0"
            x:Name="FieldName"

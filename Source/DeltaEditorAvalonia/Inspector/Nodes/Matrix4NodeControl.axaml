@@ -3,7 +3,95 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:uc="clr-namespace:DeltaEditorAvalonia;assembly=DeltaEditorAvalonia"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             mc:Ignorable="d" d:DesignWidth="455" d:DesignHeight="80"
              x:Class="DeltaEditorAvalonia.Matrix4NodeControl">
-  Welcome to Avalonia!
+
+  <Grid Margin="0"
+        ColumnDefinitions="*,3*">
+    
+    <Label Grid.Column="0"
+           x:Name="FieldName"
+           x:FieldModifier="private"
+           VerticalContentAlignment="Center"
+           VerticalAlignment="Top"
+           Padding="25,0,0,0"
+           Height="20"
+           FontSize="12"
+           Content="fieldName"/>
+
+     <Grid Grid.Column="1"
+           RowDefinitions="20,20,20,20"
+           ColumnDefinitions="*,*,*,*">
+       
+       <uc:NamedTextField x:Name="FieldM11"
+                          FieldName=""
+                          Grid.Row="0"
+                          Grid.Column="0"/>
+       <uc:NamedTextField x:Name="FieldM12"
+                          FieldName=""
+                          Grid.Row="0"
+                          Grid.Column="1"/>
+       <uc:NamedTextField x:Name="FieldM13"
+                          FieldName=""
+                          Grid.Row="0"
+                          Grid.Column="2"/>
+       <uc:NamedTextField x:Name="FieldM14"
+                          FieldName=""
+                          Grid.Row="0"
+                          Grid.Column="3"/>
+       
+       <uc:NamedTextField x:Name="FieldM21"
+                          FieldName=""
+                          Grid.Row="1"
+                          Grid.Column="0"/>
+       <uc:NamedTextField x:Name="FieldM22"
+                          FieldName=""
+                          Grid.Row="1"
+                          Grid.Column="1"/>
+       <uc:NamedTextField x:Name="FieldM23"
+                          FieldName=""
+                          Grid.Row="1"
+                          Grid.Column="2"/>
+       <uc:NamedTextField x:Name="FieldM24"
+                          FieldName=""
+                          Grid.Row="1"
+                          Grid.Column="3"/>
+
+       <uc:NamedTextField x:Name="FieldM31"
+                          FieldName=""
+                          Grid.Row="2"
+                          Grid.Column="0"/>
+       <uc:NamedTextField x:Name="FieldM32"
+                          FieldName=""
+                          Grid.Row="2"
+                          Grid.Column="1"/>
+       <uc:NamedTextField x:Name="FieldM33"
+                          FieldName=""
+                          Grid.Row="2"
+                          Grid.Column="2"/>
+       <uc:NamedTextField x:Name="FieldM34"
+                          FieldName=""
+                          Grid.Row="2"
+                          Grid.Column="3"/>
+
+       <uc:NamedTextField x:Name="FieldM41"
+                          FieldName=""
+                          Grid.Row="3"
+                          Grid.Column="0"/>
+       <uc:NamedTextField x:Name="FieldM42"
+                          FieldName=""
+                          Grid.Row="3"
+                          Grid.Column="1"/>
+       <uc:NamedTextField x:Name="FieldM43"
+                          FieldName=""
+                          Grid.Row="3"
+                          Grid.Column="2"/>
+       <uc:NamedTextField x:Name="FieldM44"
+                          FieldName=""
+                          Grid.Row="3"
+                          Grid.Column="3"/>
+     
+    </Grid>
+    
+  </Grid>
 </UserControl>

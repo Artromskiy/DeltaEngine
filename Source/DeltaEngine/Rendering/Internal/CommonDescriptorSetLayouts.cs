@@ -5,7 +5,8 @@ using System;
 namespace Delta.Rendering.Internal;
 internal class CommonDescriptorSetLayouts : IDisposable
 {
-    private readonly RenderBase _data;
+    private readonly Vk _vk;
+    private readonly DeviceQueues _deviceQ;
     public DescriptorSetLayout Instance { get; private set; }
     public DescriptorSetLayout Scene { get; private set; }
     public DescriptorSetLayout Material { get; private set; }
@@ -13,14 +14,14 @@ internal class CommonDescriptorSetLayouts : IDisposable
     private readonly DescriptorSetLayout[] _layouts;
     public ReadOnlySpan<DescriptorSetLayout> Layouts => _layouts;
 
-
-    public unsafe CommonDescriptorSetLayouts(RenderBase data)
+    public unsafe CommonDescriptorSetLayouts(Vk vk, DeviceQueues deviceQ)
     {
-        _data = data;
+        _vk = vk;
+        _deviceQ = deviceQ;
 
-        Instance = CreateDescriptorSetLayout(data, [MatricesBindings, IdsBindings]);
-        Scene = CreateDescriptorSetLayout(data, [CameraBindings]);
-        Material = CreateDescriptorSetLayout(data, [MaterialBindings]);
+        Instance = CreateDescriptorSetLayout([MatricesBindings, IdsBindings]);
+        Scene = CreateDescriptorSetLayout([CameraBindings]);
+        Material = CreateDescriptorSetLayout([MaterialBindings]);
 
         _layouts = new DescriptorSetLayout[RendConst.SetsCount];
 
@@ -29,8 +30,7 @@ internal class CommonDescriptorSetLayouts : IDisposable
         _layouts[RendConst.MatSet] = Material;
     }
 
-
-    public static unsafe DescriptorSetLayout CreateDescriptorSetLayout(RenderBase data, ReadOnlySpan<DescriptorSetLayoutBinding> bindingsArray)
+    private unsafe DescriptorSetLayout CreateDescriptorSetLayout(ReadOnlySpan<DescriptorSetLayoutBinding> bindingsArray)
     {
         var bindings = stackalloc DescriptorSetLayoutBinding[bindingsArray.Length];
         bindingsArray.CopyTo(bindings);
@@ -40,7 +40,7 @@ internal class CommonDescriptorSetLayouts : IDisposable
             BindingCount = (uint)bindingsArray.Length,
             PBindings = bindings,
         };
-        _ = data.vk.CreateDescriptorSetLayout(data.deviceQ, &createInfo, null, out DescriptorSetLayout setLayout);
+        _ = _vk.CreateDescriptorSetLayout(_deviceQ, &createInfo, null, out DescriptorSetLayout setLayout);
         return setLayout;
     }
 
@@ -54,6 +54,6 @@ internal class CommonDescriptorSetLayouts : IDisposable
     public unsafe void Dispose()
     {
         foreach (var item in _layouts)
-            _data.vk.DestroyDescriptorSetLayout(_data.deviceQ, item, null);
+            _vk.DestroyDescriptorSetLayout(_deviceQ, item, null);
     }
 }

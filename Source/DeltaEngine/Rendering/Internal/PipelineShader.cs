@@ -10,12 +10,12 @@ internal readonly struct PipelineShader : IDisposable
     public readonly ShaderStageFlags stage;
 
     private readonly Vk _vk;
-    private readonly Device _device;
+    private readonly Device _deviceQ;
 
-    public unsafe PipelineShader(RenderBase data, ShaderStageFlags stage, ReadOnlySpan<byte> shaderCode)
+    public unsafe PipelineShader(Vk vk, DeviceQueues deviceQ, ShaderStageFlags stage, ReadOnlySpan<byte> shaderCode)
     {
-        _vk = data.vk;
-        _device = data.deviceQ;
+        _vk = vk;
+        _deviceQ = deviceQ;
         this.stage = stage;
 
         fixed (byte* code = shaderCode)
@@ -26,15 +26,16 @@ internal readonly struct PipelineShader : IDisposable
                 CodeSize = (nuint)shaderCode.Length,
                 PCode = (uint*)code,
             };
-            _ = _vk.CreateShaderModule(_device, createInfo, null, out module);
+            _ = _vk.CreateShaderModule(_deviceQ, createInfo, null, out module);
         }
     }
 
-    public PipelineShader(RenderBase data, ShaderStageFlags stage, string path) : this(data, stage, File.ReadAllBytes(path)) { }
+    public PipelineShader(Vk vk, DeviceQueues deviceQ, ShaderStageFlags stage, string path) :
+        this(vk, deviceQ, stage, File.ReadAllBytes(path)) { }
 
 
     public unsafe void Dispose()
     {
-        _vk.DestroyShaderModule(_device, module, null);
+        _vk.DestroyShaderModule(_deviceQ, module, null);
     }
 }

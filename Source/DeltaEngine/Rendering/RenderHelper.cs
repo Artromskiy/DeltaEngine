@@ -1,6 +1,7 @@
 ﻿using Delta.Files;
 using Delta.Rendering.Collections;
 using Delta.Rendering.Internal;
+using Delta.Rendering.SdlRendering;
 using Delta.Utilities;
 using Silk.NET.Core;
 using Silk.NET.Core.Native;
@@ -20,7 +21,7 @@ using Semaphore = Silk.NET.Vulkan.Semaphore;
 
 namespace Delta.Rendering;
 
-internal static class RenderHelper
+internal static unsafe class RenderHelper
 {
     private const uint flags = (uint)
     (
@@ -32,12 +33,13 @@ internal static class RenderHelper
         | WindowFlags.SkipTaskbar
    );
 
-    public static unsafe Window* CreateWindow(Sdl sdl, string title)
+    public static Window* CreateWindow(Sdl sdl, string title)
     {
         return sdl.CreateWindow(Encoding.UTF8.GetBytes(title), 100, 100, 1000, 1000, flags);
     }
 
-    public static unsafe Instance CreateVkInstance(Vk vk, string app, string engine, string[] extensions, string[] layers, void* instanceChain)
+    public static Instance CreateVkInstance(Vk vk, string app, string engine,
+        ReadOnlySpan<string> extensions, ReadOnlySpan<string> layers, void* instanceChain)
     {
         ApplicationInfo appInfo = new()
         {
@@ -52,8 +54,8 @@ internal static class RenderHelper
             SType = StructureType.InstanceCreateInfo,
             PApplicationInfo = &appInfo,
             EnabledExtensionCount = (uint)extensions.Length,
-            PpEnabledExtensionNames = (byte**)SilkMarshal.StringArrayToPtr(extensions),
-            PpEnabledLayerNames = (byte**)SilkMarshal.StringArrayToPtr(layers),
+            PpEnabledExtensionNames = (byte**)SilkMarshal.StringArrayToPtr(extensions.ToArray()),
+            PpEnabledLayerNames = (byte**)SilkMarshal.StringArrayToPtr(layers.ToArray()),
             EnabledLayerCount = (uint)layers.Length,
             PNext = instanceChain,
         };
@@ -65,104 +67,40 @@ internal static class RenderHelper
         return instance;
     }
 
-    public static unsafe (Semaphore[] imageAvailableSemaphores, Semaphore[] renderFinishedSemaphores, Fence[] inFlightFences)
-        CreateSyncObjects(Api api, Device device, int swapChainImagesCount)
-    {
-        var imageAvailableSemaphores = new Semaphore[swapChainImagesCount];
-        var renderFinishedSemaphores = new Semaphore[swapChainImagesCount];
-        var inFlightFences = new Fence[swapChainImagesCount];
-
-        SemaphoreCreateInfo semaphoreInfo = new();
-
-        FenceCreateInfo fenceInfo = new(StructureType.FenceCreateInfo, null, FenceCreateFlags.SignaledBit);
-
-        for (var i = 0; i < swapChainImagesCount; i++)
-        {
-            _ = api.vk.CreateSemaphore(device, semaphoreInfo, null, out imageAvailableSemaphores[i]);
-            _ = api.vk.CreateSemaphore(device, semaphoreInfo, null, out renderFinishedSemaphores[i]);
-            _ = api.vk.CreateFence(device, fenceInfo, null, out inFlightFences[i]);
-        }
-        return (imageAvailableSemaphores, renderFinishedSemaphores, inFlightFences);
-    }
-
-    public static unsafe Fence CreateFence(RenderBase data, bool signaled)
+    public static Fence CreateFence(Vk vk, DeviceQueues deviceQ, bool signaled)
     {
         FenceCreateFlags flag = signaled ? FenceCreateFlags.SignaledBit : FenceCreateFlags.None;
         FenceCreateInfo fenceCreate = new(StructureType.FenceCreateInfo, null, flag);
-        _ = data.vk.CreateFence(data.deviceQ, fenceCreate, null, out var result);
+        vk.CreateFence(deviceQ, fenceCreate, null, out var result);
         return result;
     }
 
-    public static unsafe Semaphore CreateSemaphore(RenderBase data)
+    public static Semaphore CreateSemaphore(Vk vk, DeviceQueues deviceQ)
     {
         SemaphoreCreateInfo semaphoreCreate = new(StructureType.SemaphoreCreateInfo);
-        _ = data.vk.CreateSemaphore(data.deviceQ, semaphoreCreate, null, out var result);
+        _ = vk.CreateSemaphore(deviceQ, semaphoreCreate, null, out var result);
         return result;
     }
 
-    internal static unsafe void CopyBuffer<T>(this RenderBase data, GpuArray<T> source, DynamicBuffer destination,
-        CommandBuffer cmdBuffer) where T : unmanaged
-    {
-        destination.EnsureSize(source.Size);
-        data.CopyBuffer(source.Buffer, source.Size, destination.GetBuffer(), destination.Size, cmdBuffer);
-    }
-
-    internal static unsafe void CopyBuffer<T>(this RenderBase data, GpuArray<T> source, DynamicBuffer destination,
-        Fence fence, Semaphore semaphore, CommandBuffer cmdBuffer) where T : unmanaged
-    {
-        destination.EnsureSize(source.Size);
-        data.CopyBuffer(source.Buffer, source.Size, destination.GetBuffer(), destination.Size, fence, semaphore, cmdBuffer);
-    }
-    internal static unsafe void CopyBuffer<T>(this RenderBase data, GpuArray<T> source, DynamicBuffer destination,
-        Fence fence, CommandBuffer cmdBuffer) where T : unmanaged
-    {
-        destination.EnsureSize(source.Size);
-        data.CopyBuffer(source.Buffer, source.Size, destination.GetBuffer(), destination.Size, fence, cmdBuffer);
-    }
-
-    public static unsafe void BeginCmdBuffer(this RenderBase data, CommandBuffer cmdBuffer)
+    public static void BeginCmdBuffer(Vk vk, CommandBuffer cmdBuffer)
     {
         CommandBufferBeginInfo beginInfo = new()
         {
             SType = StructureType.CommandBufferBeginInfo,
             Flags = CommandBufferUsageFlags.OneTimeSubmitBit
         };
-        _ = data.vk.BeginCommandBuffer(cmdBuffer, &beginInfo);
+        _ = vk.BeginCommandBuffer(cmdBuffer, &beginInfo);
     }
 
-    internal static unsafe void CopyCmd<T>(this RenderBase data, GpuArray<T> source, DynamicBuffer destination, CommandBuffer cmdBuffer) where T : unmanaged
+    public static void CopyCmd<T>(Vk vk, GpuArray<T> source, DynamicBuffer destination, CommandBuffer cmdBuffer) where T : unmanaged
     {
         destination.EnsureSize(source.Size);
         BufferCopy copy = new(0, 0, Math.Min(source.Size, destination.Size));
-        data.vk.CmdCopyBuffer(cmdBuffer, source.Buffer, destination.GetBuffer(), 1, &copy);
+        vk.CmdCopyBuffer(cmdBuffer, source.Buffer, destination.GetBuffer(), 1, &copy);
     }
 
-    public static unsafe void EndCmdBuffer(this RenderBase data, Queue queue, CommandBuffer cmdBuffer, Fence fence, Semaphore semaphore)
+    public static void EndCmdBuffer(Vk vk, Queue queue, CommandBuffer cmdBuffer, Fence fence, Semaphore semaphore)
     {
-        _ = data.vk.EndCommandBuffer(cmdBuffer);
-        SubmitInfo submitInfo = new()
-        {
-            SType = StructureType.SubmitInfo,
-            CommandBufferCount = 1,
-            PCommandBuffers = &cmdBuffer,
-            SignalSemaphoreCount = 1,
-            PSignalSemaphores = &semaphore,
-        };
-        _ = data.vk.QueueSubmit(queue, 1, &submitInfo, fence);
-    }
-
-    public static unsafe void CopyBuffer(this RenderBase data, Buffer source, ulong sourceSize, Buffer destination, ulong destinationSize, Fence fence, Semaphore semaphore, CommandBuffer cmdBuffer)
-    {
-        Vk vk = data.vk;
-        vk.ResetFences(data.deviceQ, 1, in fence);
-        CommandBufferBeginInfo beginInfo = new()
-        {
-            SType = StructureType.CommandBufferBeginInfo,
-            Flags = CommandBufferUsageFlags.OneTimeSubmitBit
-        };
-        _ = vk.BeginCommandBuffer(cmdBuffer, &beginInfo);
-        BufferCopy copy = new(0, 0, Math.Min(sourceSize, destinationSize));
-        vk.CmdCopyBuffer(cmdBuffer, source, destination, 1, &copy);
         _ = vk.EndCommandBuffer(cmdBuffer);
         SubmitInfo submitInfo = new()
         {
@@ -172,55 +110,10 @@ internal static class RenderHelper
             SignalSemaphoreCount = 1,
             PSignalSemaphores = &semaphore,
         };
-        _ = vk.QueueSubmit(data.deviceQ.transferQueue, 1, &submitInfo, fence);
+        _ = vk.QueueSubmit(queue, 1, &submitInfo, fence);
     }
 
-
-    public static unsafe void CopyBuffer(this RenderBase data, Buffer source, ulong sourceSize, Buffer destination, ulong destinationSize, Fence fence, CommandBuffer cmdBuffer)
-    {
-        Vk vk = data.vk;
-        vk.ResetFences(data.deviceQ, 1, in fence);
-        CommandBufferBeginInfo beginInfo = new()
-        {
-            SType = StructureType.CommandBufferBeginInfo,
-            Flags = CommandBufferUsageFlags.OneTimeSubmitBit
-        };
-        _ = vk.BeginCommandBuffer(cmdBuffer, &beginInfo);
-        BufferCopy copy = new(0, 0, Math.Min(sourceSize, destinationSize));
-        vk.CmdCopyBuffer(cmdBuffer, source, destination, 1, &copy);
-        _ = vk.EndCommandBuffer(cmdBuffer);
-        SubmitInfo submitInfo = new()
-        {
-            SType = StructureType.SubmitInfo,
-            CommandBufferCount = 1,
-            PCommandBuffers = &cmdBuffer,
-        };
-        _ = vk.QueueSubmit(data.deviceQ.transferQueue, 1, &submitInfo, fence);
-    }
-
-    public static unsafe void CopyBuffer(this RenderBase data, Buffer source, ulong sourceSize, Buffer destination, ulong destinationSize, CommandBuffer cmdBuffer)
-    {
-        Vk vk = data.vk;
-        CommandBufferBeginInfo beginInfo = new()
-        {
-            SType = StructureType.CommandBufferBeginInfo,
-            Flags = CommandBufferUsageFlags.OneTimeSubmitBit
-        };
-        _ = vk.BeginCommandBuffer(cmdBuffer, &beginInfo);
-        BufferCopy copy = new(0, 0, Math.Min(sourceSize, destinationSize));
-        vk.CmdCopyBuffer(cmdBuffer, source, destination, 1, &copy);
-        _ = vk.EndCommandBuffer(cmdBuffer);
-        SubmitInfo submitInfo = new()
-        {
-            SType = StructureType.SubmitInfo,
-            CommandBufferCount = 1,
-            PCommandBuffers = &cmdBuffer,
-        };
-        _ = vk.QueueSubmit(data.deviceQ.transferQueue, 1, &submitInfo, default);
-        vk.DeviceWaitIdle(data.deviceQ);
-    }
-
-    public static unsafe RenderPass CreateRenderPass(Vk vk, Device device, Format swapChainImageFormat)
+    public static RenderPass CreateRenderPass(Vk vk, Device device, Format swapChainImageFormat)
     {
         AttachmentDescription colorAttachment = new()
         {
@@ -267,7 +160,7 @@ internal static class RenderHelper
         return renderPass;
     }
 
-    public static unsafe string[] GetRequiredVulkanExtensions(Sdl sdl, Window* window)
+    public static string[] GetSdlVulkanExtensions(Sdl sdl, Window* window)
     {
         uint extCount = 0;
         _ = sdl.VulkanGetInstanceExtensions(window, &extCount, (byte**)null);
@@ -276,31 +169,14 @@ internal static class RenderHelper
         return extensions;
     }
 
-    public static unsafe string[] GetVulkanLayers(Api api, string[] reqVkLayers)
-    {
-        uint layersCount = 0;
-        _ = api.vk.EnumerateInstanceLayerProperties(&layersCount, null);
-        Span<LayerProperties> layers = stackalloc LayerProperties[(int)layersCount];
-        _ = api.vk.EnumerateInstanceLayerProperties(&layersCount, layers);
-        HashSet<string> layersNames = [];
-        foreach (var layer in layers)
-        {
-            var layerName = Marshal.PtrToStringUTF8((nint)layer.LayerName);
-            if (!string.IsNullOrEmpty(layerName))
-                layersNames.Add(layerName);
-        }
-        return Array.FindAll(reqVkLayers, layersNames.Contains);
-    }
-
-
-    public static unsafe SurfaceKHR CreateSurface(Sdl sdl, Window* window, Instance instance)
+    public static SurfaceKHR CreateSurface(Sdl sdl, Window* window, Instance instance)
     {
         var nondispatchable = new VkNonDispatchableHandle();
         _ = sdl.VulkanCreateSurface(window, instance.ToHandle(), ref nondispatchable);
         return nondispatchable.ToSurface();
     }
 
-    public static unsafe (Buffer buffer, DeviceMemory memory) CreateBufferAndMemory(RenderBase data, ulong size, BufferUsageFlags bufferUsageFlags, MemoryPropertyFlags memoryPropertyFlags)
+    public static (Buffer buffer, DeviceMemory memory) CreateBufferAndMemory(Vk vk, DeviceQueues deviceQ, ulong size, BufferUsageFlags bufferUsageFlags, MemoryPropertyFlags memoryPropertyFlags)
     {
         BufferCreateInfo createInfo = new()
         {
@@ -310,88 +186,47 @@ internal static class RenderHelper
             SharingMode = SharingMode.Exclusive,
             Flags = default,
         };
-        _ = data.vk.CreateBuffer(data.deviceQ, createInfo, null, out var buffer);
-        var reqs = data.vk.GetBufferMemoryRequirements(data.deviceQ, buffer);
+        _ = vk.CreateBuffer(deviceQ, createInfo, null, out var buffer);
+        var reqs = vk.GetBufferMemoryRequirements(deviceQ, buffer);
         MemoryAllocateInfo allocateInfo = new()
         {
             SType = StructureType.MemoryAllocateInfo,
             AllocationSize = reqs.Size,
-            MemoryTypeIndex = FindMemoryType(data, (int)reqs.MemoryTypeBits, memoryPropertyFlags)
+            MemoryTypeIndex = deviceQ.gpu.FindMemoryType((int)reqs.MemoryTypeBits, memoryPropertyFlags)
         };
-        _ = data.vk.AllocateMemory(data.deviceQ, allocateInfo, null, out var memory);
-        _ = data.vk.BindBufferMemory(data.deviceQ, buffer, memory, 0);
+        _ = vk.AllocateMemory(deviceQ, allocateInfo, null, out var memory);
+        _ = vk.BindBufferMemory(deviceQ, buffer, memory, 0);
         return (buffer, memory);
     }
 
-    public static unsafe (Buffer buffer, DeviceMemory memory) CreateVertexBuffer(RenderBase data, MeshData meshData, VertexAttribute attributeMask)
+    public static (Buffer buffer, DeviceMemory memory) CreateVertexBuffer(Vk vk, DeviceQueues deviceQ, MeshData meshData, VertexAttribute attributeMask)
     {
         var size = (uint)(attributeMask.GetVertexSize() * meshData.vertexCount);
-        var res = CreateBufferAndMemory(data, size, BufferUsageFlags.VertexBufferBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit);
+        var res = CreateBufferAndMemory(vk, deviceQ, size, BufferUsageFlags.VertexBufferBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit);
 
         void* datap;
-        data.vk.MapMemory(data.deviceQ, res.memory, 0, size, 0, &datap);
+        vk.MapMemory(deviceQ, res.memory, 0, size, 0, &datap);
 
         Unsafe.CopyBlockUnaligned(ref Unsafe.AsRef<byte>(datap),
             ref MemoryMarshal.GetArrayDataReference(MeshCollection.GetMeshVariant(meshData, attributeMask)),
             size);
 
-        data.vk.UnmapMemory(data.deviceQ, res.memory);
+        vk.UnmapMemory(deviceQ, res.memory);
         return res;
     }
-    public static unsafe (Buffer buffer, DeviceMemory memory) CreateIndexBuffer(RenderBase data, MeshData meshData)
+    public static (Buffer buffer, DeviceMemory memory) CreateIndexBuffer(Vk vk, DeviceQueues deviceQ, MeshData meshData)
     {
         var size = (uint)(sizeof(uint) * meshData.GetIndices().Length);
-        var res = CreateBufferAndMemory(data, size, BufferUsageFlags.IndexBufferBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit);
+        var res = CreateBufferAndMemory(vk, deviceQ, size, BufferUsageFlags.IndexBufferBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit);
 
         void* datap;
-        data.vk.MapMemory(data.deviceQ, res.memory, 0, size, 0, &datap);
+        vk.MapMemory(deviceQ, res.memory, 0, size, 0, &datap);
 
         Span<uint> dataSpan = new(datap, meshData.GetIndices().Length);
         meshData.GetIndices().CopyTo(dataSpan);
 
-        data.vk.UnmapMemory(data.deviceQ, res.memory);
+        vk.UnmapMemory(deviceQ, res.memory);
         return res;
-    }
-
-
-    public static unsafe (Buffer, DeviceMemory) CreateIndexBuffer(RenderBase data, uint[] indices)
-    {
-        uint size = (uint)(sizeof(uint) * indices.Length);
-        var res = CreateBufferAndMemory(data, size, BufferUsageFlags.IndexBufferBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit);
-
-        void* datap;
-        data.vk.MapMemory(data.deviceQ, res.memory, 0, size, 0, &datap);
-
-        Unsafe.CopyBlockUnaligned(ref Unsafe.AsRef<byte>(datap),
-            ref Unsafe.As<uint, byte>(ref MemoryMarshal.GetArrayDataReference(indices)),
-            size);
-
-        data.vk.UnmapMemory(data.deviceQ, res.memory);
-        return res;
-    }
-
-    public static uint FindMemoryType(RenderBase data, int typeFilter, MemoryPropertyFlags properties)
-    {
-        int i = 0;
-        for (; i < data.memoryProperties.MemoryTypeCount; i++)
-            if (Convert.ToBoolean(typeFilter & (1 << i)) && (data.memoryProperties.MemoryTypes[i].PropertyFlags & properties) == properties) // some mask magic
-                return (uint)i;
-        _ = false;
-        return (uint)i;
-    }
-
-    public static uint FindMemoryType(RenderBase data, int typeFilter, MemoryPropertyFlags properties, out MemoryPropertyFlags memoryFlagsHas)
-    {
-        memoryFlagsHas = MemoryPropertyFlags.None;
-        int i = 0;
-        for (; i < data.memoryProperties.MemoryTypeCount; i++)
-            if (Convert.ToBoolean(typeFilter & (1 << i)) && (data.memoryProperties.MemoryTypes[i].PropertyFlags & properties) == properties) // some mask magic
-            {
-                memoryFlagsHas = data.memoryProperties.MemoryTypes[i].PropertyFlags;
-                return (uint)i;
-            }
-        _ = false;
-        return (uint)i;
     }
 
     public static VertexInputBindingDescription GetBindingDescription(VertexAttribute vertexAttributeMask) => new()
@@ -401,7 +236,7 @@ internal static class RenderHelper
         Stride = (uint)vertexAttributeMask.GetVertexSize()
     };
 
-    public static unsafe void FillAttributeDesctiption(Span<VertexInputAttributeDescription> description, VertexAttribute vertexAttributeMask)
+    public static void FillAttributeDesctiption(Span<VertexInputAttributeDescription> description, VertexAttribute vertexAttributeMask)
     {
         int index = 0;
         int offset = 0;
@@ -426,7 +261,7 @@ internal static class RenderHelper
         }
     }
 
-    public static unsafe VertexAttribute GetInputAttributes(ReadOnlySpan<byte> shaderCode)
+    public static VertexAttribute GetInputAttributes(ReadOnlySpan<byte> shaderCode)
     {
         Context* context = default;
         ParsedIr* ir = default;
@@ -460,10 +295,10 @@ internal static class RenderHelper
         return res;
     }
 
-    public static unsafe Pipeline CreateGraphicsPipeline(ShaderData shaderData, RenderBase data, out VertexAttribute attributeMask)
+    public static Pipeline CreateGraphicsPipeline(Vk vk, DeviceQueues deviceQ, PipelineLayout pipelineLayout, RenderPass renderPass, ShaderData shaderData, out VertexAttribute attributeMask)
     {
-        using var vertShader = new PipelineShader(data, ShaderStageFlags.VertexBit, shaderData.GetVertBytes());
-        using var fragShader = new PipelineShader(data, ShaderStageFlags.FragmentBit, shaderData.GetFragBytes());
+        using var vertShader = new PipelineShader(vk, deviceQ, ShaderStageFlags.VertexBit, shaderData.GetVertBytes());
+        using var fragShader = new PipelineShader(vk, deviceQ, ShaderStageFlags.FragmentBit, shaderData.GetFragBytes());
         var stages = stackalloc PipelineShaderStageCreateInfo[2]
         {
             ShaderModuleGroupCreator.Create(vertShader),
@@ -560,17 +395,16 @@ internal static class RenderHelper
             PRasterizationState = &rasterizer,
             PMultisampleState = &multisampling,
             PColorBlendState = &colorBlending,
-            Layout = data.pipelineLayout,
-            RenderPass = data.renderPass,
+            Layout = pipelineLayout,
+            RenderPass = renderPass,
             Subpass = 0,
             BasePipelineHandle = default,
         };
-        _ = data.vk.CreateGraphicsPipelines(data.deviceQ, default, 1, pipelineInfo, null, out var graphicsPipeline);
+        _ = vk.CreateGraphicsPipelines(deviceQ, default, 1, pipelineInfo, null, out var graphicsPipeline);
         return graphicsPipeline;
     }
 
-
-    public static unsafe PipelineLayout CreatePipelineLayout(Vk vk, Device device, ReadOnlySpan<DescriptorSetLayout> layouts)
+    public static PipelineLayout CreatePipelineLayout(Vk vk, Device device, ReadOnlySpan<DescriptorSetLayout> layouts)
     {
         PipelineLayout result;
         fixed (DescriptorSetLayout* layoutsPtr = layouts)
@@ -586,7 +420,7 @@ internal static class RenderHelper
         return result;
     }
 
-    public static unsafe ImmutableArray<Framebuffer> CreateFramebuffers(Api api, Device device, ReadOnlySpan<ImageView> swapChainImageViews, RenderPass renderPass, Extent2D swapChainExtent)
+    public static ImmutableArray<Framebuffer> CreateFramebuffers(Vk vk, Device device, ReadOnlySpan<ImageView> swapChainImageViews, RenderPass renderPass, Extent2D swapChainExtent)
     {
         Span<Framebuffer> swapChainFramebuffers = stackalloc Framebuffer[swapChainImageViews.Length];
         for (int i = 0; i < swapChainImageViews.Length; i++)
@@ -602,13 +436,12 @@ internal static class RenderHelper
                 Height = swapChainExtent.Height,
                 Layers = 1,
             };
-            _ = api.vk.CreateFramebuffer(device, framebufferInfo, null, out swapChainFramebuffers[i]);
+            _ = vk.CreateFramebuffer(device, framebufferInfo, null, out swapChainFramebuffers[i]);
         }
         return ImmutableArray.Create(swapChainFramebuffers);
     }
 
-
-    public static unsafe DescriptorPool CreateDescriptorPool(RenderBase data)
+    public static DescriptorPool CreateDescriptorPool(Vk vk, DeviceQueues deviceQ)
     {
         uint descriptorCount = 50;
         var poolSizes = stackalloc DescriptorPoolSize[]
@@ -622,24 +455,11 @@ internal static class RenderHelper
             PPoolSizes = poolSizes,
             MaxSets = descriptorCount,
         };
-        _ = data.vk.CreateDescriptorPool(data.deviceQ, poolInfo, null, out var result);
+        _ = vk.CreateDescriptorPool(deviceQ, poolInfo, null, out var result);
         return result;
     }
 
-    public static unsafe DescriptorSet CreateDescriptorSet(RenderBase data, DescriptorSetLayout descriptorSetLayout)
-    {
-        DescriptorSetAllocateInfo allocateInfo = new()
-        {
-            SType = StructureType.DescriptorSetAllocateInfo,
-            DescriptorPool = data.descriptorPool,
-            DescriptorSetCount = 1,
-            PSetLayouts = &descriptorSetLayout,
-        };
-        _ = data.vk.AllocateDescriptorSets(data.deviceQ, allocateInfo, out var result);
-        return result;
-    }
-
-    public static unsafe void UpdateDescriptorSets(RenderBase data, DescriptorSet descriptorSet, Buffer buffer, uint binding, DescriptorType bufferUsage)
+    public static void UpdateDescriptorSets(Vk vk, DeviceQueues deviceQ, DescriptorSet descriptorSet, Buffer buffer, uint binding, DescriptorType bufferUsage)
     {
         DescriptorBufferInfo bufferInfo = new()
         {
@@ -656,10 +476,10 @@ internal static class RenderHelper
             DescriptorCount = 1,
             PBufferInfo = &bufferInfo,
         };
-        data.vk.UpdateDescriptorSets(data.deviceQ, 1, descriptorWrite, 0, null);
+        vk.UpdateDescriptorSets(deviceQ, 1, descriptorWrite, 0, null);
     }
 
-    internal static unsafe CommandBuffer CreateCommandBuffer(this RenderBase data, CommandPool cmdPool)
+    internal static CommandBuffer CreateCommandBuffer(Vk vk, DeviceQueues deviceQ, CommandPool cmdPool)
     {
         CommandBufferAllocateInfo allocInfo = new()
         {
@@ -669,34 +489,33 @@ internal static class RenderHelper
             CommandBufferCount = 1,
         };
         CommandBuffer commandBuffer;
-        _ = data.vk.AllocateCommandBuffers(data.deviceQ, allocInfo, &commandBuffer);
+        _ = vk.AllocateCommandBuffers(deviceQ, allocInfo, &commandBuffer);
         return commandBuffer;
     }
 
 
-    public static unsafe PhysicalDevice PickPhysicalDevice(Vk vk, Instance instance, SurfaceKHR surface, KhrSurface khrsf, string[] neededExtensions)
+    public static Gpu PickPhysicalDevice(Vk vk, Instance instance, Func<PhysicalDevice, int> prioritizedSelector)
     {
         uint deviceCount = 0;
         _ = vk.EnumeratePhysicalDevices(instance, &deviceCount, null);
         Span<PhysicalDevice> devices = stackalloc PhysicalDevice[(int)deviceCount];
-        PhysicalDevice selected = default;
-        bool discrete = false;
-        bool suitable = false;
         vk.EnumeratePhysicalDevices(instance, &deviceCount, devices);
+        PhysicalDevice selected = default;
+        int currentPriority = 0;
         foreach (var device in devices)
         {
-            vk.GetPhysicalDeviceProperties(device, out var props);
-            suitable = IsDeviceSuitable(vk, device, surface, khrsf, neededExtensions);
-            if (suitable)
+            var priority = prioritizedSelector(device);
+            if (priority > currentPriority)
+            {
+                currentPriority = priority;
                 selected = device;
-            discrete = props.DeviceType == PhysicalDeviceType.DiscreteGpu;
-            if (discrete && suitable)
-                return device;
+            }
         }
-        return selected;
+        _ = currentPriority != 0;
+        return new Gpu(vk, selected);
     }
 
-    public static unsafe ImmutableArray<ImageView> CreateImageViews(Api api, Device device, ReadOnlySpan<Image> swapChainImages, Format imageFormat)
+    public static ImmutableArray<ImageView> CreateImageViews(Vk vk, Device device, ReadOnlySpan<Image> swapChainImages, Format imageFormat)
     {
         Span<ImageView> swapChainImageViews = stackalloc ImageView[swapChainImages.Length];
         for (int i = 0; i < swapChainImages.Length; i++)
@@ -717,21 +536,22 @@ internal static class RenderHelper
                     LayerCount = 1,
                 }
             };
-            _ = api.vk.CreateImageView(device, createInfo, null, out swapChainImageViews[i]);
+            _ = vk.CreateImageView(device, createInfo, null, out swapChainImageViews[i]);
         }
         return ImmutableArray.Create(swapChainImageViews);
     }
 
 
-    internal static unsafe DeviceQueues CreateLogicalDevice(Vk vk, PhysicalDevice gpu, SurfaceKHR surface, KhrSurface khrsf, string[] deviceExtensions)
+    internal static DeviceQueues CreateLogicalDevice(Vk vk, Gpu gpu, SurfaceKHR surface, KhrSurface khrsf, ReadOnlySpan<string> deviceExtensions)
     {
         var indices = new QueueFamilyIndiciesDetails(vk, surface, gpu, khrsf);
         return new DeviceQueues(vk, gpu, indices, deviceExtensions);
     }
 
-    public static SurfaceFormatKHR ChooseSwapSurfaceFormat(ImmutableArray<SurfaceFormatKHR> formats)
+    internal static DeviceQueues CreateLogicalDevice(Vk vk, Gpu gpu, ReadOnlySpan<string> deviceExtensions)
     {
-        return ChooseSwapSurfaceFormat(formats, new(Format.B8G8R8A8Srgb, ColorSpaceKHR.SpaceSrgbNonlinearKhr));
+        //var indices = new QueueFamilyIndiciesDetails(vk, surface, gpu, khrsf);
+        return new DeviceQueues(vk, gpu, default, deviceExtensions);
     }
 
     public static SurfaceFormatKHR ChooseSwapSurfaceFormat(ImmutableArray<SurfaceFormatKHR> formats, SurfaceFormatKHR targetFormat)
@@ -740,15 +560,7 @@ internal static class RenderHelper
             format : formats[0];
     }
 
-    private static unsafe Extent2D ChooseSwapExtent(Api api, Window* window, SurfaceCapabilitiesKHR capabilities)
-    {
-        int w, h;
-        w = h = 0;
-        api.sdl.VulkanGetDrawableSize(window, ref w, ref h);
-        return ChooseSwapExtent(w, h, capabilities);
-    }
-
-    public static unsafe Extent2D ChooseSwapExtent(int width, int height, SurfaceCapabilitiesKHR capabilities)
+    public static Extent2D ChooseSwapExtent(int width, int height, SurfaceCapabilitiesKHR capabilities)
     {
         if (capabilities.CurrentExtent.Width != uint.MaxValue)
             return capabilities.CurrentExtent;
@@ -759,14 +571,21 @@ internal static class RenderHelper
         };
     }
 
-    private static unsafe bool IsDeviceSuitable(Vk vk, PhysicalDevice device, SurfaceKHR surface, KhrSurface khrsf, string[] neededExtensions)
+    public static bool IsDeviceSuitable(Vk vk, PhysicalDevice device, SurfaceKHR surface, KhrSurface khrsf, ReadOnlySpan<string> neededExtensions)
     {
         var indices = new QueueFamilyIndiciesDetails(vk, surface, device, khrsf);
         bool extensionsSupported = CheckDeviceExtensionsSupport(vk, device, neededExtensions);
         return indices.suitable && extensionsSupported && SwapChainSupportDetails.Adequate(device, surface, khrsf);
     }
 
-    private static unsafe bool CheckDeviceExtensionsSupport(Vk vk, PhysicalDevice device, string[] neededExtensions)
+    public static bool IsDeviceSuitable(Vk vk, PhysicalDevice device, ReadOnlySpan<string> neededExtensions)
+    {
+        var gpu = new Gpu(vk, device);
+        bool extensionsSupported = CheckDeviceExtensionsSupport(vk, device, neededExtensions);
+        return gpu.HasQueue(QueueType.Graphics) && extensionsSupported;
+    }
+
+    private static bool CheckDeviceExtensionsSupport(Vk vk, PhysicalDevice device, ReadOnlySpan<string> neededExtensions)
     {
         uint extentionsCount = 0;
         vk.EnumerateDeviceExtensionProperties(device, (byte*)null, &extentionsCount, null);
