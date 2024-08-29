@@ -1,6 +1,6 @@
 ﻿using Delta.Files;
+using Delta.Rendering.HeadlessRendering;
 using Delta.Rendering.Internal;
-using Delta.Rendering.SdlRendering;
 using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;

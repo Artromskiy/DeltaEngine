@@ -1,7 +1,6 @@
 ﻿using Delta.Files;
 using Delta.Rendering.Collections;
 using Delta.Rendering.Internal;
-using Delta.Rendering.SdlRendering;
 using Delta.Utilities;
 using Silk.NET.Core;
 using Silk.NET.Core.Native;
@@ -11,7 +10,6 @@ using Silk.NET.SPIRV.Cross;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -575,7 +573,7 @@ internal static unsafe class RenderHelper
     {
         var indices = new QueueFamilyIndiciesDetails(vk, surface, device, khrsf);
         bool extensionsSupported = CheckDeviceExtensionsSupport(vk, device, neededExtensions);
-        return indices.suitable && extensionsSupported && SwapChainSupportDetails.Adequate(device, surface, khrsf);
+        return indices.suitable && extensionsSupported && SdlRendering.SwapChainSupportDetails.Adequate(device, surface, khrsf);
     }
 
     public static bool IsDeviceSuitable(Vk vk, PhysicalDevice device, ReadOnlySpan<string> neededExtensions)

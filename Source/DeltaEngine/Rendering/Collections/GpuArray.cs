@@ -1,5 +1,4 @@
 ﻿using Delta.Rendering.Internal;
-using Delta.Rendering.SdlRendering;
 using Silk.NET.Vulkan;
 using System;
 using System.Numerics;

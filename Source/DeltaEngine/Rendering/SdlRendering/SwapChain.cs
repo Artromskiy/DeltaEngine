@@ -22,14 +22,14 @@ internal class SwapChain : IDisposable
     public unsafe SwapChain(RenderBase data, uint trgImageCount, SurfaceFormatKHR targetFormat)
     {
         this.data = data;
-        var swSupport = data.swapChainSupport;
+        var swSupport = data.SwapChainSupport;
         var indiciesDetails = data.deviceQ.queueIndicesDetails;
 
         format = RenderHelper.ChooseSwapSurfaceFormat(swSupport.Formats, targetFormat);
         var presentMode = PresentModeKHR.MailboxKhr; // swSupport.PresentModes.Contains(PresentModeKHR.ImmediateKhr) ? PresentModeKHR.ImmediateKhr : PresentModeKHR.FifoKhr;
 
         int w = 0, h = 0;
-        data.sdl.VulkanGetDrawableSize(data.window, ref w, ref h);
+        data.sdl.VulkanGetDrawableSize(data.Window, ref w, ref h);
         extent = RenderHelper.ChooseSwapExtent(w, h, swSupport.Capabilities);
 
         uint maxImageCount = swSupport.Capabilities.MaxImageCount;
@@ -43,7 +43,7 @@ internal class SwapChain : IDisposable
         SwapchainCreateInfoKHR creatInfo = new()
         {
             SType = StructureType.SwapchainCreateInfoKhr,
-            Surface = data.surface,
+            Surface = data.Surface,
             MinImageCount = (uint)imageCount,
             ImageFormat = format.Format,
             ImageColorSpace = format.ColorSpace,

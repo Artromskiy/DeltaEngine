@@ -9,7 +9,7 @@ public static class MauiProgram
 {
     public static MauiApp CreateMauiApp()
     {
-        string directoryPath  = ProjectCreator.GetExecutableDirectory();
+        string directoryPath = ProjectCreator.GetExecutableDirectory();
         var projectPath = new EditorPaths(directoryPath);
         ProjectCreator.CreateProject(projectPath);
 

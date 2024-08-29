@@ -31,7 +31,8 @@ internal readonly struct PipelineShader : IDisposable
     }
 
     public PipelineShader(Vk vk, DeviceQueues deviceQ, ShaderStageFlags stage, string path) :
-        this(vk, deviceQ, stage, File.ReadAllBytes(path)) { }
+        this(vk, deviceQ, stage, File.ReadAllBytes(path))
+    { }
 
 
     public unsafe void Dispose()

@@ -1,6 +1,5 @@
 using Arch.Core;
 using Avalonia.Controls;
-using DeltaEditor.Tools;
 using DeltaEditorAvalonia.Inspector.Internal;
 
 namespace DeltaEditorAvalonia;

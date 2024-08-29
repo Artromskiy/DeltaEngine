@@ -9,9 +9,13 @@ using Semaphore = Silk.NET.Vulkan.Semaphore;
 
 namespace Delta.Rendering.SdlRendering;
 
-internal class GraphicsModule : IGraphicsModule, IDisposable
+internal class SdlGraphicsModule : IGraphicsModule, IDisposable
 {
-    public RenderBase RenderData { get; private set; }
+    private readonly RenderBase _sdlRenderBase;
+    public HeadlessRendering.RenderBase RenderData
+    {
+        get => _sdlRenderBase;
+    }
 
     private readonly string _appName;
 
@@ -37,15 +41,15 @@ internal class GraphicsModule : IGraphicsModule, IDisposable
 
     private CommandBuffer _copyCmdBuffer;
 
-    public unsafe GraphicsModule(string appName)
+    public unsafe SdlGraphicsModule(string appName)
     {
         _appName = appName;
-        RenderData = new RenderBase(_appName);
-        _swapChain = new SwapChain(RenderData, Buffering, RenderData.Format);
+        _sdlRenderBase = new RenderBase(_appName);
+        _swapChain = new SwapChain(_sdlRenderBase, Buffering, RenderData.Format);
         _renderAssets = new RenderAssets(RenderData);
 
         for (int i = 0; i < _swapChain.imageCount; i++)
-            _frames.Enqueue(new Frame(RenderData, _renderAssets, _swapChain));
+            _frames.Enqueue(new Frame(_sdlRenderBase, _renderAssets, _swapChain));
 
         _copyCmdBuffer = RenderHelper.CreateCommandBuffer(RenderData.vk, RenderData.deviceQ, RenderData.deviceQ.transferCmdPool);
         _copyFence = RenderHelper.CreateFence(RenderData.vk, RenderData.deviceQ, true);
@@ -74,7 +78,7 @@ internal class GraphicsModule : IGraphicsModule, IDisposable
 
     private void Sync()
     {
-        RenderData.sdl.PumpEvents();
+        _sdlRenderBase.sdl.PumpEvents();
         if (!_skippedFrame)
             _frames.Enqueue(_frames.Dequeue());
 
@@ -143,8 +147,8 @@ internal class GraphicsModule : IGraphicsModule, IDisposable
     private void OnResize()
     {
         _swapChain.Dispose();
-        RenderData.UpdateSupportDetails();
-        _swapChain = new SwapChain(RenderData, 3, RenderData.Format);
+        _sdlRenderBase.UpdateSupportDetails();
+        _swapChain = new SwapChain(_sdlRenderBase, 3, RenderData.Format);
 
         if (_swapChain.imageCount == _frames.Count)
         {
@@ -156,7 +160,7 @@ internal class GraphicsModule : IGraphicsModule, IDisposable
         _frames.Dispose();
         _frames.Clear();
         for (int i = 0; i < _swapChain.imageCount; i++)
-            _frames.Enqueue(new Frame(RenderData, _renderAssets, _swapChain));
+            _frames.Enqueue(new Frame(_sdlRenderBase, _renderAssets, _swapChain));
     }
 
     public void DrawGizmos(Render render, Transform transform) => throw new NotImplementedException();
