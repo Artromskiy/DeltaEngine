@@ -4,7 +4,7 @@ using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;
 
-namespace Delta.Rendering.SdlRendering;
+namespace Delta.Rendering.Headless;
 internal class Frame : IDisposable
 {
     private readonly RenderBase _rendererBase;
@@ -90,7 +90,12 @@ internal class Frame : IDisposable
     {
         //_rendererData.vk.WaitForFences(_rendererData.deviceQueues.device, 1, renderFinishedFence, true, ulong.MaxValue);
 
-        var imageIndex = _swapChain.GetImageIndex(_imageAvailable, out resize);
+        var imageAvailable = _imageAvailable;
+        uint imageIndex = 0;
+
+        var res = Result.Success; // _swapChain.khrSw.AcquireNextImage(_rendererBase.deviceQ, _swapChain.swapChain, ulong.MaxValue, imageAvailable, default, &imageIndex);
+
+        resize = res == Result.SuboptimalKhr || res == Result.ErrorOutOfDateKhr;
         if (resize)
             return;
 
@@ -108,8 +113,8 @@ internal class Frame : IDisposable
         var syncSemaphore = _syncSemaphore;
 
         var waitStages = stackalloc PipelineStageFlags[] { PipelineStageFlags.ColorAttachmentOutputBit, PipelineStageFlags.ColorAttachmentOutputBit };
-        var waitBeforeRender = stackalloc Semaphore[2] { _imageAvailable, syncSemaphore };
-        var renderFinished = _renderFinished;
+        var waitBeforeRender = stackalloc Semaphore[2] { imageAvailable, syncSemaphore };
+        var renderFinished = this._renderFinished;
 
         SubmitInfo submitInfo = new()
         {
@@ -123,6 +128,7 @@ internal class Frame : IDisposable
             PSignalSemaphores = &renderFinished,
         };
         _ = _rendererBase.vk.QueueSubmit(_rendererBase.deviceQ.graphicsQueue, 1, submitInfo, _renderFinishedFence);
+        /*
         var swapChain = _swapChain.swapChain;
         PresentInfoKHR presentInfo = new()
         {
@@ -133,7 +139,8 @@ internal class Frame : IDisposable
             PSwapchains = &swapChain,
             PImageIndices = &imageIndex
         };
-        var res = _swapChain.khrSw.QueuePresent(_rendererBase.deviceQ.presentQueue, presentInfo);
+        */
+        res = Result.Success; // _swapChain.khrSw.QueuePresent(_rendererBase.deviceQ.presentQueue, presentInfo);
         resize = res == Result.SuboptimalKhr || res == Result.ErrorOutOfDateKhr;
         if (!resize)
             _ = res;

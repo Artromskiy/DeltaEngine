@@ -14,15 +14,15 @@ public struct Transform
 
     public readonly Matrix4x4 LocalMatrix
     {
-        [MethodImpl(Inl)]
+        [Imp(Inl)]
         get => ModelMatrix(position, rotation, scale);
     }
 
 
-    //[MethodImpl(Inl)]
+    //[Imp(Inl)]
     //private readonly Matrix4x4 LocalMatrixSlow() => Matrix4x4.CreateFromQuaternion(rotation) * Matrix4x4.CreateScale(scale) * Matrix4x4.CreateTranslation(position);
 
-    [MethodImpl(Inl)]
+    [Imp(Inl)]
     public static Matrix4x4 ModelMatrix(Vector3 translation, Quaternion rotation, Vector3 scale)
     {
         // Faster simd creation of xx, xy, xz, xw

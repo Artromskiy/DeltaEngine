@@ -7,7 +7,7 @@ using System;
 
 namespace Delta.Rendering.SdlRendering;
 
-internal sealed class RenderBase : HeadlessRendering.RenderBase, IDisposable
+internal sealed class RenderBase : Headless.RenderBase, IDisposable
 {
     public readonly Sdl sdl = Sdl.GetApi();
 

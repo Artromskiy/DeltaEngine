@@ -1,5 +1,5 @@
 ﻿using Delta.Files;
-using Delta.Rendering.HeadlessRendering;
+using Delta.Rendering.Headless;
 using Delta.Rendering.Internal;
 using Silk.NET.Vulkan;
 using System;

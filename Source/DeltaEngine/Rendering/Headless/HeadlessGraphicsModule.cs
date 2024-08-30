@@ -5,17 +5,11 @@ using Delta.Utilities;
 using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;
-using Semaphore = Silk.NET.Vulkan.Semaphore;
 
-namespace Delta.Rendering.SdlRendering;
-
-internal class SdlGraphicsModule : IGraphicsModule, IDisposable
+namespace Delta.Rendering.Headless;
+internal class HeadlessGraphicsModule : IGraphicsModule, IDisposable
 {
-    private readonly RenderBase _sdlRenderBase;
-    public Headless.RenderBase RenderData
-    {
-        get => _sdlRenderBase;
-    }
+    public RenderBase RenderData { get; private set; }
 
     private readonly string _appName;
 
@@ -41,15 +35,15 @@ internal class SdlGraphicsModule : IGraphicsModule, IDisposable
 
     private CommandBuffer _copyCmdBuffer;
 
-    public unsafe SdlGraphicsModule(string appName)
+    public unsafe HeadlessGraphicsModule(string appName)
     {
         _appName = appName;
-        _sdlRenderBase = new RenderBase(_appName);
-        _swapChain = new SwapChain(_sdlRenderBase, Buffering, RenderData.Format);
+        RenderData = new RenderBase(_appName);
+        _swapChain = new SwapChain(RenderData, Buffering, RenderData.Format.Format);
         _renderAssets = new RenderAssets(RenderData);
 
         for (int i = 0; i < _swapChain.imageCount; i++)
-            _frames.Enqueue(new Frame(_sdlRenderBase, _renderAssets, _swapChain));
+            _frames.Enqueue(new Frame(RenderData, _renderAssets, _swapChain));
 
         _copyCmdBuffer = RenderHelper.CreateCommandBuffer(RenderData.vk, RenderData.deviceQ, RenderData.deviceQ.transferCmdPool);
         _copyFence = RenderHelper.CreateFence(RenderData.vk, RenderData.deviceQ, true);
@@ -78,7 +72,6 @@ internal class SdlGraphicsModule : IGraphicsModule, IDisposable
 
     private void Sync()
     {
-        _sdlRenderBase.sdl.PumpEvents();
         if (!_skippedFrame)
             _frames.Enqueue(_frames.Dequeue());
 
@@ -147,8 +140,8 @@ internal class SdlGraphicsModule : IGraphicsModule, IDisposable
     private void OnResize()
     {
         _swapChain.Dispose();
-        _sdlRenderBase.UpdateSupportDetails();
-        _swapChain = new SwapChain(_sdlRenderBase, 3, RenderData.Format);
+        //RenderData.UpdateSupportDetails();
+        _swapChain = new SwapChain(RenderData, 3, RenderData.Format.Format);
 
         if (_swapChain.imageCount == _frames.Count)
         {
@@ -160,7 +153,7 @@ internal class SdlGraphicsModule : IGraphicsModule, IDisposable
         _frames.Dispose();
         _frames.Clear();
         for (int i = 0; i < _swapChain.imageCount; i++)
-            _frames.Enqueue(new Frame(_sdlRenderBase, _renderAssets, _swapChain));
+            _frames.Enqueue(new Frame(RenderData, _renderAssets, _swapChain));
     }
 
     public void DrawGizmos(Render render, Transform transform) => throw new NotImplementedException();

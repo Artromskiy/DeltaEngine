@@ -5,7 +5,7 @@ using Silk.NET.Vulkan.Extensions.EXT;
 using System;
 using System.Runtime.InteropServices;
 
-namespace Delta.Rendering.HeadlessRendering;
+namespace Delta.Rendering.Headless;
 
 internal class RenderBase : IDisposable
 {

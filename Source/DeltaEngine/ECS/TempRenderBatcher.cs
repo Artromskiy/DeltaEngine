@@ -1,7 +1,7 @@
 ﻿using Delta.ECS.Components;
 using Delta.Rendering;
 using Delta.Rendering.Collections;
-using Delta.Rendering.HeadlessRendering;
+using Delta.Rendering.Headless;
 using System;
 using System.Collections.Generic;
 using System.Numerics;

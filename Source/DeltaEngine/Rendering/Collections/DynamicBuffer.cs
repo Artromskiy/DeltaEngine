@@ -2,7 +2,6 @@
 using Silk.NET.Vulkan;
 using System;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using Buffer = Silk.NET.Vulkan.Buffer;
 
 namespace Delta.Rendering.Collections;
@@ -58,7 +57,7 @@ internal class DynamicBuffer
         _ = _vk.CreateBuffer(_deviceQ, createInfo, null, out buffer);
 
         var memProps = MemoryPropertyFlags.DeviceLocalBit;
-        uint memType = _deviceQ.gpu.FindMemoryType((int)reqs.MemoryTypeBits, memProps);
+        uint memType = _deviceQ.gpu.FindMemoryType(reqs.MemoryTypeBits, memProps);
         MemoryAllocateInfo allocateInfo = new()
         {
             SType = StructureType.MemoryAllocateInfo,
@@ -70,7 +69,7 @@ internal class DynamicBuffer
         _ = _vk.BindBufferMemory(_deviceQ, buffer, memory, 0);
     }
 
-    [MethodImpl(Inl)]
+    [Imp(Inl)]
     public void UpdateFrom<T>(GpuArray<T> array) where T : unmanaged
     {
         var sourceSize = array.Size;
@@ -98,7 +97,7 @@ internal class DynamicBuffer
         ChangedBuffer = true;
     }
 
-    [MethodImpl(Inl)]
+    [Imp(Inl)]
     private unsafe void CopyBuffer(Buffer source, ulong sourceSize, Buffer destionation, ulong destinationSize)
     {
         CommandBuffer cmdBuffer = _cmdBuffer;

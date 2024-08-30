@@ -1,13 +1,12 @@
 ﻿using Arch.Core;
 using Delta.ECS.Components;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 
 namespace Delta.ECS;
 
 internal readonly struct WorldContext(World world)
 {
-    [MethodImpl(Inl)]
+    [Imp(Inl)]
     public readonly Matrix4x4 GetParentWorldMatrix(Entity entity)
     {
         if (entity.GetParent<Transform>(out var parent))
@@ -15,7 +14,7 @@ internal readonly struct WorldContext(World world)
         return Matrix4x4.Identity;
     }
 
-    [MethodImpl(Inl)]
+    [Imp(Inl)]
     public readonly bool GetParent<T>(Entity entity, out Entity parent)
     {
         parent = entity;
@@ -26,7 +25,7 @@ internal readonly struct WorldContext(World world)
     }
 
 
-    [MethodImpl(Inl)]
+    [Imp(Inl)]
     public readonly Matrix4x4 GetWorldRecursive(Entity entity)
     {
         ref var transform = ref world.Get<Transform>(entity);
@@ -37,7 +36,7 @@ internal readonly struct WorldContext(World world)
             return localMatrix;
     }
 
-    [MethodImpl(Inl)]
+    [Imp(Inl)]
     public readonly bool GetParent(ref Entity entity)
     {
         ref var childOf = ref world.TryGetRef<ChildOf>(entity, out bool has);
@@ -49,7 +48,7 @@ internal readonly struct WorldContext(World world)
         return false;
     }
 
-    [MethodImpl(Inl)]
+    [Imp(Inl)]
     public readonly bool HasParent<T>(Entity entity)
     {
         do

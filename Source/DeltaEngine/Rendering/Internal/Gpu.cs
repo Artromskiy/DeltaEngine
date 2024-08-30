@@ -43,26 +43,35 @@ internal class Gpu
         }
         return false;
     }
-    public uint FindMemoryType(int typeFilter, MemoryPropertyFlags properties)
+    public uint FindMemoryType(uint typeFilter, MemoryPropertyFlags properties)
     {
-        int i = 0;
-        for (; i < memoryProperties.MemoryTypeCount; i++)
-            if (Convert.ToBoolean(typeFilter & (1 << i)) && (memoryProperties.MemoryTypes[i].PropertyFlags & properties) == properties) // some mask magic
-                return (uint)i;
+        var memoryTypes = memoryProperties.MemoryTypes;
+        for (uint i = 0; i < memoryProperties.MemoryTypeCount; i++)
+        {
+            if (((typeFilter & 1) == 1) &&
+                (memoryTypes[(int)i].PropertyFlags & properties) == properties) // some mask magic
+                return i;
+            typeFilter >>= 1;
+        }
         _ = false;
-        return (uint)i;
+        return 0;
     }
-    public uint FindMemoryType(int typeFilter, MemoryPropertyFlags properties, out MemoryPropertyFlags memoryFlagsHas)
+    public uint FindMemoryType(uint typeFilter, MemoryPropertyFlags properties, out MemoryPropertyFlags memoryFlagsHas)
     {
+        var memoryTypes = memoryProperties.MemoryTypes;
         memoryFlagsHas = MemoryPropertyFlags.None;
-        int i = 0;
-        for (; i < memoryProperties.MemoryTypeCount; i++)
-            if (Convert.ToBoolean(typeFilter & (1 << i)) && (memoryProperties.MemoryTypes[i].PropertyFlags & properties) == properties) // some mask magic
+
+        for (uint i = 0; i < memoryProperties.MemoryTypeCount; i++)
+        {
+            if (((typeFilter & 1) == 1) &&
+                (memoryTypes[(int)i].PropertyFlags & properties) == properties) // some mask magic
             {
-                memoryFlagsHas = memoryProperties.MemoryTypes[i].PropertyFlags;
-                return (uint)i;
+                memoryFlagsHas = memoryTypes[(int)i].PropertyFlags;
+                return i;
             }
+            typeFilter >>= 1;
+        }
         _ = false;
-        return (uint)i;
+        return 0;
     }
 }

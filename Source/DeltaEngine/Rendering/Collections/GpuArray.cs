@@ -42,7 +42,7 @@ internal unsafe class GpuArray<T> : IDisposable where T : unmanaged
 
     protected T this[uint index]
     {
-        [MethodImpl(Inl)]
+        [Imp(Inl)]
         set
         {
             Debug.Assert(index >= 0 && index < _length);
@@ -66,7 +66,7 @@ internal unsafe class GpuArray<T> : IDisposable where T : unmanaged
 
         public readonly ref T this[uint index]
         {
-            [MethodImpl(Inl)]
+            [Imp(Inl)]
             get
             {
                 Debug.Assert(index >= 0 && index < _length);
@@ -88,7 +88,7 @@ internal unsafe class GpuArray<T> : IDisposable where T : unmanaged
         _vk.FlushMappedMemoryRanges(_deviceQ, 1, memRng);
     }
 
-    [MethodImpl(Inl)]
+    [Imp(Inl)]
     public void Resize(uint length)
     {
         _length = length;
@@ -137,7 +137,7 @@ internal unsafe class GpuArray<T> : IDisposable where T : unmanaged
         _ = _vk.CreateBuffer(_deviceQ, createInfo, null, out buffer);
         var reqs = _vk.GetBufferMemoryRequirements(_deviceQ, buffer);
         var memProps = MemoryPropertyFlags.HostVisibleBit;
-        uint memType = _deviceQ.gpu.FindMemoryType((int)reqs.MemoryTypeBits, memProps, out var memPropsFound);
+        uint memType = _deviceQ.gpu.FindMemoryType(reqs.MemoryTypeBits, memProps, out var memPropsFound);
         MemoryAllocateInfo allocateInfo = new()
         {
             SType = StructureType.MemoryAllocateInfo,

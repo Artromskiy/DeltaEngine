@@ -1,6 +1,6 @@
 ﻿using Delta.ECS;
 using Delta.ECS.Components;
-using Delta.Rendering.HeadlessRendering;
+using Delta.Rendering.Headless;
 using Delta.Runtime;
 using System;
 

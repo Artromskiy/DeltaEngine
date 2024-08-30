@@ -190,7 +190,7 @@ internal static unsafe class RenderHelper
         {
             SType = StructureType.MemoryAllocateInfo,
             AllocationSize = reqs.Size,
-            MemoryTypeIndex = deviceQ.gpu.FindMemoryType((int)reqs.MemoryTypeBits, memoryPropertyFlags)
+            MemoryTypeIndex = deviceQ.gpu.FindMemoryType(reqs.MemoryTypeBits, memoryPropertyFlags)
         };
         _ = vk.AllocateMemory(deviceQ, allocateInfo, null, out var memory);
         _ = vk.BindBufferMemory(deviceQ, buffer, memory, 0);
@@ -418,26 +418,6 @@ internal static unsafe class RenderHelper
         return result;
     }
 
-    public static ImmutableArray<Framebuffer> CreateFramebuffers(Vk vk, Device device, ReadOnlySpan<ImageView> swapChainImageViews, RenderPass renderPass, Extent2D swapChainExtent)
-    {
-        Span<Framebuffer> swapChainFramebuffers = stackalloc Framebuffer[swapChainImageViews.Length];
-        for (int i = 0; i < swapChainImageViews.Length; i++)
-        {
-            var attachment = swapChainImageViews[i];
-            FramebufferCreateInfo framebufferInfo = new()
-            {
-                SType = StructureType.FramebufferCreateInfo,
-                RenderPass = renderPass,
-                AttachmentCount = 1,
-                PAttachments = &attachment,
-                Width = swapChainExtent.Width,
-                Height = swapChainExtent.Height,
-                Layers = 1,
-            };
-            _ = vk.CreateFramebuffer(device, framebufferInfo, null, out swapChainFramebuffers[i]);
-        }
-        return ImmutableArray.Create(swapChainFramebuffers);
-    }
 
     public static DescriptorPool CreateDescriptorPool(Vk vk, DeviceQueues deviceQ)
     {
@@ -513,15 +493,54 @@ internal static unsafe class RenderHelper
         return new Gpu(vk, selected);
     }
 
-    public static ImmutableArray<ImageView> CreateImageViews(Vk vk, Device device, ReadOnlySpan<Image> swapChainImages, Format imageFormat)
+    public static ImmutableArray<Image> CreateImages(Vk vk, DeviceQueues deviceQ,
+        int imagesCount, uint width, uint height, Format imageFormat,
+        out ImmutableArray<DeviceMemory> imagesMemory)
     {
-        Span<ImageView> swapChainImageViews = stackalloc ImageView[swapChainImages.Length];
-        for (int i = 0; i < swapChainImages.Length; i++)
+        Span<Image> images = stackalloc Image[imagesCount];
+        Span<DeviceMemory> imagesMemorySpan = stackalloc DeviceMemory[imagesCount];
+        for (int i = 0; i < images.Length; i++)
+        {
+            ImageCreateInfo createInfo = new()
+            {
+                ImageType = ImageType.Type2D,
+                Format = imageFormat,
+                Extent =
+                {
+                    Width= width,
+                    Height = height,
+                    Depth = 1,
+                },
+                MipLevels = 1,
+                ArrayLayers = 1,
+                Samples = SampleCountFlags.Count1Bit,
+                Tiling = ImageTiling.Optimal,
+                Usage = ImageUsageFlags.ColorAttachmentBit | ImageUsageFlags.TransferSrcBit
+            };
+            _ = vk.CreateImage(deviceQ, createInfo, null, out images[i]);
+            var reqs = vk.GetImageMemoryRequirements(deviceQ, images[i]);
+            MemoryAllocateInfo memAlloc = new()
+            {
+                SType = StructureType.MemoryAllocateInfo,
+                AllocationSize = reqs.Size,
+                MemoryTypeIndex = deviceQ.gpu.FindMemoryType(reqs.MemoryTypeBits, MemoryPropertyFlags.DeviceLocalBit),
+            };
+            _ = vk.AllocateMemory(deviceQ, memAlloc, null, out imagesMemorySpan[i]);
+            _ = vk.BindImageMemory(deviceQ, images[i], imagesMemorySpan[i], 0);
+        }
+        imagesMemory = ImmutableArray.Create(imagesMemorySpan);
+        return ImmutableArray.Create(images);
+    }
+
+    public static ImmutableArray<ImageView> CreateImageViews(Vk vk, Device device, ReadOnlySpan<Image> images, Format imageFormat)
+    {
+        Span<ImageView> imageViews = stackalloc ImageView[images.Length];
+        for (int i = 0; i < images.Length; i++)
         {
             ImageViewCreateInfo createInfo = new()
             {
                 SType = StructureType.ImageViewCreateInfo,
-                Image = swapChainImages[i],
+                Image = images[i],
                 ViewType = ImageViewType.Type2D,
                 Format = imageFormat,
                 Components = default,
@@ -534,22 +553,180 @@ internal static unsafe class RenderHelper
                     LayerCount = 1,
                 }
             };
-            _ = vk.CreateImageView(device, createInfo, null, out swapChainImageViews[i]);
+            _ = vk.CreateImageView(device, createInfo, null, out imageViews[i]);
         }
-        return ImmutableArray.Create(swapChainImageViews);
+        return ImmutableArray.Create(imageViews);
+    }
+
+    public static ImmutableArray<Framebuffer> CreateFramebuffers(Vk vk, Device device, ReadOnlySpan<ImageView> imageViews, RenderPass renderPass, Extent2D swapChainExtent)
+    {
+        Span<Framebuffer> framebuffers = stackalloc Framebuffer[imageViews.Length];
+        for (int i = 0; i < imageViews.Length; i++)
+        {
+            var attachment = imageViews[i];
+            FramebufferCreateInfo framebufferInfo = new()
+            {
+                SType = StructureType.FramebufferCreateInfo,
+                RenderPass = renderPass,
+                AttachmentCount = 1,
+                PAttachments = &attachment,
+                Width = swapChainExtent.Width,
+                Height = swapChainExtent.Height,
+                Layers = 1,
+            };
+            _ = vk.CreateFramebuffer(device, framebufferInfo, null, out framebuffers[i]);
+        }
+        return ImmutableArray.Create(framebuffers);
     }
 
 
     internal static DeviceQueues CreateLogicalDevice(Vk vk, Gpu gpu, SurfaceKHR surface, KhrSurface khrsf, ReadOnlySpan<string> deviceExtensions)
     {
-        var indices = new QueueFamilyIndiciesDetails(vk, surface, gpu, khrsf);
-        return new DeviceQueues(vk, gpu, indices, deviceExtensions);
+        var queueFamilies = SelectQueueFamilies(vk, gpu, surface, khrsf);
+        return new DeviceQueues(vk, gpu, queueFamilies, deviceExtensions);
     }
 
     internal static DeviceQueues CreateLogicalDevice(Vk vk, Gpu gpu, ReadOnlySpan<string> deviceExtensions)
     {
         //var indices = new QueueFamilyIndiciesDetails(vk, surface, gpu, khrsf);
         return new DeviceQueues(vk, gpu, default, deviceExtensions);
+    }
+
+    private static QueueFamilies SelectQueueFamilies(Vk vk, Gpu gpu, SurfaceKHR surface, KhrSurface khrsf)
+    {
+        uint graphicsFamily = 0;
+        uint presentFamily = 0;
+        uint computeFamily = 0;
+        uint transferFamily = 0;
+
+        uint graphicsQueueNum = 0;
+        uint presentQueueNum = 0;
+        uint computeQueueNum = 0;
+        uint transferQueueNum = 0;
+
+        uint queueFamilyCount = 0;
+        vk.GetPhysicalDeviceQueueFamilyProperties(gpu, &queueFamilyCount, null);
+        Span<QueueFamilyProperties> queueFamilies = stackalloc QueueFamilyProperties[(int)queueFamilyCount];
+        vk.GetPhysicalDeviceQueueFamilyProperties(gpu, &queueFamilyCount, queueFamilies);
+
+        int graphicsIndex, presentIndex, transferIndex, computendex;
+        graphicsIndex = presentIndex = transferIndex = computendex = -1;
+
+        Span<uint> bookedFamilies = stackalloc uint[(int)queueFamilyCount];
+
+        // Selection of specialized queues
+        for (int i = 0; i < queueFamilies.Length; i++)
+        {
+            var props = queueFamilies[i];
+            var flags = GetFlags(queueFamilies, i, gpu, surface, khrsf);
+
+            if (bookedFamilies[i] < props.QueueCount && flags.hasGraphics && graphicsIndex < 0)
+            {
+                graphicsIndex = i;
+                graphicsQueueNum = bookedFamilies[i]++;
+            }
+            if (bookedFamilies[i] < props.QueueCount && i != graphicsIndex && flags.hasPresent && presentIndex < 0)
+            {
+                presentIndex = i;
+                presentQueueNum = bookedFamilies[i]++;
+            }
+            if (bookedFamilies[i] < props.QueueCount && !flags.hasGraphics && flags.hasCompute && computendex < 0)
+            {
+                computendex = i;
+                computeQueueNum = bookedFamilies[i]++;
+            }
+            if (bookedFamilies[i] < props.QueueCount && !flags.hasGraphics && flags.hasTransfer && transferIndex < 0)
+            {
+                transferIndex = i;
+                transferQueueNum = bookedFamilies[i]++;
+            }
+            if (graphicsIndex >= 0 && presentIndex >= 0 && computendex >= 0 && transferIndex >= 0)
+                break;
+        }
+
+        // fallback if no unique specialized queue search just specialized
+        for (int i = 0; i < queueFamilies.Length; i++)
+        {
+            if (graphicsIndex >= 0 && presentIndex >= 0 && computendex >= 0 && transferIndex >= 0)
+                break;
+
+            var flags = GetFlags(queueFamilies, i, gpu, surface, khrsf);
+
+            if (flags.hasPresent && presentIndex < 0)
+            {
+                presentIndex = i;
+                presentQueueNum = 0;
+            }
+            if (!flags.hasGraphics && flags.hasCompute && computendex < 0)
+            {
+                computendex = i;
+                computeQueueNum = 0;
+            }
+            if (!flags.hasGraphics && flags.hasTransfer && transferIndex < 0)
+            {
+                transferIndex = i;
+                transferQueueNum = 0;
+            }
+        }
+
+        // fallback to anything supported
+        for (int i = 0; i < queueFamilies.Length; i++)
+        {
+            if (graphicsIndex >= 0 && presentIndex >= 0 && computendex >= 0 && transferIndex >= 0)
+                break;
+
+            var flags = GetFlags(queueFamilies, i, gpu, surface, khrsf);
+
+            if (flags.hasCompute && computendex < 0)
+            {
+                computendex = i;
+                computeQueueNum = 0;
+            }
+            if (flags.hasTransfer && transferIndex < 0)
+            {
+                transferIndex = i;
+                transferQueueNum = 0;
+            }
+        }
+        graphicsFamily = (uint)graphicsIndex;
+        presentFamily = (uint)presentIndex;
+        computeFamily = (uint)computendex;
+        transferFamily = (uint)transferIndex;
+        return new QueueFamilies()
+        {
+            graphics = (graphicsFamily, graphicsQueueNum),
+            present = (presentFamily, presentQueueNum),
+            compute = (computeFamily, computeQueueNum),
+            transfer = (transferFamily, transferQueueNum)
+        };
+    }
+
+    private static QueueFlagsData GetFlags(Span<QueueFamilyProperties> queueProps, int index, PhysicalDevice gpu, SurfaceKHR surface, KhrSurface khrsf)
+    {
+        var props = queueProps[index];
+        var flags = props.QueueFlags;
+        _ = khrsf.GetPhysicalDeviceSurfaceSupport(gpu, (uint)index, surface, out var presentSupport);
+        return new QueueFlagsData(
+            flags.HasFlag(QueueFlags.GraphicsBit),
+            flags.HasFlag(QueueFlags.TransferBit),
+            flags.HasFlag(QueueFlags.ComputeBit),
+            presentSupport);
+    }
+
+    private readonly struct QueueFlagsData
+    {
+        public readonly bool hasGraphics;
+        public readonly bool hasTransfer;
+        public readonly bool hasCompute;
+        public readonly bool hasPresent;
+
+        public QueueFlagsData(bool hasGraphics, bool hasTransfer, bool hasCompute, bool hasPresent)
+        {
+            this.hasGraphics = hasGraphics;
+            this.hasTransfer = hasTransfer;
+            this.hasCompute = hasCompute;
+            this.hasPresent = hasPresent;
+        }
     }
 
     public static SurfaceFormatKHR ChooseSwapSurfaceFormat(ImmutableArray<SurfaceFormatKHR> formats, SurfaceFormatKHR targetFormat)
@@ -569,16 +746,36 @@ internal static unsafe class RenderHelper
         };
     }
 
-    public static bool IsDeviceSuitable(Vk vk, PhysicalDevice device, SurfaceKHR surface, KhrSurface khrsf, ReadOnlySpan<string> neededExtensions)
+    public static bool IsDeviceSuitable(Vk vk, PhysicalDevice gpu, SurfaceKHR surface, KhrSurface khrsf, ReadOnlySpan<string> neededExtensions)
     {
-        var indices = new QueueFamilyIndiciesDetails(vk, surface, device, khrsf);
-        bool extensionsSupported = CheckDeviceExtensionsSupport(vk, device, neededExtensions);
-        return indices.suitable && extensionsSupported && SdlRendering.SwapChainSupportDetails.Adequate(device, surface, khrsf);
+        uint queueFamilyCount = 0;
+        vk.GetPhysicalDeviceQueueFamilyProperties(gpu, &queueFamilyCount, null);
+        Span<QueueFamilyProperties> queueFamilies = stackalloc QueueFamilyProperties[(int)queueFamilyCount];
+        vk.GetPhysicalDeviceQueueFamilyProperties(gpu, &queueFamilyCount, queueFamilies);
+        bool hasPresent = false;
+        for (int i = 0; i < queueFamilies.Length; i++)
+        {
+            _ = khrsf.GetPhysicalDeviceSurfaceSupport(gpu, (uint)i, surface, out var presentSupport);
+            if (presentSupport && (hasPresent = true))
+                break;
+        }
+        bool hasGraphics = queueFamilies.Exist(f => f.QueueFlags.HasFlag(QueueFlags.GraphicsBit));
+        bool extensionsSupported = CheckDeviceExtensionsSupport(vk, gpu, neededExtensions);
+        return hasGraphics && hasPresent && extensionsSupported && SdlRendering.SwapChainSupportDetails.Adequate(gpu, surface, khrsf);
     }
 
     public static bool IsDeviceSuitable(Vk vk, PhysicalDevice device, ReadOnlySpan<string> neededExtensions)
     {
         var gpu = new Gpu(vk, device);
+
+        uint queueFamilyCount = 0;
+        vk.GetPhysicalDeviceQueueFamilyProperties(gpu, &queueFamilyCount, null);
+        Span<QueueFamilyProperties> queueFamilies = stackalloc QueueFamilyProperties[(int)queueFamilyCount];
+        vk.GetPhysicalDeviceQueueFamilyProperties(gpu, &queueFamilyCount, queueFamilies);
+
+        static bool HasGraphics(QueueFamilyProperties f) => f.QueueFlags.HasFlag(QueueFlags.GraphicsBit);
+        bool hasGraphics = queueFamilies.Exist(&HasGraphics);
+
         bool extensionsSupported = CheckDeviceExtensionsSupport(vk, device, neededExtensions);
         return gpu.HasQueue(QueueType.Graphics) && extensionsSupported;
     }

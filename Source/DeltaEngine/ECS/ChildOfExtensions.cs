@@ -3,7 +3,6 @@ using Arch.Core.Extensions;
 using Delta.ECS.Components;
 using System;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 
 namespace Delta.ECS;
 internal static class ChildOfExtensions
@@ -13,7 +12,7 @@ internal static class ChildOfExtensions
     /// </summary>
     /// <param name="entity"></param>
     /// <returns>World matrix or <see cref="Matrix4x4.Identity"/> if no <see cref="Transform"/> found</returns>
-    [MethodImpl(Inl)]
+    [Imp(Inl)]
     public static Matrix4x4 GetWorldMatrix(this in Entity entity)
     {
         if (entity.Has<Transform>())
@@ -28,7 +27,7 @@ internal static class ChildOfExtensions
     /// </summary>
     /// <param name="entity"></param>
     /// <returns>World matrix or <see cref="Matrix4x4.Identity"/> if no parent with <see cref="Transform"/> found</returns>
-    [MethodImpl(Inl)]
+    [Imp(Inl)]
     public static Matrix4x4 GetParentWorldMatrix(this in Entity entity)
     {
         if (entity.GetParent<Transform>(out var parent))
@@ -41,7 +40,7 @@ internal static class ChildOfExtensions
     /// </summary>
     /// <param name="entity"></param>
     /// <returns>World matrix</returns>
-    [MethodImpl(Inl)]
+    [Imp(Inl)]
     public static Matrix4x4 GetWorldRecursive(this Entity entity)
     {
         ref var transform = ref entity.Get<Transform>();
@@ -52,7 +51,7 @@ internal static class ChildOfExtensions
             return localMatrix;
     }
 
-    [MethodImpl(Inl)]
+    [Imp(Inl)]
     public static bool GetParent(this ref Entity entity)
     {
         ref var childOf = ref entity.TryGetRef<ChildOf>(out bool has);
@@ -65,7 +64,7 @@ internal static class ChildOfExtensions
     }
 
 
-    [MethodImpl(Inl)]
+    [Imp(Inl)]
     public static bool GetParent<T>(this Entity entity, out Entity parent)
     {
         parent = entity;
@@ -76,7 +75,7 @@ internal static class ChildOfExtensions
     }
 
 
-    [MethodImpl(Inl)]
+    [Imp(Inl)]
     public static bool HasParent<T>(this Entity entity)
     {
         while (GetParent(ref entity))
@@ -85,7 +84,7 @@ internal static class ChildOfExtensions
         return false;
     }
 
-    [MethodImpl(Inl)]
+    [Imp(Inl)]
     public static uint GetDepth<T>(this Entity entity)
     {
         uint depth = 0;
@@ -103,7 +102,7 @@ internal static class ChildOfExtensions
                 depthSpan[depth++] = entity.Get<T>();
     }
 
-    [MethodImpl(Inl)]
+    [Imp(Inl)]
     public static bool GetLast<T>(this Entity entity, out Entity last)
     {
         last = Entity.Null;
@@ -114,6 +113,7 @@ internal static class ChildOfExtensions
     }
 
 
+    [Imp(Inl)]
     public static bool Has(this World world, in QueryDescription queryDescription)
     {
         var query = world.Query(in queryDescription);

@@ -17,6 +17,11 @@ internal readonly struct QueueFamilyIndiciesDetails
     public readonly uint computeQueueNum;
     public readonly uint transferQueueNum;
 
+    public readonly (uint family, uint queueNum) graphics => (graphicsFamily, graphicsQueueNum);
+    public readonly (uint family, uint queueNum) present => (presentFamily, presentQueueNum);
+    public readonly (uint family, uint queueNum) compute => (computeFamily, computeQueueNum);
+    public readonly (uint family, uint queueNum) transfer => (transferFamily, transferQueueNum);
+
     public readonly bool suitable;
 
     public unsafe QueueFamilyIndiciesDetails(Vk vk, SurfaceKHR surface, PhysicalDevice gpu, KhrSurface khrsf)

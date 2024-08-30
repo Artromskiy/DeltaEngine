@@ -20,18 +20,18 @@ internal readonly struct DeviceQueues : IDisposable
     public readonly CommandPool computeCmdPool;
     public readonly CommandPool transferCmdPool;
 
-    public readonly QueueFamilyIndiciesDetails queueIndicesDetails;
+    public readonly QueueFamilies queueFamilies;
     public readonly Gpu gpu;
 
     public static implicit operator Device(DeviceQueues deviceQueues) => deviceQueues.device;
 
-    public unsafe DeviceQueues(Vk vk, Gpu gpu, QueueFamilyIndiciesDetails indices, ReadOnlySpan<string> deviceExtensions)
+    public unsafe DeviceQueues(Vk vk, Gpu gpu, QueueFamilies queueFamilies, ReadOnlySpan<string> deviceExtensions)
     {
         _vk = vk;
         this.gpu = gpu;
-        queueIndicesDetails = indices;
+        this.queueFamilies = queueFamilies;
         Span<(uint queueFamily, uint count)> uniqueFamilyIndices = stackalloc (uint, uint)[4];
-        uniqueFamilyIndices = uniqueFamilyIndices[..indices.GetUniqueFamilies(uniqueFamilyIndices)];
+        uniqueFamilyIndices = uniqueFamilyIndices[..queueFamilies.GetUniqueFamilies(uniqueFamilyIndices)];
         var uniqueQueueFam = stackalloc DeviceQueueCreateInfo[uniqueFamilyIndices.Length];
         var queuePriority = stackalloc float[] { 1.0f, 1.0f, 1.0f, 1.0f };
         for (int i = 0; i < uniqueFamilyIndices.Length; i++)
@@ -57,10 +57,10 @@ internal readonly struct DeviceQueues : IDisposable
         };
         _ = vk.CreateDevice(gpu, &createInfo, null, out device);
 
-        graphicsQueue = vk.GetDeviceQueue(device, indices.graphicsFamily, indices.graphicsQueueNum);
-        presentQueue = vk.GetDeviceQueue(device, indices.presentFamily, indices.presentQueueNum);
-        computeQueue = vk.GetDeviceQueue(device, indices.computeFamily, indices.computeQueueNum);
-        transferQueue = vk.GetDeviceQueue(device, indices.transferFamily, indices.transferQueueNum);
+        graphicsQueue = vk.GetDeviceQueue(device, queueFamilies.graphics.family, queueFamilies.graphics.queueNum);
+        presentQueue = vk.GetDeviceQueue(device, queueFamilies.present.family, queueFamilies.present.queueNum);
+        computeQueue = vk.GetDeviceQueue(device, queueFamilies.compute.family, queueFamilies.compute.queueNum);
+        transferQueue = vk.GetDeviceQueue(device, queueFamilies.transfer.family, queueFamilies.transfer.queueNum);
 
         Span<CommandPool> cmdPools = stackalloc CommandPool[uniqueFamilyIndices.Length];
         for (int i = 0; i < cmdPools.Length; i++)
@@ -74,10 +74,10 @@ internal readonly struct DeviceQueues : IDisposable
             vk.CreateCommandPool(device, cmdPoolInfo, null, out cmdPools[i]);
         }
 
-        graphicsCmdPool = cmdPools[uniqueFamilyIndices.FindIndex(x => x.queueFamily == indices.graphicsFamily)];
-        presentCmdPool = cmdPools[uniqueFamilyIndices.FindIndex(x => x.queueFamily == indices.presentFamily)];
-        computeCmdPool = cmdPools[uniqueFamilyIndices.FindIndex(x => x.queueFamily == indices.computeFamily)];
-        transferCmdPool = cmdPools[uniqueFamilyIndices.FindIndex(x => x.queueFamily == indices.transferFamily)];
+        graphicsCmdPool = cmdPools[uniqueFamilyIndices.FindIndex(x => x.queueFamily == queueFamilies.graphics.family)];
+        presentCmdPool = cmdPools[uniqueFamilyIndices.FindIndex(x => x.queueFamily == queueFamilies.present.family)];
+        computeCmdPool = cmdPools[uniqueFamilyIndices.FindIndex(x => x.queueFamily == queueFamilies.compute.family)];
+        transferCmdPool = cmdPools[uniqueFamilyIndices.FindIndex(x => x.queueFamily == queueFamilies.transfer.family)];
 
         SilkMarshal.Free((nint)createInfo.PpEnabledExtensionNames);
     }

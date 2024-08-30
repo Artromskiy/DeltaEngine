@@ -1,7 +1,6 @@
 ﻿using CommunityToolkit.Maui;
 using Delta.Runtime;
 using DeltaEditorLib.Loader;
-using Microsoft.Extensions.Logging;
 
 namespace DeltaEditor;
 

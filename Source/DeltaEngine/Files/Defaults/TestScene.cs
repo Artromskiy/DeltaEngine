@@ -10,7 +10,6 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Delta.Files.Defaults;
@@ -168,7 +167,7 @@ internal static class TestScene
         {
             private readonly float deltaTime = deltaTime;
 
-            [MethodImpl(Inl)]
+            [Imp(Inl)]
             public readonly void Update(ref Transform t, ref MoveToTarget m)
             {
                 t.position = Vector3.Lerp(m.start, m.target, m.percent);

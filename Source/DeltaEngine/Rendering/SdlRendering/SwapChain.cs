@@ -23,7 +23,7 @@ internal class SwapChain : IDisposable
     {
         this.data = data;
         var swSupport = data.SwapChainSupport;
-        var indiciesDetails = data.deviceQ.queueIndicesDetails;
+        var indiciesDetails = data.deviceQ.queueFamilies;
 
         format = RenderHelper.ChooseSwapSurfaceFormat(swSupport.Formats, targetFormat);
         var presentMode = PresentModeKHR.MailboxKhr; // swSupport.PresentModes.Contains(PresentModeKHR.ImmediateKhr) ? PresentModeKHR.ImmediateKhr : PresentModeKHR.FifoKhr;
@@ -36,9 +36,9 @@ internal class SwapChain : IDisposable
         maxImageCount = maxImageCount == 0 ? int.MaxValue : maxImageCount;
         imageCount = (int)Math.Clamp(trgImageCount, swSupport.Capabilities.MinImageCount, maxImageCount);
 
-        bool sameFamily = indiciesDetails.graphicsFamily == indiciesDetails.presentFamily;
+        bool sameFamily = indiciesDetails.graphics.family == indiciesDetails.present.family;
 
-        var queueFamilyIndices = stackalloc[] { indiciesDetails.graphicsFamily, indiciesDetails.presentFamily };
+        var queueFamilyIndices = stackalloc[] { indiciesDetails.graphics.family, indiciesDetails.present.family };
 
         SwapchainCreateInfoKHR creatInfo = new()
         {
@@ -70,6 +70,14 @@ internal class SwapChain : IDisposable
         images = ImmutableArray.Create(imageSpan);
         imageViews = RenderHelper.CreateImageViews(data.vk, data.deviceQ, [.. images], format.Format);
         frameBuffers = RenderHelper.CreateFramebuffers(data.vk, data.deviceQ, [.. imageViews], data.renderPass, extent);
+    }
+
+    public unsafe uint GetImageIndex(Semaphore semaphore, out bool resize)
+    {
+        uint index = 0;
+        var res = khrSw.AcquireNextImage(data.deviceQ, swapChain, ulong.MaxValue, semaphore, default, &index);
+        resize = res == Result.SuboptimalKhr || res == Result.ErrorOutOfDateKhr;
+        return index;
     }
 
     public unsafe void Dispose()

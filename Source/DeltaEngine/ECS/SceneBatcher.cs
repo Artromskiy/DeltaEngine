@@ -9,7 +9,6 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 
@@ -144,7 +143,7 @@ internal class SceneBatcher : IRenderBatcher
 
     private readonly struct RemoveRender(Queue<uint> freeIds, RenderGroupData rendGroupData) : ISystem
     {
-        [MethodImpl(Inl)]
+        [Imp(Inl)]
         public readonly void Execute()
         {
             var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
@@ -158,7 +157,7 @@ internal class SceneBatcher : IRenderBatcher
         private readonly struct InlineRemover(Queue<uint> free, RenderGroupData rendGroupData)
             : IForEach<RendId, RenderGroup>
         {
-            [MethodImpl(Inl)]
+            [Imp(Inl)]
             public readonly void Update(ref RendId id, ref RenderGroup group)
             {
                 rendGroupData.Remove(group);
@@ -174,7 +173,7 @@ internal class SceneBatcher : IRenderBatcher
         private static readonly QueryDescription _addTag = new QueryDescription().WithAll<AddTag>();
         private readonly struct AddTag();
 
-        [MethodImpl(Inl)]
+        [Imp(Inl)]
         public readonly void Execute()
         {
             var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
@@ -195,7 +194,7 @@ internal class SceneBatcher : IRenderBatcher
             PooledSet<uint> forceUpdate)
             : IForEach<Render, RendId, RenderGroup>
         {
-            [MethodImpl(Inl)]
+            [Imp(Inl)]
             public readonly void Update(ref Render render, ref RendId id, ref RenderGroup group)
             {
                 uint index = free.Dequeue();
@@ -208,7 +207,7 @@ internal class SceneBatcher : IRenderBatcher
 
     private readonly struct ChangeRender(RenderGroupData rendGroupData) : ISystem
     {
-        [MethodImpl(Inl)]
+        [Imp(Inl)]
         public readonly void Execute()
         {
             var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
@@ -221,7 +220,7 @@ internal class SceneBatcher : IRenderBatcher
         private readonly struct ChangeWriter(RenderGroupData rendGroupData)
             : IForEach<Render, RenderGroup>
         {
-            [MethodImpl(Inl)]
+            [Imp(Inl)]
             public readonly void Update(ref Render render, ref RenderGroup group)
             {
                 rendGroupData.Remove(group);
@@ -234,7 +233,7 @@ internal class SceneBatcher : IRenderBatcher
         GpuArray<uint> rendersArray,
         RenderGroupData rendGroupData) : ISystem
     {
-        [MethodImpl(Inl)]
+        [Imp(Inl)]
         public readonly void Execute()
         {
             var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
@@ -256,7 +255,7 @@ internal class SceneBatcher : IRenderBatcher
         private readonly struct RenderWriter(GpuArray<uint>.GpuWriter writer, uint[] offsets) :
             IForEach<RenderGroup, RendId>
         {
-            [MethodImpl(Inl)]
+            [Imp(Inl)]
             public readonly void Update(ref RenderGroup group, ref RendId id) => writer[offsets[group.id]++] = id.trsId;
         }
     }
@@ -265,7 +264,7 @@ internal class SceneBatcher : IRenderBatcher
     {
         private readonly ThreadLocal<PooledList<uint>> _threadTransfer = new(() => new PooledList<uint>(ClearMode.Never), true);
 
-        [MethodImpl(Inl)]
+        [Imp(Inl)]
         public readonly void Execute()
         {
             var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
@@ -286,7 +285,7 @@ internal class SceneBatcher : IRenderBatcher
             ThreadLocal<PooledList<uint>> transfer, PooledSet<uint> forceWrite) :
             IForEachWithEntity<RendId>
         {
-            [MethodImpl(Inl)]
+            [Imp(Inl)]
             public readonly void Update(Entity entity, ref RendId rendToId)
             {
                 if (!ForceWrites && !forceWrite.Contains(rendToId.trsId) && !ctx.HasParent<DirtyFlag<Transform>>(entity))
@@ -300,7 +299,7 @@ internal class SceneBatcher : IRenderBatcher
             ThreadLocal<PooledList<uint>> transfer, PooledSet<uint> forceWrite) :
             IForEachWithEntity<RendId>
         {
-            [MethodImpl(Inl)]
+            [Imp(Inl)]
             public readonly void Update(Entity entity, ref RendId rendToId)
             {
                 if (!ForceWrites && !forceWrite.Contains(rendToId.trsId) && !ctx.HasParent<DirtyFlag<Transform>>(entity))
