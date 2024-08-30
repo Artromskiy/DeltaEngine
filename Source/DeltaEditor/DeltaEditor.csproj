@@ -9,7 +9,6 @@
 
     <RootNamespace>DeltaEditor</RootNamespace>
 
-
   </PropertyGroup>
   
   <ItemGroup>
