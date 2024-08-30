@@ -1,0 +1,66 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:uc="clr-namespace:DeltaEditor;assembly=DeltaEditor"
+             mc:Ignorable="d" d:DesignWidth="455" d:DesignHeight="20"
+             x:Class="DeltaEditor.ComponentNodeControl">
+
+  <Grid x:Name="MainGrid"
+        x:FieldModifier="private"
+        Background="Magenta">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="20"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+    
+    <Grid Grid.Row="0">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="20"/>
+        <ColumnDefinition Width="20"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="20"/>
+      </Grid.RowDefinitions>
+
+      <!--Collapse/Expand-->
+      <Button Grid.Column="0"
+              x:Name="CollapseButton"
+              x:FieldModifier="private"
+              Click="OnCollapseClick"
+              CornerRadius="0,0,3,0"
+              Padding = "0"
+              Width="20"
+              Height="20">
+        <Svg x:Name="CollapseIcon"
+             x:FieldModifier="private"
+             Path="/Assets/Icons/expand.svg"
+             Margin="3"/>
+      </Button>
+      
+      <!--Component Icon-->
+      <Svg Grid.Column="1"
+           Margin="3"
+           Path="/Assets/Icons/file.svg"/>
+      
+      <!--Component Name-->
+      <Label x:Name="ComponentName"
+             x:FieldModifier="private"
+             Grid.Column="2"
+             Padding="0"
+             FontWeight="Bold"
+             FontSize="12"
+             VerticalContentAlignment="Center">
+        Component
+      </Label>
+      
+    </Grid>
+    
+    <Grid Grid.Row="1"
+            x:Name="ChildrenGrid"
+            x:FieldModifier="private">
+    </Grid>
+    
+  </Grid>
+</UserControl>

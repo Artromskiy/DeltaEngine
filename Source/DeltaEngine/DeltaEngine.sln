@@ -24,7 +24,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeltaBench", "..\DeltaBench
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleModelImporter", "..\ConsoleModelImporter\ConsoleModelImporter.csproj", "{3E274157-E313-491F-A604-7D4A7D56DE94}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeltaEditorAvalonia", "..\DeltaEditorAvalonia\DeltaEditorAvalonia.csproj", "{098436C9-D95A-4101-8F7A-534F83D62085}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeltaEditor", "..\DeltaEditor\DeltaEditor.csproj", "{098436C9-D95A-4101-8F7A-534F83D62085}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

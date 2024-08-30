@@ -1,0 +1,35 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="455" d:DesignHeight="20"
+             x:Class="DeltaEditor.NamedTextField">
+
+  <Grid Grid.Column="0"
+        Height="20"
+        x:Name="ContainerGrid"
+        x:FieldModifier="private"
+        ColumnDefinitions="*,3*">
+
+    <Label Grid.Column="0"
+           x:Name="NameLabel"
+           x:FieldModifier="private"
+           FontSize="12"
+           HorizontalAlignment="Right"
+           Padding="5,0,5,0"
+           VerticalContentAlignment="Center"
+           Content="SomeField"/>
+
+    <TextBox Grid.Column="1"
+             x:Name="DataTextBox"
+             x:FieldModifier="private"
+             FontSize="12"
+             CornerRadius="0,3,3,0"
+             BorderThickness="0,0,1,0"
+             Padding="5,0,0,0"
+             MinHeight="0"
+             Height="20"
+             VerticalContentAlignment="Center"
+             Text="SomeData"/>
+  </Grid>
+</UserControl>

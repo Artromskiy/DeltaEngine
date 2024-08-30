@@ -1,0 +1,90 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:uc="clr-namespace:DeltaEditor;assembly=DeltaEditor"
+             mc:Ignorable="d" d:DesignWidth="455" d:DesignHeight="612"
+             x:Class="DeltaEditor.InspectorControl">
+
+  <Grid Background="Magenta">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="20"/>
+      <RowDefinition Height="20"/>
+      <RowDefinition Height="*"/>
+    </Grid.RowDefinitions>
+
+    <!--Menu Name-->
+    <Grid Grid.Row="0">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="20"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+      <Svg Grid.Column="0"
+           Margin="3"
+           Path="/Assets/Icons/inspector.svg"/>
+      <Label Grid.Column="1"
+             FontWeight="Bold"
+             FontSize="12">
+        Inspector
+      </Label>
+    </Grid>
+
+    <Grid Grid.Row="1">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+      <Border Grid.Column="0"
+              Width="20">
+        
+      </Border>
+      <!--Entity Icon-->
+      <Border Grid.Column="1"
+              Width="20"
+              Height="20"
+              BorderThickness="0,0,0,0"
+              BorderBrush="Black"
+              Padding="3">
+        <Svg Path="/Assets/Icons/entity.svg"/>
+      </Border>
+
+      <!--Name field-->
+      <TextBox Grid.Column="2"
+               MinHeight="0"
+               Height="20"
+               CornerRadius="0,0,0,0"
+               BorderBrush="Black"
+               FontSize="12"
+               Padding="5,0,0,0"
+               BorderThickness="0,0,0,0"
+               VerticalContentAlignment="Center"
+               Watermark="Name"/>
+    </Grid>
+
+    <!--Entities-->
+    <Border Grid.Row="2"
+            Background="Cyan">
+      <ScrollViewer VerticalScrollBarVisibility="Visible">
+        <StackPanel x:Name="InspectorStack"
+                    x:FieldModifier="private">
+          
+          <!--Test Transform-->
+          
+          <!--
+          <uc:ComponentNodeControl Collapsed="False"
+                                   RowsDefs="*,*,*">
+            <uc:ComponentNodeControl.Rows>
+              <uc:Vector3NodeControl Grid.Row="0"/>
+              <uc:QuaternionNodeControl Grid.Row="1"/>
+              <uc:Vector3NodeControl Grid.Row="2"/>
+            </uc:ComponentNodeControl.Rows>
+          </uc:ComponentNodeControl>
+          -->
+          
+        </StackPanel>
+      </ScrollViewer>
+    </Border>
+
+  </Grid>
+</UserControl>
