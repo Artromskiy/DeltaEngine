@@ -23,6 +23,7 @@ internal static class TestScene
     //private const int N = 200_000;
     //private const int N = 100_000;
     //private const int N = 10_000;
+    //private const int N = 5_000; // TODO Check crush
     //private const int N = 1_000;
     //private const int N = 100;
     private const int N = 20;

@@ -1,6 +1,5 @@
 ﻿using Arch.Core;
 using Avalonia.Controls;
-using DeltaEditor;
 using DeltaEditorLib.Scripting;
 using System;
 using System.Collections.Generic;

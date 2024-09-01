@@ -8,21 +8,11 @@
 
   <Grid x:Name="MainGrid"
         x:FieldModifier="private"
-        Background="Magenta">
-    <Grid.RowDefinitions>
-      <RowDefinition Height="20"/>
-      <RowDefinition Height="Auto"/>
-    </Grid.RowDefinitions>
+        Background="Magenta"
+        RowDefinitions="20, Auto">
     
-    <Grid Grid.Row="0">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="20"/>
-        <ColumnDefinition Width="20"/>
-        <ColumnDefinition Width="*"/>
-      </Grid.ColumnDefinitions>
-      <Grid.RowDefinitions>
-        <RowDefinition Height="20"/>
-      </Grid.RowDefinitions>
+    <Grid Grid.Row="0"
+          ColumnDefinitions="20,20,*,Auto">
 
       <!--Collapse/Expand-->
       <Button Grid.Column="0"
@@ -51,9 +41,17 @@
              Padding="0"
              FontWeight="Bold"
              FontSize="12"
-             VerticalContentAlignment="Center">
-        Component
-      </Label>
+             VerticalContentAlignment="Center"
+             Content="Component"/>
+      
+      <Label x:Name="DebugTimer"
+             x:FieldModifier="private"
+             Grid.Column="3"
+             Padding="0,0,5,0"
+             FontWeight="Bold"
+             FontSize="12"
+             VerticalContentAlignment="Center"
+             Content="3350μs"/>
       
     </Grid>
     

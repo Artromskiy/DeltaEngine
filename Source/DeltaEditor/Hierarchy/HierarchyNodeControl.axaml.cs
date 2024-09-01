@@ -5,7 +5,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Delta.ECS.Components;
-using DeltaEditor;
 using System;
 
 namespace DeltaEditor;
@@ -23,6 +22,8 @@ public partial class HierarchyNodeControl : UserControl
         get => GetValue(SelectedProperty);
         set
         {
+            if (GetValue(SelectedProperty) == value)
+                return;
             SetValue(SelectedProperty, value);
             MainBorder.Background = new SolidColorBrush(value ? Colors.Cyan : Colors.Magenta);
         }

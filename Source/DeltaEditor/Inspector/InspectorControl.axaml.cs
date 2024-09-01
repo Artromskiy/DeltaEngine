@@ -5,13 +5,13 @@ using Avalonia.Controls;
 using Delta.Runtime;
 using Delta.Scripting;
 using Delta.Utilities;
-using DeltaEditor;
 using DeltaEditor.Inspector;
 using DeltaEditor.Inspector.Internal;
 using DeltaEditorLib.Scripting;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 
 namespace DeltaEditor;
 
@@ -25,6 +25,9 @@ public partial class InspectorControl : UserControl
 
     private readonly IAccessorsContainer _accessors;
     private readonly ImmutableArray<Type> _components;
+
+    private readonly Stopwatch sw = new();
+    private int prevTime = 0;
 
     public InspectorControl()
     {
@@ -41,13 +44,14 @@ public partial class InspectorControl : UserControl
     {
         SelectedEntity = entityReference;
     }
-
     public void UpdateInspector(IRuntimeContext ctx)
     {
+        sw.Restart();
         if (!SelectedEntity.IsAlive()) // Dead entity
         {
             ClearHandledEntityData();
             ClearInspector();
+            StopDebug();
             return;
         }
         if (CurrentArch != SelectedEntity.Entity.GetArchetype()) // Arch changed
@@ -65,6 +69,19 @@ public partial class InspectorControl : UserControl
                 // TODO mark dirty
             }
         }
+        StopDebug();
+    }
+
+    private void StopDebug()
+    {
+        sw.Stop();
+        prevTime = SmoothInt(prevTime, (int)sw.Elapsed.TotalMicroseconds, 50);
+        DebugTimer.Content = $"{prevTime}us";
+    }
+
+    private static int SmoothInt(int value1, int value2, int smoothing)
+    {
+        return ((value1 * smoothing) + value2) / (smoothing + 1);
     }
 
     private void RebuildInspectorComponents(IRuntimeContext ctx)

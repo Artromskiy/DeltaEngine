@@ -5,6 +5,7 @@ using Avalonia.Interactivity;
 using DeltaEditor.Inspector;
 using DeltaEditor.Inspector.Internal;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace DeltaEditor;
 
@@ -24,6 +25,8 @@ internal partial class ComponentNodeControl : UserControl, INode
 
     private const string CollapseSvgPath = "/Assets/Icons/collapse.svg";
     private const string ExpandSvgPath = "/Assets/Icons/expand.svg";
+
+    private readonly Stopwatch sw = new Stopwatch();
 
     private readonly List<INode> _fields = [];
 
@@ -71,14 +74,32 @@ internal partial class ComponentNodeControl : UserControl, INode
         }
     }
 
+    private int prevTime;
     public bool UpdateData(EntityReference entity)
     {
-        bool changed = false;
+        sw.Restart();
 
+        bool changed = false;
         if (!Collapsed)
             foreach (var field in _fields)
                 changed |= field.UpdateData(entity);
 
+        sw.Stop();
+        prevTime = SmoothInt(prevTime, (int)sw.Elapsed.TotalMicroseconds, 50);
+        DebugTimer.Content = $"{prevTime}us";
+
         return changed;
+    }
+
+    private void StopDebug()
+    {
+        sw.Stop();
+        prevTime = SmoothInt(prevTime, (int)sw.Elapsed.TotalMicroseconds, 50);
+        DebugTimer.Content = $"{prevTime}us";
+    }
+
+    private static int SmoothInt(int value1, int value2, int smoothing)
+    {
+        return ((value1 * smoothing) + value2) / (smoothing + 1);
     }
 }

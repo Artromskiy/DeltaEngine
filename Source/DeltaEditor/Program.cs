@@ -1,6 +1,5 @@
 ﻿using Avalonia;
 using Delta.Runtime;
-using DeltaEditor;
 using DeltaEditorLib.Loader;
 using System;
 

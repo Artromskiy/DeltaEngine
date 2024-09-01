@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using Delta.Utilities;
+using System;
 using System.Numerics;
-
 namespace Delta.Rendering;
 
 /// <summary>
@@ -24,6 +22,10 @@ public enum VertexAttribute : int
 
 internal static class VertexAttributeExtensions
 {
+    private static readonly int _attributesCount = Enums.GetValues<VertexAttribute>().Length;
+    private static VertexAttribute GetAttribute(int location) => (VertexAttribute)(1 << location);
+    public static int GetAttributeLocation(this VertexAttribute attribute) => BitOperations.Log2((uint)attribute);
+    public static int GetAttributeSize(this VertexAttribute attribute) => GetAttributeSize(GetAttributeLocation(attribute));
     private static int GetAttributeSize(int location)
     {
         const int float4 = 4 * 4;
@@ -42,9 +44,8 @@ internal static class VertexAttributeExtensions
             _ => float4,  // default for user data
         };
     }
+    public static EnumerableVertexAttributeMask Iterate(this VertexAttribute vertexAttributeMask) => new(vertexAttributeMask);
 
-    private static VertexAttribute GetAttribute(int location) => (VertexAttribute)(1 << location);
-    private static int AttributesCount => Enum.GetValues<VertexAttribute>().Length;
     public struct VertexAttributeMaskElement(VertexAttribute value, int location, int size)
     {
         public VertexAttribute value = value;
@@ -52,31 +53,29 @@ internal static class VertexAttributeExtensions
         public int size = size;
     }
 
-    public static IterateVertexAttributeMask Iterate(this VertexAttribute vertexAttributeMask) => new(vertexAttributeMask);
 
-    public struct IterateVertexAttributeMask(VertexAttribute vertexAttributeMask) : IEnumerator<VertexAttributeMaskElement>, IEnumerable<VertexAttributeMaskElement>
+    public ref struct EnumerableVertexAttributeMask
     {
-        private readonly VertexAttribute _vertexAttributeMask = vertexAttributeMask;
+        private readonly VertexAttribute _mask;
         private int _position = -1;
-        public readonly void Dispose() { }
-        public void Reset() => _position = -1;
+
+        internal EnumerableVertexAttributeMask(VertexAttribute mask) => _mask = mask;
+
         public bool MoveNext()
         {
             _position++;
-            while (_position < AttributesCount && !_vertexAttributeMask.HasFlag(GetAttribute(_position)))
+            while (_position < _attributesCount && !_mask.HasFlag(GetAttribute(_position)))
                 _position++;
-            return _position < AttributesCount;
+            return _position < _attributesCount;
         }
         public readonly VertexAttributeMaskElement Current => new(GetAttribute(_position), _position, GetAttributeSize(_position));
-        public readonly IEnumerator<VertexAttributeMaskElement> GetEnumerator() => this;
-        readonly object IEnumerator.Current => Current;
-        readonly IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        public readonly EnumerableVertexAttributeMask GetEnumerator() => this;
     }
 
     public static int GetVertexSize(this VertexAttribute vertexAttributeMask)
     {
         int size = 0;
-        for (int i = 0; i < AttributesCount; i++)
+        for (int i = 0; i < _attributesCount; i++)
             size += vertexAttributeMask.HasFlag(GetAttribute(i)) ? GetAttributeSize(i) : 0;
         return size;
     }
@@ -84,7 +83,7 @@ internal static class VertexAttributeExtensions
     public static int GetAttributesCount(this VertexAttribute vertexAttributeMask)
     {
         int size = 0;
-        for (int i = 0; i < AttributesCount; i++)
+        for (int i = 0; i < _attributesCount; i++)
             if (vertexAttributeMask.HasFlag(GetAttribute(i)))
                 size++;
         return size;
@@ -96,6 +95,4 @@ internal static class VertexAttributeExtensions
         return (location, GetAttributeSize(location));
     }
 
-    public static int Location(this VertexAttribute attribute) => BitOperations.Log2((uint)attribute);
-    public static int Size(this VertexAttribute attribute) => GetAttributeSize(Location(attribute));
 }

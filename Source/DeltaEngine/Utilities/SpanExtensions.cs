@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Delta.Utilities;
 
-internal static class SpanExtensions
+public static class SpanExtensions
 {
     public static bool Exist<T>(this ReadOnlySpan<T> span, Predicate<T> match, out T result) where T : struct
     {
@@ -97,22 +97,67 @@ internal static class SpanExtensions
         array.CopyTo(span);
     }
 
+    #region Distinct
     public static int Distinct<T>(this Span<T> items)
     {
         EqualityComparer<T> comparer = EqualityComparer<T>.Default;
         int count = items.Length;
         int lastNonDuplicate = 0;
-        Span<bool> duplicateMask = stackalloc bool[count];
         for (int i = 0; i < count; i++)
         {
-            for (int j = 0; j < i; j++)
-                if (!duplicateMask[j] && comparer.Equals(items[i], items[j]) && (duplicateMask[i] = true))
-                    break;
+            var item = items[i];
+            for (int j = 0; j < lastNonDuplicate; j++)
+                if (comparer.Equals(item, items[j]))
+                    goto end;
+            items[lastNonDuplicate++] = item;
+        end:;
         }
-        for (int i = 0; i < count; i++)
-            if (!duplicateMask[i])
-                items[lastNonDuplicate++] = items[i];
         return lastNonDuplicate;
     }
 
+    public static int Distinct<T>(this Span<T> items, EqualityComparer<T> comparer)
+    {
+        int count = items.Length;
+        int lastNonDuplicate = 0;
+        for (int i = 0; i < count; i++)
+        {
+            var item = items[i];
+            for (int j = 0; j < lastNonDuplicate; j++)
+                if (comparer.Equals(item, items[j]))
+                    goto end;
+            items[lastNonDuplicate++] = item;
+        end:;
+        }
+        return lastNonDuplicate;
+    }
+    #endregion
+
+    #region CountRepetitions
+
+    public static int CountRepetitions<T>(this ReadOnlySpan<T> items, Span<(T key, int count)> repeatCount)
+    {
+        EqualityComparer<T> comparer = EqualityComparer<T>.Default;
+        int count = items.Length;
+        int lastNonDuplicate = 0;
+        for (int i = 0; i < count; i++)
+        {
+            var item = items[i];
+            for (int j = 0; j < lastNonDuplicate; j++)
+                if (comparer.Equals(item, repeatCount[j].key))
+                {
+                    repeatCount[j].count++;
+                    goto end;
+                }
+            repeatCount[lastNonDuplicate++] = (item, 1);
+        end:;
+        }
+        return lastNonDuplicate;
+    }
+
+    public static int CountRepetitions<T>(this Span<T> items, Span<(T key, int count)> repeatCount)
+    {
+        return CountRepetitions((ReadOnlySpan<T>)items, repeatCount);
+    }
+
+    #endregion
 }

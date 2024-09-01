@@ -30,7 +30,7 @@ internal class DynamicBuffer
         _size = sizeBytes;
         CreateBuffer(ref _size, out _buffer, out _memory);
         _copyFence = RenderHelper.CreateFence(vk, deviceQ, false);
-        _cmdBuffer = RenderHelper.CreateCommandBuffer(_vk, _deviceQ, _deviceQ.transferCmdPool);
+        _cmdBuffer = RenderHelper.CreateCommandBuffer(_vk, _deviceQ, _deviceQ.GetCmdPool(QueueType.Transfer));
     }
 
     public Buffer GetBuffer() => _buffer;
@@ -117,7 +117,7 @@ internal class DynamicBuffer
             PCommandBuffers = &cmdBuffer
         };
         var fence = _copyFence;
-        var res = _vk.QueueSubmit(_deviceQ.graphicsQueue, 1, &submitInfo, fence);
+        var res = _vk.QueueSubmit(_deviceQ.GetQueue(QueueType.Graphics), 1, &submitInfo, fence);
         _ = res;
         if (res == Result.Success)
             _ = _vk.WaitForFences(_deviceQ, 1, &fence, true, ulong.MaxValue);

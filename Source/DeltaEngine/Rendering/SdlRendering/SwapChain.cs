@@ -1,4 +1,5 @@
-﻿using Silk.NET.Vulkan;
+﻿using Delta.Rendering.Internal;
+using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
 using System;
 using System.Collections.Immutable;
@@ -23,7 +24,7 @@ internal class SwapChain : IDisposable
     {
         this.data = data;
         var swSupport = data.SwapChainSupport;
-        var indiciesDetails = data.deviceQ.queueFamilies;
+        var queueFamilies = data.deviceQ.familyQueues;
 
         format = RenderHelper.ChooseSwapSurfaceFormat(swSupport.Formats, targetFormat);
         var presentMode = PresentModeKHR.MailboxKhr; // swSupport.PresentModes.Contains(PresentModeKHR.ImmediateKhr) ? PresentModeKHR.ImmediateKhr : PresentModeKHR.FifoKhr;
@@ -36,9 +37,9 @@ internal class SwapChain : IDisposable
         maxImageCount = maxImageCount == 0 ? int.MaxValue : maxImageCount;
         imageCount = (int)Math.Clamp(trgImageCount, swSupport.Capabilities.MinImageCount, maxImageCount);
 
-        bool sameFamily = indiciesDetails.graphics.family == indiciesDetails.present.family;
+        bool sameFamily = queueFamilies[QueueType.Graphics].family == queueFamilies[QueueType.Present].family;
 
-        var queueFamilyIndices = stackalloc[] { indiciesDetails.graphics.family, indiciesDetails.present.family };
+        var queueFamilyIndices = stackalloc[] { queueFamilies[QueueType.Graphics].family, queueFamilies[QueueType.Present].family };
 
         SwapchainCreateInfoKHR creatInfo = new()
         {

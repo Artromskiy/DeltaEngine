@@ -19,9 +19,6 @@ internal class Frame : IDisposable
 
     private readonly Dictionary<IRenderBatcher, DescriptorSets> _batchedSets = [];
 
-    //public readonly DescriptorSets DescriptorSets;
-
-
     private Semaphore _syncSemaphore;
 
     public void UpdateSwapChain(SwapChain swapChain)
@@ -35,7 +32,6 @@ internal class Frame : IDisposable
         _renderAssets = renderAssets;
         _swapChain = swapChain;
 
-        //DescriptorSets = new DescriptorSets(renderBase);
 
         FenceCreateInfo fenceInfo = new(StructureType.FenceCreateInfo, null, FenceCreateFlags.SignaledBit);
         SemaphoreCreateInfo semaphoreInfo = new(StructureType.SemaphoreCreateInfo);
@@ -43,7 +39,7 @@ internal class Frame : IDisposable
         CommandBufferAllocateInfo allocInfo = new()
         {
             SType = StructureType.CommandBufferAllocateInfo,
-            CommandPool = _rendererBase.deviceQ.graphicsCmdPool,
+            CommandPool = _rendererBase.deviceQ.GetCmdPool(QueueType.Graphics),
             Level = CommandBufferLevel.Primary,
             CommandBufferCount = 1,
         };
@@ -56,7 +52,7 @@ internal class Frame : IDisposable
 
     public unsafe void Dispose()
     {
-        _rendererBase.vk.FreeCommandBuffers(_rendererBase.deviceQ, _rendererBase.deviceQ.graphicsCmdPool, 1, in _commandBuffer);
+        _rendererBase.vk.FreeCommandBuffers(_rendererBase.deviceQ, _rendererBase.deviceQ.GetCmdPool(QueueType.Graphics), 1, in _commandBuffer);
         _rendererBase.vk.DestroySemaphore(_rendererBase.deviceQ, _imageAvailable, null);
         _rendererBase.vk.DestroySemaphore(_rendererBase.deviceQ, _renderFinished, null);
         _rendererBase.vk.DestroyFence(_rendererBase.deviceQ, _renderFinishedFence, null);
@@ -64,7 +60,6 @@ internal class Frame : IDisposable
         foreach (var item in _batchedSets)
             item.Value.Dispose();
         _batchedSets.Clear();
-        //DescriptorSets.Dispose();
     }
     public void CopyBatchersData(CommandBuffer commandBuffer)
     {
@@ -122,7 +117,7 @@ internal class Frame : IDisposable
             SignalSemaphoreCount = 1,
             PSignalSemaphores = &renderFinished,
         };
-        _ = _rendererBase.vk.QueueSubmit(_rendererBase.deviceQ.graphicsQueue, 1, submitInfo, _renderFinishedFence);
+        _ = _rendererBase.vk.QueueSubmit(_rendererBase.deviceQ.GetQueue(QueueType.Graphics), 1, submitInfo, _renderFinishedFence);
         var swapChain = _swapChain.swapChain;
         PresentInfoKHR presentInfo = new()
         {
@@ -133,7 +128,7 @@ internal class Frame : IDisposable
             PSwapchains = &swapChain,
             PImageIndices = &imageIndex
         };
-        var res = _swapChain.khrSw.QueuePresent(_rendererBase.deviceQ.presentQueue, presentInfo);
+        var res = _swapChain.khrSw.QueuePresent(_rendererBase.deviceQ.GetQueue(QueueType.Present), presentInfo);
         resize = res == Result.SuboptimalKhr || res == Result.ErrorOutOfDateKhr;
         if (!resize)
             _ = res;

@@ -66,7 +66,11 @@ internal class RenderBase : IDisposable
         var discrete = props.DeviceType == PhysicalDeviceType.DiscreteGpu ? 1 : 0;
         return suitable ? 1 + discrete : 0;
     }
-    protected virtual DeviceQueues CreateLogicalDevice() => RenderHelper.CreateLogicalDevice(vk, gpu, DeviceExtensions);
+    protected virtual DeviceQueues CreateLogicalDevice()
+    {
+        Span<QueueType> neededQueues = [QueueType.Graphics, QueueType.Compute, QueueType.Transfer];
+        return RenderHelper.CreateLogicalDevice(vk, gpu, neededQueues, DeviceExtensions);
+    }
 
     public unsafe void Dispose()
     {

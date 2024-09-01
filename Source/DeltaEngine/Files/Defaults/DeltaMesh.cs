@@ -37,8 +37,8 @@ internal static class DeltaMesh
         get
         {
             byte[][] meshData = new byte[16][];
-            meshData[VertexAttribute.Pos2.Location()] = MemoryMarshal.AsBytes(positions.AsSpan()).ToArray();
-            meshData[VertexAttribute.Col.Location()] = MemoryMarshal.AsBytes(colors.AsSpan()).ToArray();
+            meshData[VertexAttribute.Pos2.GetAttributeLocation()] = MemoryMarshal.AsBytes(positions.AsSpan()).ToArray();
+            meshData[VertexAttribute.Col.GetAttributeLocation()] = MemoryMarshal.AsBytes(colors.AsSpan()).ToArray();
             return new(positions.Length, deltaLetterIndices, meshData);
         }
     }

@@ -19,9 +19,6 @@ internal class Frame : IDisposable
 
     private readonly Dictionary<IRenderBatcher, DescriptorSets> _batchedSets = [];
 
-    //public readonly DescriptorSets DescriptorSets;
-
-
     private Semaphore _syncSemaphore;
 
     public void UpdateSwapChain(SwapChain swapChain)
@@ -35,15 +32,13 @@ internal class Frame : IDisposable
         _renderAssets = renderAssets;
         _swapChain = swapChain;
 
-        //DescriptorSets = new DescriptorSets(renderBase);
-
         FenceCreateInfo fenceInfo = new(StructureType.FenceCreateInfo, null, FenceCreateFlags.SignaledBit);
         SemaphoreCreateInfo semaphoreInfo = new(StructureType.SemaphoreCreateInfo);
 
         CommandBufferAllocateInfo allocInfo = new()
         {
             SType = StructureType.CommandBufferAllocateInfo,
-            CommandPool = _rendererBase.deviceQ.graphicsCmdPool,
+            CommandPool = _rendererBase.deviceQ.GetCmdPool(QueueType.Graphics),
             Level = CommandBufferLevel.Primary,
             CommandBufferCount = 1,
         };
@@ -56,7 +51,9 @@ internal class Frame : IDisposable
 
     public unsafe void Dispose()
     {
-        _rendererBase.vk.FreeCommandBuffers(_rendererBase.deviceQ, _rendererBase.deviceQ.graphicsCmdPool, 1, in _commandBuffer);
+        _rendererBase.vk.FreeCommandBuffers(_rendererBase.deviceQ,
+            _rendererBase.deviceQ.GetCmdPool(QueueType.Graphics), 1, in _commandBuffer);
+
         _rendererBase.vk.DestroySemaphore(_rendererBase.deviceQ, _imageAvailable, null);
         _rendererBase.vk.DestroySemaphore(_rendererBase.deviceQ, _renderFinished, null);
         _rendererBase.vk.DestroyFence(_rendererBase.deviceQ, _renderFinishedFence, null);
@@ -64,7 +61,6 @@ internal class Frame : IDisposable
         foreach (var item in _batchedSets)
             item.Value.Dispose();
         _batchedSets.Clear();
-        //DescriptorSets.Dispose();
     }
     public void CopyBatchersData(CommandBuffer commandBuffer)
     {
@@ -89,15 +85,11 @@ internal class Frame : IDisposable
     public unsafe void Draw(out bool resize)
     {
         //_rendererData.vk.WaitForFences(_rendererData.deviceQueues.device, 1, renderFinishedFence, true, ulong.MaxValue);
-
+        resize = false;
         var imageAvailable = _imageAvailable;
-        uint imageIndex = 0;
+        int imageIndex = 0;
 
-        var res = Result.Success; // _swapChain.khrSw.AcquireNextImage(_rendererBase.deviceQ, _swapChain.swapChain, ulong.MaxValue, imageAvailable, default, &imageIndex);
-
-        resize = res == Result.SuboptimalKhr || res == Result.ErrorOutOfDateKhr;
-        if (resize)
-            return;
+        imageIndex = _swapChain.AcquireNextImage();
 
         _rendererBase.vk.ResetFences(_rendererBase.deviceQ, 1, _renderFinishedFence);
         _rendererBase.vk.ResetCommandBuffer(_commandBuffer, 0);
@@ -114,7 +106,7 @@ internal class Frame : IDisposable
 
         var waitStages = stackalloc PipelineStageFlags[] { PipelineStageFlags.ColorAttachmentOutputBit, PipelineStageFlags.ColorAttachmentOutputBit };
         var waitBeforeRender = stackalloc Semaphore[2] { imageAvailable, syncSemaphore };
-        var renderFinished = this._renderFinished;
+        var renderFinished = _renderFinished;
 
         SubmitInfo submitInfo = new()
         {
@@ -127,26 +119,11 @@ internal class Frame : IDisposable
             SignalSemaphoreCount = 1,
             PSignalSemaphores = &renderFinished,
         };
-        _ = _rendererBase.vk.QueueSubmit(_rendererBase.deviceQ.graphicsQueue, 1, submitInfo, _renderFinishedFence);
-        /*
-        var swapChain = _swapChain.swapChain;
-        PresentInfoKHR presentInfo = new()
-        {
-            SType = StructureType.PresentInfoKhr,
-            WaitSemaphoreCount = 1,
-            PWaitSemaphores = &renderFinished,
-            SwapchainCount = 1,
-            PSwapchains = &swapChain,
-            PImageIndices = &imageIndex
-        };
-        */
-        res = Result.Success; // _swapChain.khrSw.QueuePresent(_rendererBase.deviceQ.presentQueue, presentInfo);
-        resize = res == Result.SuboptimalKhr || res == Result.ErrorOutOfDateKhr;
-        if (!resize)
-            _ = res;
+        _ = _rendererBase.vk.QueueSubmit(_rendererBase.deviceQ.GetQueue(QueueType.Graphics), 1, submitInfo, _renderFinishedFence);
+        _swapChain.Present(renderFinished, imageAvailable);
     }
 
-    private unsafe void BeginRecordCommandBuffer(uint imageIndex)
+    private unsafe void BeginRecordCommandBuffer(int imageIndex)
     {
         CommandBufferBeginInfo beginInfo = new(StructureType.CommandBufferBeginInfo);
         ClearValue clearColor = new(new ClearColorValue(0.05f, 0.05f, 0.05f, 1));
@@ -155,7 +132,7 @@ internal class Frame : IDisposable
         {
             SType = StructureType.RenderPassBeginInfo,
             RenderPass = _rendererBase.renderPass,
-            Framebuffer = _swapChain.frameBuffers[(int)imageIndex],
+            Framebuffer = _swapChain.frameBuffers[imageIndex],
             ClearValueCount = 1,
             PClearValues = &clearColor,
             RenderArea = renderRect

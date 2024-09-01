@@ -35,6 +35,6 @@ public class MeshData : IAsset
     public unsafe void SetData(VertexAttribute attribute, void* dataPointer)
     {
         if (dataPointer != null)
-            vertices[attribute.Location()] = new Span<byte>(dataPointer, vertexCount * attribute.Size()).ToArray();
+            vertices[attribute.GetAttributeLocation()] = new Span<byte>(dataPointer, vertexCount * attribute.GetAttributeSize()).ToArray();
     }
 }

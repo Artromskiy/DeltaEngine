@@ -1,8 +1,8 @@
 using Arch.Core;
 using Avalonia.Controls;
 using Delta.Runtime;
-using DeltaEditor;
 using System;
+using System.Diagnostics;
 
 namespace DeltaEditor;
 
@@ -12,15 +12,18 @@ public partial class HierarchyControl : UserControl
     private HierarchyNodeControl? _selectedNode = null;
     private EntityReference _selectedEntity = EntityReference.Null;
 
+    private readonly Stopwatch sw = new();
+    private int prevTime = 0;
+
     public HierarchyControl()
     {
         InitializeComponent();
         if (Design.IsDesignMode)
             return;
     }
-
     public void UpdateHierarchy(IRuntimeContext ctx)
     {
+        sw.Restart();
         var entities = ctx.SceneManager.GetEntities();
         entities.Sort((e1, e2) => e1.Entity.Id.CompareTo(e2.Entity.Id));
         ResizeStack(entities.Count);
@@ -29,6 +32,20 @@ public partial class HierarchyControl : UserControl
             GetNode(i).UpdateEntity(entities[i]);
             GetNode(i).Selected = entities[i] == _selectedEntity;
         }
+        var hierarchyTime = sw.Elapsed;
+
+        StopDebug();
+    }
+    private void StopDebug()
+    {
+        sw.Stop();
+        prevTime = SmoothInt(prevTime, (int)sw.Elapsed.TotalMicroseconds, 50);
+        DebugTimer.Content = $"{prevTime}us";
+    }
+
+    private static int SmoothInt(int value1, int value2, int smoothing)
+    {
+        return ((value1 * smoothing) + value2) / (smoothing + 1);
     }
 
     private void CreateNewEntity(object? sender, EventArgs e)

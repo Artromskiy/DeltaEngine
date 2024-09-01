@@ -36,7 +36,7 @@ internal unsafe class GpuArray<T> : IDisposable where T : unmanaged
         ulong size = (ulong)(sizeof(T) * _length);
         CreateBuffer(ref size, out _buffer, out _memory, out _pData);
         _fence = RenderHelper.CreateFence(_vk, _deviceQ, false);
-        _cmdBuffer = RenderHelper.CreateCommandBuffer(_vk, _deviceQ, _deviceQ.transferCmdPool);
+        _cmdBuffer = RenderHelper.CreateCommandBuffer(_vk, _deviceQ, _deviceQ.GetCmdPool(QueueType.Transfer));
         _size = size;
     }
 
@@ -110,7 +110,7 @@ internal unsafe class GpuArray<T> : IDisposable where T : unmanaged
             CommandBufferCount = 1,
             PCommandBuffers = &cmdBuffer
         };
-        _ = _vk.QueueSubmit(_deviceQ.transferQueue, 1, &submitInfo, _fence);
+        _ = _vk.QueueSubmit(_deviceQ.GetQueue(QueueType.Transfer), 1, &submitInfo, _fence);
         _ = _vk.WaitForFences(_deviceQ, 1, _fence, true, ulong.MaxValue);
         _ = _vk.ResetCommandBuffer(cmdBuffer, 0);
         _ = _vk.ResetFences(_deviceQ, 1, _fence);

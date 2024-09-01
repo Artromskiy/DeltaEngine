@@ -6,36 +6,36 @@
              mc:Ignorable="d" d:DesignWidth="455" d:DesignHeight="612"
              x:Class="DeltaEditor.HierarchyControl">
 
-  <Grid Background="Magenta">
-    <Grid.RowDefinitions>
-      <RowDefinition Height="20"/>
-      <RowDefinition Height="20"/>
-      <RowDefinition Height="*"/>
-    </Grid.RowDefinitions>
+  <Grid Background="Magenta"
+        RowDefinitions="20,20,*">
 
     <!--Menu Name-->
-    <Grid Margin="5,0,0,0">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="20"/>
-        <ColumnDefinition Width="*"/>
-      </Grid.ColumnDefinitions>
+    <Grid Margin="5,0,0,0"
+          ColumnDefinitions="20,*,Auto">
+      
       <Svg Grid.Column="0"
            Margin="3"
            Path="/Assets/Icons/hierarchy.svg"/>
+      
       <Label Grid.Column="1"
              FontWeight="Bold"
-             FontSize="12">
-        Hierarchy
-      </Label>
+             FontSize="12"
+             Content="Hierarchy"/>
+
+      <Label x:Name="DebugTimer"
+             x:FieldModifier="private"
+             Grid.Column="2"
+             Padding="0,0,5,0"
+             FontWeight="Bold"
+             FontSize="12"
+             VerticalContentAlignment="Center"
+             Content="3350μs"/>
+      
     </Grid>
 
     <Grid Grid.Row="1"
-          Margin="5,0,0,0">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="Auto"/>
-        <ColumnDefinition Width="*"/>
-        <ColumnDefinition Width="Auto"/>
-      </Grid.ColumnDefinitions>
+          Margin="5,0,0,0"
+          ColumnDefinitions="Auto,*,Auto">
 
       <!--Add Entity etc-->
       <Button Grid.Column="0"
@@ -71,9 +71,11 @@
       <ScrollViewer VerticalScrollBarVisibility="Visible">
         <StackPanel x:Name="EntityNodeStack"
                     x:FieldModifier="private">
-
+          
+          <!--TestEntity-->
+<!--
           <uc:HierarchyNodeControl/>
-
+-->
         </StackPanel>
       </ScrollViewer>
     </Border>

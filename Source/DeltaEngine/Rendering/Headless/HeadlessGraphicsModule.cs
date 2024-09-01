@@ -1,5 +1,6 @@
 ﻿using Delta.ECS;
 using Delta.ECS.Components;
+using Delta.Rendering.Internal;
 using Delta.Runtime;
 using Delta.Utilities;
 using Silk.NET.Vulkan;
@@ -45,7 +46,7 @@ internal class HeadlessGraphicsModule : IGraphicsModule, IDisposable
         for (int i = 0; i < _swapChain.imageCount; i++)
             _frames.Enqueue(new Frame(RenderData, _renderAssets, _swapChain));
 
-        _copyCmdBuffer = RenderHelper.CreateCommandBuffer(RenderData.vk, RenderData.deviceQ, RenderData.deviceQ.transferCmdPool);
+        _copyCmdBuffer = RenderHelper.CreateCommandBuffer(RenderData.vk, RenderData.deviceQ, RenderData.deviceQ.GetCmdPool(QueueType.Transfer));
         _copyFence = RenderHelper.CreateFence(RenderData.vk, RenderData.deviceQ, true);
         _copySemaphore = RenderHelper.CreateSemaphore(RenderData.vk, RenderData.deviceQ);
     }
@@ -116,7 +117,7 @@ internal class HeadlessGraphicsModule : IGraphicsModule, IDisposable
 
         CurrentFrame.CopyBatchersData(_copyCmdBuffer);
 
-        RenderHelper.EndCmdBuffer(RenderData.vk, RenderData.deviceQ.transferQueue, _copyCmdBuffer, _copyFence, _copySemaphore);
+        RenderHelper.EndCmdBuffer(RenderData.vk, RenderData.deviceQ.GetQueue(QueueType.Transfer), _copyCmdBuffer, _copyFence, _copySemaphore);
 
         CurrentFrame.AddSemaphore(_copySemaphore);
     }

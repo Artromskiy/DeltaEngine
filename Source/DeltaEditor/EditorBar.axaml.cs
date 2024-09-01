@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using DeltaEditor;
 
 namespace DeltaEditor;
 

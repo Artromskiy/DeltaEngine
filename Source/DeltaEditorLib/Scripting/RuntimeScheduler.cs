@@ -42,10 +42,16 @@ internal class RuntimeScheduler : IRuntimeScheduler
         _runtime.RuntimeCall += Execute;
     }
 
+    private Stopwatch? sw;
     private void Execute()
     {
+        sw ??= Stopwatch.StartNew();
+        sw.Restart();
         UIThreadCall();
+        var uiWork = sw.Elapsed;
+        sw.Restart();
         RuntimeThreadCalls();
+        var uiCallback = sw.Elapsed;
     }
 
     private void UIThreadCall()

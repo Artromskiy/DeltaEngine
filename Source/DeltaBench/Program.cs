@@ -11,7 +11,7 @@ namespace DeltaBench
 #if DEBUG
             config = new DebugInProcessConfig();
 #endif
-            var summary = BenchmarkRunner.Run<DelegateVsFuncPointer>(config);
+            var summary = BenchmarkRunner.Run<DuplicateBench>(config);
             Console.ReadKey();
         }
     }

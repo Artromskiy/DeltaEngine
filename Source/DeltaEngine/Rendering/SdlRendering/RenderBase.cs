@@ -46,7 +46,10 @@ internal sealed class RenderBase : Headless.RenderBase, IDisposable
         var discrete = props.DeviceType == PhysicalDeviceType.DiscreteGpu ? 1 : 0;
         return suitable ? 1 + discrete : 0;
     }
-    protected override DeviceQueues CreateLogicalDevice() => RenderHelper.CreateLogicalDevice(vk, gpu, Surface, Khrsf, DeviceExtensions);
+    protected override DeviceQueues CreateLogicalDevice()
+    {
+        return SdlRenderHelper.CreateLogicalDevice(vk, gpu, Surface, Khrsf, DeviceExtensions);
+    }
 
 
     private KhrSurface GetKhrsf()
