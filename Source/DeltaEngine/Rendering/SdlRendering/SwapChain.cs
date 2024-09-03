@@ -20,7 +20,7 @@ internal class SwapChain : IDisposable
 
     private readonly RenderBase data;
 
-    public unsafe SwapChain(RenderBase data, uint trgImageCount, SurfaceFormatKHR targetFormat)
+    public unsafe SwapChain(RenderBase data, uint trgImageCount, SurfaceFormatKHR targetFormat, int width, int height)
     {
         this.data = data;
         var swSupport = data.SwapChainSupport;
@@ -29,9 +29,7 @@ internal class SwapChain : IDisposable
         format = RenderHelper.ChooseSwapSurfaceFormat(swSupport.Formats, targetFormat);
         var presentMode = PresentModeKHR.MailboxKhr; // swSupport.PresentModes.Contains(PresentModeKHR.ImmediateKhr) ? PresentModeKHR.ImmediateKhr : PresentModeKHR.FifoKhr;
 
-        int w = 0, h = 0;
-        data.sdl.VulkanGetDrawableSize(data.Window, ref w, ref h);
-        extent = RenderHelper.ChooseSwapExtent(w, h, swSupport.Capabilities);
+        extent = RenderHelper.ChooseSwapExtent(width, height, swSupport.Capabilities);
 
         uint maxImageCount = swSupport.Capabilities.MaxImageCount;
         maxImageCount = maxImageCount == 0 ? int.MaxValue : maxImageCount;
@@ -40,6 +38,7 @@ internal class SwapChain : IDisposable
         bool sameFamily = queueFamilies[QueueType.Graphics].family == queueFamilies[QueueType.Present].family;
 
         var queueFamilyIndices = stackalloc[] { queueFamilies[QueueType.Graphics].family, queueFamilies[QueueType.Present].family };
+        _ = data.vk.TryGetDeviceExtension(data.instance, data.deviceQ, out khrSw);
 
         SwapchainCreateInfoKHR creatInfo = new()
         {
@@ -61,16 +60,16 @@ internal class SwapChain : IDisposable
             OldSwapchain = default,
             Flags = SwapchainCreateFlagsKHR.None
         };
-
-        _ = data.vk.TryGetDeviceExtension(data.instance, data.deviceQ, out khrSw);
-        _ = khrSw.CreateSwapchain(data.deviceQ, creatInfo, null, out swapChain);
+        SwapchainKHR swapchainKHR;
+        _ = khrSw.CreateSwapchain(data.deviceQ, creatInfo, null, &swapchainKHR);
+        swapChain = swapchainKHR;
         uint imCount = (uint)imageCount;
         _ = khrSw.GetSwapchainImages(data.deviceQ, swapChain, &imCount, null);
         Span<Image> imageSpan = stackalloc Image[(int)imCount];
         _ = khrSw.GetSwapchainImages(data.deviceQ, swapChain, &imCount, imageSpan);
         images = ImmutableArray.Create(imageSpan);
         imageViews = RenderHelper.CreateImageViews(data.vk, data.deviceQ, [.. images], format.Format);
-        frameBuffers = RenderHelper.CreateFramebuffers(data.vk, data.deviceQ, [.. imageViews], data.renderPass, extent);
+        frameBuffers = RenderHelper.CreateFramebuffers(data.vk, data.deviceQ, [.. imageViews], data.renderPass, (int)extent.Width, (int)extent.Height);
     }
 
     public unsafe uint GetImageIndex(Semaphore semaphore, out bool resize)

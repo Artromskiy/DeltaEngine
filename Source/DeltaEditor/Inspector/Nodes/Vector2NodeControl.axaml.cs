@@ -18,9 +18,9 @@ public partial class Vector2NodeControl : UserControl, INode
         _nodeDataX = _nodeData.ChildData(_nodeData.FieldNames[0]);
         _nodeDataY = _nodeData.ChildData(_nodeData.FieldNames[1]);
     }
-    public bool UpdateData(EntityReference entity)
+    public bool UpdateData(ref EntityReference entity)
     {
-        return _nodeDataX.UpdateFloat(FieldX.FieldData, entity) |
-               _nodeDataY.UpdateFloat(FieldY.FieldData, entity);
+        return _nodeDataX.UpdateFloat(FieldX.FieldData, ref entity) |
+               _nodeDataY.UpdateFloat(FieldY.FieldData, ref entity);
     }
 }

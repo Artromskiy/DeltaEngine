@@ -11,6 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\DeltaEditorLib\DeltaEditorLib.csproj" />
     <ProjectReference Include="..\DeltaEngine\DeltaEngine.csproj" />
   </ItemGroup>
 

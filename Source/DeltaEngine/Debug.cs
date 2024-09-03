@@ -7,5 +7,5 @@ internal static class Debug
     [Conditional("ASSERT")]
     public static void Assert([DoesNotReturnIf(false)] bool condition) => System.Diagnostics.Debug.Assert(condition);
     [Conditional("ASSERT")]
-    public static void Assert([DoesNotReturnIf(false)] bool condition, string message) => System.Diagnostics.Debug.Assert(condition, message);
+    public static void Assert([DoesNotReturnIf(false)] bool condition, string? message) => System.Diagnostics.Debug.Assert(condition, message);
 }

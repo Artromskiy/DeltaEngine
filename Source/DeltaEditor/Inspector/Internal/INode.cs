@@ -10,5 +10,5 @@ internal interface INode
     /// <param name="entity"></param>
     /// <param name="changed"></param>
     /// <returns>true if data was modified from editor</returns>
-    public bool UpdateData(EntityReference entity);
+    public bool UpdateData(ref EntityReference entity);
 }

@@ -12,9 +12,9 @@ public partial class MainWindow : Window
             return;
 
         //Program.RuntimeLoader
-
         Program.RuntimeLoader.OnUIThreadLoop += Inspector.UpdateInspector;
         Program.RuntimeLoader.OnUIThreadLoop += Hierarchy.UpdateHierarchy;
+        Program.RuntimeLoader.OnUIThreadLoop += Scene.UpdateScene;
         //Program.RuntimeLoader.OnUIThreadLoop += _explorer.UpdateExplorer;
 
         Hierarchy.OnEntitySelected += Inspector.SetSelectedEntity;

@@ -26,9 +26,9 @@ internal partial class ComponentNodeControl : UserControl, INode
     private const string CollapseSvgPath = "/Assets/Icons/collapse.svg";
     private const string ExpandSvgPath = "/Assets/Icons/expand.svg";
 
-    private readonly Stopwatch sw = new Stopwatch();
+    private readonly Stopwatch _perfWatch = new();
 
-    private readonly List<INode> _fields = [];
+    private readonly INode[] _fields;
 
     public Grid? ComponentGrid
     {
@@ -61,6 +61,7 @@ internal partial class ComponentNodeControl : UserControl, INode
     {
         ComponentName.Content = nodeData.FieldName;
         int fieldsCount = nodeData.FieldNames.Length;
+        _fields = new INode[fieldsCount];
         ChildrenGrid.RowDefinitions = [];
         for (int i = 0; i < fieldsCount; i++)
             ChildrenGrid.RowDefinitions.Add(new RowDefinition(1, GridUnitType.Star));
@@ -68,24 +69,24 @@ internal partial class ComponentNodeControl : UserControl, INode
         {
             var node = NodeFactory.CreateNode(nodeData.ChildData(nodeData.FieldNames[i]));
             var control = (Control)node;
-            _fields.Add(node);
+            _fields[i] = node;
             control[Grid.RowProperty] = i;
             ChildrenGrid.Children.Add(control);
         }
     }
 
     private int prevTime;
-    public bool UpdateData(EntityReference entity)
+    public bool UpdateData(ref EntityReference entity)
     {
-        sw.Restart();
+        _perfWatch.Restart();
 
         bool changed = false;
         if (!Collapsed)
-            foreach (var field in _fields)
-                changed |= field.UpdateData(entity);
+            for (int i = 0; i < _fields.Length; i++)
+                changed |= _fields[i].UpdateData(ref entity);
 
-        sw.Stop();
-        prevTime = SmoothInt(prevTime, (int)sw.Elapsed.TotalMicroseconds, 50);
+        _perfWatch.Stop();
+        prevTime = SmoothInt(prevTime, (int)_perfWatch.Elapsed.TotalMicroseconds, 50);
         DebugTimer.Content = $"{prevTime}us";
 
         return changed;
@@ -93,8 +94,8 @@ internal partial class ComponentNodeControl : UserControl, INode
 
     private void StopDebug()
     {
-        sw.Stop();
-        prevTime = SmoothInt(prevTime, (int)sw.Elapsed.TotalMicroseconds, 50);
+        _perfWatch.Stop();
+        prevTime = SmoothInt(prevTime, (int)_perfWatch.Elapsed.TotalMicroseconds, 50);
         DebugTimer.Content = $"{prevTime}us";
     }
 

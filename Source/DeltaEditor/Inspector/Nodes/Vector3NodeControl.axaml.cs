@@ -19,10 +19,10 @@ public partial class Vector3NodeControl : UserControl, INode
         _nodeDataZ = _nodeData.ChildData(_nodeData.FieldNames[2]);
     }
 
-    public bool UpdateData(EntityReference entity)
+    public bool UpdateData(ref EntityReference entity)
     {
-        return _nodeDataX.UpdateFloat(FieldX.FieldData, entity) |
-               _nodeDataY.UpdateFloat(FieldY.FieldData, entity) |
-               _nodeDataZ.UpdateFloat(FieldZ.FieldData, entity);
+        return _nodeDataX.UpdateFloat(FieldX.FieldData, ref entity) |
+               _nodeDataY.UpdateFloat(FieldY.FieldData, ref entity) |
+               _nodeDataZ.UpdateFloat(FieldZ.FieldData, ref entity);
     }
 }

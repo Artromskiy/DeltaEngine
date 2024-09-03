@@ -1,10 +1,16 @@
 ﻿using Delta.Runtime;
+using DeltaEditorLib.Loader;
 using System.Diagnostics;
 
 try
 {
-    using var eng = new Runtime(new EditorPaths(Directory.GetCurrentDirectory()));
+    string directoryPath = ProjectCreator.GetExecutableDirectory();
+    var projectPath = new EditorPaths(directoryPath);
+    ProjectCreator.CreateProject(projectPath);
+    using var eng = new Runtime(projectPath);
     eng.Context.SceneManager.CreateTestScene();
+    //eng.RuntimeCall += eng.Context.SceneManager.CreateTestScene;
+    eng.Context.SceneManager.Running = true;
 
     //eng.RunOnce();
     Stopwatch sw = new();
@@ -15,26 +21,7 @@ try
 
     while (true)
     {
-        sw.Restart();
-        //eng.RunOnce();
-        sw.Stop();
-        ms += sw.Elapsed;
-        timer += sw.Elapsed;
-        c++;
-        if (c == 100)
-        {
-            var el = ms / c;
-            Console.WriteLine();
-            Console.WriteLine((int)(1.0 / el.TotalSeconds)); // FPS of main thread
-            Console.WriteLine();
-            ms = TimeSpan.Zero;
-            c = 0;
-        }
-        if (timer.TotalSeconds >= 20)
-        {
-            timer = TimeSpan.Zero;
-            eng.Context.SceneManager.CreateTestScene();
-        }
+        Thread.Yield();
     }
 }
 catch (Exception e)

@@ -6,6 +6,7 @@ using Delta.Utilities;
 using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace Delta.Rendering.Headless;
 internal class HeadlessGraphicsModule : IGraphicsModule, IDisposable
@@ -30,6 +31,7 @@ internal class HeadlessGraphicsModule : IGraphicsModule, IDisposable
 
     private Frame CurrentFrame => _frames.Peek();
 
+    public Stream RenderStream => _swapChain.RenderStream;
 
     private readonly Fence _copyFence;
     private readonly Semaphore _copySemaphore;
@@ -40,7 +42,7 @@ internal class HeadlessGraphicsModule : IGraphicsModule, IDisposable
     {
         _appName = appName;
         RenderData = new RenderBase(_appName);
-        _swapChain = new SwapChain(RenderData, Buffering, RenderData.Format.Format);
+        _swapChain = new SwapChain(RenderData, Buffering, RenderData.Format, 1024, 1024);
         _renderAssets = new RenderAssets(RenderData);
 
         for (int i = 0; i < _swapChain.imageCount; i++)
@@ -90,10 +92,7 @@ internal class HeadlessGraphicsModule : IGraphicsModule, IDisposable
     {
         if (_skippedFrame)
             return;
-
-        CurrentFrame.Draw(out var resize);
-        if (resize)
-            OnResize();
+        CurrentFrame.Draw();
     }
 
     /// <summary>
@@ -122,6 +121,32 @@ internal class HeadlessGraphicsModule : IGraphicsModule, IDisposable
         CurrentFrame.AddSemaphore(_copySemaphore);
     }
 
+    public (int width, int height) Size
+    {
+        get => (_swapChain.width, _swapChain.height);
+        set => SetSize(value.width, value.height);
+    }
+
+    private void SetSize(int width, int height)
+    {
+        if (_swapChain.width == width && _swapChain.height == height)
+            return;
+        _swapChain.Dispose();
+        _swapChain = new SwapChain(RenderData, 3, RenderData.Format, width, height);
+
+        if (_swapChain.imageCount == _frames.Count)
+        {
+            foreach (var frame in _frames)
+                frame.UpdateSwapChain(_swapChain);
+            return;
+        }
+
+        _frames.Dispose();
+        _frames.Clear();
+        for (int i = 0; i < _swapChain.imageCount; i++)
+            _frames.Enqueue(new Frame(RenderData, _renderAssets, _swapChain));
+    }
+
     public unsafe void Dispose()
     {
         _ = RenderData.vk.DeviceWaitIdle(RenderData.deviceQ);
@@ -136,25 +161,6 @@ internal class HeadlessGraphicsModule : IGraphicsModule, IDisposable
 
         _swapChain.Dispose();
         RenderData.Dispose();
-    }
-
-    private void OnResize()
-    {
-        _swapChain.Dispose();
-        //RenderData.UpdateSupportDetails();
-        _swapChain = new SwapChain(RenderData, 3, RenderData.Format.Format);
-
-        if (_swapChain.imageCount == _frames.Count)
-        {
-            foreach (var frame in _frames)
-                frame.UpdateSwapChain(_swapChain);
-            return;
-        }
-
-        _frames.Dispose();
-        _frames.Clear();
-        for (int i = 0; i < _swapChain.imageCount; i++)
-            _frames.Enqueue(new Frame(RenderData, _renderAssets, _swapChain));
     }
 
     public void DrawGizmos(Render render, Transform transform) => throw new NotImplementedException();

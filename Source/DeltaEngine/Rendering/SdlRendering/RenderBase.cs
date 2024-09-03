@@ -7,7 +7,7 @@ using System;
 
 namespace Delta.Rendering.SdlRendering;
 
-internal sealed class RenderBase : Headless.RenderBase, IDisposable
+internal class RenderBase : Headless.RenderBase, IDisposable
 {
     public readonly Sdl sdl = Sdl.GetApi();
 
@@ -27,7 +27,9 @@ internal sealed class RenderBase : Headless.RenderBase, IDisposable
     public SwapChainSupportDetails SwapChainSupport => _swapChainSupport ??=
         new SwapChainSupportDetails(gpu, Surface, Khrsf);
 
-    public override SurfaceFormatKHR Format => RenderHelper.ChooseSwapSurfaceFormat(SwapChainSupport.Formats, base.Format);
+    private readonly ColorSpaceKHR _targetColorSpace = ColorSpaceKHR.SpaceAdobergbLinearExt;
+    public virtual SurfaceFormatKHR SurfaceFormat =>
+        RenderHelper.ChooseSwapSurfaceFormat(SwapChainSupport.Formats, new(base.Format, _targetColorSpace));
 
     private string[]? _instanceExtensions;
     protected override unsafe ReadOnlySpan<string> InstanceExtensions => _instanceExtensions ??=
@@ -36,6 +38,7 @@ internal sealed class RenderBase : Headless.RenderBase, IDisposable
     private string[]? _deviceExtensions;
     protected override ReadOnlySpan<string> DeviceExtensions => _deviceExtensions ??=
         [.. base.DeviceExtensions, KhrSwapchain.ExtensionName];
+    protected override ImageLayout RenderPassFinalLayout => ImageLayout.PresentSrcKhr;
 
     public RenderBase(string appName) : base(appName) { }
 

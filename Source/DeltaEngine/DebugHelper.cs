@@ -20,9 +20,20 @@ internal static unsafe class DebugHelper
     /// Currently supports implicit casts of
     /// Bool, SdlBool, Vulkan.Result.
     /// </summary>
-    internal static ResultStruct _
+    internal static object _
     {
-        set => Debug.Assert(value);
+        set
+        {
+            ResultStruct result = value switch
+            {
+                Result r => new ResultStruct(r == Result.Success, r.ToString()),
+                SdlBool r => new ResultStruct(r),
+                bool r => new ResultStruct(r),
+                _ => new ResultStruct()
+            };
+            Debug.Assert(result, result.data);
+
+        }
     }
 #endif
 
@@ -30,14 +41,14 @@ internal static unsafe class DebugHelper
     /// Struct used for implicit casts of various types for debugging
     /// Ref added to prevent boxing by user
     /// </summary>
-    internal readonly ref struct ResultStruct
+    private readonly ref struct ResultStruct
     {
-        internal readonly bool succeed;
-        internal readonly string data;
+        private readonly bool succeed;
+        public readonly string data;
 
-        private ResultStruct(bool succeed, string data)
+        public ResultStruct(bool succeed, string? data = null)
         {
-            this.data = data;
+            this.data = data ?? string.Empty;
             this.succeed = succeed;
         }
 
@@ -47,10 +58,11 @@ internal static unsafe class DebugHelper
         /// </summary>
         public ResultStruct() : this(false, string.Empty) { }
 
-        public static implicit operator bool(ResultStruct s) => s.succeed;
+        public ResultStruct(Result r) : this(r == Result.Success, r.ToString()) { }
+        public ResultStruct(SdlBool r) : this(r == SdlBool.True) { }
+        public ResultStruct(bool r) : this(r, string.Empty) { }
+        public ResultStruct(object _) : this() { }
 
-        public static implicit operator ResultStruct(Result r) => new(r == Result.Success, r.ToString());
-        public static implicit operator ResultStruct(SdlBool r) => new(r == SdlBool.True, string.Empty);
-        public static implicit operator ResultStruct(bool r) => new(r, string.Empty);
+        public static implicit operator bool(ResultStruct s) => s.succeed;
     }
 }

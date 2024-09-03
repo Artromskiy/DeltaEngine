@@ -9,6 +9,8 @@
 
     <RootNamespace>DeltaEditor</RootNamespace>
 
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+
   </PropertyGroup>
   
   <ItemGroup>

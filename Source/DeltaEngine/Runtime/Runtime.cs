@@ -1,5 +1,4 @@
 ﻿using Arch.Core;
-using Delta.Rendering.Headless;
 using Schedulers;
 using System;
 using System.Diagnostics;
@@ -11,7 +10,6 @@ public sealed class Runtime : IRuntime, IDisposable
 {
     public IRuntimeContext Context { get; }
     public event Action? RuntimeCall;
-    public event Action? RuntimeLoopEnd;
 
     private bool _disposed = false;
 
@@ -27,10 +25,10 @@ public sealed class Runtime : IRuntime, IDisposable
     public Runtime(IProjectPath projectPath)
     {
         var path = projectPath;
-        var assets = new AssetCollection(path);
+        var assets = new GlobalAssetCollection(path);
         var sceneManager = new SceneManager();
-        var graphics = new HeadlessGraphicsModule("Delta Editor");
-        //var graphics = new SdlGraphicsModule("Delta Editor");
+        var graphics = new Rendering.Headless.HeadlessGraphicsModule("Delta Editor");
+        //var graphics = new Rendering.SdlRendering.SdlGraphicsModule("Delta Editor");
         //var graphics = new DummyGraphics();
 
         Context = new DefaultRuntimeContext(path, assets, sceneManager, graphics);
@@ -56,7 +54,6 @@ public sealed class Runtime : IRuntime, IDisposable
             IRuntimeContext.Current.SceneManager.Execute(deltaTime);
             RuntimeCall?.Invoke();
             IRuntimeContext.Current.GraphicsModule.Execute();
-            RuntimeLoopEnd?.Invoke();
 
             sw.Stop();
             deltaTime = (float)sw.Elapsed.TotalSeconds;

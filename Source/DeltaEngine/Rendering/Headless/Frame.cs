@@ -11,15 +11,15 @@ internal class Frame : IDisposable
     private readonly RenderAssets _renderAssets;
     private SwapChain _swapChain;
 
-    private Semaphore _imageAvailable;
-    private Semaphore _renderFinished;
+    private Semaphore _presentSemaphore;
+    private Semaphore _renderedSemaphore;
     private Fence _renderFinishedFence;
 
     private CommandBuffer _commandBuffer;
 
     private readonly Dictionary<IRenderBatcher, DescriptorSets> _batchedSets = [];
 
-    private Semaphore _syncSemaphore;
+    private Semaphore _batchersSemaphore;
 
     public void UpdateSwapChain(SwapChain swapChain)
     {
@@ -44,8 +44,8 @@ internal class Frame : IDisposable
         };
 
         _ = _rendererBase.vk.AllocateCommandBuffers(_rendererBase.deviceQ, allocInfo, out _commandBuffer);
-        _ = _rendererBase.vk.CreateSemaphore(_rendererBase.deviceQ, semaphoreInfo, null, out _imageAvailable);
-        _ = _rendererBase.vk.CreateSemaphore(_rendererBase.deviceQ, semaphoreInfo, null, out _renderFinished);
+        _ = _rendererBase.vk.CreateSemaphore(_rendererBase.deviceQ, semaphoreInfo, null, out _presentSemaphore);
+        _ = _rendererBase.vk.CreateSemaphore(_rendererBase.deviceQ, semaphoreInfo, null, out _renderedSemaphore);
         _ = _rendererBase.vk.CreateFence(_rendererBase.deviceQ, fenceInfo, null, out _renderFinishedFence);
     }
 
@@ -54,8 +54,8 @@ internal class Frame : IDisposable
         _rendererBase.vk.FreeCommandBuffers(_rendererBase.deviceQ,
             _rendererBase.deviceQ.GetCmdPool(QueueType.Graphics), 1, in _commandBuffer);
 
-        _rendererBase.vk.DestroySemaphore(_rendererBase.deviceQ, _imageAvailable, null);
-        _rendererBase.vk.DestroySemaphore(_rendererBase.deviceQ, _renderFinished, null);
+        _rendererBase.vk.DestroySemaphore(_rendererBase.deviceQ, _presentSemaphore, null);
+        _rendererBase.vk.DestroySemaphore(_rendererBase.deviceQ, _renderedSemaphore, null);
         _rendererBase.vk.DestroyFence(_rendererBase.deviceQ, _renderFinishedFence, null);
 
         foreach (var item in _batchedSets)
@@ -69,7 +69,7 @@ internal class Frame : IDisposable
     }
     public void Sync() => _rendererBase.vk.WaitForFences(_rendererBase.deviceQ, 1, _renderFinishedFence, true, ulong.MaxValue);
     public bool Synced() => _rendererBase.vk.GetFenceStatus(_rendererBase.deviceQ, _renderFinishedFence) == Result.Success;
-    public void AddSemaphore(Semaphore semaphore) => _syncSemaphore = semaphore;
+    public void AddSemaphore(Semaphore semaphore) => _batchersSemaphore = semaphore;
     public void AddBatcher(IRenderBatcher renderBatcher)
     {
         var sets = new DescriptorSets(_rendererBase.vk, _rendererBase.deviceQ,
@@ -82,11 +82,9 @@ internal class Frame : IDisposable
             sets.Dispose();
     }
 
-    public unsafe void Draw(out bool resize)
+    public unsafe void Draw()
     {
         //_rendererData.vk.WaitForFences(_rendererData.deviceQueues.device, 1, renderFinishedFence, true, ulong.MaxValue);
-        resize = false;
-        var imageAvailable = _imageAvailable;
         int imageIndex = 0;
 
         imageIndex = _swapChain.AcquireNextImage();
@@ -102,32 +100,31 @@ internal class Frame : IDisposable
         EndRecordCommandBuffer();
 
         var buffer = _commandBuffer;
-        var syncSemaphore = _syncSemaphore;
+        var batchersSemaphore = _batchersSemaphore;
+        var renderedSemaphore = _renderedSemaphore;
 
         var waitStages = stackalloc PipelineStageFlags[] { PipelineStageFlags.ColorAttachmentOutputBit, PipelineStageFlags.ColorAttachmentOutputBit };
-        var waitBeforeRender = stackalloc Semaphore[2] { imageAvailable, syncSemaphore };
-        var renderFinished = _renderFinished;
 
         SubmitInfo submitInfo = new()
         {
             SType = StructureType.SubmitInfo,
-            WaitSemaphoreCount = 2,
-            PWaitSemaphores = waitBeforeRender,
             PWaitDstStageMask = waitStages,
+            WaitSemaphoreCount = 1,
+            PWaitSemaphores = &batchersSemaphore,
             CommandBufferCount = 1,
             PCommandBuffers = &buffer,
             SignalSemaphoreCount = 1,
-            PSignalSemaphores = &renderFinished,
+            PSignalSemaphores = &renderedSemaphore,
         };
         _ = _rendererBase.vk.QueueSubmit(_rendererBase.deviceQ.GetQueue(QueueType.Graphics), 1, submitInfo, _renderFinishedFence);
-        _swapChain.Present(renderFinished, imageAvailable);
+        _swapChain.Present(renderedSemaphore);
     }
 
     private unsafe void BeginRecordCommandBuffer(int imageIndex)
     {
         CommandBufferBeginInfo beginInfo = new(StructureType.CommandBufferBeginInfo);
         ClearValue clearColor = new(new ClearColorValue(0.05f, 0.05f, 0.05f, 1));
-        Rect2D renderRect = new(null, _swapChain.extent);
+        Rect2D renderRect = new(null, _swapChain.Extent);
         RenderPassBeginInfo renderPassInfo = new()
         {
             SType = StructureType.RenderPassBeginInfo,
@@ -139,8 +136,8 @@ internal class Frame : IDisposable
         };
         Viewport viewport = new()
         {
-            Width = _swapChain.extent.Width,
-            Height = _swapChain.extent.Height,
+            Width = _swapChain.Extent.Width,
+            Height = _swapChain.Extent.Height,
             MinDepth = 0.0f,
             MaxDepth = 1.0f
         };

@@ -12,5 +12,5 @@ public partial class FloatNodeControl : UserControl, INode
     {
         Field.FieldName = (_nodeData = nodeData).FieldName;
     }
-    public bool UpdateData(EntityReference entity) => _nodeData.UpdateFloat(Field.FieldData, entity);
+    public bool UpdateData(ref EntityReference entity) => _nodeData.UpdateFloat(Field.FieldData, ref entity);
 }

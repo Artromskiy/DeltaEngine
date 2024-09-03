@@ -64,8 +64,10 @@ internal static class TestScene
         });
         cameraEntity.Add<Camera>(new()
         {
-            projection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(float.DegreesToRadians(90), 1, float.Epsilon, 1000)
-            //projection = Matrix4x4.CreateOrthographicLeftHanded(5, 5, float.Epsilon, 1000)
+            fieldOfView = 90,
+            aspectRation = 1,
+            nearPlaneDistance = float.Epsilon,
+            farPlaneDistance = 1000
         });
         cameraEntity.Add<EntityName>(new("Camera"));
     }

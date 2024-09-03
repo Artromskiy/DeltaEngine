@@ -3,6 +3,7 @@
 public interface IProjectPath
 {
     public string RootDirectory { get; }
+    public string TempDirectory { get; }
 
     public string AssetsDirectory { get; }
     public string ScriptsDirectory { get; }

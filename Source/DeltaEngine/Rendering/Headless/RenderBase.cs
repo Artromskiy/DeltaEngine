@@ -35,7 +35,8 @@ internal class RenderBase : IDisposable
         _instanceExtensions : ReadOnlySpan<string>.Empty;
 
     protected virtual ReadOnlySpan<string> DeviceExtensions => [];
-    public virtual SurfaceFormatKHR Format => new(Silk.NET.Vulkan.Format.B8G8R8A8Srgb, ColorSpaceKHR.SpaceAdobergbLinearExt);
+    public virtual Format Format => Format.R8G8B8A8Unorm;
+    protected virtual ImageLayout RenderPassFinalLayout => ImageLayout.TransferSrcOptimal;
 
     public unsafe RenderBase(string appName)
     {
@@ -57,7 +58,7 @@ internal class RenderBase : IDisposable
 
         pipelineLayout = RenderHelper.CreatePipelineLayout(vk, deviceQ, descriptorSetLayouts.Layouts);
 
-        renderPass = RenderHelper.CreateRenderPass(vk, deviceQ, Format.Format);
+        renderPass = RenderHelper.CreateRenderPass(vk, deviceQ, Format, RenderPassFinalLayout);
     }
     protected virtual int DeviceSelector(PhysicalDevice device)
     {
@@ -98,6 +99,7 @@ internal class RenderBase : IDisposable
 
     private unsafe DebugUtilsMessengerCreateInfoEXT PopulateDebugMessengerCreateInfo()
     {
+        /*
         DebugUtilsMessengerCreateInfoEXT createInfo = new()
         {
             SType = StructureType.DebugUtilsMessengerCreateInfoExt,
@@ -109,13 +111,49 @@ internal class RenderBase : IDisposable
                                  DebugUtilsMessageTypeFlagsEXT.ValidationBitExt,
             PfnUserCallback = new PfnDebugUtilsMessengerCallbackEXT(DebugCallback)
         };
+        */
+        var severityFlags = Enums.GetValues<DebugUtilsMessageSeverityFlagsEXT>();
+        var messageTypeFlags = Enums.GetValues<DebugUtilsMessageTypeFlagsEXT>();
+        var allSeverity = severityFlags[0];
+        var allmessageTypes = messageTypeFlags[0];
+        for (int i = 1; i < severityFlags.Length; i++)
+            allSeverity |= severityFlags[i];
+        for (int i = 1; i < messageTypeFlags.Length; i++)
+            allmessageTypes |= messageTypeFlags[i];
+
+        DebugUtilsMessengerCreateInfoEXT createInfo = new()
+        {
+            SType = StructureType.DebugUtilsMessengerCreateInfoExt,
+            MessageSeverity = allSeverity,
+            MessageType = allmessageTypes,
+            PfnUserCallback = new PfnDebugUtilsMessengerCallbackEXT(DebugCallback)
+        };
         return createInfo;
     }
 
     private unsafe uint DebugCallback(DebugUtilsMessageSeverityFlagsEXT messageSeverity, DebugUtilsMessageTypeFlagsEXT messageTypes, DebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
     {
-        var message = (nint)pCallbackData->PMessage;
-        Console.WriteLine(Marshal.PtrToStringAnsi(message));
+        try
+        {
+            var type = messageTypes.ToString();
+            var message = (nint)pCallbackData->PMessage;
+            var messageString = Marshal.PtrToStringAnsi(message);
+            bool assertFail = messageTypes.HasFlag(DebugUtilsMessageTypeFlagsEXT.ValidationBitExt) ||
+                messageTypes.HasFlag(DebugUtilsMessageTypeFlagsEXT.PerformanceBitExt) ||
+                messageSeverity.HasFlag(DebugUtilsMessageSeverityFlagsEXT.WarningBitExt) ||
+                messageSeverity.HasFlag(DebugUtilsMessageSeverityFlagsEXT.ErrorBitExt);
+
+            var messageTypeString = Enums.ToString(messageTypes);
+            var messageSeverityString = Enums.ToString(messageSeverity);
+            Console.WriteLine($"Severity {messageSeverity} {messageTypeString}:");
+            Console.WriteLine(messageString);
+            Debug.Assert(!assertFail, messageString);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
         return Vk.True;
     }
+
 }

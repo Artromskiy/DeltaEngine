@@ -27,7 +27,6 @@ internal static unsafe class RenderHelper
         | WindowFlags.Shown
         | WindowFlags.Resizable
         | WindowFlags.AllowHighdpi
-        | WindowFlags.Borderless
         | WindowFlags.SkipTaskbar
    );
 
@@ -111,17 +110,17 @@ internal static unsafe class RenderHelper
         _ = vk.QueueSubmit(queue, 1, &submitInfo, fence);
     }
 
-    public static RenderPass CreateRenderPass(Vk vk, Device device, Format swapChainImageFormat)
+    public static RenderPass CreateRenderPass(Vk vk, Device device, Format imageFormat, ImageLayout finalLayout)
     {
         AttachmentDescription colorAttachment = new()
         {
-            Format = swapChainImageFormat,
+            Format = imageFormat,
             Samples = SampleCountFlags.Count1Bit,
             LoadOp = AttachmentLoadOp.Clear,
             StoreOp = AttachmentStoreOp.Store,
             StencilLoadOp = AttachmentLoadOp.DontCare,
             InitialLayout = ImageLayout.Undefined,
-            FinalLayout = ImageLayout.PresentSrcKhr,
+            FinalLayout = finalLayout,
         };
 
         AttachmentReference colorAttachmentRef = new(0, ImageLayout.ColorAttachmentOptimal);
@@ -495,7 +494,7 @@ internal static unsafe class RenderHelper
 
     public static void CopyImage(Vk vk, CommandBuffer cmdBuffer, DeviceQueues deviceQ,
         Image source, Image destionation, int width, int height,
-        Semaphore waitSemaphore, Semaphore signalSemaphore)
+        Semaphore waitSemaphore, Fence signalFence)
     {
         CommandBufferBeginInfo beginInfo = new()
         {
@@ -503,28 +502,41 @@ internal static unsafe class RenderHelper
             Flags = CommandBufferUsageFlags.OneTimeSubmitBit
         };
         _ = vk.BeginCommandBuffer(cmdBuffer, &beginInfo);
+
+        InsertImageMemoryBarrier(vk, cmdBuffer,
+            destionation,
+            0,
+            AccessFlags.TransferWriteBit,
+            ImageLayout.Undefined,
+            ImageLayout.TransferDstOptimal,
+            PipelineStageFlags.TransferBit,
+            PipelineStageFlags.TransferBit,
+            new ImageSubresourceRange(ImageAspectFlags.ColorBit, 0, 1, 0, 1));
+
         ImageCopy copy = new()
         {
-            SrcSubresource =
-            {
-                AspectMask = ImageAspectFlags.ColorBit,
-                LayerCount= 1,
-            },
-            DstSubresource =
-            {
-                AspectMask = ImageAspectFlags.ColorBit,
-                LayerCount= 1,
-            },
-            Extent =
-            {
-                Width = (uint)width,
-                Height =(uint) height,
-                Depth = 1
-            }
+            SrcSubresource = new(ImageAspectFlags.ColorBit, layerCount: 1),
+            DstSubresource = new(ImageAspectFlags.ColorBit, layerCount: 1),
+            Extent = new((uint)width, (uint)height, 1),
         };
-        vk.CmdCopyImage(cmdBuffer, source, ImageLayout.TransferSrcOptimal,
-            destionation, ImageLayout.TransferDstOptimal, 1, &copy);
+
+        vk.CmdCopyImage(cmdBuffer,
+            source, ImageLayout.TransferSrcOptimal,
+            destionation, ImageLayout.TransferDstOptimal,
+            1, copy);
+
+        InsertImageMemoryBarrier(vk, cmdBuffer,
+            destionation,
+            AccessFlags.TransferWriteBit,
+            AccessFlags.TransferReadBit,
+            ImageLayout.TransferDstOptimal,
+            ImageLayout.General,
+            PipelineStageFlags.TransferBit,
+            PipelineStageFlags.TransferBit,
+            new ImageSubresourceRange(ImageAspectFlags.ColorBit, 0, 1, 0, 1));
+
         _ = vk.EndCommandBuffer(cmdBuffer);
+        var waitStageFlags = PipelineStageFlags.TransferBit;
         SubmitInfo submitInfo = new()
         {
             SType = StructureType.SubmitInfo,
@@ -532,38 +544,43 @@ internal static unsafe class RenderHelper
             PCommandBuffers = &cmdBuffer,
             PWaitSemaphores = &waitSemaphore,
             WaitSemaphoreCount = 1,
-            PSignalSemaphores = &signalSemaphore,
-            SignalSemaphoreCount = 1
+            PWaitDstStageMask = &waitStageFlags
         };
-        _ = vk.QueueSubmit(deviceQ.GetQueue(QueueType.Graphics), 1, &submitInfo, default);
+        _ = vk.QueueSubmit(deviceQ.GetQueue(QueueType.Transfer), 1, &submitInfo, signalFence);
     }
 
+
+
     public static (Image image, DeviceMemory memory) CreateImage(Vk vk, DeviceQueues deviceQ,
-        uint width, uint height, Format imageFormat, ImageUsageFlags usageFlags, MemoryPropertyFlags memoryFlags)
+        int width, int height, Format imageFormat, ImageUsageFlags usageFlags, MemoryPropertyFlags memoryFlags,
+        ImageTiling imageTiling)
     {
         ImageCreateInfo createInfo = new()
         {
+            SType = StructureType.ImageCreateInfo,
             ImageType = ImageType.Type2D,
             Format = imageFormat,
             Extent =
                 {
-                    Width= width,
-                    Height = height,
+                    Width= (uint)width,
+                    Height = (uint)height,
                     Depth = 1,
                 },
+            InitialLayout = ImageLayout.Undefined,
             MipLevels = 1,
             ArrayLayers = 1,
             Samples = SampleCountFlags.Count1Bit,
-            Tiling = ImageTiling.Optimal,
+            Tiling = imageTiling,
             Usage = usageFlags
         };
         _ = vk.CreateImage(deviceQ, createInfo, null, out var image);
         var reqs = vk.GetImageMemoryRequirements(deviceQ, image);
+        var memTypeIndex = deviceQ.gpu.FindMemoryType(reqs.MemoryTypeBits, memoryFlags);
         MemoryAllocateInfo memAlloc = new()
         {
             SType = StructureType.MemoryAllocateInfo,
             AllocationSize = reqs.Size,
-            MemoryTypeIndex = deviceQ.gpu.FindMemoryType(reqs.MemoryTypeBits, memoryFlags),
+            MemoryTypeIndex = memTypeIndex,
         };
         _ = vk.AllocateMemory(deviceQ, memAlloc, null, out var memory);
         _ = vk.BindImageMemory(deviceQ, image, memory, 0);
@@ -571,43 +588,17 @@ internal static unsafe class RenderHelper
     }
 
 
-    public static ImmutableArray<Image> CreateImages(Vk vk, DeviceQueues deviceQ,
-        int imagesCount, uint width, uint height, Format imageFormat,
-        out ImmutableArray<DeviceMemory> imagesMemory)
+    public static (ImmutableArray<Image> images, ImmutableArray<DeviceMemory> imagesMemory) CreateImages(Vk vk, DeviceQueues deviceQ,
+        int imagesCount, int width, int height, Format imageFormat, ImageUsageFlags usageFlags, MemoryPropertyFlags memoryFlags,
+        ImageTiling imageTiling)
     {
         Span<Image> images = stackalloc Image[imagesCount];
-        Span<DeviceMemory> imagesMemorySpan = stackalloc DeviceMemory[imagesCount];
+        Span<DeviceMemory> imagesMemory = stackalloc DeviceMemory[imagesCount];
+
         for (int i = 0; i < images.Length; i++)
-        {
-            ImageCreateInfo createInfo = new()
-            {
-                ImageType = ImageType.Type2D,
-                Format = imageFormat,
-                Extent =
-                {
-                    Width= width,
-                    Height = height,
-                    Depth = 1,
-                },
-                MipLevels = 1,
-                ArrayLayers = 1,
-                Samples = SampleCountFlags.Count1Bit,
-                Tiling = ImageTiling.Optimal,
-                Usage = ImageUsageFlags.ColorAttachmentBit | ImageUsageFlags.TransferSrcBit
-            };
-            _ = vk.CreateImage(deviceQ, createInfo, null, out images[i]);
-            var reqs = vk.GetImageMemoryRequirements(deviceQ, images[i]);
-            MemoryAllocateInfo memAlloc = new()
-            {
-                SType = StructureType.MemoryAllocateInfo,
-                AllocationSize = reqs.Size,
-                MemoryTypeIndex = deviceQ.gpu.FindMemoryType(reqs.MemoryTypeBits, MemoryPropertyFlags.DeviceLocalBit),
-            };
-            _ = vk.AllocateMemory(deviceQ, memAlloc, null, out imagesMemorySpan[i]);
-            _ = vk.BindImageMemory(deviceQ, images[i], imagesMemorySpan[i], 0);
-        }
-        imagesMemory = ImmutableArray.Create(imagesMemorySpan);
-        return ImmutableArray.Create(images);
+            (images[i], imagesMemory[i]) = CreateImage(vk, deviceQ, width, height, imageFormat, usageFlags, memoryFlags, imageTiling);
+
+        return (ImmutableArray.Create(images), ImmutableArray.Create(imagesMemory));
     }
 
     public static ImmutableArray<ImageView> CreateImageViews(Vk vk, Device device, ReadOnlySpan<Image> images, Format imageFormat)
@@ -636,7 +627,8 @@ internal static unsafe class RenderHelper
         return ImmutableArray.Create(imageViews);
     }
 
-    public static ImmutableArray<Framebuffer> CreateFramebuffers(Vk vk, Device device, ReadOnlySpan<ImageView> imageViews, RenderPass renderPass, Extent2D swapChainExtent)
+
+    public static ImmutableArray<Framebuffer> CreateFramebuffers(Vk vk, Device device, ReadOnlySpan<ImageView> imageViews, RenderPass renderPass, int width, int height)
     {
         Span<Framebuffer> framebuffers = stackalloc Framebuffer[imageViews.Length];
         for (int i = 0; i < imageViews.Length; i++)
@@ -648,8 +640,8 @@ internal static unsafe class RenderHelper
                 RenderPass = renderPass,
                 AttachmentCount = 1,
                 PAttachments = &attachment,
-                Width = swapChainExtent.Width,
-                Height = swapChainExtent.Height,
+                Width = (uint)width,
+                Height = (uint)height,
                 Layers = 1,
             };
             _ = vk.CreateFramebuffer(device, framebufferInfo, null, out framebuffers[i]);
@@ -774,4 +766,167 @@ internal static unsafe class RenderHelper
                 return false;
         return true;
     }
+
+    public static void SetImageLayout
+        (
+        Vk vk,
+        CommandBuffer cmdbuffer,
+        Image image,
+        ImageLayout oldImageLayout,
+        ImageLayout newImageLayout,
+        ImageSubresourceRange subresourceRange,
+        PipelineStageFlags srcStageMask,
+        PipelineStageFlags dstStageMask)
+    {
+        // Create an image barrier object
+        ImageMemoryBarrier imageMemoryBarrier = new()
+        {
+            SType = StructureType.ImageMemoryBarrier,
+            OldLayout = oldImageLayout,
+            NewLayout = newImageLayout,
+            Image = image,
+            SubresourceRange = subresourceRange,
+        };
+
+        // Source layouts (old)
+        // Source access mask controls actions that have to be finished on the old layout
+        // before it will be transitioned to the new layout
+        imageMemoryBarrier.SrcAccessMask = oldImageLayout switch
+        {
+            // Image layout is undefined (or does not matter)
+            // Only valid as initial layout
+            // No flags required, listed only for completeness
+            ImageLayout.Undefined => imageMemoryBarrier.SrcAccessMask = 0,
+
+            // Image is preinitialized
+            // Only valid as initial layout for linear images, preserves memory contents
+            // Make sure host writes have been finished
+            ImageLayout.Preinitialized => AccessFlags.HostWriteBit,
+
+            // Image is a color attachment
+            // Make sure any writes to the color buffer have been finished
+            ImageLayout.ColorAttachmentOptimal => AccessFlags.ColorAttachmentWriteBit,
+
+            // Image is a depth/stencil attachment
+            // Make sure any writes to the depth/stencil buffer have been finished
+            ImageLayout.DepthStencilAttachmentOptimal => AccessFlags.DepthStencilAttachmentWriteBit,
+
+            // Image is a transfer source
+            // Make sure any reads from the image have been finished
+            ImageLayout.TransferSrcOptimal => AccessFlags.TransferReadBit,
+
+            // Image is a transfer destination
+            // Make sure any writes to the image have been finished
+            ImageLayout.TransferDstOptimal => AccessFlags.TransferWriteBit,
+
+            // Image is read by a shader
+            // Make sure any shader reads from the image have been finished
+            ImageLayout.ShaderReadOnlyOptimal => AccessFlags.ShaderReadBit,
+
+            // Other source layouts aren't handled (yet)
+            _ => throw new NotImplementedException(),
+        };
+
+        // Target layouts (new)
+        // Destination access mask controls the dependency for the new image layout
+        imageMemoryBarrier.DstAccessMask = newImageLayout switch
+        {
+            // Image will be used as a transfer destination
+            // Make sure any writes to the image have been finished
+            ImageLayout.TransferDstOptimal => AccessFlags.TransferWriteBit,
+
+            // Image will be used as a transfer source
+            // Make sure any reads from the image have been finished
+            ImageLayout.TransferSrcOptimal => AccessFlags.TransferReadBit,
+
+            // Image will be used as a color attachment
+            // Make sure any writes to the color buffer have been finished
+            ImageLayout.ColorAttachmentOptimal => AccessFlags.ColorAttachmentWriteBit,
+
+            // Image layout will be used as a depth/stencil attachment
+            // Make sure any writes to depth/stencil buffer have been finished
+            ImageLayout.DepthStencilAttachmentOptimal => imageMemoryBarrier.DstAccessMask | AccessFlags.DepthStencilAttachmentWriteBit,
+
+            // Image will be read in a shader (sampler, input attachment)
+            // Make sure any writes to the image have been finished
+            ImageLayout.ShaderReadOnlyOptimal => ShaderReadOnlyOptimalDstAccessMask(),
+
+            // Other source layouts aren't handled (yet)
+            _ => throw new NotImplementedException()
+        };
+
+        AccessFlags ShaderReadOnlyOptimalDstAccessMask()
+        {
+            if (imageMemoryBarrier.SrcAccessMask == 0)
+                imageMemoryBarrier.SrcAccessMask = AccessFlags.HostWriteBit | AccessFlags.TransferWriteBit;
+            return AccessFlags.ShaderReadBit;
+        }
+
+        // Put barrier inside setup command buffer
+        vk.CmdPipelineBarrier(
+            cmdbuffer,
+            srcStageMask,
+            dstStageMask,
+            0,
+            0, null,
+            0, null,
+            1, imageMemoryBarrier);
+    }
+
+
+    // Fixed sub resource on first mip level and layer
+    private static void SetImageLayout(
+            Vk vk,
+            CommandBuffer cmdbuffer,
+            Image image,
+            ImageAspectFlags aspectMask,
+            ImageLayout oldImageLayout,
+            ImageLayout newImageLayout,
+            PipelineStageFlags srcStageMask,
+            PipelineStageFlags dstStageMask)
+    {
+        ImageSubresourceRange subresourceRange = new()
+        {
+            AspectMask = aspectMask,
+            BaseMipLevel = 0,
+            LevelCount = 1,
+            LayerCount = 1
+        };
+        SetImageLayout(vk, cmdbuffer, image, oldImageLayout, newImageLayout, subresourceRange, srcStageMask, dstStageMask);
+    }
+
+    private static void InsertImageMemoryBarrier(
+            Vk vk,
+            CommandBuffer cmdbuffer,
+            Image image,
+            AccessFlags srcAccessMask,
+            AccessFlags dstAccessMask,
+            ImageLayout oldImageLayout,
+            ImageLayout newImageLayout,
+            PipelineStageFlags srcStageMask,
+            PipelineStageFlags dstStageMask,
+            ImageSubresourceRange subresourceRange)
+    {
+        ImageMemoryBarrier imageMemoryBarrier = new()
+        {
+            SType = StructureType.ImageMemoryBarrier,
+            SrcAccessMask = srcAccessMask,
+            DstAccessMask = dstAccessMask,
+            OldLayout = oldImageLayout,
+            NewLayout = newImageLayout,
+            Image = image,
+            SubresourceRange = subresourceRange
+        };
+
+        vk.CmdPipelineBarrier(
+            cmdbuffer,
+            srcStageMask,
+            dstStageMask,
+            0,
+            0, null,
+            0, null,
+            1, imageMemoryBarrier);
+    }
+
+
 }

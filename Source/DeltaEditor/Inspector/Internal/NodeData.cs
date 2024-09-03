@@ -22,46 +22,46 @@ public class NodeData(RootData root, PathData path)
     public ReadOnlySpan<string> Path => pathData.Path;
     public ReadOnlySpan<string> FieldNames => rootData.Accessors.AllAccessors[rootData.Accessors.GetFieldType(rootData.Component, Path)].FieldNames;
     public NodeData ChildData(string fieldName) => new(rootData, new([.. Path, fieldName]));
-    public T GetData<T>(EntityReference entity) => rootData.Accessors.GetComponentFieldValue<T>(entity, rootData.Component, Path);
-    public void SetData<T>(EntityReference entity, T data) => rootData.Accessors.SetComponentFieldValue(entity, rootData.Component, Path, data);
+    public T GetData<T>(ref EntityReference entity) => rootData.Accessors.GetComponentFieldValue<T>(entity, rootData.Component, Path);
+    public void SetData<T>(ref EntityReference entity, T data) => rootData.Accessors.SetComponentFieldValue(entity, rootData.Component, Path, data);
 
 
-    public bool UpdateFloat(TextBox fieldData, EntityReference entity)
+    public bool UpdateFloat(TextBox fieldData, ref EntityReference entity)
     {
         bool changed = fieldData.IsFocused;
         if (!changed)
-            fieldData.Text = GetData<float>(entity).LookupString();
+            fieldData.Text = GetData<float>(ref entity).LookupString();
         else
         {
             if (string.IsNullOrEmpty(fieldData.Text))
-                SetData<float>(entity, default);
+                SetData<float>(ref entity, default);
             else if (float.TryParse(fieldData.Text, CultureInfo.InvariantCulture, out float result))
-                SetData(entity, result);
+                SetData(ref entity, result);
         }
         return changed;
     }
 
-    public bool UpdateString(TextBox FieldData, EntityReference entity)
+    public bool UpdateString(TextBox FieldData, ref EntityReference entity)
     {
         bool changed = FieldData.IsFocused;
         if (!changed)
-            FieldData.Text = GetData<string>(entity);
+            FieldData.Text = GetData<string>(ref entity);
         else
-            SetData(entity, FieldData.Text);
+            SetData(ref entity, FieldData.Text);
         return changed;
     }
 
-    public bool UpdateInt(TextBox fieldData, EntityReference entity)
+    public bool UpdateInt(TextBox fieldData, ref EntityReference entity)
     {
         bool changed = fieldData.IsFocused;
         if (!changed)
-            fieldData.Text = GetData<int>(entity).LookupString();
+            fieldData.Text = GetData<int>(ref entity).LookupString();
         else
         {
             if (string.IsNullOrEmpty(fieldData.Text))
-                SetData(entity, default(int));
+                SetData(ref entity, default(int));
             else if (int.TryParse(fieldData.Text, out int result))
-                SetData(entity, result);
+                SetData(ref entity, result);
         }
         return changed;
     }

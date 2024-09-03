@@ -6,6 +6,8 @@ using Delta.Utilities;
 using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 
 namespace Delta.Rendering.SdlRendering;
@@ -35,6 +37,7 @@ internal class SdlGraphicsModule : IGraphicsModule, IDisposable
     private readonly HashSet<IRenderBatcher> _renderBatchers = [];
 
     private Frame CurrentFrame => _frames.Peek();
+    public Stream RenderStream => throw new NotImplementedException();
 
 
     private readonly Fence _copyFence;
@@ -46,7 +49,8 @@ internal class SdlGraphicsModule : IGraphicsModule, IDisposable
     {
         _appName = appName;
         _sdlRenderBase = new RenderBase(_appName);
-        _swapChain = new SwapChain(_sdlRenderBase, Buffering, RenderData.Format);
+        var (width, height) = GetSdlWindowSize();
+        _swapChain = new SwapChain(_sdlRenderBase, Buffering, _sdlRenderBase.SurfaceFormat, width, height);
         _renderAssets = new RenderAssets(RenderData);
 
         for (int i = 0; i < _swapChain.imageCount; i++)
@@ -149,7 +153,8 @@ internal class SdlGraphicsModule : IGraphicsModule, IDisposable
     {
         _swapChain.Dispose();
         _sdlRenderBase.UpdateSupportDetails();
-        _swapChain = new SwapChain(_sdlRenderBase, 3, RenderData.Format);
+        var (width, height) = GetSdlWindowSize();
+        _swapChain = new SwapChain(_sdlRenderBase, 3, _sdlRenderBase.SurfaceFormat, width, height);
 
         if (_swapChain.imageCount == _frames.Count)
         {
@@ -164,6 +169,29 @@ internal class SdlGraphicsModule : IGraphicsModule, IDisposable
             _frames.Enqueue(new Frame(_sdlRenderBase, _renderAssets, _swapChain));
     }
 
+
     public void DrawGizmos(Render render, Transform transform) => throw new NotImplementedException();
     public void DrawMesh(Render render, Transform transform) => throw new NotImplementedException();
+    public (int width, int height) Size
+    {
+        get => GetSdlWindowSize();
+        set
+        {
+            unsafe
+            {
+                _sdlRenderBase.sdl.SetWindowSize(_sdlRenderBase.Window, value.width, value.height);
+            }
+            OnResize();
+        }
+    }
+
+    private (int width, int height) GetSdlWindowSize()
+    {
+        int w = 0, h = 0;
+        unsafe
+        {
+            _sdlRenderBase.sdl.VulkanGetDrawableSize(_sdlRenderBase.Window, ref w, ref h);
+        }
+        return (w, h);
+    }
 }

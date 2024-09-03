@@ -17,6 +17,7 @@ public class EditorPaths(string path) : IProjectPath
     private const string json = nameof(json);
 
     public string RootDirectory { get; } = path;
+    public string TempDirectory { get; } = Directory.CreateTempSubdirectory().FullName;
 
     public string AssetsDirectory { get; } = Path.Combine(path, Assets);
     public string ResourcesDirectory { get; } = Path.Combine(path, Assets, Resources);

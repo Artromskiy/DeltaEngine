@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="DeltaEditor.SceneControl">
-  <Grid RowDefinitions="30,*">
+  <Grid RowDefinitions="40,*">
 
     <!--Global Tools-->
     <Border Grid.Row="0"
@@ -58,6 +58,15 @@
       </StackPanel>
 
     </Border>
-    
+    <Border Grid.Row="1"
+            x:Name="RenderBorder"
+            x:FieldModifier="private"
+            Background="Aquamarine">
+      <Image Grid.Row="1"
+             Grid.Column="0"
+             x:Name="Render"
+             x:FieldModifier="private"
+             Stretch="Fill"/>
+    </Border>
   </Grid>
 </UserControl>

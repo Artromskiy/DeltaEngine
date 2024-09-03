@@ -98,6 +98,9 @@ internal class SceneBatcher : IRenderBatcher
         _forceTrsWrite.TrimExcess(); // we assume it's better to free this, as large changes will create large internal array
         _transferIndicesSet.Clear();
 
+        if (IRuntimeContext.Current.SceneManager.CurrentScene == null)
+            return;
+
         BufferResize();
 
         _removeRender.Execute();
@@ -386,8 +389,9 @@ internal class SceneBatcher : IRenderBatcher
 
     private static GpuCameraData GetCameraData(Entity entity)
     {
+        (float width, float height) = IRuntimeContext.Current.GraphicsModule.Size;
         var matrix = entity.GetWorldMatrix();
         var camera = entity.Get<Camera>();
-        return new GpuCameraData(camera, matrix);
+        return new GpuCameraData(camera, matrix, width / height);
     }
 }

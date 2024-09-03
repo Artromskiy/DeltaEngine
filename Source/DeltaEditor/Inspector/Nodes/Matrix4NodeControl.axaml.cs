@@ -49,23 +49,23 @@ public partial class Matrix4NodeControl : UserControl, INode
         _nodeDataM44 = _nodeData.ChildData(_nodeData.FieldNames[15]);
     }
 
-    public bool UpdateData(EntityReference entity)
+    public bool UpdateData(ref EntityReference entity)
     {
-        return _nodeDataM11.UpdateFloat(FieldM11.FieldData, entity) |
-               _nodeDataM12.UpdateFloat(FieldM12.FieldData, entity) |
-               _nodeDataM13.UpdateFloat(FieldM13.FieldData, entity) |
-               _nodeDataM14.UpdateFloat(FieldM14.FieldData, entity) |
-               _nodeDataM21.UpdateFloat(FieldM21.FieldData, entity) |
-               _nodeDataM22.UpdateFloat(FieldM22.FieldData, entity) |
-               _nodeDataM23.UpdateFloat(FieldM23.FieldData, entity) |
-               _nodeDataM24.UpdateFloat(FieldM24.FieldData, entity) |
-               _nodeDataM31.UpdateFloat(FieldM31.FieldData, entity) |
-               _nodeDataM32.UpdateFloat(FieldM32.FieldData, entity) |
-               _nodeDataM33.UpdateFloat(FieldM33.FieldData, entity) |
-               _nodeDataM34.UpdateFloat(FieldM34.FieldData, entity) |
-               _nodeDataM41.UpdateFloat(FieldM41.FieldData, entity) |
-               _nodeDataM42.UpdateFloat(FieldM42.FieldData, entity) |
-               _nodeDataM43.UpdateFloat(FieldM43.FieldData, entity) |
-               _nodeDataM44.UpdateFloat(FieldM44.FieldData, entity);
+        return _nodeDataM11.UpdateFloat(FieldM11.FieldData, ref entity) |
+               _nodeDataM12.UpdateFloat(FieldM12.FieldData, ref entity) |
+               _nodeDataM13.UpdateFloat(FieldM13.FieldData, ref entity) |
+               _nodeDataM14.UpdateFloat(FieldM14.FieldData, ref entity) |
+               _nodeDataM21.UpdateFloat(FieldM21.FieldData, ref entity) |
+               _nodeDataM22.UpdateFloat(FieldM22.FieldData, ref entity) |
+               _nodeDataM23.UpdateFloat(FieldM23.FieldData, ref entity) |
+               _nodeDataM24.UpdateFloat(FieldM24.FieldData, ref entity) |
+               _nodeDataM31.UpdateFloat(FieldM31.FieldData, ref entity) |
+               _nodeDataM32.UpdateFloat(FieldM32.FieldData, ref entity) |
+               _nodeDataM33.UpdateFloat(FieldM33.FieldData, ref entity) |
+               _nodeDataM34.UpdateFloat(FieldM34.FieldData, ref entity) |
+               _nodeDataM41.UpdateFloat(FieldM41.FieldData, ref entity) |
+               _nodeDataM42.UpdateFloat(FieldM42.FieldData, ref entity) |
+               _nodeDataM43.UpdateFloat(FieldM43.FieldData, ref entity) |
+               _nodeDataM44.UpdateFloat(FieldM44.FieldData, ref entity);
     }
 }

@@ -45,31 +45,33 @@ internal class Gpu
     }
     public uint FindMemoryType(uint typeFilter, MemoryPropertyFlags properties)
     {
+        var typeFilterInt = (int)typeFilter;
         var memoryTypes = memoryProperties.MemoryTypes;
-        for (uint i = 0; i < memoryProperties.MemoryTypeCount; i++)
+        for (int i = 0; i < memoryProperties.MemoryTypeCount; i++)
         {
-            if (((typeFilter & 1) == 1) &&
-                (memoryTypes[(int)i].PropertyFlags & properties) == properties) // some mask magic
-                return i;
-            typeFilter >>= 1;
+            bool indexMatch = (typeFilterInt & (1 << i)) != 0; // some mask magic
+            bool flagsMatch = memoryTypes[i].PropertyFlags.HasFlag(properties);
+            if (indexMatch && flagsMatch)
+                return (uint)i;
         }
         _ = false;
         return 0;
     }
+
+
     public uint FindMemoryType(uint typeFilter, MemoryPropertyFlags properties, out MemoryPropertyFlags memoryFlagsHas)
     {
+        var typeFilterInt = (int)typeFilter;
         var memoryTypes = memoryProperties.MemoryTypes;
         memoryFlagsHas = MemoryPropertyFlags.None;
 
-        for (uint i = 0; i < memoryProperties.MemoryTypeCount; i++)
+        for (int i = 0; i < memoryProperties.MemoryTypeCount; i++)
         {
-            if (((typeFilter & 1) == 1) &&
-                (memoryTypes[(int)i].PropertyFlags & properties) == properties) // some mask magic
-            {
-                memoryFlagsHas = memoryTypes[(int)i].PropertyFlags;
-                return i;
-            }
-            typeFilter >>= 1;
+            memoryFlagsHas = memoryTypes[i].PropertyFlags;
+            bool indexMatch = ((typeFilterInt & (1 << i)) != 0); // some mask magic
+            bool flagsMatch = memoryFlagsHas.HasFlag(properties);
+            if (indexMatch && flagsMatch)
+                return (uint)i;
         }
         _ = false;
         return 0;

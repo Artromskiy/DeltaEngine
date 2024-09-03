@@ -85,7 +85,7 @@ internal readonly struct DeviceQueues : IDisposable
             {
                 var (family, queueNum) = familyQueues[queueTypes[i]];
                 _queues[i] = vk.GetDeviceQueue(device, family, queueNum);
-                _cmdPools[i] = cmdPools[uniqueFamilyIndices.FindIndex(x => x.queueFamily == queueNum)];
+                _cmdPools[i] = cmdPools[uniqueFamilyIndices.FindIndex(x => x.queueFamily == family)];
             }
         }
         SilkMarshal.Free((nint)createInfo.PpEnabledExtensionNames);

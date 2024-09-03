@@ -51,7 +51,7 @@ internal class SceneManager : ISceneManager
     public void LoadScene(string path)
     {
         _scene?.Dispose();
-        _scene = IRuntimeContext.Current.AssetImporter.GetAsset<Scene>(path);
+        //_scene = IRuntimeContext.Current.AssetImporter.GetAsset<Scene>(path);
         OnSceneChanged?.Invoke(_scene);
         _firstRun = true;
     }

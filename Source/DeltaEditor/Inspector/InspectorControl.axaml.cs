@@ -63,7 +63,7 @@ public partial class InspectorControl : UserControl
         }
         foreach (var item in _currentComponentInspectors)
         {
-            bool changed = item.Value.UpdateData(SelectedEntity);
+            bool changed = item.Value.UpdateData(ref SelectedEntity);
             if (changed && item.Key.HasAttribute<DirtyAttribute>())
             {
                 // TODO mark dirty

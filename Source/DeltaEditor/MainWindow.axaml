@@ -14,20 +14,55 @@
         RequestedThemeVariant="Default">
 
   <Grid
-    RowDefinitions="Auto,*,*">
+    RowDefinitions="Auto,*,4,*">
+
     <uc:EditorBar Grid.Row="0"/>
 
     <Grid Grid.Row="1"
-          ColumnDefinitions="*,*,*"
+          ColumnDefinitions="*,4,*,4,*"
           RowDefinitions="*">
 
       <uc:HierarchyControl x:Name="Hierarchy"
                            Grid.Column="0"/>
 
-      <ScrollViewer Grid.Column="1">
+      <GridSplitter Grid.Column="1"
+                    Background="Black"
+                    MinWidth="1"
+                    Margin="1,0"
+                    ResizeDirection="Columns"/>
+
+      <uc:SceneControl x:Name="Scene"
+                       Grid.Column="2"/>
+
+      <GridSplitter Grid.Column="3"
+                    Background="Black"
+                    MinWidth="1"
+                    Margin="1,0"
+                    ResizeDirection="Columns"/>
+
+      <uc:InspectorControl x:Name="Inspector"
+                           Grid.Column="4"/>
+
+    </Grid>
+
+    <GridSplitter Grid.Row="2"
+                  Background="Black"
+                  MinHeight="1"
+                  ResizeDirection="Rows"
+                  Margin="0,1"/>
+
+    <!--Explorer-->
+    <Grid Grid.Row="3"
+          ColumnDefinitions="*"
+          RowDefinitions="40,*">
+
+      <Label Grid.Row="0"
+             Content="Explorer"/>
+
+      <ScrollViewer Grid.Row="1">
         <StackPanel Orientation="Vertical"
                   Spacing="25">
-          
+
           <Button x:Name="CreateSceneButton"
                   Content="Create new scene"/>
 
@@ -42,28 +77,16 @@
 
           <Button x:Name="ImportFbx"
                   Content="Import Fbx"/>
-        
+
         </StackPanel>
       </ScrollViewer>
 
-      <uc:InspectorControl x:Name="Inspector"
-                           Grid.Column="2"/>
-
-    </Grid>
-    
-    <!--Explorer-->
-    <Grid Grid.Row="2"
-          ColumnDefinitions="*"
-          RowDefinitions="40,*">
-
-      <Label Grid.Row="0"
-             Content="Explorer"/>
-
+      <!--
       <ScrollViewer Grid.Row="1"
                   x:Name="ExplorerScrollView"
                   VerticalScrollBarVisibility="Visible">
       </ScrollViewer>
-
+      -->
     </Grid>
 
   </Grid>

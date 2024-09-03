@@ -4,12 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="1920" d:DesignHeight="30"
              x:Class="DeltaEditor.EditorBar">
-  <Grid Height="30">
-    <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="Auto"/>
-      <ColumnDefinition Width="*"/>
-      <ColumnDefinition Width="Auto"/>
-    </Grid.ColumnDefinitions>
+  <Grid Height="30"
+        ColumnDefinitions="Auto,*,Auto">
 
     <!--Global Tools-->
     <Border Grid.Column="0"
