@@ -1,7 +1,7 @@
 ﻿using Delta.ECS;
 using Delta.ECS.Components;
 using Delta.Rendering.Headless;
-using System.IO;
+using System;
 
 namespace Delta.Runtime;
 public interface IGraphicsModule
@@ -13,5 +13,5 @@ public interface IGraphicsModule
     internal void Execute();
     public void DrawGizmos(Render render, Transform transform);
     public void DrawMesh(Render render, Transform transform);
-    public Stream RenderStream { get; }
+    public Memory<byte> RenderStream { get; }
 }

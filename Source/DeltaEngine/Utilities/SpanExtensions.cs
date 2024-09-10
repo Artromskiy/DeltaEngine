@@ -1,4 +1,6 @@
-﻿using System;
+﻿using CommunityToolkit.HighPerformance.Helpers;
+using System;
+using System.Buffers;
 using System.Collections.Generic;
 
 namespace Delta.Utilities;
@@ -95,6 +97,35 @@ public static class SpanExtensions
     {
         Span<T> span = new(pointer, array.Length);
         array.CopyTo(span);
+    }
+
+    public static unsafe void CopyToParallel<T>(this Memory<T> source, Memory<T> destination)
+    {
+        if (source.Length != destination.Length)
+            throw new Exception();
+
+        int cores = Environment.ProcessorCount;
+        var segmentSize = source.Length / cores;
+
+        DataCopy<T> dataCopy = new(segmentSize, source, destination);
+        ParallelHelper.For(0, cores - 1, dataCopy);
+
+        source = source[(segmentSize * (cores - 1))..];
+        destination = destination[(segmentSize * (cores - 1))..];
+        source.CopyTo(destination);
+    }
+
+    private readonly struct DataCopy<T>(int segmentSize, Memory<T> source, Memory<T> destination) : IAction
+    {
+        public readonly Memory<T> source = source;
+        public readonly Memory<T> destination = destination;
+
+        public readonly unsafe void Invoke(int i)
+        {
+            var sourceSpan = source.Slice(segmentSize * i, segmentSize);
+            var destinationSpan = destination.Slice(segmentSize * i, segmentSize);
+            sourceSpan.CopyTo(destinationSpan);
+        }
     }
 
     #region Distinct

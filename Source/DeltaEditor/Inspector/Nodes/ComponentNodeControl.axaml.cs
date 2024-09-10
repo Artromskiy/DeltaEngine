@@ -4,7 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using DeltaEditor.Inspector;
 using DeltaEditor.Inspector.Internal;
-using System.Collections.Generic;
+using System;
 using System.Diagnostics;
 
 namespace DeltaEditor;
@@ -21,14 +21,17 @@ internal partial class ComponentNodeControl : UserControl, INode
         AvaloniaProperty.Register<ComponentNodeControl, Controls?>(nameof(Rows));
 
     public static readonly StyledProperty<bool> CollapsedProperty =
-        AvaloniaProperty.Register<ComponentNodeControl, bool>(nameof(Collapsed));
+        AvaloniaProperty.Register<ComponentNodeControl, bool>(nameof(Collapsed), false);
 
     private const string CollapseSvgPath = "/Assets/Icons/collapse.svg";
     private const string ExpandSvgPath = "/Assets/Icons/expand.svg";
 
+    private readonly INode[] _fields;
+    private readonly NodeData _nodeData;
+    public event Action<Type> OnComponentRemoveRequest;
+
     private readonly Stopwatch _perfWatch = new();
 
-    private readonly INode[] _fields;
 
     public Grid? ComponentGrid
     {
@@ -55,19 +58,21 @@ internal partial class ComponentNodeControl : UserControl, INode
         }
     }
     private void OnCollapseClick(object? sender, RoutedEventArgs e) => Collapsed = !Collapsed;
+    private void OnRemoveClick(object? sender, RoutedEventArgs e) => OnComponentRemoveRequest.Invoke(_nodeData.Component);
 
     public ComponentNodeControl() => InitializeComponent();
     public ComponentNodeControl(NodeData nodeData) : this()
     {
-        ComponentName.Content = nodeData.FieldName;
-        int fieldsCount = nodeData.FieldNames.Length;
+        _nodeData = nodeData;
+        ComponentName.Content = _nodeData.FieldName;
+        int fieldsCount = _nodeData.FieldNames.Length;
         _fields = new INode[fieldsCount];
         ChildrenGrid.RowDefinitions = [];
         for (int i = 0; i < fieldsCount; i++)
             ChildrenGrid.RowDefinitions.Add(new RowDefinition(1, GridUnitType.Star));
         for (int i = 0; i < fieldsCount; i++)
         {
-            var node = NodeFactory.CreateNode(nodeData.ChildData(nodeData.FieldNames[i]));
+            var node = NodeFactory.CreateNode(_nodeData.ChildData(_nodeData.FieldNames[i]));
             var control = (Control)node;
             _fields[i] = node;
             control[Grid.RowProperty] = i;
@@ -85,9 +90,7 @@ internal partial class ComponentNodeControl : UserControl, INode
             for (int i = 0; i < _fields.Length; i++)
                 changed |= _fields[i].UpdateData(ref entity);
 
-        _perfWatch.Stop();
-        prevTime = SmoothInt(prevTime, (int)_perfWatch.Elapsed.TotalMicroseconds, 50);
-        DebugTimer.Content = $"{prevTime}us";
+        StopDebug();
 
         return changed;
     }
@@ -95,12 +98,7 @@ internal partial class ComponentNodeControl : UserControl, INode
     private void StopDebug()
     {
         _perfWatch.Stop();
-        prevTime = SmoothInt(prevTime, (int)_perfWatch.Elapsed.TotalMicroseconds, 50);
+        prevTime = Helpers.SmoothInt(prevTime, (int)_perfWatch.Elapsed.TotalMicroseconds, 50);
         DebugTimer.Content = $"{prevTime}us";
-    }
-
-    private static int SmoothInt(int value1, int value2, int smoothing)
-    {
-        return ((value1 * smoothing) + value2) / (smoothing + 1);
     }
 }

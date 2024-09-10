@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace Delta.Scripting;
 
@@ -14,7 +15,6 @@ public class ComponentAttribute : Attribute, IComparable<ComponentAttribute>
     }
 
     public ComponentAttribute(int order = 0) : this(order, false) { }
-
 
     public int CompareTo(ComponentAttribute? other)
     {

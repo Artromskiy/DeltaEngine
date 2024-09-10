@@ -1,5 +1,4 @@
 ﻿using Delta.Files;
-using System;
 
 namespace Delta.Runtime;
 

@@ -259,7 +259,11 @@ internal class SceneBatcher : IRenderBatcher
             IForEach<RenderGroup, RendId>
         {
             [Imp(Inl)]
-            public readonly void Update(ref RenderGroup group, ref RendId id) => writer[offsets[group.id]++] = id.trsId;
+            public readonly void Update(ref RenderGroup group, ref RendId id)
+            {
+                var offset = offsets[group.id]++;
+                writer[offset] = id.trsId;
+            }
         }
     }
 

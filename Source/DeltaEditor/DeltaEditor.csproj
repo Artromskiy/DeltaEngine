@@ -45,6 +45,9 @@
     <Compile Update="Hierarchy\HierarchyControl.axaml.cs">
       <DependentUpon>HierarchyControl.axaml</DependentUpon>
     </Compile>
+    <Compile Update="Inspector\AddComponentItemControl.axaml.cs">
+      <DependentUpon>AddComponentItemControl.axaml</DependentUpon>
+    </Compile>
     <Compile Update="Inspector\Nodes\CompositeNodeControl.axaml.cs">
       <DependentUpon>CompositeNodeControl.axaml</DependentUpon>
     </Compile>

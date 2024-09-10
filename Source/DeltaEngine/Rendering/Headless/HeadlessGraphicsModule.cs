@@ -6,7 +6,6 @@ using Delta.Utilities;
 using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;
-using System.IO;
 
 namespace Delta.Rendering.Headless;
 internal class HeadlessGraphicsModule : IGraphicsModule, IDisposable
@@ -31,7 +30,8 @@ internal class HeadlessGraphicsModule : IGraphicsModule, IDisposable
 
     private Frame CurrentFrame => _frames.Peek();
 
-    public Stream RenderStream => _swapChain.RenderStream;
+    public Memory<byte> RenderStream => _swapChain.RenderStream;
+
 
     private readonly Fence _copyFence;
     private readonly Semaphore _copySemaphore;

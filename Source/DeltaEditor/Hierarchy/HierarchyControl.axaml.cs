@@ -2,6 +2,7 @@ using Arch.Core;
 using Avalonia.Controls;
 using Delta.Runtime;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace DeltaEditor;
@@ -11,7 +12,7 @@ public partial class HierarchyControl : UserControl
     public event Action<EntityReference>? OnEntitySelected;
     private HierarchyNodeControl? _selectedNode = null;
     private EntityReference _selectedEntity = EntityReference.Null;
-
+    private readonly IComparer<EntityReference> _entityReferenceComparer = new EntityReferenceComparer();
     private readonly Stopwatch sw = new();
     private int prevTime = 0;
 
@@ -24,15 +25,18 @@ public partial class HierarchyControl : UserControl
     public void UpdateHierarchy(IRuntimeContext ctx)
     {
         sw.Restart();
+
         var entities = ctx.SceneManager.GetEntities();
-        entities.Sort((e1, e2) => e1.Entity.Id.CompareTo(e2.Entity.Id));
-        ResizeStack(entities.Count);
-        for (int i = 0; i < EntityNodeStack.Children.Count; i++)
-        {
+        int count = entities.Count;
+        entities.Sort(_entityReferenceComparer);
+        int selectedId = entities.BinarySearch(0, count, _selectedEntity, _entityReferenceComparer);
+
+        ResizeStack(count);
+
+        for (int i = 0; i < count; i++)
             GetNode(i).UpdateEntity(entities[i]);
-            GetNode(i).Selected = entities[i] == _selectedEntity;
-        }
-        var hierarchyTime = sw.Elapsed;
+
+        SelectEntity(GetNode(selectedId));
 
         StopDebug();
     }
@@ -93,10 +97,15 @@ public partial class HierarchyControl : UserControl
 
     private void Deselect()
     {
-        for (int i = 0; i < EntityNodeStack.Children.Count; i++)
-            GetNode(i).Selected = false;
+        if (_selectedNode != null)
+            _selectedNode.Selected = false;
         _selectedNode = null;
         _selectedEntity = EntityReference.Null;
         OnEntitySelected?.Invoke(_selectedEntity);
+    }
+
+    private class EntityReferenceComparer : IComparer<EntityReference>
+    {
+        public int Compare(EntityReference e1, EntityReference e2) => e1.Entity.Id.CompareTo(e2.Entity.Id);
     }
 }

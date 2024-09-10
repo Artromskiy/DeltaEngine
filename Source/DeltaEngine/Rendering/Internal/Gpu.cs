@@ -68,7 +68,7 @@ internal class Gpu
         for (int i = 0; i < memoryProperties.MemoryTypeCount; i++)
         {
             memoryFlagsHas = memoryTypes[i].PropertyFlags;
-            bool indexMatch = ((typeFilterInt & (1 << i)) != 0); // some mask magic
+            bool indexMatch = (typeFilterInt & (1 << i)) != 0; // some mask magic
             bool flagsMatch = memoryFlagsHas.HasFlag(properties);
             if (indexMatch && flagsMatch)
                 return (uint)i;

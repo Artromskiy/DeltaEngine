@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.Core.Extensions;
 using Arch.Core.Utils;
 using Avalonia.Controls;
+using Delta.ECS;
 using Delta.Runtime;
 using Delta.Scripting;
 using Delta.Utilities;
@@ -19,12 +20,14 @@ public partial class InspectorControl : UserControl
 {
     private readonly Dictionary<Type, INode> _currentComponentInspectors = [];
     private readonly Dictionary<Type, INode> _loadedComponentInspectors = [];
+    private readonly HashSet<Type> _notUsedComponentTypes = [];
 
     private EntityReference SelectedEntity = EntityReference.Null;
     private Archetype? CurrentArch;
 
     private readonly IAccessorsContainer _accessors;
     private readonly ImmutableArray<Type> _components;
+
 
     private readonly Stopwatch sw = new();
     private int prevTime = 0;
@@ -38,12 +41,14 @@ public partial class InspectorControl : UserControl
 
         _accessors = Program.RuntimeLoader.Accessors;
         _components = [.. Program.RuntimeLoader.Components];
+        AddComponentControlFlyout.OnComponentAddRequested += OnComponentAddRequest;
     }
 
     public void SetSelectedEntity(EntityReference entityReference)
     {
         SelectedEntity = entityReference;
     }
+
     public void UpdateInspector(IRuntimeContext ctx)
     {
         sw.Restart();
@@ -51,38 +56,29 @@ public partial class InspectorControl : UserControl
         {
             ClearHandledEntityData();
             ClearInspector();
+            AddComponentButton.IsVisible = false;
+            AddComponentControlFlyout.UpdateComponents(_notUsedComponentTypes);
             StopDebug();
             return;
         }
+        AddComponentButton.IsVisible = true;
         if (CurrentArch != SelectedEntity.Entity.GetArchetype()) // Arch changed
         {
             CurrentArch = SelectedEntity.Entity.GetArchetype();
             ClearInspector();
             RebuildInspectorComponents(ctx);
-            //RebuildComponentAdder();
+            UpdateNotUsedComponentTypes();
+            AddComponentControlFlyout.UpdateComponents(_notUsedComponentTypes);
         }
         foreach (var item in _currentComponentInspectors)
         {
             bool changed = item.Value.UpdateData(ref SelectedEntity);
-            if (changed && item.Key.HasAttribute<DirtyAttribute>())
-            {
-                // TODO mark dirty
-            }
+            if (changed)
+                SelectedEntity.Entity.MarkDirty(item.Key);
         }
         StopDebug();
     }
 
-    private void StopDebug()
-    {
-        sw.Stop();
-        prevTime = SmoothInt(prevTime, (int)sw.Elapsed.TotalMicroseconds, 50);
-        DebugTimer.Content = $"{prevTime}us";
-    }
-
-    private static int SmoothInt(int value1, int value2, int smoothing)
-    {
-        return ((value1 * smoothing) + value2) / (smoothing + 1);
-    }
 
     private void RebuildInspectorComponents(IRuntimeContext ctx)
     {
@@ -98,7 +94,31 @@ public partial class InspectorControl : UserControl
             InspectorStack.Children.Add((Control)componentEditor);
             _currentComponentInspectors.Add(type, componentEditor);
         }
-        //InspectorStack.Children.Add(_addComponentPicker);
+    }
+
+    private void OnComponentAddRequest(Type type)
+    {
+        Program.RuntimeLoader.OnRuntimeThread += AddComponent;
+        void AddComponent(IRuntimeContext ctx)
+        {
+            var instance = Activator.CreateInstance(type);
+            SelectedEntity.Entity.Add(instance!);
+        }
+    }
+    private void OnComponentRemoveRequest(Type type)
+    {
+        Program.RuntimeLoader.OnRuntimeThread += RemoveComponent;
+        void RemoveComponent(IRuntimeContext ctx)
+        {
+            SelectedEntity.Entity.RemoveRange(type);
+        }
+    }
+
+    private void StopDebug()
+    {
+        sw.Stop();
+        prevTime = Helpers.SmoothInt(prevTime, (int)sw.Elapsed.TotalMicroseconds, 50);
+        DebugTimer.Content = $"{prevTime}us";
     }
 
     private void ClearHandledEntityData()
@@ -112,18 +132,26 @@ public partial class InspectorControl : UserControl
         if (InspectorStack.Children.Count != 0)
             InspectorStack.Children.Clear();
         _currentComponentInspectors.Clear();
-        //if (_addComponentList.Count != 0)
-        //    _addComponentList.Clear();
     }
 
-    private INode GetOrCreateInspector(IRuntimeContext ctx, Type type)
+    private INode GetOrCreateInspector(IRuntimeContext _, Type type)
     {
         if (!_loadedComponentInspectors.TryGetValue(type, out var inspector))
         {
             var rootData = new RootData(type, _accessors);
             var nodeData = new NodeData(rootData);
-            _loadedComponentInspectors[type] = inspector = NodeFactory.CreateComponentInspector(nodeData);
+            var componentInspector = new ComponentNodeControl(nodeData);
+            componentInspector.OnComponentRemoveRequest += OnComponentRemoveRequest;
+            _loadedComponentInspectors[type] = inspector = componentInspector;
         }
         return inspector;
+    }
+
+    private void UpdateNotUsedComponentTypes()
+    {
+        _notUsedComponentTypes.Clear();
+        foreach (var type in _components)
+            if (!_currentComponentInspectors.ContainsKey(type))
+                _notUsedComponentTypes.Add(type);
     }
 }

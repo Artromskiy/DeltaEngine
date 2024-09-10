@@ -51,13 +51,21 @@ public sealed class Runtime : IRuntime, IDisposable
                 break;
             sw.Restart();
 
-            IRuntimeContext.Current.SceneManager.Execute(deltaTime);
-            RuntimeCall?.Invoke();
-            IRuntimeContext.Current.GraphicsModule.Execute();
-
+            try
+            {
+                IRuntimeContext.Current.SceneManager.Execute(deltaTime);
+                RuntimeCall?.Invoke();
+                IRuntimeContext.Current.GraphicsModule.Execute();
+            }
+            catch (Exception e)
+            {
+                Debug.Assert(false, e.Message);
+            }
             sw.Stop();
             deltaTime = (float)sw.Elapsed.TotalSeconds;
-            var ms = sw.ElapsedMilliseconds;
+            var us = (int)sw.Elapsed.TotalMicroseconds;
+            Debug.WriteLine($"{us} us");
+            Debug.WriteLine($"{1f / deltaTime} fps");
         }
 
         World.SharedJobScheduler?.Dispose();

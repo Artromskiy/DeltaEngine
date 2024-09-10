@@ -45,7 +45,7 @@ internal unsafe class GpuArray<T> : IDisposable where T : unmanaged
         [Imp(Inl)]
         set
         {
-            Debug.Assert(index >= 0 && index < _length);
+            _ = index >= 0 && index < _length;
             ref var destination = ref Unsafe.Add(ref Unsafe.AsRef<T>(_pData.ToPointer()), index);
             Unsafe.WriteUnaligned(Unsafe.AsPointer(ref destination), value);
         }
@@ -69,7 +69,7 @@ internal unsafe class GpuArray<T> : IDisposable where T : unmanaged
             [Imp(Inl)]
             get
             {
-                Debug.Assert(index >= 0 && index < _length);
+                _ = index >= 0 && index < _length;
                 return ref Unsafe.Add(ref Unsafe.AsRef<T>((void*)_pData), index);
             }
         }

@@ -42,16 +42,10 @@ internal class RuntimeScheduler : IRuntimeScheduler
         _runtime.RuntimeCall += Execute;
     }
 
-    private Stopwatch? sw;
     private void Execute()
     {
-        sw ??= Stopwatch.StartNew();
-        sw.Restart();
         UIThreadCall();
-        var uiWork = sw.Elapsed;
-        sw.Restart();
         RuntimeThreadCalls();
-        var uiCallback = sw.Elapsed;
     }
 
     private void UIThreadCall()
@@ -62,11 +56,6 @@ internal class RuntimeScheduler : IRuntimeScheduler
                 return;
 
             _uiThreadGetter?.Thread?.Invoke(UIThreadCalls)?.Wait();
-            // Somehow ui can stop respond
-            // if game thread asks to update ui too freaquently
-            // Maybe rendering not blocks other threads
-            // and just endlessly waits for ui
-            //Thread.Sleep(1);
         }
         catch (Exception e)
         {

@@ -3,13 +3,12 @@ using Delta.ECS.Components;
 using Delta.Rendering.Headless;
 using Delta.Runtime;
 using System;
-using System.IO;
 
 namespace Delta.Rendering;
 internal class DummyGraphics : IGraphicsModule
 {
     RenderBase IGraphicsModule.RenderData => throw new NotImplementedException();
-    public Stream RenderStream => throw new NotImplementedException();
+    public Memory<byte> RenderStream => throw new NotImplementedException();
     public (int width, int height) Size
     {
         get => default;

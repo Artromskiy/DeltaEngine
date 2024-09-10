@@ -2,7 +2,6 @@
 using Delta.Runtime;
 using DeltaEditorLib.Loader;
 using System;
-using System.IO;
 
 namespace DeltaEditor;
 

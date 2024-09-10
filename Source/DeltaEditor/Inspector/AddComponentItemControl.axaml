@@ -1,0 +1,27 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="100"
+             x:Class="DeltaEditor.AddComponentItemControl"
+             Height="20">
+  <Grid ColumnDefinitions="30,*"
+        Background="Magenta">
+
+    <Svg Grid.Column="0"
+         Margin="3"
+         Path="/Assets/Icons/inspector.svg"
+         VerticalAlignment="Center"/>
+
+    <Label Grid.Column="1"
+           x:Name="ComponentNameLabel"
+           x:FieldModifier="private"
+           FontWeight="Bold"
+           FontSize="12"
+           HorizontalAlignment="Left"
+           VerticalAlignment="Center"
+           Content="Transform"
+           VerticalContentAlignment="Center"/>
+  </Grid>
+
+</UserControl>

@@ -23,10 +23,10 @@ internal static class TestScene
     //private const int N = 200_000;
     //private const int N = 100_000;
     //private const int N = 10_000;
-    //private const int N = 5_000; // TODO Check crush
+    private const int N = 5_000; // TODO Check crush
     //private const int N = 1_000;
     //private const int N = 100;
-    private const int N = 20;
+    //private const int N = 20;
     //private const int N = 10;
     //private const int N = 2;
 
@@ -163,6 +163,7 @@ internal static class TestScene
         {
             var query = new QueryDescription().WithAll<Transform, MoveToTarget>();
             Move move = new(deltaTime.Invoke());
+            var count = _sceneWorld.CountEntities(query);
             _sceneWorld.InlineDirtyQuery<Move, Transform, MoveToTarget>(query, ref move);
         }
 

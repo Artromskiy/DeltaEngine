@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using Arch.Core.Extensions;
 using Arch.Core.Utils;
 using Delta.ECS.Components;
 using Delta.Scripting;
@@ -8,9 +9,11 @@ using System.Collections.Generic;
 
 namespace Delta.ECS;
 
-internal static class DirtyQueryExtensions
+public static class DirtyQueryExtensions
 {
     private static readonly Dictionary<QueryDescription, Dictionary<ComponentType, QueryDescription>> _nonDirtyLookup = [];
+    private static readonly Dictionary<Type, (Type type, object flag)> typeToDirtyFlag = [];
+    private static readonly Type DirtyFlagGeneric = typeof(DirtyFlag<>);
 
     [Imp(Inl)]
     public static void InlineDirtyQuery<T, T0>(this World world, in QueryDescription description, ref T iForEach)
@@ -84,6 +87,27 @@ internal static class DirtyQueryExtensions
             dict[cmp] = desc;
         }
         return desc;
+    }
+
+    public static void MarkDirty<T>(this Entity entity)
+    {
+        if (entity.Has<T>() && !entity.Has<DirtyFlag<T>>() && AttributeCache.HasAttribute<DirtyAttribute, T>())
+            entity.Add<DirtyFlag<T>>();
+    }
+
+    [Imp(Sync)]
+    public static void MarkDirty(this Entity entity, Type component)
+    {
+        if (!entity.Has(component) || !AttributeCache.HasAttribute<DirtyAttribute>(component))
+            return;
+        if (!typeToDirtyFlag.TryGetValue(component, out var typeNflag))
+        {
+            var type = DirtyFlagGeneric.MakeGenericType(component);
+            var flag = Activator.CreateInstance(type);
+            typeToDirtyFlag[component] = typeNflag = (type, flag)!;
+        }
+        if (!entity.Has(typeNflag.type))
+            entity.Add(typeNflag.flag!);
     }
 }
 

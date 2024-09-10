@@ -5,8 +5,7 @@ using System;
 
 namespace Delta.ECS.Components;
 
-[Dirty]
-[Component]
+[Component, Dirty]
 public struct Render : IEquatable<Render>, IComparable<Render>
 {
     internal GuidAsset<ShaderData> _shader;

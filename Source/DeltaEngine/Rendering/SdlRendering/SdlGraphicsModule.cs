@@ -6,8 +6,6 @@ using Delta.Utilities;
 using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 
 namespace Delta.Rendering.SdlRendering;
@@ -37,7 +35,7 @@ internal class SdlGraphicsModule : IGraphicsModule, IDisposable
     private readonly HashSet<IRenderBatcher> _renderBatchers = [];
 
     private Frame CurrentFrame => _frames.Peek();
-    public Stream RenderStream => throw new NotImplementedException();
+    public Memory<byte> RenderStream => throw new NotImplementedException();
 
 
     private readonly Fence _copyFence;

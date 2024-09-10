@@ -1,24 +1,40 @@
 ﻿using Arch.Core;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace DeltaEditor;
 
-internal static class StringLookups
+internal static class EditorFormatter
 {
     private const string FloatFormat = "0.00";
     private static readonly Dictionary<float, string> _lookupFloat = [];
     private static readonly Dictionary<int, string> _lookupInt = [];
     private static readonly Dictionary<Guid, string> _lookupGuid = [];
     private static readonly Dictionary<EntityReference, string> _lookupEntityReference = [];
-
-    public static string LookupString(this float value)
+    private const NumberStyles FloatNumberStyles = NumberStyles.Float;
+    private static readonly CultureInfo _editorCulture;
+    static EditorFormatter()
     {
-        _lookupFloat.Clear();
-        return value.ToString(FloatFormat);
-        if (!_lookupFloat.TryGetValue(value, out var result))
-            _lookupFloat[value] = result = value.ToString(FloatFormat);
-        return result;
+        _editorCulture = (CultureInfo)CultureInfo.InvariantCulture.Clone();
+        _editorCulture.NumberFormat = (NumberFormatInfo)_editorCulture.NumberFormat.Clone();
+        _editorCulture.NumberFormat.NumberDecimalSeparator = ".";
+    }
+
+    public static string ParseToString(this float value)
+    {
+        var val = value.ToString(FloatFormat, _editorCulture);
+        return val;
+    }
+
+    public static bool ParseToFloat(this string? value, out float parsed)
+    {
+        parsed = default;
+        if (string.IsNullOrEmpty(value))
+            return true;
+        else if (float.TryParse(value, NumberStyles.Float, _editorCulture, out parsed))
+            return true;
+        return false;
     }
 
     public static string LookupString(this int value)

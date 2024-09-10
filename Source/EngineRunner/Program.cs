@@ -14,8 +14,6 @@ try
 
     //eng.RunOnce();
     Stopwatch sw = new();
-
-    int c = 0;
     TimeSpan ms = TimeSpan.Zero;
     TimeSpan timer = TimeSpan.Zero;
 

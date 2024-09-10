@@ -12,14 +12,13 @@
         RowDefinitions="20, Auto">
     
     <Grid Grid.Row="0"
-          ColumnDefinitions="20,20,*,Auto">
+          ColumnDefinitions="20,20,*,Auto,20,20">
 
       <!--Collapse/Expand-->
       <Button Grid.Column="0"
-              x:Name="CollapseButton"
-              x:FieldModifier="private"
               Click="OnCollapseClick"
               CornerRadius="0,0,3,0"
+              BorderThickness="0"
               Padding = "0"
               Width="20"
               Height="20">
@@ -44,6 +43,7 @@
              VerticalContentAlignment="Center"
              Content="Component"/>
       
+      <!--Debug Timer-->
       <Label x:Name="DebugTimer"
              x:FieldModifier="private"
              Grid.Column="3"
@@ -52,6 +52,31 @@
              FontSize="12"
              VerticalContentAlignment="Center"
              Content="3350μs"/>
+
+      <!--Remove Component-->
+      <Button Grid.Column="4"
+              Click="OnRemoveClick"
+              CornerRadius="0,0,0,3"
+              BorderThickness="0"
+              Padding = "0"
+              Width="20"
+              Height="20">
+        <Svg Path="/Assets/Icons/delete.svg"
+             Margin="3"/>
+      </Button>
+
+      <!--Component Settings-->
+      <Button Grid.Column="5"
+              x:Name="SettingsButton"
+              x:FieldModifier="private"
+              CornerRadius="0,0,0,0"
+              BorderThickness="0"
+              Padding = "0"
+              Width="20"
+              Height="20">
+        <Svg Path="/Assets/Icons/tune.svg"
+             Margin="3"/>
+      </Button>
       
     </Grid>
     

@@ -493,6 +493,57 @@ internal static unsafe class RenderHelper
     }
 
     public static void CopyImage(Vk vk, CommandBuffer cmdBuffer, DeviceQueues deviceQ,
+        Image source, Buffer destionation, int width, int height,
+        Semaphore waitSemaphore, Fence signalFence)
+    {
+        CommandBufferBeginInfo beginInfo = new()
+        {
+            SType = StructureType.CommandBufferBeginInfo,
+            Flags = CommandBufferUsageFlags.OneTimeSubmitBit
+        };
+        _ = vk.BeginCommandBuffer(cmdBuffer, &beginInfo);
+        BufferImageCopy copy = new()
+        {
+            BufferImageHeight = (uint)height,
+            BufferRowLength = (uint)width,
+            BufferOffset = 0,
+            ImageExtent =
+            {
+                Width = (uint)width,
+                Height = (uint)height,
+                Depth = 1
+            },
+            ImageOffset =
+            {
+                X = 0,
+                Y = 0,
+                Z = 0
+            },
+            ImageSubresource =
+            {
+                AspectMask = ImageAspectFlags.ColorBit,
+                LayerCount = 1,
+                MipLevel = 0,
+                BaseArrayLayer = 0
+            }
+        };
+        vk.CmdCopyImageToBuffer(cmdBuffer, source, ImageLayout.TransferSrcOptimal, destionation, 1, copy);
+        _ = vk.EndCommandBuffer(cmdBuffer);
+        var waitStageFlags = PipelineStageFlags.TransferBit;
+        SubmitInfo submitInfo = new()
+        {
+            SType = StructureType.SubmitInfo,
+            CommandBufferCount = 1,
+            PCommandBuffers = &cmdBuffer,
+            PWaitSemaphores = &waitSemaphore,
+            WaitSemaphoreCount = 1,
+            PWaitDstStageMask = &waitStageFlags
+        };
+        _ = vk.QueueSubmit(deviceQ.GetQueue(QueueType.Transfer), 1, &submitInfo, signalFence);
+    }
+
+
+    public static void CopyImage(Vk vk, CommandBuffer cmdBuffer, DeviceQueues deviceQ,
         Image source, Image destionation, int width, int height,
         Semaphore waitSemaphore, Fence signalFence)
     {

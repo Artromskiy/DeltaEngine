@@ -7,21 +7,21 @@
              x:Class="DeltaEditor.InspectorControl">
 
   <Grid Background="Magenta"
-        RowDefinitions="20,20,*">
+        RowDefinitions="20,20,*,Auto">
 
     <!--Menu Name-->
     <Grid Grid.Row="0"
           ColumnDefinitions="20,*,Auto">
-      
+
       <Svg Grid.Column="0"
            Margin="3"
            Path="/Assets/Icons/inspector.svg"/>
-      
+
       <Label Grid.Column="1"
              FontWeight="Bold"
              FontSize="12"
              Content="Inspector"/>
-      
+
       <Label x:Name="DebugTimer"
              x:FieldModifier="private"
              Grid.Column="2"
@@ -36,15 +36,15 @@
           ColumnDefinitions="Auto,Auto,*">
       <Border Grid.Column="0"
               Width="20">
-        
+
       </Border>
       <!--Entity Icon-->
       <Border Grid.Column="1"
-              Width="20"
-              Height="20"
-              BorderThickness="0,0,0,0"
-              BorderBrush="Black"
-              Padding="3">
+            Width="20"
+            Height="20"
+            BorderThickness="0,0,0,0"
+            BorderBrush="Black"
+            Padding="3">
         <Svg Path="/Assets/Icons/entity.svg"/>
       </Border>
 
@@ -67,9 +67,9 @@
       <ScrollViewer VerticalScrollBarVisibility="Visible">
         <StackPanel x:Name="InspectorStack"
                     x:FieldModifier="private">
-          
+
           <!--Test Transform-->
-          
+
           <!--
           <uc:ComponentNodeControl Collapsed="False"
                                    RowsDefs="*,*,*">
@@ -80,10 +80,27 @@
             </uc:ComponentNodeControl.Rows>
           </uc:ComponentNodeControl>
           -->
-          
+
         </StackPanel>
       </ScrollViewer>
     </Border>
 
+    
+    <Button Grid.Row="3"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Top"
+            Content="Add Component"
+            FontSize="12"
+            FontWeight="Bold"
+            x:Name="AddComponentButton"
+            x:FieldModifier="private">
+      <Button.Flyout>
+        <Flyout>
+          <uc:AddComponentControl x:Name="AddComponentControlFlyout"
+                                  x:FieldModifier="private"/>
+        </Flyout>
+      </Button.Flyout>
+    </Button>
+    
   </Grid>
 </UserControl>

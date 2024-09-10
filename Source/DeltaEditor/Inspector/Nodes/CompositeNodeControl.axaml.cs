@@ -2,7 +2,6 @@ using Arch.Core;
 using Avalonia.Controls;
 using DeltaEditor.Inspector;
 using DeltaEditor.Inspector.Internal;
-using System.Collections.Generic;
 
 namespace DeltaEditor;
 

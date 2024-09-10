@@ -38,6 +38,4 @@ internal static class NodeFactory
         { typeof(string), (n) => new StringNodeControl(n) },
         //{ typeof(Guid), (n) => new GuidNode(n) },
     };
-
-    public static INode CreateComponentInspector(NodeData parameters) => new ComponentNodeControl(parameters);
 }

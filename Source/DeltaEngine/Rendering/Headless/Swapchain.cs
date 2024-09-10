@@ -1,8 +1,9 @@
 ﻿using Delta.Rendering.Internal;
+using Delta.Utilities;
 using Silk.NET.Vulkan;
 using System;
 using System.Collections.Immutable;
-using System.IO;
+using Buffer = Silk.NET.Vulkan.Buffer;
 
 namespace Delta.Rendering.Headless;
 internal class SwapChain : IDisposable
@@ -11,14 +12,13 @@ internal class SwapChain : IDisposable
     public readonly ImmutableArray<Image> images;
     public readonly ImmutableArray<ImageView> imageViews;
     public readonly ImmutableArray<Framebuffer> frameBuffers;
-    public readonly Stream RenderStream;
 
-    private readonly Image _hostImage;
-    private readonly DeviceMemory _hostMemory;
-    private readonly unsafe nint _imageData;
+    private readonly Buffer _hostBuffer;
+    private readonly DeviceMemory _hostBufferMemory;
+    private UnmanagedMemoryManager<byte>? _renderMemoryManager;
+    public Memory<byte> RenderStream => _renderMemoryManager!.Memory;
 
     private Fence _copyFence;
-    private SubresourceLayout _subResourceLayout;
     private CommandBuffer _cmdBuffer;
 
     private int _currentFrameIndex = -1;
@@ -37,7 +37,7 @@ internal class SwapChain : IDisposable
         this.data = data;
         this.width = width;
         this.height = height;
-        RenderStream = new MemoryStream(width * height * 4);
+        var size = width * height * 4;
 
         uint maxImageCount = int.MaxValue;
         uint minImageCount = 1;
@@ -57,41 +57,26 @@ internal class SwapChain : IDisposable
 
         _cmdBuffer = RenderHelper.CreateCommandBuffer(data.vk, data.deviceQ, data.deviceQ.GetCmdPool(QueueType.Transfer));
 
-        (_hostImage, _hostMemory) = RenderHelper.CreateImage(
-            data.vk, data.deviceQ, width, height, format,
-            ImageUsageFlags.ColorAttachmentBit | ImageUsageFlags.TransferDstBit,
-            MemoryPropertyFlags.HostVisibleBit,
-            ImageTiling.Linear);
+        (_hostBuffer, _hostBufferMemory) = RenderHelper.CreateBufferAndMemory(
+            data.vk, data.deviceQ, (uint)size,
+            BufferUsageFlags.TransferDstBit, MemoryPropertyFlags.HostVisibleBit);
 
-        ImageSubresource subResource = new(ImageAspectFlags.ColorBit);
-        data.vk.GetImageSubresourceLayout(data.deviceQ, _hostImage, subResource, out _subResourceLayout);
-
-        void* pdata = default;
-        _ = data.vk.MapMemory(data.deviceQ, _hostMemory, 0, Vk.WholeSize, 0, &pdata);
-        _imageData = new(pdata);
-        _imageData += (nint)_subResourceLayout.Offset;
+        void* ptr = default;
+        _ = data.vk.MapMemory(data.deviceQ, _hostBufferMemory, 0, Vk.WholeSize, 0, &ptr);
+        _renderMemoryManager = new(new nint(ptr), size);
     }
+
 
     public void Present(Semaphore waitSemaphore)
     {
         RenderHelper.CopyImage(data.vk, _cmdBuffer, data.deviceQ,
-            images[_currentFrameIndex], _hostImage, width, height,
+            images[_currentFrameIndex], _hostBuffer, width, height,
             waitSemaphore, _copyFence);
+
         data.vk.WaitForFences(data.deviceQ, 1, _copyFence, true, ulong.MaxValue);
-        CopyData(RenderStream);
         data.vk.ResetFences(data.deviceQ, 1, _copyFence);
     }
 
-    private unsafe void CopyData(Stream RenderStream)
-    {
-        var rowPtr = _imageData;
-        int rowPitch = (int)_subResourceLayout.RowPitch;
-        int size = (int)_subResourceLayout.ArrayPitch;
-        Span<byte> colors = new(rowPtr.ToPointer(), size);
-        RenderStream.Position = 0;
-        for (int i = 0; i < height; i++)
-            RenderStream.Write(colors.Slice(i * rowPitch, width * 4));
-    }
 
     public int AcquireNextImage()
     {
@@ -114,6 +99,6 @@ internal class SwapChain : IDisposable
             data.vk.FreeMemory(data.deviceQ, memory, null);
         data.vk.FreeCommandBuffers(data.deviceQ, data.deviceQ.GetCmdPool(QueueType.Transfer), 1, _cmdBuffer);
 
-        RenderStream.Dispose();
+        _renderMemoryManager = null;
     }
 }

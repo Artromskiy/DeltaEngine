@@ -4,8 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace Delta.ECS.Components;
 
-[Dirty]
-[Component(0, true)]
+[Component(0, true), Dirty]
 public struct Transform
 {
     public Vector3 position;

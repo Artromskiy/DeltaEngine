@@ -3,6 +3,7 @@ using Delta.Utilities;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.EXT;
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace Delta.Rendering.Headless;
@@ -99,19 +100,6 @@ internal class RenderBase : IDisposable
 
     private unsafe DebugUtilsMessengerCreateInfoEXT PopulateDebugMessengerCreateInfo()
     {
-        /*
-        DebugUtilsMessengerCreateInfoEXT createInfo = new()
-        {
-            SType = StructureType.DebugUtilsMessengerCreateInfoExt,
-            MessageSeverity = DebugUtilsMessageSeverityFlagsEXT.VerboseBitExt |
-                                     DebugUtilsMessageSeverityFlagsEXT.WarningBitExt |
-                                     DebugUtilsMessageSeverityFlagsEXT.ErrorBitExt,
-            MessageType = DebugUtilsMessageTypeFlagsEXT.GeneralBitExt |
-                                 DebugUtilsMessageTypeFlagsEXT.PerformanceBitExt |
-                                 DebugUtilsMessageTypeFlagsEXT.ValidationBitExt,
-            PfnUserCallback = new PfnDebugUtilsMessengerCallbackEXT(DebugCallback)
-        };
-        */
         var severityFlags = Enums.GetValues<DebugUtilsMessageSeverityFlagsEXT>();
         var messageTypeFlags = Enums.GetValues<DebugUtilsMessageTypeFlagsEXT>();
         var allSeverity = severityFlags[0];

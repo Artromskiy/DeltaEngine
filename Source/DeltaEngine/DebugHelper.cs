@@ -1,5 +1,6 @@
 ﻿using Silk.NET.SDL;
 using Silk.NET.Vulkan;
+using System.Diagnostics;
 
 namespace Delta;
 

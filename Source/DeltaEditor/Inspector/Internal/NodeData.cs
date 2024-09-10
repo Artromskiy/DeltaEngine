@@ -3,7 +3,6 @@ using Avalonia.Controls;
 using DeltaEditorLib.Scripting;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Runtime.InteropServices;
 
 namespace DeltaEditor.Inspector.Internal;
@@ -30,14 +29,9 @@ public class NodeData(RootData root, PathData path)
     {
         bool changed = fieldData.IsFocused;
         if (!changed)
-            fieldData.Text = GetData<float>(ref entity).LookupString();
-        else
-        {
-            if (string.IsNullOrEmpty(fieldData.Text))
-                SetData<float>(ref entity, default);
-            else if (float.TryParse(fieldData.Text, CultureInfo.InvariantCulture, out float result))
-                SetData(ref entity, result);
-        }
+            fieldData.Text = GetData<float>(ref entity).ParseToString();
+        else if (fieldData.Text.ParseToFloat(out var value))
+            SetData(ref entity, value);
         return changed;
     }
 
@@ -46,7 +40,7 @@ public class NodeData(RootData root, PathData path)
         bool changed = FieldData.IsFocused;
         if (!changed)
             FieldData.Text = GetData<string>(ref entity);
-        else
+        else if (FieldData.Text != null)
             SetData(ref entity, FieldData.Text);
         return changed;
     }
