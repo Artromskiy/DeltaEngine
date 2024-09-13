@@ -24,7 +24,7 @@
               Height="20">
         <Svg x:Name="CollapseIcon"
              x:FieldModifier="private"
-             Path="/Assets/Icons/expand.svg"
+             Path="/Assets/Icons/expanded.svg"
              Margin="3"/>
       </Button>
       
@@ -44,14 +44,9 @@
              Content="Component"/>
       
       <!--Debug Timer-->
-      <Label x:Name="DebugTimer"
-             x:FieldModifier="private"
-             Grid.Column="3"
-             Padding="0,0,5,0"
-             FontWeight="Bold"
-             FontSize="12"
-             VerticalContentAlignment="Center"
-             Content="3350μs"/>
+      <uc:DebugTimerControl x:Name="DebugTimer"
+                            x:FieldModifier="private"
+                            Grid.Column="3"/>
 
       <!--Remove Component-->
       <Button Grid.Column="4"

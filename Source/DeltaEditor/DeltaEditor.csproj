@@ -24,11 +24,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Assets\Icons\" />
     <Content Include="Assets\Icons\**">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Folder Include="Assets\" />
   </ItemGroup>
 
   <ItemGroup>
@@ -54,6 +52,10 @@
     <Compile Update="Inspector\Nodes\QuaternionNodeControl.axaml.cs">
       <DependentUpon>QuaternionNodeControl.axaml</DependentUpon>
     </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Tools\" />
   </ItemGroup>
 
 </Project>

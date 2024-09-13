@@ -2,6 +2,7 @@
 using Arch.Core.Extensions;
 using Delta.ECS;
 using Delta.ECS.Components;
+using Delta.ECS.Components.Hierarchy;
 using Delta.Rendering;
 using Delta.Runtime;
 using Delta.Scenes;
@@ -23,11 +24,11 @@ internal static class TestScene
     //private const int N = 200_000;
     //private const int N = 100_000;
     //private const int N = 10_000;
-    private const int N = 5_000; // TODO Check crush
+    //private const int N = 5_000; // TODO Check crush
     //private const int N = 1_000;
     //private const int N = 100;
     //private const int N = 20;
-    //private const int N = 10;
+    private const int N = 10;
     //private const int N = 2;
 
     private static Scene NewScene()
@@ -55,7 +56,7 @@ internal static class TestScene
 
     private static void CreateCamera(Scene scene)
     {
-        var cameraEntity = scene._world.Create();
+        var cameraEntity = scene.AddEntity().Entity;
         cameraEntity.Add<Transform>(new()
         {
             position = new Vector3(0, 0, -2),
@@ -74,14 +75,14 @@ internal static class TestScene
 
     private static void CreateEmptyTestComponent(Scene scene)
     {
-        var testEntity = scene._world.Create();
+        var testEntity = scene.AddEntity().Entity;
         testEntity.Add<EntityName>(new("Empty"));
         testEntity.Add<TestArraysAndSoOn>(new());
     }
 
     private static void CreateFullTestComponent(Scene scene)
     {
-        var testEntity = scene._world.Create();
+        var testEntity = scene.AddEntity().Entity;
         testEntity.Add<EntityName>(new("Full"));
         testEntity.Add<TestArraysAndSoOn>(new()
         {
@@ -101,7 +102,9 @@ internal static class TestScene
     {
         Transform defaultTransform = new() { rotation = Quaternion.Identity, scale = Vector3.One };
         for (int i = 0; i < count; i++)
-            scene._world.Create(defaultTransform);
+        {
+            scene.AddEntity().Entity.Add(defaultTransform);
+        }
         var transforms = ArrayPool<Entity>.Shared.Rent(count);
         scene._world.GetEntities(new QueryDescription().WithAll<Transform>(), transforms);
         var material = VCShader.VCMat;
@@ -144,7 +147,7 @@ internal static class TestScene
 
     private static void CreateOneDelta(Scene scene)
     {
-        var entity = scene._world.Create();
+        var entity = scene.AddEntity().Entity;
         Transform defaultTransform = new()
         {
             scale = Vector3.One * 1f,
@@ -155,6 +158,7 @@ internal static class TestScene
         entity.Add(defaultTransform);
         entity.Add(deltaRend);
     }
+
 
     private readonly struct MoveTransformsJob(World world, Func<float> deltaTime) : ISystem
     {

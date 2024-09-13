@@ -1,5 +1,7 @@
 ﻿using Arch.Core;
+//using Arch.Core.Extensions;
 using Delta.ECS;
+using Delta.ECS.Components.Hierarchy;
 using Delta.Files;
 using System;
 using System.Collections.Generic;
@@ -13,6 +15,9 @@ public sealed class Scene : IDisposable, IAsset
     [JsonIgnore]
     private readonly List<ISystem> _jobs;
 
+    [JsonIgnore]
+    private readonly HierarchySystem _hierarchySystem = new();
+
     private float _deltaTime;
 
     public Scene()
@@ -20,15 +25,15 @@ public sealed class Scene : IDisposable, IAsset
         _world = World.Create();
         _jobs = [];
     }
+    public float DeltaTime() => _deltaTime;
 
     public void Run(float deltaTime)
     {
+        _hierarchySystem.UpdateOrders();
         _deltaTime = deltaTime;
         foreach (var item in _jobs)
             item.Execute();
     }
-
-    public float DeltaTime() => _deltaTime;
 
     public void AddJob(ISystem job)
     {
@@ -40,14 +45,26 @@ public sealed class Scene : IDisposable, IAsset
         _jobs.Remove(job);
     }
 
-    public void AddEntity()
+    public void RemoveEntity(EntityReference entityRef)
     {
-        _world.Create();
+        _hierarchySystem.RemoveEntity(entityRef);
+        _world.Destroy(entityRef);
     }
 
-    public void RemoveEntity(Entity entity)
+    public EntityReference AddEntity()
     {
-        _world.Destroy(entity);
+        var entityRef = _world.Reference(_world.Create());
+        _hierarchySystem.AddRootEntity(entityRef);
+        return entityRef;
+    }
+
+    public EntityReference[] GetRootEntities()
+    {
+        return _hierarchySystem.GetRootEntities();
+    }
+    public void GetFirstChildren(EntityReference entityRef, List<EntityReference> children)
+    {
+        _hierarchySystem.GetFirstChildren(entityRef, children);
     }
 
     public void Dispose()

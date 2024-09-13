@@ -6,13 +6,11 @@ using Delta.ECS;
 using Delta.Runtime;
 using Delta.Scripting;
 using Delta.Utilities;
-using DeltaEditor.Inspector;
 using DeltaEditor.Inspector.Internal;
 using DeltaEditorLib.Scripting;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics;
 
 namespace DeltaEditor;
 
@@ -28,9 +26,6 @@ public partial class InspectorControl : UserControl
     private readonly IAccessorsContainer _accessors;
     private readonly ImmutableArray<Type> _components;
 
-
-    private readonly Stopwatch sw = new();
-    private int prevTime = 0;
 
     public InspectorControl()
     {
@@ -51,14 +46,14 @@ public partial class InspectorControl : UserControl
 
     public void UpdateInspector(IRuntimeContext ctx)
     {
-        sw.Restart();
+        DebugTimer.StartDebug();
         if (!SelectedEntity.IsAlive()) // Dead entity
         {
             ClearHandledEntityData();
             ClearInspector();
             AddComponentButton.IsVisible = false;
             AddComponentControlFlyout.UpdateComponents(_notUsedComponentTypes);
-            StopDebug();
+            DebugTimer.StopDebug();
             return;
         }
         AddComponentButton.IsVisible = true;
@@ -76,7 +71,7 @@ public partial class InspectorControl : UserControl
             if (changed)
                 SelectedEntity.Entity.MarkDirty(item.Key);
         }
-        StopDebug();
+        DebugTimer.StopDebug();
     }
 
 
@@ -112,13 +107,6 @@ public partial class InspectorControl : UserControl
         {
             SelectedEntity.Entity.RemoveRange(type);
         }
-    }
-
-    private void StopDebug()
-    {
-        sw.Stop();
-        prevTime = Helpers.SmoothInt(prevTime, (int)sw.Elapsed.TotalMicroseconds, 50);
-        DebugTimer.Content = $"{prevTime}us";
     }
 
     private void ClearHandledEntityData()

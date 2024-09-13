@@ -1,5 +1,5 @@
-﻿using Delta.ECS;
-using Delta.ECS.Components;
+﻿using Delta.ECS.Components;
+using Delta.Rendering;
 using Delta.Rendering.Headless;
 using System;
 

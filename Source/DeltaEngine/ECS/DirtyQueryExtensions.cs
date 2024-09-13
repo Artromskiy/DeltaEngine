@@ -16,37 +16,12 @@ public static class DirtyQueryExtensions
     private static readonly Type DirtyFlagGeneric = typeof(DirtyFlag<>);
 
     [Imp(Inl)]
-    public static void InlineDirtyQuery<T, T0>(this World world, in QueryDescription description, ref T iForEach)
-        where T : struct, IForEach<T0>
-    {
-        world.AddDirty<T0>(description);
-        world.InlineQuery<T, T0>(description, ref iForEach);
-    }
-
-    [Imp(Inl)]
     public static void InlineDirtyQuery<T, T0, T1>(this World world, in QueryDescription description, ref T iForEach)
         where T : struct, IForEach<T0, T1>
     {
         world.AddDirty<T0>(description);
         world.AddDirty<T1>(description);
         world.InlineQuery<T, T0, T1>(description, ref iForEach);
-    }
-
-    [Imp(Inl)]
-    public static void InlineDirtyParallelQuery<T, T0, T1>(this World world, in QueryDescription description, ref T iForEach)
-        where T : struct, IForEach<T0, T1>
-    {
-        world.AddDirty<T0>(description);
-        world.AddDirty<T1>(description);
-        world.InlineParallelQuery<T, T0, T1>(description, ref iForEach);
-    }
-
-    [Imp(Inl)]
-    public static void InlinePrallelDirtyQuery<T, T0>(this World world, in QueryDescription description, ref T iForEach)
-        where T : struct, IForEach<T0>
-    {
-        world.AddDirty<T0>(description);
-        world.InlineParallelQuery<T, T0>(description, ref iForEach);
     }
 
     [Imp(Inl)]

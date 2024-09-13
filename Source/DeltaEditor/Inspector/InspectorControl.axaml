@@ -22,14 +22,10 @@
              FontSize="12"
              Content="Inspector"/>
 
-      <Label x:Name="DebugTimer"
-             x:FieldModifier="private"
-             Grid.Column="2"
-             Padding="0,0,5,0"
-             FontWeight="Bold"
-             FontSize="12"
-             VerticalContentAlignment="Center"
-             Content="3350μs"/>
+      <uc:DebugTimerControl x:Name="DebugTimer"
+                            x:FieldModifier="private"
+                            Grid.Column="2"/>
+
     </Grid>
 
     <Grid Grid.Row="1"

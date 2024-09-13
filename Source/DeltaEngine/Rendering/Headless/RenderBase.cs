@@ -143,5 +143,4 @@ internal class RenderBase : IDisposable
         }
         return Vk.True;
     }
-
 }

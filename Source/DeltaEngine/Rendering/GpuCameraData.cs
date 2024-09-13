@@ -29,7 +29,10 @@ internal struct GpuCameraData
     private static Matrix4x4 GetProjection(Camera camera, float? aspect = null)
     {
         float fovRadians = float.DegreesToRadians(camera.fieldOfView);
-        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(fovRadians, aspect ?? camera.aspectRation, camera.nearPlaneDistance, camera.farPlaneDistance);
+        fovRadians = float.Clamp(fovRadians, float.Epsilon, float.Pi - float.Epsilon);
+        float nearPlane = float.Max(camera.nearPlaneDistance, float.Epsilon);
+        float farPlane = float.Max(camera.farPlaneDistance, nearPlane + float.Epsilon);
+        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(fovRadians, aspect ?? camera.aspectRation, nearPlane, farPlane);
     }
 
     public static GpuCameraData DefaultCamera() => new()

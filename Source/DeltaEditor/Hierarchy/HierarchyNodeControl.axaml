@@ -2,29 +2,76 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="20"
-             x:Class="DeltaEditor.HierarchyNodeControl">
+             xmlns:uc="clr-namespace:DeltaEditor;assembly=DeltaEditor"
+             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="300"
+             x:Class="DeltaEditor.HierarchyNodeControl"
+             Tapped="OnSelectClick"
+             DragDrop.AllowDrop="True">
 
-  <Border x:Name="MainBorder"
-          x:FieldModifier="private"
-          Background="Magenta"
-          Height="20">
-    
-    <StackPanel Orientation="Horizontal">
-      
-      <Border Width="25"/>
+  <Grid RowDefinitions="20,Auto"
+        x:Name="MainGrid"
+        x:FieldModifier="private">
+
+    <Grid ColumnDefinitions="20,20,*,20"
+          Grid.Row="0"
+          Background="Magenta">
+
+      <!--Collapse/Expand-->
+      <Button Grid.Column="0"
+              Click="OnCollapseClick"
+              CornerRadius="0,0,3,0"
+              BorderThickness="0"
+              Padding = "0"
+              Width="20"
+              Height="20">
+        <Svg x:Name="CollapseIcon"
+             x:FieldModifier="private"
+             Path="/Assets/Icons/collapsed.svg"
+             Margin="3"/>
+      </Button>
+
+      <Border Width="25"
+              Grid.Column="0"/>
       <Svg Path="/Assets/Icons/entity.svg"
-           Margin="3"/>
-      
+           Margin="3"
+           Grid.Column="1"/>
+
       <!--Entity Name-->
       <Label x:Name="NodeName"
+             Grid.Column="2"
              x:FieldModifier="private"
              FontSize="12"
              VerticalContentAlignment="Center"
              Content="Entity">
       </Label>
+
+      <!--Remove Component-->
+      <Button Grid.Column="3"
+              Click="OnRemoveClick"
+              CornerRadius="0,0,0,3"
+              BorderThickness="0"
+              Padding = "0"
+              Width="20"
+              Height="20">
+        <Svg Path="/Assets/Icons/close.svg"
+             Margin="3"/>
+      </Button>
+
+    </Grid>
+
+    <Grid ColumnDefinitions="20,*"
+          Background="BlueViolet"
+          Grid.Row="1"
+          MinHeight="0">
       
-    </StackPanel>
-  </Border>
-  
+      <Border Grid.Column="0"/>
+      
+      <StackPanel x:Name="ChildrenGrid"
+            x:FieldModifier="private"
+            Grid.Column="1">
+        
+      </StackPanel>
+    </Grid>
+    
+  </Grid>
 </UserControl>

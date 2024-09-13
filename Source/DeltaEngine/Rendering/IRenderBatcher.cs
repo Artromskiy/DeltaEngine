@@ -1,10 +1,9 @@
 ﻿using Delta.ECS.Components;
-using Delta.Rendering;
 using Delta.Rendering.Collections;
 using System;
 using System.Numerics;
 
-namespace Delta.ECS;
+namespace Delta.Rendering;
 internal interface IRenderBatcher : IDisposable
 {
     /// <summary>

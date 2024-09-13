@@ -1,5 +1,4 @@
 ﻿using Delta.ECS.Components;
-using Delta.Rendering;
 using Delta.Rendering.Collections;
 using Delta.Rendering.Headless;
 using System;
@@ -7,7 +6,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.InteropServices;
 
-namespace Delta.ECS;
+namespace Delta.Rendering;
 internal class TempRenderBatcher : IRenderBatcher
 {
     public GpuArray<GpuCameraData> Camera { get; private set; }

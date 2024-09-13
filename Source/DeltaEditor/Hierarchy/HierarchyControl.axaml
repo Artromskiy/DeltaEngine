@@ -12,25 +12,20 @@
     <!--Menu Name-->
     <Grid Margin="5,0,0,0"
           ColumnDefinitions="20,*,Auto">
-      
+
       <Svg Grid.Column="0"
            Margin="3"
            Path="/Assets/Icons/hierarchy.svg"/>
-      
+
       <Label Grid.Column="1"
              FontWeight="Bold"
              FontSize="12"
              Content="Hierarchy"/>
 
-      <Label x:Name="DebugTimer"
-             x:FieldModifier="private"
-             Grid.Column="2"
-             Padding="0,0,5,0"
-             FontWeight="Bold"
-             FontSize="12"
-             VerticalContentAlignment="Center"
-             Content="3350μs"/>
-      
+      <uc:DebugTimerControl x:Name="DebugTimer"
+                            x:FieldModifier="private"
+                            Grid.Column="2"/>
+
     </Grid>
 
     <Grid Grid.Row="1"
@@ -42,7 +37,9 @@
               Width="20"
               Height="20"
               FontSize="12"
-              Background="Transparent"
+              BorderThickness="0"
+              CornerRadius="3,0,0,3"
+              Click="CreateNewEntity"
               Padding="3">
         <Svg Path="/Assets/Icons/add.svg"/>
       </Button>
@@ -50,18 +47,19 @@
       <!--Search field-->
       <TextBox Grid.Column="1"
                MinHeight="0"
-               CornerRadius="3,0,0,3"
-               BorderBrush="Black"
+               CornerRadius="0"
+               BorderThickness="0"
                FontSize="12"
-               Padding="5,0,0,0"
-               BorderThickness="1,1,0,1"
+               Padding="5,0"
                VerticalContentAlignment="Center"
                Watermark="Search"/>
+
       <Border Grid.Column="2"
-              Padding="3"
-              BorderBrush="Black"
-              BorderThickness="0,1,0,1">
-        <Svg Path="/Assets/Icons/search.svg"/>
+              Padding="0"
+              BorderBrush="Transparent"
+              BorderThickness="0">
+        <Svg Path="/Assets/Icons/search.svg"
+             Margin="3"/>
       </Border>
     </Grid>
 
@@ -70,12 +68,14 @@
             Background="Cyan">
       <ScrollViewer VerticalScrollBarVisibility="Visible">
         <StackPanel x:Name="EntityNodeStack"
-                    x:FieldModifier="private">
-          
+                    x:FieldModifier="private"
+                    Margin="0,0,15,0">
           <!--TestEntity-->
-<!--
+          
+          <!--
           <uc:HierarchyNodeControl/>
--->
+          -->
+          
         </StackPanel>
       </ScrollViewer>
     </Border>

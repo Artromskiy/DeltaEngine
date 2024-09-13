@@ -1,111 +1,106 @@
 using Arch.Core;
+using Arch.Core.Extensions;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
+using Delta.ECS.Components.Hierarchy;
 using Delta.Runtime;
+using DeltaEditor.Hierarchy;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace DeltaEditor;
 
 public partial class HierarchyControl : UserControl
 {
     public event Action<EntityReference>? OnEntitySelected;
-    private HierarchyNodeControl? _selectedNode = null;
-    private EntityReference _selectedEntity = EntityReference.Null;
+    private readonly HierarchyNodeCreator _hierarchyNodeCreator = new();
     private readonly IComparer<EntityReference> _entityReferenceComparer = new EntityReferenceComparer();
-    private readonly Stopwatch sw = new();
-    private int prevTime = 0;
+    
+    private IListWrapper<HierarchyNodeControl, Control> ChildrenNodes => new(EntityNodeStack.Children);
 
     public HierarchyControl()
     {
         InitializeComponent();
         if (Design.IsDesignMode)
             return;
+        _hierarchyNodeCreator.OnEntityRemoveRequest += RemoveEntity;
+        _hierarchyNodeCreator.OnEntitySelectRequest += SelectEntity;
     }
+
     public void UpdateHierarchy(IRuntimeContext ctx)
     {
-        sw.Restart();
+        DebugTimer.StartDebug();
 
-        var entities = ctx.SceneManager.GetEntities();
-        int count = entities.Count;
-        entities.Sort(_entityReferenceComparer);
-        int selectedId = entities.BinarySearch(0, count, _selectedEntity, _entityReferenceComparer);
+        if (ctx.SceneManager.CurrentScene == null)
+            return;
 
-        ResizeStack(count);
+        var entities = ctx.SceneManager.CurrentScene.GetRootEntities();
+        int count = entities.Length;
+
+        UpdateChildrenCount(count);
 
         for (int i = 0; i < count; i++)
-            GetNode(i).UpdateEntity(entities[i]);
+            ChildrenNodes[i].UpdateEntity(ctx, entities[i]);
 
-        SelectEntity(GetNode(selectedId));
-
-        StopDebug();
-    }
-    private void StopDebug()
-    {
-        sw.Stop();
-        prevTime = SmoothInt(prevTime, (int)sw.Elapsed.TotalMicroseconds, 50);
-        DebugTimer.Content = $"{prevTime}us";
+        DebugTimer.StopDebug();
     }
 
-    private static int SmoothInt(int value1, int value2, int smoothing)
-    {
-        return ((value1 * smoothing) + value2) / (smoothing + 1);
-    }
 
-    private void CreateNewEntity(object? sender, EventArgs e)
+    private void CreateNewEntity(object? sender, RoutedEventArgs e)
     {
-        Program.RuntimeLoader.OnRuntimeThread += ctx => ctx.SceneManager.CurrentScene.AddEntity();
-    }
-
-    private void RemoveSelectedEntity(object? sender, EventArgs e)
-    {
-        if (_selectedEntity == EntityReference.Null)
-            return;
-        var toRemove = _selectedEntity;
-        Deselect();
-        Program.RuntimeLoader.OnRuntimeThread += ctx => ctx.SceneManager.CurrentScene.RemoveEntity(toRemove);
-    }
-
-    private HierarchyNodeControl GetNode(int index) => (EntityNodeStack.Children[index] as HierarchyNodeControl)!;
-
-    private void ResizeStack(int count)
-    {
-        var delta = EntityNodeStack.Children.Count - count;
-        for (int i = EntityNodeStack.Children.Count - 1; i >= count; i--)
+        Program.RuntimeLoader.OnRuntimeThread += AddEntity;
+        void AddEntity(IRuntimeContext ctx)
         {
-            GetNode(i).OnClicked -= SelectEntity;
-            EntityNodeStack.Children.RemoveAt(i);
-        }
-        for (int i = 0; i > delta; i--)
-        {
-            HierarchyNodeControl node = new(EntityReference.Null);
-            node.OnClicked += SelectEntity;
-            EntityNodeStack.Children.Add(node);
+            ctx.SceneManager.CurrentScene.AddEntity();
         }
     }
 
-    private void SelectEntity(HierarchyNodeControl node)
+    private void RemoveEntity(EntityReference entity)
     {
-        if (_selectedNode != null)
-            _selectedNode.Selected = false;
+        Program.RuntimeLoader.OnRuntimeThread += RemoveEntity;
+        void RemoveEntity(IRuntimeContext ctx)
+        {
+            ctx.SceneManager.CurrentScene.RemoveEntity(entity);
+        }
+    }
 
-        _selectedNode = node;
-        _selectedNode.Selected = true;
-        _selectedEntity = _selectedNode.Entity;
-        OnEntitySelected?.Invoke(_selectedEntity);
+    private void UpdateChildrenCount(int neededNodesCount)
+    {
+        var currentNodesCount = ChildrenNodes.Count;
+        var delta = currentNodesCount - neededNodesCount;
+        if (delta > 0)
+        {
+            for (int i = 0; i < delta; i++)
+            {
+                ChildrenNodes[^1].Dispose();
+                ChildrenNodes.RemoveAt(ChildrenNodes.Count - 1);
+            }
+        }
+        else if (delta < 0)
+        {
+            for (int i = delta; i < 0; i++)
+            {
+                var node = _hierarchyNodeCreator.GetOrCreateNode();
+                ChildrenNodes.Add(node);
+            }
+        }
+    }
+
+    private void SelectEntity(EntityReference entityRef)
+    {
+        OnEntitySelected?.Invoke(entityRef);
     }
 
     private void Deselect()
     {
-        if (_selectedNode != null)
-            _selectedNode.Selected = false;
-        _selectedNode = null;
-        _selectedEntity = EntityReference.Null;
-        OnEntitySelected?.Invoke(_selectedEntity);
+        OnEntitySelected?.Invoke(EntityReference.Null);
     }
 
     private class EntityReferenceComparer : IComparer<EntityReference>
     {
-        public int Compare(EntityReference e1, EntityReference e2) => e1.Entity.Id.CompareTo(e2.Entity.Id);
+        public int Compare(EntityReference e1, EntityReference e2)
+        {
+            return e1.Entity.Get<Order>().order.CompareTo(e2.Entity.Get<Order>().order);
+        }
     }
 }

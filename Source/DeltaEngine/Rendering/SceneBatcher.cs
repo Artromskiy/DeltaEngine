@@ -1,18 +1,20 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
 using Collections.Pooled;
+using Delta.ECS;
 using Delta.ECS.Components;
-using Delta.Rendering;
+using Delta.ECS.Components.Hierarchy;
 using Delta.Rendering.Collections;
 using Delta.Runtime;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace Delta.ECS;
+namespace Delta.Rendering;
 internal class SceneBatcher : IRenderBatcher
 {
     private readonly Queue<uint> _free;
@@ -86,10 +88,10 @@ internal class SceneBatcher : IRenderBatcher
 
     private void OnSceneChanged()
     {
-        _rendGroupData.Clear();
-        _free.Clear();
-        for (uint i = 0; i < Transforms.Length; i++)
-            _free.Enqueue(i);
+        // _rendGroupData.Clear();
+        // _free.Clear();
+        // for (uint i = 0; i < Transforms.Length; i++)
+        //     _free.Enqueue(i);
     }
 
     public void Execute()
@@ -127,6 +129,7 @@ internal class SceneBatcher : IRenderBatcher
     /// </summary>
     private void BufferResize()
     {
+        Debug.Assert(IRuntimeContext.Current.SceneManager.CurrentScene != null);
         var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
         var countToAdd = world.CountEntities(_addDescription);
         var countToRemove = world.CountEntities(_removeDescription);
@@ -149,6 +152,7 @@ internal class SceneBatcher : IRenderBatcher
         [Imp(Inl)]
         public readonly void Execute()
         {
+            Debug.Assert(IRuntimeContext.Current.SceneManager.CurrentScene != null);
             var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
             if (!world.Has(_removeDescription))
                 return;
@@ -179,6 +183,7 @@ internal class SceneBatcher : IRenderBatcher
         [Imp(Inl)]
         public readonly void Execute()
         {
+            Debug.Assert(IRuntimeContext.Current.SceneManager.CurrentScene != null);
             var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
             if (!world.Has(_addDescription))
                 return;
@@ -213,6 +218,7 @@ internal class SceneBatcher : IRenderBatcher
         [Imp(Inl)]
         public readonly void Execute()
         {
+            Debug.Assert(IRuntimeContext.Current.SceneManager.CurrentScene != null);
             var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
             if (!world.Has(_changeDescription))
                 return;
@@ -239,8 +245,11 @@ internal class SceneBatcher : IRenderBatcher
         [Imp(Inl)]
         public readonly void Execute()
         {
+            Debug.Assert(IRuntimeContext.Current.SceneManager.CurrentScene != null);
             var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
-            var offsets = ArrayPool<uint>.Shared.Rent(rendGroupData.rendToGroup.Count);
+            var offsetsCount = rendGroupData.rendToGroup.Count;
+            Debug.Assert(offsetsCount != 0);
+            var offsets = ArrayPool<uint>.Shared.Rent(offsetsCount);
             foreach (var item in rendGroupData.groupToCount)
                 offsets[item.Key.id] = item.Value;
             uint index = 0;
@@ -274,6 +283,7 @@ internal class SceneBatcher : IRenderBatcher
         [Imp(Inl)]
         public readonly void Execute()
         {
+            Debug.Assert(IRuntimeContext.Current.SceneManager.CurrentScene != null);
             var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
             var writer = trs.Writer;
             WorldContext ctx = new(world);
@@ -321,6 +331,7 @@ internal class SceneBatcher : IRenderBatcher
     {
         public void Execute()
         {
+            Debug.Assert(IRuntimeContext.Current.SceneManager.CurrentScene != null);
             var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
             var writer = _cameraArray.Writer;
             if (world.CountEntities(_cameraDescription) != 0)
