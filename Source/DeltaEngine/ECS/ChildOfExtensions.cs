@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
 using Delta.ECS.Components;
-using Delta.ECS.Components.Hierarchy;
 using System;
 using System.Numerics;
 
@@ -66,13 +65,24 @@ internal static class ChildOfExtensions
 
 
     [Imp(Inl)]
-    public static bool GetParent<T>(this Entity entity, out Entity parent)
+    public static bool GetParent<T>(this Entity entity, out Entity matchedParent)
     {
-        parent = entity;
-        while (GetParent(ref parent))
-            if (parent.Has<T>())
+        matchedParent = entity;
+        while (GetParent(ref matchedParent))
+            if (matchedParent.Has<T>())
                 return true;
         return false;
+    }
+
+    [Imp(Inl)]
+    public static bool GetLastParent<T>(this Entity entity, out Entity marchedParent)
+    {
+        marchedParent = entity;
+        Entity parent = entity;
+        while (GetParent(ref parent))
+            if (parent.Has<T>())
+                marchedParent = parent;
+        return parent != entity;
     }
 
 

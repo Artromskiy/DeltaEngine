@@ -32,15 +32,15 @@ public static class Serialization
         _options.Converters.Add(new WorldConverter());
     }
 
-    public static void Serialize<T>(Stream utf8Stream, T value)
+    public static void Serialize<T>(Stream stream, T value)
     {
-        JsonSerializer.Serialize<T>(utf8Stream, value, _options);
+        JsonSerializer.Serialize(stream, value, _options);
     }
 
     public static void Serialize<T>(string path, T value)
     {
-        using FileStream utf8Stream = File.Create(path);
-        JsonSerializer.Serialize<T>(utf8Stream, value, _options);
+        using FileStream stream = File.Create(path);
+        JsonSerializer.Serialize(stream, value, _options);
     }
 
     public static T Deserialize<T>(string path)

@@ -126,10 +126,11 @@ internal class RenderBase : IDisposable
             var type = messageTypes.ToString();
             var message = (nint)pCallbackData->PMessage;
             var messageString = Marshal.PtrToStringAnsi(message);
-            bool assertFail = messageTypes.HasFlag(DebugUtilsMessageTypeFlagsEXT.ValidationBitExt) ||
-                messageTypes.HasFlag(DebugUtilsMessageTypeFlagsEXT.PerformanceBitExt) ||
-                messageSeverity.HasFlag(DebugUtilsMessageSeverityFlagsEXT.WarningBitExt) ||
-                messageSeverity.HasFlag(DebugUtilsMessageSeverityFlagsEXT.ErrorBitExt);
+            bool assertFail =
+                (messageTypes.HasFlag(DebugUtilsMessageTypeFlagsEXT.ValidationBitExt) ||
+                messageTypes.HasFlag(DebugUtilsMessageTypeFlagsEXT.PerformanceBitExt)) &&
+                (messageSeverity.HasFlag(DebugUtilsMessageSeverityFlagsEXT.WarningBitExt) ||
+                messageSeverity.HasFlag(DebugUtilsMessageSeverityFlagsEXT.ErrorBitExt));
 
             var messageTypeString = Enums.ToString(messageTypes);
             var messageSeverityString = Enums.ToString(messageSeverity);

@@ -15,6 +15,8 @@ public partial class MainWindow : Window
         Program.RuntimeLoader.OnUIThreadLoop += Inspector.UpdateInspector;
         Program.RuntimeLoader.OnUIThreadLoop += Hierarchy.UpdateHierarchy;
         Program.RuntimeLoader.OnUIThreadLoop += Scene.UpdateScene;
+        AssetSearch.OnOpenedChanged += x => Inspector.IsVisible = !x;
+
         //Program.RuntimeLoader.OnUIThreadLoop += _explorer.UpdateExplorer;
 
         Hierarchy.OnEntitySelected += Inspector.SetSelectedEntity;

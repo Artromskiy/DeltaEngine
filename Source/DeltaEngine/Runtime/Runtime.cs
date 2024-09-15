@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using Delta.ECS;
 using Schedulers;
 using System;
 using System.Diagnostics;
@@ -9,6 +10,7 @@ namespace Delta.Runtime;
 public sealed class Runtime : IRuntime, IDisposable
 {
     public IRuntimeContext Context { get; }
+
     public event Action? RuntimeCall;
 
     private bool _disposed = false;
@@ -25,7 +27,7 @@ public sealed class Runtime : IRuntime, IDisposable
     public Runtime(IProjectPath projectPath)
     {
         var path = projectPath;
-        var assets = new GlobalAssetCollection(path);
+        var assets = new GlobalAssetCollection();
         var sceneManager = new SceneManager();
         var graphics = new Rendering.Headless.HeadlessGraphicsModule("Delta Editor");
         //var graphics = new Rendering.SdlRendering.SdlGraphicsModule("Delta Editor");
@@ -44,7 +46,6 @@ public sealed class Runtime : IRuntime, IDisposable
     {
         World.SharedJobScheduler ??= new JobScheduler(_jobConfig);
         Stopwatch sw = new();
-        float deltaTime = 0;
         while (!_disposed)
         {
             if (_disposed)
@@ -53,19 +54,23 @@ public sealed class Runtime : IRuntime, IDisposable
 
             try
             {
-                IRuntimeContext.Current.SceneManager.Execute(deltaTime);
                 RuntimeCall?.Invoke();
-                IRuntimeContext.Current.GraphicsModule.Execute();
+                if (IRuntimeContext.Current.Running)
+                    IRuntimeContext.Current.SceneManager.CurrentScene?.Run();
+                else
+                    IRuntimeContext.Current.SceneManager.CurrentScene?.RunDefault();
+
+                if (IRuntimeContext.Current.SceneManager.CurrentScene != null)
+                    IRuntimeContext.Current.GraphicsModule.Execute();
+                DestroySystem.Execute();
             }
             catch (Exception e)
             {
                 Debug.Assert(false, e.Message);
             }
             sw.Stop();
-            deltaTime = (float)sw.Elapsed.TotalSeconds;
-            var us = (int)sw.Elapsed.TotalMicroseconds;
-            Debug.WriteLine($"{us} us");
-            Debug.WriteLine($"{1f / deltaTime} fps");
+            Debug.WriteLine($"{(int)sw.Elapsed.TotalMicroseconds} us");
+            Debug.WriteLine($"{1.0 / sw.Elapsed.TotalSeconds:0.00} fps");
         }
 
         World.SharedJobScheduler?.Dispose();

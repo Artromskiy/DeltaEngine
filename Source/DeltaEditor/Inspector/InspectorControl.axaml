@@ -62,7 +62,8 @@
             Background="Cyan">
       <ScrollViewer VerticalScrollBarVisibility="Visible">
         <StackPanel x:Name="InspectorStack"
-                    x:FieldModifier="private">
+                    x:FieldModifier="private"
+                    Margin="0,0,15,0">
 
           <!--Test Transform-->
 

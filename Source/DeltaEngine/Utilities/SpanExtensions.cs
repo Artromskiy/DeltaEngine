@@ -101,17 +101,25 @@ public static class SpanExtensions
 
     public static unsafe void CopyToParallel<T>(this Memory<T> source, Memory<T> destination)
     {
+        CopyToParallel(source, destination, Environment.ProcessorCount);
+    }
+
+    public static unsafe void CopyToParallel<T>(this Memory<T> source, Memory<T> destination, int threads)
+    {
         if (source.Length != destination.Length)
             throw new Exception();
 
-        int cores = Environment.ProcessorCount;
-        var segmentSize = source.Length / cores;
+        int cores = int.Min(Environment.ProcessorCount, threads);
+
+        int segmentsCount = cores;
+        var segmentSize = source.Length / segmentsCount;
 
         DataCopy<T> dataCopy = new(segmentSize, source, destination);
-        ParallelHelper.For(0, cores - 1, dataCopy);
+        ParallelHelper.For(0, segmentsCount, dataCopy);
 
-        source = source[(segmentSize * (cores - 1))..];
-        destination = destination[(segmentSize * (cores - 1))..];
+        int tailBegin = segmentSize * segmentsCount;
+        source = source[tailBegin..];
+        destination = destination[tailBegin..];
         source.CopyTo(destination);
     }
 
@@ -120,6 +128,7 @@ public static class SpanExtensions
         public readonly Memory<T> source = source;
         public readonly Memory<T> destination = destination;
 
+        [Imp(Inl)]
         public readonly unsafe void Invoke(int i)
         {
             var sourceSpan = source.Slice(segmentSize * i, segmentSize);

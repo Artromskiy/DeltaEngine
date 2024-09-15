@@ -2,11 +2,12 @@ using Arch.Core;
 using Arch.Core.Extensions;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Delta.ECS.Components.Hierarchy;
+using Delta.ECS.Components;
 using Delta.Runtime;
 using DeltaEditor.Hierarchy;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace DeltaEditor;
 
@@ -15,7 +16,7 @@ public partial class HierarchyControl : UserControl
     public event Action<EntityReference>? OnEntitySelected;
     private readonly HierarchyNodeCreator _hierarchyNodeCreator = new();
     private readonly IComparer<EntityReference> _entityReferenceComparer = new EntityReferenceComparer();
-    
+
     private IListWrapper<HierarchyNodeControl, Control> ChildrenNodes => new(EntityNodeStack.Children);
 
     public HierarchyControl()
@@ -51,6 +52,7 @@ public partial class HierarchyControl : UserControl
         Program.RuntimeLoader.OnRuntimeThread += AddEntity;
         void AddEntity(IRuntimeContext ctx)
         {
+            Debug.Assert(ctx.SceneManager.CurrentScene != null);
             ctx.SceneManager.CurrentScene.AddEntity();
         }
     }
@@ -60,6 +62,7 @@ public partial class HierarchyControl : UserControl
         Program.RuntimeLoader.OnRuntimeThread += RemoveEntity;
         void RemoveEntity(IRuntimeContext ctx)
         {
+            Debug.Assert(ctx.SceneManager.CurrentScene != null);
             ctx.SceneManager.CurrentScene.RemoveEntity(entity);
         }
     }

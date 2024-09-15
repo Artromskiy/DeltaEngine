@@ -1,6 +1,5 @@
 ﻿using Arch.Core;
 using Delta.ECS.Components;
-using Delta.ECS.Components.Hierarchy;
 using System.Numerics;
 
 namespace Delta.ECS;

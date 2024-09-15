@@ -40,18 +40,6 @@ internal static class FileHelper
     }
 
     /// <summary>
-    /// Return path to new file in <paramref name="folder"/> with <paramref name="guid"/> name if it does not exist
-    /// or adds indexer to the end of name and increments it till file does not exist
-    /// </summary>
-    /// <param name="fullPath"></param>
-    /// <returns></returns>
-    public static string CreateIndexedFile(string folder, Guid guid)
-    {
-        string fullPath = Path.Combine(folder, guid.ToString());
-        return CreateIndexedFile(fullPath);
-    }
-
-    /// <summary>
     /// Return path to new file in <paramref name="folder"/> with <paramref name="fileName"/> name if it does not exist
     /// or adds indexer to the end of name and increments it till file does not exist
     /// </summary>

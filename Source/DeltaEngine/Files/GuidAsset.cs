@@ -5,9 +5,8 @@ using System.Text.Json.Serialization;
 namespace Delta.Files;
 
 public interface IAsset { }
-public interface IGuid { Guid GetGuid(); }
 
-public readonly struct GuidAsset<T> : IGuid, IEquatable<GuidAsset<T>>, IComparable<GuidAsset<T>> where T : class, IAsset
+public readonly struct GuidAsset<T> : IEquatable<GuidAsset<T>>, IComparable<GuidAsset<T>> where T : class, IAsset
 {
     public readonly Guid guid;
 
@@ -24,7 +23,7 @@ public readonly struct GuidAsset<T> : IGuid, IEquatable<GuidAsset<T>>, IComparab
     public readonly int CompareTo(GuidAsset<T> other) => guid.CompareTo(other.guid);
 
     [Imp(Inl)]
-    public override readonly int GetHashCode() => guid.GetHashCode();
+    public override readonly int GetHashCode() => guid.GetHashCode(); // TODO override hashCode? just return first 32 bits?
     [Imp(Inl)]
     public readonly bool Equals(GuidAsset<T> other) => guid.Equals(other.guid);
     [Imp(Inl)]
@@ -34,5 +33,4 @@ public readonly struct GuidAsset<T> : IGuid, IEquatable<GuidAsset<T>>, IComparab
     public static bool operator ==(GuidAsset<T> left, GuidAsset<T> right) => left.Equals(right);
     [Imp(Inl)]
     public static bool operator !=(GuidAsset<T> left, GuidAsset<T> right) => !left.Equals(right);
-
 }

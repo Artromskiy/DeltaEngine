@@ -10,7 +10,7 @@ try
     using var eng = new Runtime(projectPath);
     eng.Context.SceneManager.CreateTestScene();
     //eng.RuntimeCall += eng.Context.SceneManager.CreateTestScene;
-    eng.Context.SceneManager.Running = true;
+    eng.Context.Running = true;
 
     //eng.RunOnce();
     Stopwatch sw = new();

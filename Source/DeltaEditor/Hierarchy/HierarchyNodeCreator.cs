@@ -2,6 +2,7 @@
 using Delta.Runtime;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace DeltaEditor.Hierarchy
@@ -9,30 +10,41 @@ namespace DeltaEditor.Hierarchy
     public class HierarchyNodeCreator
     {
         private readonly Stack<HierarchyNodeControl> _nodes = [];
-        private readonly Dictionary<EntityReference, bool> _collapsedData = [];
+        private readonly HashSet<EntityReference> _expandedNodes = [];
 
         private readonly List<EntityReference> _childrenListCached = [];
 
         public event Action<EntityReference>? OnEntitySelectRequest;
         public event Action<EntityReference>? OnEntityRemoveRequest;
 
-        public void CallRemove(EntityReference entityRef)=> OnEntityRemoveRequest?.Invoke(entityRef);
-        public void CallSelect(EntityReference entityRef)=> OnEntitySelectRequest?.Invoke(entityRef);
+        public void CallRemove(EntityReference entityRef) => OnEntityRemoveRequest?.Invoke(entityRef);
+        public void CallSelect(EntityReference entityRef) => OnEntitySelectRequest?.Invoke(entityRef);
 
 
         public bool IsCollapsed(EntityReference entityRef)
         {
-            if (!_collapsedData.TryGetValue(entityRef, out var collapsed))
-                return true;
-            return collapsed;
+            return !_expandedNodes.Contains(entityRef);
         }
 
-        public bool SetCollapsed(EntityReference entityRef, bool collapsed) => _collapsedData[entityRef] = collapsed;
-
-        public ReadOnlySpan<EntityReference> GetChildren(IRuntimeContext context, EntityReference entityRef)
+        public void SetCollapsed(EntityReference entityRef, bool collapsed)
         {
-            context.SceneManager.CurrentScene.GetFirstChildren(entityRef, _childrenListCached);
+            if (collapsed)
+                _expandedNodes.Remove(entityRef);
+            else
+                _expandedNodes.Add(entityRef);
+        }
+
+        public ReadOnlySpan<EntityReference> GetChildren(IRuntimeContext ctx, EntityReference entityRef)
+        {
+            Debug.Assert(ctx.SceneManager.CurrentScene != null);
+            ctx.SceneManager.CurrentScene.GetFirstChildren(entityRef, _childrenListCached);
             return CollectionsMarshal.AsSpan(_childrenListCached);
+        }
+
+        public int GetChildrenCount(IRuntimeContext ctx, EntityReference entityRef)
+        {
+            Debug.Assert(ctx.SceneManager.CurrentScene != null);
+            return ctx.SceneManager.CurrentScene.GetFirstChildrenCount(entityRef);
         }
 
         public HierarchyNodeControl GetOrCreateNode()

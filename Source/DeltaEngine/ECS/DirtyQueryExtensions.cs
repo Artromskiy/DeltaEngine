@@ -1,8 +1,8 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
 using Arch.Core.Utils;
+using Delta.ECS.Attributes;
 using Delta.ECS.Components;
-using Delta.Scripting;
 using Delta.Utilities;
 using System;
 using System.Collections.Generic;

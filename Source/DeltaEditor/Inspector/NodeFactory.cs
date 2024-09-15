@@ -1,4 +1,5 @@
-﻿using DeltaEditor.Inspector.Internal;
+﻿using Delta.Files;
+using DeltaEditor.Inspector.Internal;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -11,31 +12,29 @@ internal static class NodeFactory
     public static INode CreateNode(NodeData nodeData)
     {
         var type = nodeData.FieldType;
-        //if (visited.Contains(type) || !type.IsPublic)
-        //    return new EmptyNode(nodeData);
         visited.Add(type);
         INode result = CreateNode(type, nodeData);
         visited.Remove(type);
         return result;
     }
 
-    private static INode CreateNode(Type type, NodeData nodeData)
+    private static INode CreateNode(Type type, NodeData nodeData) => GetNode(type, nodeData);
+
+    private static INode GetNode(Type type, NodeData n)
     {
-        if (!_typeToNode.TryGetValue(type, out var createFunc))
-            return new CompositeNodeControl(nodeData);
-        return createFunc(nodeData);
+        return type switch
+        {
+            _ when type == typeof(Vector3) => new Vector3NodeControl(n),
+            _ when type == typeof(Vector4) => new Vector4NodeControl(n),
+            _ when type == typeof(Quaternion) => new QuaternionNodeControl(n),
+            _ when type == typeof(Matrix4x4) => new Matrix4NodeControl(n),
+            _ when type == typeof(float) => new FloatNodeControl(n),
+            _ when type == typeof(int) => new IntNodeControl(n),
+            _ when type == typeof(string) => new StringNodeControl(n),
+            _ when IsGuidAssetType(type) => new GuidAssetNodeControl(n),
+            _ => new CompositeNodeControl(n)
+        };
     }
 
-
-    private static readonly Dictionary<Type, Func<NodeData, INode>> _typeToNode = new()
-    {
-        { typeof(Vector3), (n) => new Vector3NodeControl(n) },
-        { typeof(Vector4), (n) => new Vector4NodeControl(n) },
-        { typeof(Quaternion), (n) => new QuaternionNodeControl(n) },
-        { typeof(Matrix4x4), (n) => new Matrix4NodeControl(n) },
-        { typeof(float), (n) => new FloatNodeControl(n) },
-        { typeof(int), (n) => new IntNodeControl(n) },
-        { typeof(string), (n) => new StringNodeControl(n) },
-        //{ typeof(Guid), (n) => new GuidNode(n) },
-    };
+    private static bool IsGuidAssetType(Type type) => type.IsGenericType && type.GetGenericTypeDefinition() == typeof(GuidAsset<>);
 }

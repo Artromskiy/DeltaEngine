@@ -5,8 +5,7 @@
              xmlns:uc="clr-namespace:DeltaEditor;assembly=DeltaEditor"
              mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="300"
              x:Class="DeltaEditor.HierarchyNodeControl"
-             Tapped="OnSelectClick"
-             DragDrop.AllowDrop="True">
+             Tapped="OnSelectClick">
 
   <Grid RowDefinitions="20,Auto"
         x:Name="MainGrid"
@@ -18,6 +17,8 @@
 
       <!--Collapse/Expand-->
       <Button Grid.Column="0"
+              x:Name="CollapseButton"
+              x:FieldModifier="private"
               Click="OnCollapseClick"
               CornerRadius="0,0,3,0"
               BorderThickness="0"
@@ -63,15 +64,15 @@
           Background="BlueViolet"
           Grid.Row="1"
           MinHeight="0">
-      
+
       <Border Grid.Column="0"/>
-      
+
       <StackPanel x:Name="ChildrenGrid"
             x:FieldModifier="private"
             Grid.Column="1">
-        
+
       </StackPanel>
     </Grid>
-    
+
   </Grid>
 </UserControl>

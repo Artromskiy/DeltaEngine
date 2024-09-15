@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Diagnostics;
 
-namespace Delta.Scripting;
+namespace Delta.ECS.Attributes;
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
 public class ComponentAttribute : Attribute, IComparable<ComponentAttribute>
@@ -18,11 +17,12 @@ public class ComponentAttribute : Attribute, IComparable<ComponentAttribute>
 
     public int CompareTo(ComponentAttribute? other)
     {
-        Debug.Assert(other != null);
+        if (other == null)
+            return -1;
 
-        if (builtIn != other.builtIn)
-            return builtIn.CompareTo(other.builtIn);
+        var builtInCompare = builtIn.CompareTo(other.builtIn);
+        var orderCompare = order.CompareTo(other.order);
 
-        return order.CompareTo(other.order);
+        return builtInCompare != 0 ? builtInCompare : orderCompare;
     }
 }

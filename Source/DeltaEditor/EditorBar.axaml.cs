@@ -39,6 +39,6 @@ public partial class EditorBar : UserControl
 
         var running = PlayButton.IsChecked ?? default;
         var pausing = PauseButton.IsChecked ?? default;
-        Program.RuntimeLoader.OnRuntimeThread += r => r.SceneManager.Running = running && !pausing;
+        Program.RuntimeLoader.OnRuntimeThread += r => r.Running = running && !pausing;
     }
 }

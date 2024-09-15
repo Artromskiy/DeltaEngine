@@ -1,6 +1,6 @@
 ﻿using Arch.Core;
 
-namespace Delta.ECS.Components.Hierarchy;
+namespace Delta.ECS.Components;
 
 /// <summary>
 /// Stores information about parent of entity.

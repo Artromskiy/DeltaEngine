@@ -7,7 +7,7 @@ internal readonly struct IListWrapper<T, K> : IList<T> where T : K
 {
     private readonly IList<K> _list;
 
-    internal IListWrapper(IList<K> list)=> _list = list;
+    internal IListWrapper(IList<K> list) => _list = list;
 
     public int Count => _list.Count;
     public bool IsReadOnly => _list.IsReadOnly;

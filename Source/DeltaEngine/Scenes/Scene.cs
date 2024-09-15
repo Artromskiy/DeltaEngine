@@ -1,10 +1,11 @@
 ﻿using Arch.Core;
-//using Arch.Core.Extensions;
+using Arch.Core.Extensions;
 using Delta.ECS;
-using Delta.ECS.Components.Hierarchy;
+using Delta.ECS.Components;
 using Delta.Files;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 
 namespace Delta.Scenes;
@@ -15,15 +16,18 @@ public sealed class Scene : IDisposable, IAsset
     [JsonIgnore]
     private readonly List<ISystem> _jobs;
 
+    private readonly List<ISystem> _defaultJobs;
+
     [JsonIgnore]
     private readonly HierarchySystem _hierarchySystem = new();
-
+    private readonly Stopwatch _deltaTimeSw = new();
     private float _deltaTime;
 
     public Scene()
     {
         _world = World.Create();
         _jobs = [];
+        _defaultJobs = [_hierarchySystem.MarkDestroySystem()];
     }
     public float DeltaTime() => _deltaTime;
 
@@ -33,24 +37,26 @@ public sealed class Scene : IDisposable, IAsset
         _deltaTime = deltaTime;
         foreach (var item in _jobs)
             item.Execute();
+
+        RunDefault();
     }
 
-    public void AddJob(ISystem job)
+    public void Run()
     {
-        _jobs.Add(job);
+        var deltaTime = (float)_deltaTimeSw.Elapsed.TotalSeconds;
+        _deltaTimeSw.Restart();
+        Run(deltaTime);
     }
 
-    public void RemoveJob(ISystem job)
+    internal void RunDefault()
     {
-        _jobs.Remove(job);
+        foreach (var item in _defaultJobs)
+            item.Execute();
     }
 
-    public void RemoveEntity(EntityReference entityRef)
-    {
-        _hierarchySystem.RemoveEntity(entityRef);
-        _world.Destroy(entityRef);
-    }
-
+    public void AddSystem(ISystem job) => _jobs.Add(job);
+    public void RemoveSystem(ISystem job) => _jobs.Remove(job);
+    public void RemoveEntity(EntityReference entityRef) => entityRef.Entity.AddOrGet<DestroyFlag>();
     public EntityReference AddEntity()
     {
         var entityRef = _world.Reference(_world.Create());
@@ -65,6 +71,10 @@ public sealed class Scene : IDisposable, IAsset
     public void GetFirstChildren(EntityReference entityRef, List<EntityReference> children)
     {
         _hierarchySystem.GetFirstChildren(entityRef, children);
+    }
+    public int GetFirstChildrenCount(EntityReference entityRef)
+    {
+        return _hierarchySystem.GetFirstChildrenCount(entityRef);
     }
 
     public void Dispose()

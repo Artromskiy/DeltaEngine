@@ -1,11 +1,12 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
+using Delta.ECS.Components;
+using Delta.Runtime;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System;
 
-namespace Delta.ECS.Components.Hierarchy;
+namespace Delta.ECS;
 
 internal class HierarchySystem
 {
@@ -16,6 +17,7 @@ internal class HierarchySystem
     private readonly Stack<LinkedListNode<TreeNode>> _cachedNodes = [];
     private readonly Stack<TreeNode> _cachedTreeNodes = [];
 
+    public ISystem MarkDestroySystem() => new MarkChildrenDestroy(this);
 
     public int GetOrderIndex(EntityReference entityRef)
     {
@@ -85,6 +87,15 @@ internal class HierarchySystem
             children.Add(item.entityRef);
     }
 
+    public int GetFirstChildrenCount(EntityReference entityRef)
+    {
+        Debug.Assert(entityRef.Entity.Has<Order>());
+        Debug.Assert(entityRef.Entity.Has<HierarchyFlag>());
+
+        var node = _entityToNode[entityRef];
+        return node.Value.children.Count;
+    }
+
     public List<EntityReference> GetChildren(EntityReference entityRef)
     {
         Debug.Assert(entityRef.Entity.Has<Order>());
@@ -120,24 +131,10 @@ internal class HierarchySystem
         CreateMarkerAndOrder(entityRef, order);
         var node = GetOrCreateNode();
         _entityToNode[entityRef] = node;
-        node.ValueRef.entityRef = entityRef;
+        node.Value.entityRef = entityRef;
         Root.children.AddLast(node);
     }
 
-
-    [Imp(Sync)]
-    public void RemoveEntity(EntityReference entityRef)
-    {
-        Debug.Assert(entityRef.Entity.Has<HierarchyFlag>());
-        Debug.Assert(entityRef.Entity.Has<Order>());
-
-        var node = _entityToNode[entityRef];
-        var parentNode = GetParentNode(entityRef);
-
-        parentNode.children.Remove(node);
-
-        RemoveEntities(node.Value.children);
-    }
 
     private static void UpdateOrders(LinkedList<TreeNode> children)
     {
@@ -145,17 +142,8 @@ internal class HierarchySystem
         int count = children.Count;
         for (int i = 0; i < count; i++, node = node.Next!)
         {
-            node.ValueRef.entityRef.Entity.Get<Order>().order = i;
-            UpdateOrders(node.ValueRef.children);
-        }
-    }
-
-    private void RemoveEntities(LinkedList<TreeNode> children)
-    {
-        foreach (var item in children)
-        {
-            RemoveEntities(item.children);
-            RemoveNode(item);
+            node.Value.entityRef.Entity.Get<Order>().order = i;
+            UpdateOrders(node.Value.children);
         }
     }
 
@@ -173,7 +161,7 @@ internal class HierarchySystem
         if (!_cachedNodes.TryPop(out var node))
             node = new LinkedListNode<TreeNode>(default);
         if (!_cachedTreeNodes.TryPop(out node.ValueRef))
-            node.ValueRef = new TreeNode();
+            node.Value = new TreeNode();
         return node;
     }
 
@@ -212,9 +200,10 @@ internal class HierarchySystem
         entityRef.Entity.Add(markerCmp, orderCmp);
     }
 
+
     private struct HierarchyFlag { }
 
-    private struct TreeNode : IEquatable<TreeNode>
+    private class TreeNode : IEquatable<TreeNode>
     {
         public EntityReference entityRef;
         public readonly LinkedList<TreeNode> children;
@@ -226,12 +215,48 @@ internal class HierarchySystem
         }
         public TreeNode() : this(EntityReference.Null) { }
 
-
-        public override readonly bool Equals([NotNullWhen(true)] object? obj) => obj is TreeNode node && Equals(node);
-        public readonly bool Equals(TreeNode other) => other.entityRef == entityRef;
-        public override readonly int GetHashCode() => entityRef.GetHashCode();
+        public override bool Equals(object? obj) => obj is TreeNode node && Equals(node);
+        public bool Equals(TreeNode? other) => other is not null && other.entityRef == entityRef;
+        public override int GetHashCode() => entityRef.GetHashCode();
 
         public static bool operator ==(TreeNode left, TreeNode right) => left.Equals(right);
         public static bool operator !=(TreeNode left, TreeNode right) => !left.Equals(right);
+    }
+
+
+    private readonly struct MarkChildrenDestroy(HierarchySystem hierarchySystem) : ISystem
+    {
+        private static readonly QueryDescription _destroyDescription = new QueryDescription().WithAll<DestroyFlag, HierarchyFlag, Order>();
+        private static readonly List<Entity> _entitiesToDestroy = [];
+        public readonly void Execute()
+        {
+            Debug.Assert(IRuntimeContext.Current.SceneManager.CurrentScene != null);
+            var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
+
+            _entitiesToDestroy.Clear();
+            world.GetEntities(_destroyDescription, _entitiesToDestroy);
+
+            // Do not include items which has parent with DestroyFlag
+            _entitiesToDestroy.RemoveAll(static x => x.GetLastParent<DestroyFlag>(out var _));
+
+            foreach (var entity in _entitiesToDestroy)
+            {
+                var entityRef = world.Reference(entity);
+                var parentNode = hierarchySystem.GetParentNode(entityRef);
+                var node = hierarchySystem._entityToNode[entityRef];
+
+                RemoveEntities(node.Value);
+                parentNode.children.Remove(node);
+                hierarchySystem._cachedNodes.Push(node);
+            }
+        }
+
+        private readonly void RemoveEntities(TreeNode treeNode)
+        {
+            foreach (var item in treeNode.children)
+                RemoveEntities(item);
+            treeNode.entityRef.Entity.AddOrGet<DestroyFlag>();
+            hierarchySystem.RemoveNode(treeNode);
+        }
     }
 }

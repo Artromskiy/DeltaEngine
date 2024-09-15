@@ -5,7 +5,6 @@ using Avalonia.Interactivity;
 using DeltaEditor.Inspector;
 using DeltaEditor.Inspector.Internal;
 using System;
-using System.Diagnostics;
 
 namespace DeltaEditor;
 
@@ -91,5 +90,4 @@ internal partial class ComponentNodeControl : UserControl, INode
 
         return changed;
     }
-
 }

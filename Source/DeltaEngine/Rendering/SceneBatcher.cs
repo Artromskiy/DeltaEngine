@@ -3,7 +3,6 @@ using Arch.Core.Extensions;
 using Collections.Pooled;
 using Delta.ECS;
 using Delta.ECS.Components;
-using Delta.ECS.Components.Hierarchy;
 using Delta.Rendering.Collections;
 using Delta.Runtime;
 using System;
@@ -29,23 +28,23 @@ internal class SceneBatcher : IRenderBatcher
     private readonly PooledSet<uint> _forceTrsWrite;
     private readonly List<uint> _transferIndicesSet;
 
-    //private readonly World _world;
-
     private static readonly QueryDescription _cameraDescription = new QueryDescription().WithAll<Camera, Transform>();
 
-    private static readonly QueryDescription _removeDescription = new QueryDescription().WithAll<RendId>().WithNone<Render>();
-    private static readonly QueryDescription _addDescription = new QueryDescription().WithAll<Render>().WithNone<RendId>();
-    private static readonly QueryDescription _changeDescription = new QueryDescription().WithAll<Render, RendId, DirtyFlag<Render>>();
-    private static readonly QueryDescription _renderDescription = new QueryDescription().WithAll<Render, RendId>();
+    private static readonly QueryDescription _removeEntityDescription = new QueryDescription().WithAll<Render, RendId, RenderGroup, DestroyFlag>();
+    private static readonly QueryDescription _removeRenderDescription = new QueryDescription().WithAll<RendId, RenderGroup>().WithNone<Render>();
+    private static readonly QueryDescription _addDescription = new QueryDescription().WithAll<Render>().WithNone<RendId, RenderGroup>();
+    private static readonly QueryDescription _changeDescription = new QueryDescription().WithAll<Render, RendId, RenderGroup, DirtyFlag<Render>>();
+    private static readonly QueryDescription _renderDescription = new QueryDescription().WithAll<Render, RendId, RenderGroup>();
 
-    private static readonly QueryDescription _trsDescriptionTransform = new QueryDescription().WithAll<Render, RendId, Transform>();
-    private static readonly QueryDescription _trsDescriptionParent = new QueryDescription().WithAll<Render, RendId, ChildOf>().WithNone<Transform>();
+    private static readonly QueryDescription _trsDescriptionTransform = new QueryDescription().WithAll<Render, RendId, RenderGroup, Transform>();
+    private static readonly QueryDescription _trsDescriptionParent = new QueryDescription().WithAll<Render, RendId, RenderGroup, ChildOf>().WithNone<Transform>();
 
     private readonly RenderGroupData _rendGroupData = new();
 
     private readonly List<(Render rend, uint count)> _renders = [];
 
     private const bool ForceWrites = true;
+    private readonly RemoveEntity _removeEntity;
     private readonly RemoveRender _removeRender;
     private readonly AddRender _addRender;
     private readonly ChangeRender _changeRender;
@@ -68,6 +67,7 @@ internal class SceneBatcher : IRenderBatcher
         for (uint i = 0; i < Transforms.Length; i++)
             _free.Enqueue(i);
 
+        _removeEntity = new RemoveEntity(_free, _rendGroupData);
         _removeRender = new RemoveRender(_free, _rendGroupData);
         _addRender = new AddRender(_free, _rendGroupData, _forceTrsWrite);
         _changeRender = new ChangeRender(_rendGroupData);
@@ -105,6 +105,7 @@ internal class SceneBatcher : IRenderBatcher
 
         BufferResize();
 
+        _removeEntity.Execute();
         _removeRender.Execute();
         _addRender.Execute();
         _changeRender.Execute();
@@ -132,7 +133,7 @@ internal class SceneBatcher : IRenderBatcher
         Debug.Assert(IRuntimeContext.Current.SceneManager.CurrentScene != null);
         var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
         var countToAdd = world.CountEntities(_addDescription);
-        var countToRemove = world.CountEntities(_removeDescription);
+        var countToRemove = world.CountEntities(_removeRenderDescription);
         var wholeFree = _free.Count + countToRemove;
         var delta = countToAdd - wholeFree;
         if (delta > 0)
@@ -147,6 +148,32 @@ internal class SceneBatcher : IRenderBatcher
         }
     }
 
+    private readonly struct RemoveEntity(Queue<uint> freeIds, RenderGroupData rendGroupData) : ISystem
+    {
+        [Imp(Inl)]
+        public readonly void Execute()
+        {
+            Debug.Assert(IRuntimeContext.Current.SceneManager.CurrentScene != null);
+            var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
+            if (!world.Has(_removeEntityDescription))
+                return;
+            var remover = new InlineRemover(freeIds, rendGroupData);
+            world.InlineQuery<InlineRemover, RendId, RenderGroup>(_removeEntityDescription, ref remover);
+            world.Remove<RendId, RenderGroup, Render>(_removeEntityDescription);
+        }
+
+        private readonly struct InlineRemover(Queue<uint> free, RenderGroupData rendGroupData)
+            : IForEach<RendId, RenderGroup>
+        {
+            [Imp(Inl)]
+            public readonly void Update(ref RendId id, ref RenderGroup group)
+            {
+                rendGroupData.Remove(group);
+                free.Enqueue(id.trsId);
+            }
+        }
+    }
+
     private readonly struct RemoveRender(Queue<uint> freeIds, RenderGroupData rendGroupData) : ISystem
     {
         [Imp(Inl)]
@@ -154,11 +181,11 @@ internal class SceneBatcher : IRenderBatcher
         {
             Debug.Assert(IRuntimeContext.Current.SceneManager.CurrentScene != null);
             var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
-            if (!world.Has(_removeDescription))
+            if (!world.Has(_removeRenderDescription))
                 return;
             var remover = new InlineRemover(freeIds, rendGroupData);
-            world.InlineQuery<InlineRemover, RendId, RenderGroup>(_removeDescription, ref remover);
-            world.Remove<RendId, RenderGroup>(_removeDescription);
+            world.InlineQuery<InlineRemover, RendId, RenderGroup>(_removeRenderDescription, ref remover);
+            world.Remove<RendId, RenderGroup>(_removeRenderDescription);
         }
 
         private readonly struct InlineRemover(Queue<uint> free, RenderGroupData rendGroupData)
@@ -303,12 +330,12 @@ internal class SceneBatcher : IRenderBatcher
             IForEachWithEntity<RendId>
         {
             [Imp(Inl)]
-            public readonly void Update(Entity entity, ref RendId rendToId)
+            public readonly void Update(Entity entity, ref RendId rendId)
             {
-                if (!ForceWrites && !forceWrite.Contains(rendToId.trsId) && !ctx.HasParent<DirtyFlag<Transform>>(entity))
+                if (!ForceWrites && !forceWrite.Contains(rendId.trsId) && !ctx.HasParent<DirtyFlag<Transform>>(entity))
                     return;
-                trsArray[rendToId.trsId] = ctx.GetWorldRecursive(entity);
-                transfer.Value!.Add(rendToId.trsId);
+                trsArray[rendId.trsId] = ctx.GetWorldRecursive(entity);
+                transfer.Value!.Add(rendId.trsId);
             }
         }
 
@@ -360,7 +387,8 @@ internal class SceneBatcher : IRenderBatcher
         {
             if (!rendToGroup.TryGetValue(render, out var group))
             {
-                sortedRendToGroup[render] = rendToGroup[render] = group = new RenderGroup((uint)rendToGroup.Count);
+                group = new((uint)rendToGroup.Count);
+                sortedRendToGroup[render] = rendToGroup[render] = group;
                 groupToCount[group] = 0;
             }
             groupToCount[group]++;

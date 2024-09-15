@@ -1,4 +1,3 @@
-using Avalonia;
 using Avalonia.Controls;
 using System.Diagnostics;
 
@@ -8,7 +7,7 @@ public partial class DebugTimerControl : UserControl
 {
     private Stopwatch sw;
     private int prevTime = 0;
-    public DebugTimerControl()=> InitializeComponent();
+    public DebugTimerControl() => InitializeComponent();
 
     public void StartDebug()
     {
@@ -17,14 +16,18 @@ public partial class DebugTimerControl : UserControl
 
     public void StopDebug()
     {
+        const string usS = "us";
+        const string msS = "ms";
         sw.Stop();
-        int us = (int)(sw?.Elapsed.TotalMicroseconds ?? 0);
-        prevTime = SmoothInt(prevTime, us, 50);
-        DebugTimer.Content = $"{prevTime}us";
+        int time = (int)(sw?.Elapsed.TotalMicroseconds ?? 0);
+        prevTime = SmoothInt(prevTime, time, 50);
+        string format = prevTime > 1000 ? msS : usS;
+        string t = prevTime > 1000 ? ((float)prevTime / 1000).ToString("0.00") : prevTime.ToString();
+        DebugTimer.Content = $"{t}{format}";
     }
 
     private static int SmoothInt(int value1, int value2, int smoothing)
     {
-        return (value1 * smoothing + value2) / (smoothing + 1);
+        return ((value1 * smoothing) + value2) / (smoothing + 1);
     }
 }

@@ -1,12 +1,11 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
 using Delta.ECS;
+using Delta.ECS.Attributes;
 using Delta.ECS.Components;
-using Delta.ECS.Components.Hierarchy;
 using Delta.Rendering;
 using Delta.Runtime;
 using Delta.Scenes;
-using Delta.Scripting;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -38,9 +37,12 @@ internal static class TestScene
         var graphics = IRuntimeContext.Current.GraphicsModule;
         if (graphics is not DummyGraphics)
             graphics.AddRenderBatcher(new SceneBatcher());
-        scene.AddJob(new MoveTransformsJob(scene._world, scene.DeltaTime));
+        scene.AddSystem(new MoveTransformsJob(scene._world, scene.DeltaTime));
         //scene.AddJob(new RemoveDirtyJob(scene._world));
         //scene.AddJob(new FpsDropper(60, scene.DeltaTime));
+
+        scene._world.TrimExcess();
+        GC.Collect();
         return scene;
     }
 

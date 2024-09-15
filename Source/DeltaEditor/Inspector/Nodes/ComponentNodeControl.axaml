@@ -31,7 +31,7 @@
       <!--Component Icon-->
       <Svg Grid.Column="1"
            Margin="3"
-           Path="/Assets/Icons/file.svg"/>
+           Path="/Assets/Icons/code.svg"/>
       
       <!--Component Name-->
       <Label x:Name="ComponentName"

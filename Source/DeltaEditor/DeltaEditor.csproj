@@ -49,6 +49,9 @@
     <Compile Update="Inspector\Nodes\CompositeNodeControl.axaml.cs">
       <DependentUpon>CompositeNodeControl.axaml</DependentUpon>
     </Compile>
+    <Compile Update="Inspector\Nodes\GuidAssetNodeControl.axaml.cs">
+      <DependentUpon>GuidAssetNodeControl.axaml</DependentUpon>
+    </Compile>
     <Compile Update="Inspector\Nodes\QuaternionNodeControl.axaml.cs">
       <DependentUpon>QuaternionNodeControl.axaml</DependentUpon>
     </Compile>

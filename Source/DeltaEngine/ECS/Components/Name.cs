@@ -1,4 +1,4 @@
-﻿using Delta.Scripting;
+﻿using Delta.ECS.Attributes;
 
 namespace Delta.ECS.Components;
 

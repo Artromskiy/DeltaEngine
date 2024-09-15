@@ -4,6 +4,7 @@ namespace Delta.Runtime;
 
 public interface IRuntimeContext
 {
+    public bool Running { get; set; }
     public IAssetCollection AssetImporter { get; }
     public IProjectPath ProjectPath { get; }
     public ISceneManager SceneManager { get; }

@@ -9,7 +9,6 @@ using Delta.ECS.Components;
 using Delta.Runtime;
 using DeltaEditor.Hierarchy;
 using System;
-using System.Diagnostics;
 
 namespace DeltaEditor;
 
@@ -33,25 +32,6 @@ public sealed partial class HierarchyNodeControl : UserControl, IDisposable
     public HierarchyNodeControl(HierarchyNodeCreator creator) : this()
     {
         _creator = creator;
-        AddHandler(DragDrop.DragOverEvent, OnDragOver);
-        this.PointerPressed += HierarchyNodeControl_PointerPressed;
-        this.PointerReleased += HierarchyNodeControl_PointerReleased;
-        this.PointerMoved += HierarchyNodeControl_PointerMoved;
-    }
-
-    private void HierarchyNodeControl_PointerMoved(object? sender, PointerEventArgs e)
-    {
-        Debug.WriteLine("Moved");
-    }
-
-    private void HierarchyNodeControl_PointerReleased(object? sender, PointerReleasedEventArgs e)
-    {
-
-    }
-
-    private void HierarchyNodeControl_PointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-
     }
 
     public Controls? Rows => ChildrenGrid.Children;
@@ -83,14 +63,13 @@ public sealed partial class HierarchyNodeControl : UserControl, IDisposable
     private void OnCollapseClick(object? sender, RoutedEventArgs e) => Collapsed = !Collapsed;
     private void OnRemoveClick(object? sender, RoutedEventArgs e) => _creator?.CallRemove(_entity);
     private void OnSelectClick(object? sender, TappedEventArgs e) => _creator?.CallSelect(_entity);
-    private void OnDragOver(object? sender, DragEventArgs e)
-    {
-        var data = e.Data;
-    }
     public void UpdateEntity(IRuntimeContext ctx, EntityReference entityReference)
     {
         _entity = entityReference;
         NodeName.Content = EntityString(_entity);
+        var count = _creator.GetChildrenCount(ctx, _entity);
+        Collapsed |= count == 0;
+        CollapseButton.IsVisible = count != 0;
         if (!Collapsed)
             UpdateChildren(ctx);
     }
@@ -98,7 +77,7 @@ public sealed partial class HierarchyNodeControl : UserControl, IDisposable
     private void UpdateChildren(IRuntimeContext ctx)
     {
         var children = _creator.GetChildren(ctx, _entity);
-        var count = ChildrenNodes.Count;
+        var count = children.Length;
         UpdateChildrenCount(count);
         for (int i = 0; i < count; i++)
             ChildrenNodes[i].UpdateEntity(ctx, children[i]);

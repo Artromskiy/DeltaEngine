@@ -19,10 +19,14 @@ public partial class SceneControl : UserControl
 
     public void UpdateScene(IRuntimeContext ctx)
     {
+        DebugTimer.StartDebug();
         var bounds = RenderBorder.Bounds;
 
         if (!SizeIsValid(bounds.Width, bounds.Height))
+        {
+            DebugTimer.StopDebug();
             return;
+        }
 
         var w = (int)bounds.Width;
         var h = (int)bounds.Height;
@@ -38,6 +42,7 @@ public partial class SceneControl : UserControl
         {
             ctx.GraphicsModule.Size = (w, h);
         }
+        DebugTimer.StopDebug();
     }
 
     private static bool SizeIsValid(double width, double height)
@@ -49,18 +54,20 @@ public partial class SceneControl : UserControl
     {
         using var frameBuffer = bitmap.Lock();
         var renderStream = ctx.GraphicsModule.RenderStream;
-        bitmapMemoryManager.UpdateSource(frameBuffer.Address, frameBuffer.RowBytes * frameBuffer.Size.Height);
-        ctx.GraphicsModule.RenderStream.CopyToParallel(bitmapMemoryManager.Memory);
+        var size = frameBuffer.RowBytes * frameBuffer.Size.Height;
+        bitmapMemoryManager.UpdateSource(frameBuffer.Address, size);
+        ctx.GraphicsModule.RenderStream.CopyToParallel(bitmapMemoryManager.Memory, 8);
     }
+
 
     private bool ResizeBitmap(int width, int height)
     {
         var size = new PixelSize(width, height);
-        var dpi = new Vector(96, 96);
-        var pFormat = PixelFormat.Rgb32;
-        var aFormat = AlphaFormat.Opaque;
         if (_bitmap == null || _bitmap.PixelSize != size)
         {
+            var dpi = new Vector(96, 96);
+            var pFormat = PixelFormat.Rgb32;
+            var aFormat = AlphaFormat.Opaque;
             _prevBitmap = _bitmap;
             _bitmap = new WriteableBitmap(size, dpi, pFormat, aFormat);
             Render.Source = _bitmap;

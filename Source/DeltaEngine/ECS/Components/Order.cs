@@ -1,6 +1,6 @@
-﻿using Delta.Scripting;
+﻿using Delta.ECS.Attributes;
 
-namespace Delta.ECS.Components.Hierarchy;
+namespace Delta.ECS.Components;
 
 /// <summary>
 /// Stores information about order of entity in hierarchy.

@@ -22,7 +22,7 @@ public class ModelImporter : IDisposable
         List<(MeshData meshData, string name)> meshDatas = [];
         ProcessScene(scene->MRootNode, scene, meshDatas);
         foreach (var (meshData, name) in meshDatas)
-            IRuntimeContext.Current.AssetImporter.CreateAsset($"{fileName}.{name}.mesh", meshData);
+            IRuntimeContext.Current.AssetImporter.CreateAsset(meshData, $"{fileName}.{name}.mesh");
     }
 
     public static unsafe List<(MeshData meshData, string name)> ImportAndGet(string path)

@@ -1,6 +1,6 @@
-﻿using Delta.Files;
+﻿using Delta.ECS.Attributes;
+using Delta.Files;
 using Delta.Rendering;
-using Delta.Scripting;
 using System;
 
 namespace Delta.ECS.Components;

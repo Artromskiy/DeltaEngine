@@ -1,5 +1,5 @@
-﻿using Delta.Runtime;
-using Delta.Scripting;
+﻿using Delta.ECS.Attributes;
+using Delta.Runtime;
 using DeltaEditorLib.Scripting;
 using System;
 using System.Collections.Generic;

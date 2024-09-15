@@ -1,6 +1,6 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
-using Delta.ECS.Components.Hierarchy;
+using Delta.ECS.Components;
 using System.Collections.Generic;
 namespace DeltaEditorLib.Scripting;
 

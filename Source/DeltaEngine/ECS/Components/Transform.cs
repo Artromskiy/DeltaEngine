@@ -1,4 +1,4 @@
-﻿using Delta.Scripting;
+﻿using Delta.ECS.Attributes;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 

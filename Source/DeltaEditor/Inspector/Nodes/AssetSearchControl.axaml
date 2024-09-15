@@ -3,44 +3,49 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:uc="clr-namespace:DeltaEditor;assembly=DeltaEditor"
-             mc:Ignorable="d" d:DesignWidth="455" d:DesignHeight="612"
-             x:Class="DeltaEditor.HierarchyControl">
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="800"
+             x:Class="DeltaEditor.AssetSearchControl">
 
   <Grid Background="Magenta"
-        RowDefinitions="20,20,*">
+        RowDefinitions="20,20,*,Auto">
 
     <!--Menu Name-->
-    <Grid ColumnDefinitions="20,*,Auto">
+    <Grid Grid.Row="0"
+          ColumnDefinitions="20,*,Auto,20">
 
       <Svg Grid.Column="0"
            Margin="3"
-           Path="/Assets/Icons/hierarchy.svg"/>
+           Path="/Assets/Icons/file.svg"/>
 
       <Label Grid.Column="1"
              FontWeight="Bold"
              FontSize="12"
-             Content="Hierarchy"/>
+             Content="Asset search"/>
 
       <uc:DebugTimerControl x:Name="DebugTimer"
                             x:FieldModifier="private"
                             Grid.Column="2"/>
 
+      <!--Remove Component-->
+      <Button Grid.Column="3"
+              Click="OnCloseClick"
+              CornerRadius="0,0,0,3"
+              BorderThickness="0"
+              Padding = "0"
+              Width="20"
+              Height="20">
+        <Svg Path="/Assets/Icons/close.svg"
+             Margin="3"/>
+      </Button>
+      
     </Grid>
 
     <Grid Grid.Row="1"
           ColumnDefinitions="Auto,*,Auto">
+      <Border Grid.Column="0"
+              Width="20">
 
-      <!--Add Entity etc-->
-      <Button Grid.Column="0"
-              Width="20"
-              Height="20"
-              FontSize="12"
-              BorderThickness="0"
-              CornerRadius="3,0,0,3"
-              Click="CreateNewEntity"
-              Padding="3">
-        <Svg Path="/Assets/Icons/add.svg"/>
-      </Button>
+      </Border>
 
       <!--Search field-->
       <TextBox Grid.Column="1"
@@ -58,26 +63,24 @@
               BorderThickness="0">
         <Svg Path="/Assets/Icons/search.svg"
              Margin="3"/>
+        
       </Border>
+      
     </Grid>
 
-    <!--Entities-->
+    <!--Assets-->
     <Border Grid.Row="2"
             Background="Cyan">
       <ScrollViewer VerticalScrollBarVisibility="Visible">
-        <StackPanel x:Name="EntityNodeStack"
-                    x:FieldModifier="private"
-                    Margin="0,0,15,0">
-          <!--TestEntity-->
+        <StackPanel x:Name="InspectorStack"
+                    x:FieldModifier="private">
           
-          <!--
-          <uc:HierarchyNodeControl/>
-          -->
-          
+          <!--Test Transform-->
+
+
         </StackPanel>
       </ScrollViewer>
     </Border>
 
   </Grid>
-
 </UserControl>

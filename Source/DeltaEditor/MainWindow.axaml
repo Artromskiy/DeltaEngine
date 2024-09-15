@@ -22,34 +22,37 @@
           ColumnDefinitions="*,4,*,4,*"
           RowDefinitions="*">
 
+      
       <uc:HierarchyControl x:Name="Hierarchy"
                            Grid.Column="0"/>
 
+      
       <GridSplitter Grid.Column="1"
-                    Background="Black"
+                    Background="Transparent"
                     MinWidth="1"
-                    Margin="1,0"
                     ResizeDirection="Columns"/>
 
       <uc:SceneControl x:Name="Scene"
                        Grid.Column="2"/>
 
       <GridSplitter Grid.Column="3"
-                    Background="Black"
+                    Background="Transparent"
                     MinWidth="1"
-                    Margin="1,0"
                     ResizeDirection="Columns"/>
 
       <uc:InspectorControl x:Name="Inspector"
                            Grid.Column="4"/>
 
+      <uc:AssetSearchControl x:Name="AssetSearch"
+                             Grid.Column="4"
+                             IsVisible="False"/>
+
     </Grid>
 
     <GridSplitter Grid.Row="2"
-                  Background="Black"
+                  Background="Transparent"
                   MinHeight="1"
-                  ResizeDirection="Rows"
-                  Margin="0,1"/>
+                  ResizeDirection="Rows"/>
 
     <!--Explorer-->
     <Grid Grid.Row="3"
