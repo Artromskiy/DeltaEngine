@@ -30,7 +30,7 @@ public partial class HierarchyControl : UserControl
 
     public void UpdateHierarchy(IRuntimeContext ctx)
     {
-        DebugTimer.StartDebug();
+        PanelHeader.StartDebug();
 
         if (ctx.SceneManager.CurrentScene == null)
             return;
@@ -43,7 +43,7 @@ public partial class HierarchyControl : UserControl
         for (int i = 0; i < count; i++)
             ChildrenNodes[i].UpdateEntity(ctx, entities[i]);
 
-        DebugTimer.StopDebug();
+        PanelHeader.StopDebug();
     }
 
 

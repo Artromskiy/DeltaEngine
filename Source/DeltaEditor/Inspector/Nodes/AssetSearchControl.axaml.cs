@@ -26,6 +26,7 @@ public partial class AssetSearchControl : UserControl
         InitializeComponent();
         if (Design.IsDesignMode)
             return;
+        PanelHeader.OnCloseClick += CloseAssetSearch;
         _instance = this;
     }
 
@@ -53,7 +54,6 @@ public partial class AssetSearchControl : UserControl
         _onAssetSelected?.Invoke(guid);
         CloseAssetSearch();
     }
-    private void OnCloseClick(object? sender, RoutedEventArgs e) => CloseAssetSearch();
 
     private void UpdateChildrenCount(int neededNodesCount)
     {

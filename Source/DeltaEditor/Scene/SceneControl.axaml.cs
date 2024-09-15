@@ -19,12 +19,12 @@ public partial class SceneControl : UserControl
 
     public void UpdateScene(IRuntimeContext ctx)
     {
-        DebugTimer.StartDebug();
+        PanelHeader.StartDebug();
         var bounds = RenderBorder.Bounds;
 
         if (!SizeIsValid(bounds.Width, bounds.Height))
         {
-            DebugTimer.StopDebug();
+            PanelHeader.StopDebug();
             return;
         }
 
@@ -42,7 +42,7 @@ public partial class SceneControl : UserControl
         {
             ctx.GraphicsModule.Size = (w, h);
         }
-        DebugTimer.StopDebug();
+        PanelHeader.StopDebug();
     }
 
     private static bool SizeIsValid(double width, double height)

@@ -6,41 +6,24 @@
              mc:Ignorable="d" d:DesignWidth="455" d:DesignHeight="612"
              x:Class="DeltaEditor.InspectorControl">
 
-  <Grid Background="Magenta"
-        RowDefinitions="20,20,*,Auto">
+  <Grid RowDefinitions="20,20,Auto,Auto">
 
     <!--Menu Name-->
-    <Grid Grid.Row="0"
-          ColumnDefinitions="20,*,Auto">
-
-      <Svg Grid.Column="0"
-           Margin="3"
-           Path="/Assets/Icons/inspector.svg"/>
-
-      <Label Grid.Column="1"
-             FontWeight="Bold"
-             FontSize="12"
-             Content="Inspector"/>
-
-      <uc:DebugTimerControl x:Name="DebugTimer"
-                            x:FieldModifier="private"
-                            Grid.Column="2"/>
-
-    </Grid>
+    <uc:EditorPanelHeader PanelName="Inspector"
+                          PanelIcon="/Assets/Icons/inspector.svg"
+                          Grid.Row="0"
+                          x:Name="PanelHeader"
+                          x:FieldModifier="private"/>
 
     <Grid Grid.Row="1"
-          ColumnDefinitions="Auto,Auto,*">
-      <Border Grid.Column="0"
-              Width="20">
-
-      </Border>
+          ColumnDefinitions="20,Auto,*">
+      
       <!--Entity Icon-->
       <Border Grid.Column="1"
-            Width="20"
-            Height="20"
-            BorderThickness="0,0,0,0"
-            BorderBrush="Black"
-            Padding="3">
+              Width="20"
+              Height="20"
+              BorderBrush="Black"
+              Padding="3">
         <Svg Path="/Assets/Icons/entity.svg"/>
       </Border>
 
@@ -48,18 +31,12 @@
       <TextBox Grid.Column="2"
                MinHeight="0"
                Height="20"
-               CornerRadius="0,0,0,0"
-               BorderBrush="Black"
                FontSize="12"
-               Padding="5,0,0,0"
-               BorderThickness="0,0,0,0"
-               VerticalContentAlignment="Center"
                Watermark="Name"/>
     </Grid>
 
     <!--Entities-->
-    <Border Grid.Row="2"
-            Background="Cyan">
+    <Border Grid.Row="2">
       <ScrollViewer VerticalScrollBarVisibility="Visible">
         <StackPanel x:Name="InspectorStack"
                     x:FieldModifier="private"
@@ -82,15 +59,15 @@
       </ScrollViewer>
     </Border>
 
-    
+
     <Button Grid.Row="3"
             HorizontalAlignment="Center"
-            VerticalAlignment="Top"
             Content="Add Component"
             FontSize="12"
             FontWeight="Bold"
             x:Name="AddComponentButton"
             x:FieldModifier="private">
+      
       <Button.Flyout>
         <Flyout>
           <uc:AddComponentControl x:Name="AddComponentControlFlyout"
@@ -98,6 +75,6 @@
         </Flyout>
       </Button.Flyout>
     </Button>
-    
+
   </Grid>
 </UserControl>

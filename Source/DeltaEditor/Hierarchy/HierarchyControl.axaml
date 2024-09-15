@@ -6,26 +6,14 @@
              mc:Ignorable="d" d:DesignWidth="455" d:DesignHeight="612"
              x:Class="DeltaEditor.HierarchyControl">
 
-  <Grid Background="Magenta"
-        RowDefinitions="20,20,*">
-
+  <Grid RowDefinitions="20,20,*">
+    
     <!--Menu Name-->
-    <Grid ColumnDefinitions="20,*,Auto">
-
-      <Svg Grid.Column="0"
-           Margin="3"
-           Path="/Assets/Icons/hierarchy.svg"/>
-
-      <Label Grid.Column="1"
-             FontWeight="Bold"
-             FontSize="12"
-             Content="Hierarchy"/>
-
-      <uc:DebugTimerControl x:Name="DebugTimer"
-                            x:FieldModifier="private"
-                            Grid.Column="2"/>
-
-    </Grid>
+    <uc:EditorPanelHeader PanelName="Hierarchy"
+                          PanelIcon="/Assets/Icons/hierarchy.svg"
+                          Grid.Row="0"
+                          x:Name="PanelHeader"
+                          x:FieldModifier="private"/>
 
     <Grid Grid.Row="1"
           ColumnDefinitions="Auto,*,Auto">
@@ -34,7 +22,7 @@
       <Button Grid.Column="0"
               Width="20"
               Height="20"
-              FontSize="12"
+              MinHeight="0"
               BorderThickness="0"
               CornerRadius="3,0,0,3"
               Click="CreateNewEntity"
@@ -45,35 +33,36 @@
       <!--Search field-->
       <TextBox Grid.Column="1"
                MinHeight="0"
+               VerticalAlignment="Stretch"
                CornerRadius="0"
                BorderThickness="0"
                FontSize="12"
-               Padding="5,0"
                VerticalContentAlignment="Center"
                Watermark="Search"/>
 
-      <Border Grid.Column="2"
+      <Button Grid.Column="2"
               Padding="0"
-              BorderBrush="Transparent"
-              BorderThickness="0">
+              MinHeight="0"
+              CornerRadius="0,3,3,0"
+              VerticalAlignment="Stretch">
+        
         <Svg Path="/Assets/Icons/search.svg"
              Margin="3"/>
-      </Border>
+      </Button>
     </Grid>
 
     <!--Entities-->
-    <Border Grid.Row="2"
-            Background="Cyan">
+    <Border Grid.Row="2">
       <ScrollViewer VerticalScrollBarVisibility="Visible">
         <StackPanel x:Name="EntityNodeStack"
                     x:FieldModifier="private"
                     Margin="0,0,15,0">
           <!--TestEntity-->
-          
+
           <!--
           <uc:HierarchyNodeControl/>
           -->
-          
+
         </StackPanel>
       </ScrollViewer>
     </Border>

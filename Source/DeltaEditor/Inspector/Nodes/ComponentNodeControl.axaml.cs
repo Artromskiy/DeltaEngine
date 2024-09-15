@@ -10,12 +10,6 @@ namespace DeltaEditor;
 
 internal partial class ComponentNodeControl : UserControl, INode
 {
-    public static readonly StyledProperty<Grid?> ComponentGridProperty =
-        AvaloniaProperty.Register<ComponentNodeControl, Grid?>(nameof(ComponentGrid));
-
-    public static readonly StyledProperty<RowDefinitions?> GridRowsProperty =
-        AvaloniaProperty.Register<ComponentNodeControl, RowDefinitions?>(nameof(RowsDefs));
-
     public static readonly StyledProperty<Controls?> ComponentGridChildrenProperty =
         AvaloniaProperty.Register<ComponentNodeControl, Controls?>(nameof(Rows));
 
@@ -29,20 +23,8 @@ internal partial class ComponentNodeControl : UserControl, INode
     private readonly NodeData _nodeData;
     public event Action<Type> OnComponentRemoveRequest;
 
-
-
     public Controls? Rows => ChildrenGrid.Children;
-    public Grid? ComponentGrid
-    {
-        get => ChildrenGrid;
-        set => ChildrenGrid = value;
-    }
 
-    public RowDefinitions? RowsDefs
-    {
-        get => ChildrenGrid.RowDefinitions;
-        set => ChildrenGrid.RowDefinitions = value ?? ChildrenGrid.RowDefinitions;
-    }
 
     public bool Collapsed
     {

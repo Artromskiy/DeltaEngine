@@ -1,10 +1,11 @@
-<Application xmlns="https://github.com/avaloniaui"
+<Application x:Class="DeltaEditor.App"
+             xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="DeltaEditor.App"
-             RequestedThemeVariant="Light">
+             xmlns:semi="https://irihi.tech/semi"
+             RequestedThemeVariant="Dark">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
-    <Application.Styles>
-        <FluentTheme />
-    </Application.Styles>
+  <Application.Styles>
+    <semi:SemiTheme />
+  </Application.Styles>
 </Application>

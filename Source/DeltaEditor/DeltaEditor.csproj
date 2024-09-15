@@ -17,10 +17,10 @@
     <PackageReference Include="Avalonia" Version="11.1.0" />
     <PackageReference Include="Avalonia.Desktop" Version="11.1.0" />
     <PackageReference Include="Avalonia.Svg.Skia" Version="11.1.0" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.1.0" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="11.1.0" />
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
     <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.1.0" />
+    <PackageReference Include="Semi.Avalonia" Version="11.1.0.4" />
   </ItemGroup>
 
   <ItemGroup>
@@ -45,6 +45,9 @@
     </Compile>
     <Compile Update="Inspector\AddComponentItemControl.axaml.cs">
       <DependentUpon>AddComponentItemControl.axaml</DependentUpon>
+    </Compile>
+    <Compile Update="EditorPanelHeader.axaml.cs">
+      <DependentUpon>EditorPanelHeader.axaml</DependentUpon>
     </Compile>
     <Compile Update="Inspector\Nodes\CompositeNodeControl.axaml.cs">
       <DependentUpon>CompositeNodeControl.axaml</DependentUpon>

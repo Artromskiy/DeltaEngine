@@ -9,18 +9,18 @@ namespace DeltaEditor.Inspector;
 internal static class NodeFactory
 {
     private static readonly HashSet<Type> visited = [];
-    public static INode CreateNode(NodeData nodeData)
+    public static InspectorNode CreateNode(NodeData nodeData)
     {
         var type = nodeData.FieldType;
         visited.Add(type);
-        INode result = CreateNode(type, nodeData);
+        InspectorNode result = CreateNode(type, nodeData);
         visited.Remove(type);
         return result;
     }
 
-    private static INode CreateNode(Type type, NodeData nodeData) => GetNode(type, nodeData);
+    private static InspectorNode CreateNode(Type type, NodeData nodeData) => GetNode(type, nodeData);
 
-    private static INode GetNode(Type type, NodeData n)
+    private static InspectorNode GetNode(Type type, NodeData n)
     {
         return type switch
         {

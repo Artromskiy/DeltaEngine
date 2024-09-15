@@ -6,9 +6,7 @@
              x:Class="DeltaEditor.AssetSearchNodeControl"
              DoubleTapped="AssetSelected">
 
-  <Grid ColumnDefinitions="20,*"
-        Grid.Row="0"
-        Background="Magenta">
+  <Grid ColumnDefinitions="20,*">
 
     <Svg Path="/Assets/Icons/entity.svg"
          Margin="3"

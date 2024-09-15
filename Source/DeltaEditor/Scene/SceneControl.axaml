@@ -5,88 +5,20 @@
              xmlns:uc="clr-namespace:DeltaEditor;assembly=DeltaEditor"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="DeltaEditor.SceneControl">
-  <Grid RowDefinitions="20,*"
-        Background="Magenta">
-
+  <Grid RowDefinitions="20,*">
 
     <!--Menu Name-->
-    <Grid Grid.Row="0"
-          ColumnDefinitions="20,Auto,*,*">
-
-      <Svg Grid.Column="0"
-           Margin="3"
-           Path="/Assets/Icons/inspector.svg"/>
-
-      <Label Grid.Column="1"
-             FontWeight="Bold"
-             FontSize="12"
-             Content="Inspector"/>
-
-      <!--Global Tools-->
-      <Border Grid.Column="2"
-              HorizontalAlignment="Left">
-
-        <StackPanel Orientation="Horizontal"
-                    Margin="10,0"
-                    Spacing="-1"
-                    VerticalAlignment="Center">
-          <!--Hand-->
-          <Button CornerRadius="3,0,0,3"
-                  BorderBrush="Black"
-                  Width="30"
-                  Height="20"
-                  Padding="3">
-            <Svg Path="/Assets/Icons/drag_hand.svg"/>
-          </Button>
-
-          <!--Move-->
-          <Button CornerRadius="0"
-                  BorderBrush="Black"
-                  Width="30"
-                  Height="20"
-                  Padding="3">
-            <Svg Path="/Assets/Icons/move_arrows.svg"/>
-          </Button>
-          <!--Rotate-->
-          <Button CornerRadius="0"
-                  BorderBrush="Black"
-                  Width="30"
-                  Height="20"
-                  Padding="3">
-            <Svg Path="/Assets/Icons/rotate_arrows2.svg"/>
-          </Button>
-          <!--Scale-->
-          <Button CornerRadius="0"
-                  BorderBrush="Black"
-                  Width="30"
-                  Height="20"
-                  Padding="3">
-            <Svg Path="/Assets/Icons/scale_arrows.svg"/>
-          </Button>
-          <!--Transform-->
-          <Button CornerRadius="0,3,3,0"
-                  BorderBrush="Black"
-                  Width="30"
-                  Height="20"
-                  Padding="3">
-            <Svg Path="/Assets/Icons/transform_arrows.svg"/>
-          </Button>
-        </StackPanel>
-
-      </Border>
-
-      <Border HorizontalAlignment="Right"
-              Grid.Column="3">
-        <uc:DebugTimerControl x:Name="DebugTimer"
-                              x:FieldModifier="private"/>
-      </Border>
-    </Grid>
+    <uc:EditorPanelHeader PanelName="Scene"
+                          PanelIcon="/Assets/Icons/inspector.svg"
+                          Grid.Row="0"
+                          x:Name="PanelHeader"
+                          x:FieldModifier="private"/>
 
 
     <Border Grid.Row="1"
             x:Name="RenderBorder"
             x:FieldModifier="private"
-            Background="Aquamarine">
+            Background="Black">
       <Image Grid.Row="1"
              Grid.Column="0"
              x:Name="Render"

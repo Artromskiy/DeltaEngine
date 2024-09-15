@@ -14,12 +14,12 @@
         RequestedThemeVariant="Default">
 
   <Grid
-    RowDefinitions="Auto,*,4,*">
+    RowDefinitions="Auto,*,3,*">
 
     <uc:EditorBar Grid.Row="0"/>
 
     <Grid Grid.Row="1"
-          ColumnDefinitions="*,4,*,4,*"
+          ColumnDefinitions="*,3,*,3,*"
           RowDefinitions="*">
 
       
@@ -28,16 +28,12 @@
 
       
       <GridSplitter Grid.Column="1"
-                    Background="Transparent"
-                    MinWidth="1"
                     ResizeDirection="Columns"/>
 
       <uc:SceneControl x:Name="Scene"
                        Grid.Column="2"/>
 
       <GridSplitter Grid.Column="3"
-                    Background="Transparent"
-                    MinWidth="1"
                     ResizeDirection="Columns"/>
 
       <uc:InspectorControl x:Name="Inspector"
@@ -50,8 +46,6 @@
     </Grid>
 
     <GridSplitter Grid.Row="2"
-                  Background="Transparent"
-                  MinHeight="1"
                   ResizeDirection="Rows"/>
 
     <!--Explorer-->

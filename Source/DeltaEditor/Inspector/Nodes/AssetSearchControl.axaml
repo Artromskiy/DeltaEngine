@@ -6,76 +6,37 @@
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="800"
              x:Class="DeltaEditor.AssetSearchControl">
 
-  <Grid Background="Magenta"
-        RowDefinitions="20,20,*,Auto">
+  <Grid RowDefinitions="20,20,*,Auto">
 
     <!--Menu Name-->
-    <Grid Grid.Row="0"
-          ColumnDefinitions="20,*,Auto,20">
-
-      <Svg Grid.Column="0"
-           Margin="3"
-           Path="/Assets/Icons/file.svg"/>
-
-      <Label Grid.Column="1"
-             FontWeight="Bold"
-             FontSize="12"
-             Content="Asset search"/>
-
-      <uc:DebugTimerControl x:Name="DebugTimer"
-                            x:FieldModifier="private"
-                            Grid.Column="2"/>
-
-      <!--Remove Component-->
-      <Button Grid.Column="3"
-              Click="OnCloseClick"
-              CornerRadius="0,0,0,3"
-              BorderThickness="0"
-              Padding = "0"
-              Width="20"
-              Height="20">
-        <Svg Path="/Assets/Icons/close.svg"
-             Margin="3"/>
-      </Button>
-      
-    </Grid>
+    <uc:EditorPanelHeader PanelName="Asset Search"
+                          PanelIcon="/Assets/Icons/file.svg"
+                          Grid.Row="0"
+                          x:Name="PanelHeader"
+                          x:FieldModifier="private"
+                          DebugEnabled="False"
+                          CloseEnabled="True"/>
 
     <Grid Grid.Row="1"
-          ColumnDefinitions="Auto,*,Auto">
-      <Border Grid.Column="0"
-              Width="20">
-
+          ColumnDefinitions="20,20,*,Auto">
+      <Border Grid.Column="1"
+              Padding="3">
+        <Svg Path="/Assets/Icons/search.svg"/>
       </Border>
-
       <!--Search field-->
-      <TextBox Grid.Column="1"
+      <TextBox Grid.Column="2"
                MinHeight="0"
-               CornerRadius="0"
-               BorderThickness="0"
+               Height="20"
+               CornerRadius="3,0,0,3"
                FontSize="12"
-               Padding="5,0"
-               VerticalContentAlignment="Center"
                Watermark="Search"/>
-
-      <Border Grid.Column="2"
-              Padding="0"
-              BorderBrush="Transparent"
-              BorderThickness="0">
-        <Svg Path="/Assets/Icons/search.svg"
-             Margin="3"/>
-        
-      </Border>
-      
     </Grid>
 
     <!--Assets-->
-    <Border Grid.Row="2"
-            Background="Cyan">
+    <Border Grid.Row="2">
       <ScrollViewer VerticalScrollBarVisibility="Visible">
         <StackPanel x:Name="InspectorStack"
                     x:FieldModifier="private">
-          
-          <!--Test Transform-->
 
 
         </StackPanel>

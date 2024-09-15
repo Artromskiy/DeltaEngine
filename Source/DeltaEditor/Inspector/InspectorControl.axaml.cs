@@ -46,14 +46,14 @@ public partial class InspectorControl : UserControl
 
     public void UpdateInspector(IRuntimeContext ctx)
     {
-        DebugTimer.StartDebug();
+        PanelHeader.StartDebug();
         if (!SelectedEntity.IsAlive()) // Dead entity
         {
             ClearHandledEntityData();
             ClearInspector();
             AddComponentButton.IsVisible = false;
             AddComponentControlFlyout.UpdateComponents(_notUsedComponentTypes);
-            DebugTimer.StopDebug();
+            PanelHeader.StopDebug();
             return;
         }
         AddComponentButton.IsVisible = true;
@@ -71,7 +71,7 @@ public partial class InspectorControl : UserControl
             if (changed)
                 SelectedEntity.Entity.MarkDirty(item.Key);
         }
-        DebugTimer.StopDebug();
+        PanelHeader.StopDebug();
     }
 
 
