@@ -7,13 +7,12 @@
              x:Class="DeltaEditor.Vector4NodeControl">
   
   <Grid Height="20"
-        ColumnDefinitions="*,3*">
+        ColumnDefinitions="*,4*">
     
     <Label Grid.Column="0"
            x:Name="FieldName"
            x:FieldModifier="private"
            VerticalContentAlignment="Center"
-           Padding="25,0,0,0"
            FontSize="12"
            Content="fieldName"/>
     
@@ -25,6 +24,7 @@
                          Data="6,28"
                          Grid.Column="0"
                          x:Name="FieldX"
+                         FieldNameAlignment="Right"
                          x:FieldModifier="private"
                          Cursor="SizeWestEast"/>
 
@@ -33,6 +33,7 @@
                          Data="1"
                          Grid.Column="1"
                          x:Name="FieldY"
+                         FieldNameAlignment="Right"
                          x:FieldModifier="private"
                          Cursor="SizeWestEast"/>
 
@@ -41,6 +42,7 @@
                          Data="1"
                          Grid.Column="2"
                          x:Name="FieldZ"
+                         FieldNameAlignment="Right"
                          x:FieldModifier="private"
                          Cursor="SizeWestEast"/>
       
@@ -49,6 +51,7 @@
                          Data="1"
                          Grid.Column="3"
                          x:Name="FieldW"
+                         FieldNameAlignment="Right"
                          x:FieldModifier="private"
                          Cursor="SizeWestEast"/>
 

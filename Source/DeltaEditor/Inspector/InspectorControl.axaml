@@ -4,9 +4,11 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:uc="clr-namespace:DeltaEditor;assembly=DeltaEditor"
              mc:Ignorable="d" d:DesignWidth="455" d:DesignHeight="612"
-             x:Class="DeltaEditor.InspectorControl">
+             x:Class="DeltaEditor.InspectorControl"
+             Background="Transparent"
+             Focusable="True">
 
-  <Grid RowDefinitions="20,20,Auto,Auto">
+  <Grid RowDefinitions="20,*,Auto">
 
     <!--Menu Name-->
     <uc:EditorPanelHeader PanelName="Inspector"
@@ -15,59 +17,64 @@
                           x:Name="PanelHeader"
                           x:FieldModifier="private"/>
 
-    <Grid Grid.Row="1"
-          ColumnDefinitions="20,Auto,*">
-      
-      <!--Entity Icon-->
-      <Border Grid.Column="1"
-              Width="20"
-              Height="20"
-              BorderBrush="Black"
-              Padding="3">
-        <Svg Path="/Assets/Icons/entity.svg"/>
-      </Border>
-
-      <!--Name field-->
-      <TextBox Grid.Column="2"
-               MinHeight="0"
-               Height="20"
-               FontSize="12"
-               Watermark="Name"/>
-    </Grid>
 
     <!--Entities-->
-    <Border Grid.Row="2">
-      <ScrollViewer VerticalScrollBarVisibility="Visible">
+    <ScrollViewer VerticalScrollBarVisibility="Visible"
+                  Grid.Row="1"
+                  Padding="0,0,15,0">
+      <Grid RowDefinitions="20,Auto">
+
+        <!--Entity Name-->
+        <Grid Grid.Row="0"
+              Height="20"
+              ColumnDefinitions="20,Auto,*">
+
+          <!--Entity Icon-->
+          <Border Grid.Column="1"
+                  Width="20"
+                  Height="20"
+                  BorderBrush="Black"
+                  Padding="3">
+            <Svg Path="/Assets/Icons/entity.svg"/>
+          </Border>
+
+          <!--Name field-->
+          <TextBox Grid.Column="2"
+                   x:Name="EntityNameTextBox"
+                   x:FieldModifier="private"
+                   MinHeight="0"
+                   Height="20"
+                   FontSize="12"
+                   Watermark="Name"/>
+        </Grid>
+
+
         <StackPanel x:Name="InspectorStack"
                     x:FieldModifier="private"
-                    Margin="0,0,15,0">
+                    Grid.Row="1"
+                    Spacing="3">
 
           <!--Test Transform-->
 
           <!--
-          <uc:ComponentNodeControl Collapsed="False"
-                                   RowsDefs="*,*,*">
-            <uc:ComponentNodeControl.Rows>
-              <uc:Vector3NodeControl Grid.Row="0"/>
-              <uc:QuaternionNodeControl Grid.Row="1"/>
-              <uc:Vector3NodeControl Grid.Row="2"/>
-            </uc:ComponentNodeControl.Rows>
+          <uc:ComponentNodeControl Collapsed="False">
+            <uc:Vector4NodeControl/>
           </uc:ComponentNodeControl>
           -->
 
         </StackPanel>
-      </ScrollViewer>
-    </Border>
+      </Grid>
+    </ScrollViewer>
 
 
-    <Button Grid.Row="3"
+    <Button Grid.Row="2"
             HorizontalAlignment="Center"
             Content="Add Component"
             FontSize="12"
             FontWeight="Bold"
             x:Name="AddComponentButton"
             x:FieldModifier="private">
-      
+
       <Button.Flyout>
         <Flyout>
           <uc:AddComponentControl x:Name="AddComponentControlFlyout"

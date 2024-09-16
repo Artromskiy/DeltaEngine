@@ -17,11 +17,11 @@ public sealed partial class HierarchyNodeControl : UserControl, IDisposable
     public static readonly StyledProperty<bool> SelectedProperty =
         AvaloniaProperty.Register<ComponentNodeControl, bool>(nameof(Selected));
 
-    public static readonly StyledProperty<Controls?> ComponentGridChildrenProperty =
-        AvaloniaProperty.Register<ComponentNodeControl, Controls?>(nameof(Rows));
+    public static readonly StyledProperty<Controls?> ChildrenProperty =
+        AvaloniaProperty.Register<ComponentNodeControl, Controls?>(nameof(ContentChildren));
 
     private readonly HierarchyNodeCreator _creator;
-    private IListWrapper<HierarchyNodeControl, Control> ChildrenNodes => new(ChildrenGrid.Children);
+    private IListWrapper<HierarchyNodeControl, Control> ChildrenNodes => new(ChildrenStack.Children);
 
     private const string CollapsedSvgPath = "/Assets/Icons/collapsed.svg";
     private const string ExpandedSvgPath = "/Assets/Icons/expanded.svg";
@@ -34,7 +34,7 @@ public sealed partial class HierarchyNodeControl : UserControl, IDisposable
         _creator = creator;
     }
 
-    public Controls? Rows => ChildrenGrid.Children;
+    public Controls? ContentChildren => ChildrenStack.Children;
 
 
     public bool Selected
@@ -56,7 +56,7 @@ public sealed partial class HierarchyNodeControl : UserControl, IDisposable
         {
             _creator?.SetCollapsed(_entity, value);
             CollapseIcon.Path = value ? CollapsedSvgPath : ExpandedSvgPath;
-            ChildrenGrid.IsVisible = !value;
+            ChildrenStack.IsVisible = !value;
         }
     }
 
@@ -121,4 +121,8 @@ public sealed partial class HierarchyNodeControl : UserControl, IDisposable
             return entityName.name;
         return entityReference.LookupString();
     }
+
+    private void OnPointerEntered(object? sender, PointerEventArgs e) => RemoveButton.IsVisible = true;
+
+    private void OnPointerExited(object? sender, PointerEventArgs e) => RemoveButton.IsVisible = false;
 }

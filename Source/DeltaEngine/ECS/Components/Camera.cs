@@ -2,7 +2,7 @@
 
 namespace Delta.ECS.Components;
 
-[Component]
+[Component(0)]
 public struct Camera
 {
     public float fieldOfView;

@@ -24,6 +24,7 @@ internal static class NodeFactory
     {
         return type switch
         {
+            _ when type == typeof(Vector2) => new Vector2NodeControl(n),
             _ when type == typeof(Vector3) => new Vector3NodeControl(n),
             _ when type == typeof(Vector4) => new Vector4NodeControl(n),
             _ when type == typeof(Quaternion) => new QuaternionNodeControl(n),

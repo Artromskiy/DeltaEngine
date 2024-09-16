@@ -3,6 +3,7 @@ using Delta.Runtime;
 using DeltaEditorLib.Scripting;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
@@ -38,8 +39,9 @@ internal class CompilerModule : ICompilerModule
 
     private void Compile()
     {
+        Debug.Assert(_context != null);
         var scriptsPath = _compileHelper.CompileScripts();
-        _context!.LoadFromAssemblyPath(scriptsPath);
+        _context.LoadFromAssemblyPath(scriptsPath);
         HashSet<Type> components = new(GetComponents());
         var accessorsPath = _compileHelper.CompileAccessors(components);
         _context.LoadFromAssemblyPath(accessorsPath);

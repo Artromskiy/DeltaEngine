@@ -9,8 +9,7 @@
   <StackPanel Orientation="Vertical"
               x:Name="ComponentsStackPanel"
               x:FieldModifier="private">
-    
-    <uc:AddComponentItemControl/>
+
     
   </StackPanel>
 </UserControl>

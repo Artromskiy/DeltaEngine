@@ -3,10 +3,10 @@ using System;
 using System.Collections.Generic;
 
 namespace Delta.Utilities;
-public class NullSafeAttributeComparer<A> : IComparer<ComponentType> where A : Attribute
+public class NullSafeComponentAttributeComparer<A> : IComparer<ComponentType> where A : Attribute
 {
-    private static readonly NullSafeAttributeComparer<A> _defaultComparer = new();
-    public static NullSafeAttributeComparer<A> Default => _defaultComparer;
+    private static readonly NullSafeComponentAttributeComparer<A> _defaultComparer = new();
+    public static NullSafeComponentAttributeComparer<A> Default => _defaultComparer;
     public int Compare(ComponentType x, ComponentType y)
     {
         var attr1 = x.Type.GetAttribute<A>();

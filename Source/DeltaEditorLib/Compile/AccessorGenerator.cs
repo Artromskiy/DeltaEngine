@@ -10,7 +10,8 @@ using System.Text;
 
 
 namespace DeltaEditorLib.Compile;
-
+// TODO: Rewrite with templates as DeltaGen
+// Add support for generics components
 internal class AccessorGenerator
 {
     public static string GenerateAccessors(HashSet<Type> componentTypes)

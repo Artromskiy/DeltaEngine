@@ -1,10 +1,11 @@
 using Arch.Core;
-using Avalonia.Controls;
+using Avalonia.Media;
 using DeltaEditor.Inspector.Internal;
+using System.Threading.Channels;
 
 namespace DeltaEditor;
 
-public partial class IntNodeControl : UserControl, INode
+internal partial class IntNodeControl : InspectorNode
 {
     private readonly NodeData _nodeData;
     public IntNodeControl() => InitializeComponent();
@@ -12,5 +13,16 @@ public partial class IntNodeControl : UserControl, INode
     {
         Field.FieldName = (_nodeData = nodeData).FieldName;
     }
-    public bool UpdateData(ref EntityReference entity) => _nodeData.UpdateInt(Field.FieldData, ref entity);
+
+    public override void SetLabelColor(IBrush brush)=> Field.SetFieldColor(brush);
+
+    public override bool UpdateData(ref EntityReference entity)
+    {
+        if (!ClipVisible)
+            return false;
+
+        bool changed = _nodeData.UpdateInt(Field.FieldData, ref entity);
+
+        return changed;
+    }
 }

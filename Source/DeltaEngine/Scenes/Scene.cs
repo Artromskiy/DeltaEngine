@@ -3,6 +3,7 @@ using Arch.Core.Extensions;
 using Delta.ECS;
 using Delta.ECS.Components;
 using Delta.Files;
+using Delta.Runtime;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -33,12 +34,15 @@ public sealed class Scene : IDisposable, IAsset
 
     public void Run(float deltaTime)
     {
-        _hierarchySystem.UpdateOrders();
-        _deltaTime = deltaTime;
-        foreach (var item in _jobs)
+        if (IRuntimeContext.Current.Running)
+        {
+            _hierarchySystem.UpdateOrders();
+            _deltaTime = deltaTime;
+            foreach (var item in _jobs)
+                item.Execute();
+        }
+        foreach (var item in _defaultJobs)
             item.Execute();
-
-        RunDefault();
     }
 
     public void Run()
@@ -48,15 +52,14 @@ public sealed class Scene : IDisposable, IAsset
         Run(deltaTime);
     }
 
-    internal void RunDefault()
-    {
-        foreach (var item in _defaultJobs)
-            item.Execute();
-    }
-
+    [Imp(Sync)]
     public void AddSystem(ISystem job) => _jobs.Add(job);
+    [Imp(Sync)]
     public void RemoveSystem(ISystem job) => _jobs.Remove(job);
+    [Imp(Sync)]
     public void RemoveEntity(EntityReference entityRef) => entityRef.Entity.AddOrGet<DestroyFlag>();
+
+    [Imp(Sync)]
     public EntityReference AddEntity()
     {
         var entityRef = _world.Reference(_world.Create());

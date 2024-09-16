@@ -1,13 +1,14 @@
 using Arch.Core;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Delta.Runtime;
 using DeltaEditor.Inspector.Internal;
 using System;
 
 namespace DeltaEditor;
 
-public partial class GuidAssetNodeControl : UserControl, INode
+internal partial class GuidAssetNodeControl : InspectorNode
 {
     private readonly NodeData _nodeData;
     private readonly NodeData _guidData;
@@ -23,12 +24,19 @@ public partial class GuidAssetNodeControl : UserControl, INode
         _assetType = _nodeData.FieldType.GenericTypeArguments[0];
     }
 
-    public bool UpdateData(ref EntityReference entity)
+    public override void SetLabelColor(IBrush brush)
     {
-        bool changed = _guidToSet != null;
+        //throw new NotImplementedException();
+    }
+
+    public override bool UpdateData(ref EntityReference entity)
+    {
+        if (!ClipVisible)
+            return false;
+        bool changed = _guidToSet.HasValue;
         if (changed)
         {
-            _guidData.SetData(ref entity, _guidToSet.Value);
+            _guidData.SetData(ref entity, _guidToSet!.Value);
             _guidToSet = null;
         }
         var currentGuid = _guidData.GetData<Guid>(ref entity);
@@ -49,7 +57,12 @@ public partial class GuidAssetNodeControl : UserControl, INode
         Program.RuntimeLoader.OnUIThread += OpenAssetSearch;
         void OpenAssetSearch(IRuntimeContext ctx)
         {
-            AssetSearchControl.Instance.OpenAssetSearch(ctx, _assetType, guid => _guidToSet = guid);
+            AssetSearchControl.Instance.OpenAssetSearch(ctx, _assetType, guid =>
+            {
+                _guidToSet = guid;
+                // in case we somehow scrolled out and field will not be updated as it's out of render viewport
+                Focus();
+            });
         }
     }
 }

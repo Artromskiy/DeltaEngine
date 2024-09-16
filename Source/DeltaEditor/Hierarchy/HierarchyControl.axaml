@@ -53,10 +53,10 @@
 
     <!--Entities-->
     <Border Grid.Row="2">
-      <ScrollViewer VerticalScrollBarVisibility="Visible">
+      <ScrollViewer VerticalScrollBarVisibility="Visible"
+                    Padding="0,0,15,0">
         <StackPanel x:Name="EntityNodeStack"
-                    x:FieldModifier="private"
-                    Margin="0,0,15,0">
+                    x:FieldModifier="private">
           <!--TestEntity-->
 
           <!--

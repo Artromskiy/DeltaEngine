@@ -4,26 +4,29 @@ using Arch.Core.Utils;
 using Avalonia.Controls;
 using Delta.ECS;
 using Delta.ECS.Attributes;
+using Delta.ECS.Components;
 using Delta.Runtime;
 using Delta.Utilities;
+using DeltaEditor.Hierarchy;
 using DeltaEditor.Inspector.Internal;
 using DeltaEditorLib.Scripting;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 
 namespace DeltaEditor;
 
 public partial class InspectorControl : UserControl
 {
-    private readonly Dictionary<Type, INode> _currentComponentInspectors = [];
-    private readonly Dictionary<Type, INode> _loadedComponentInspectors = [];
+    private readonly Dictionary<Type, ComponentNodeControl> _loadedComponentInspectors = [];
     private readonly HashSet<Type> _notUsedComponentTypes = [];
+    private IListWrapper<ComponentNodeControl, Control> ChildrenNodes => new(InspectorStack.Children);
 
     private EntityReference SelectedEntity = EntityReference.Null;
     private Archetype? CurrentArch;
 
-    private readonly IAccessorsContainer _accessors;
+    private readonly IAccessorsContainer? _accessors;
     private readonly ImmutableArray<Type> _components;
 
 
@@ -42,6 +45,7 @@ public partial class InspectorControl : UserControl
     public void SetSelectedEntity(EntityReference entityReference)
     {
         SelectedEntity = entityReference;
+        this.Focus();
     }
 
     public void UpdateInspector(IRuntimeContext ctx)
@@ -50,7 +54,8 @@ public partial class InspectorControl : UserControl
         if (!SelectedEntity.IsAlive()) // Dead entity
         {
             ClearHandledEntityData();
-            ClearInspector();
+            EntityNameTextBox.Text = string.Empty;
+            ChildrenNodes.Clear();
             AddComponentButton.IsVisible = false;
             AddComponentControlFlyout.UpdateComponents(_notUsedComponentTypes);
             PanelHeader.StopDebug();
@@ -60,34 +65,54 @@ public partial class InspectorControl : UserControl
         if (CurrentArch != SelectedEntity.Entity.GetArchetype()) // Arch changed
         {
             CurrentArch = SelectedEntity.Entity.GetArchetype();
-            ClearInspector();
+            ChildrenNodes.Clear();
             RebuildInspectorComponents(ctx);
-            UpdateNotUsedComponentTypes();
             AddComponentControlFlyout.UpdateComponents(_notUsedComponentTypes);
         }
-        foreach (var item in _currentComponentInspectors)
-        {
-            bool changed = item.Value.UpdateData(ref SelectedEntity);
-            if (changed)
-                SelectedEntity.Entity.MarkDirty(item.Key);
-        }
+        UpdateName();
+        foreach (var item in ChildrenNodes)
+            if (item.UpdateData(ref SelectedEntity))
+                SelectedEntity.Entity.MarkDirty(item.ComponentType);
+
         PanelHeader.StopDebug();
     }
 
+    private void UpdateName()
+    {
+        bool editing = EntityNameTextBox.IsFocused;
+
+        var name = EntityNameTextBox.Text;
+        if (editing)
+        {
+            if (!string.IsNullOrEmpty(name))
+                SelectedEntity.Entity.AddOrGet<EntityName>().name = name;
+            else if (SelectedEntity.Entity.Has<EntityName>())
+                SelectedEntity.Entity.Remove<EntityName>();
+        }
+        else
+            EntityNameTextBox.Text =
+                SelectedEntity.Entity.Has<EntityName>() ?
+                SelectedEntity.Entity.Get<EntityName>().name :
+                string.Empty;
+    }
 
     private void RebuildInspectorComponents(IRuntimeContext ctx)
     {
+        Debug.Assert(_accessors != null);
+        var a = AttributeCache.GetAttribute<ComponentAttribute, Camera>();
         var types = SelectedEntity.Entity.GetComponentTypes();
         Span<ComponentType> typesSpan = stackalloc ComponentType[types.Length];
         types.CopyTo(typesSpan);
-        typesSpan.Sort(NullSafeAttributeComparer<ComponentAttribute>.Default);
+        typesSpan.Sort(NullSafeComponentAttributeComparer<ComponentAttribute>.Default);
+        _notUsedComponentTypes.Clear();
+        _notUsedComponentTypes.UnionWith(_components);
         foreach (var type in typesSpan)
         {
-            if (!_accessors.AllAccessors.ContainsKey(type))
+            _notUsedComponentTypes.Remove(type);
+            if (!_accessors.AllAccessors.ContainsKey(type) || typeof(EntityName) == type.Type)
                 continue;
-            var componentEditor = GetOrCreateInspector(ctx, type);
-            InspectorStack.Children.Add((Control)componentEditor);
-            _currentComponentInspectors.Add(type, componentEditor);
+            var componentInspector = GetOrCreateInspector(ctx, type);
+            ChildrenNodes.Add(componentInspector);
         }
     }
 
@@ -108,24 +133,16 @@ public partial class InspectorControl : UserControl
             SelectedEntity.Entity.RemoveRange(type);
         }
     }
-
     private void ClearHandledEntityData()
     {
         SelectedEntity = EntityReference.Null;
         CurrentArch = null;
     }
-
-    private void ClearInspector()
-    {
-        if (InspectorStack.Children.Count != 0)
-            InspectorStack.Children.Clear();
-        _currentComponentInspectors.Clear();
-    }
-
-    private INode GetOrCreateInspector(IRuntimeContext _, Type type)
+    private ComponentNodeControl GetOrCreateInspector(IRuntimeContext _, Type type)
     {
         if (!_loadedComponentInspectors.TryGetValue(type, out var inspector))
         {
+            Debug.Assert(_accessors != null);
             var rootData = new RootData(type, _accessors);
             var nodeData = new NodeData(rootData);
             var componentInspector = new ComponentNodeControl(nodeData);
@@ -133,13 +150,5 @@ public partial class InspectorControl : UserControl
             _loadedComponentInspectors[type] = inspector = componentInspector;
         }
         return inspector;
-    }
-
-    private void UpdateNotUsedComponentTypes()
-    {
-        _notUsedComponentTypes.Clear();
-        foreach (var type in _components)
-            if (!_currentComponentInspectors.ContainsKey(type))
-                _notUsedComponentTypes.Add(type);
     }
 }

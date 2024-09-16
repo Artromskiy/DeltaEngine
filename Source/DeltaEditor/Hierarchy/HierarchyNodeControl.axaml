@@ -3,17 +3,18 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:uc="clr-namespace:DeltaEditor;assembly=DeltaEditor"
-             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="300"
+             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="20"
              x:Class="DeltaEditor.HierarchyNodeControl"
+             Background="Transparent"
              Tapped="OnSelectClick">
 
-  <Grid RowDefinitions="20,Auto"
-        x:Name="MainGrid"
-        x:FieldModifier="private">
+  <Grid RowDefinitions="20,Auto">
 
     <Grid ColumnDefinitions="20,20,*,20"
-          Grid.Row="0"
-          Background="Magenta">
+          PointerEntered="OnPointerEntered"
+          PointerExited="OnPointerExited"
+          Background="Transparent"
+          Grid.Row="0">
 
       <!--Collapse/Expand-->
       <Button Grid.Column="0"
@@ -21,26 +22,28 @@
               x:FieldModifier="private"
               Click="OnCollapseClick"
               CornerRadius="0,0,3,0"
+              Theme="{DynamicResource BorderlessButton}"
               BorderThickness="0"
-              Padding = "0"
-              Width="20"
+              Padding="3"
+              MinHeight="0"
               Height="20">
         <Svg x:Name="CollapseIcon"
              x:FieldModifier="private"
-             Path="/Assets/Icons/collapsed.svg"
-             Margin="3"/>
+             Path="/Assets/Icons/collapsed.svg"/>
       </Button>
 
-      <Border Width="25"
-              Grid.Column="0"/>
-      <Svg Path="/Assets/Icons/entity.svg"
-           Margin="3"
-           Grid.Column="1"/>
+      <!--Entity Icon-->
+      <Border Width="20"
+              Height="20"
+              Grid.Column="1"
+              Padding="3">
+        <Svg Path="/Assets/Icons/entity.svg"/>
+      </Border>
 
       <!--Entity Name-->
       <Label x:Name="NodeName"
-             Grid.Column="2"
              x:FieldModifier="private"
+             Grid.Column="2"
              FontSize="12"
              VerticalContentAlignment="Center"
              Content="Entity">
@@ -48,26 +51,27 @@
 
       <!--Remove Component-->
       <Button Grid.Column="3"
+              x:Name="RemoveButton"
+              x:FieldModifier="private"
+              Theme="{DynamicResource BorderlessButton}"
               Click="OnRemoveClick"
               CornerRadius="0,0,0,3"
               BorderThickness="0"
-              Padding = "0"
-              Width="20"
-              Height="20">
-        <Svg Path="/Assets/Icons/close.svg"
-             Margin="3"/>
+              Padding = "3"
+              MinHeight="0"
+              IsVisible="False">
+        <Svg Path="/Assets/Icons/close.svg"/>
       </Button>
 
     </Grid>
 
     <Grid ColumnDefinitions="20,*"
-          Background="BlueViolet"
           Grid.Row="1"
           MinHeight="0">
 
       <Border Grid.Column="0"/>
 
-      <StackPanel x:Name="ChildrenGrid"
+      <StackPanel x:Name="ChildrenStack"
             x:FieldModifier="private"
             Grid.Column="1">
 

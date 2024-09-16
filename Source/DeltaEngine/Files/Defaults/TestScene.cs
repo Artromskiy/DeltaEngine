@@ -92,6 +92,7 @@ internal static class TestScene
             stringsList = [],
             stringsSet = []
         });
+        testEntity.Add<CompStruct>();
     }
 
     private static void MarkTransformsDirty(Scene scene)
@@ -250,3 +251,106 @@ public struct TestArraysAndSoOn
     public HashSet<string> stringsSet;
     public Dictionary<string, string> stringsDictionary;
 }
+[Component]
+public struct BigCompStruct
+{
+    public float vec1;
+    public float vec2;
+    public float vec3;
+    public float asdvec1;
+    public float vecasd1;
+    public float veca1;
+    public float vesdc1;
+    public float vecaasd1;
+    public float veaaca1;
+    public float vesssc1;
+    public float vecs1;
+    public float vedc1;
+    public float veddc1;
+    public float vecdd1;
+    public float vecddd1;
+    public float vec1d;
+    public float avec1;
+    public float vaaec1;
+    public float vecad1;
+    public float vasec1;
+    public float vecass1;
+    public float veasc1;
+    public float vecas1;
+    public float vedasc1;
+    public float veac1;
+    public float veddac1;
+    public float vedsc1;
+    public float vedsac1;
+    public float veddadc1;
+    public float vecsas1;
+    public float vasdec1;
+    public float vecasda1;
+    public float veasdc1;
+    public float vedfc1;
+    public float vfdfgec1;
+    public float vecdfg1;
+    public float vegfc1;
+    public float vgec1;
+    public float vefc1;
+    public float vecf1;
+    public float vecg1;
+    public float vecd1;
+    public float vedgfc1;
+    public float vecgg1;
+    public float vegc1;
+    public float veffc1;
+    public float veggc1;
+    public float ggvec1;
+    public float gvec1;
+    public float gggvec1;
+    public float fvec1;
+    public float vdgec1;
+    public float vdec1;
+
+}
+
+[Component]
+public struct CompStruct
+{
+    public float vec1;
+    public Vector2 vec2;
+    public Vector3 vec3;
+    public Vector3 vec4;
+    public Quaternion vec5;
+    public Vector4 vec6;
+    public Matrix4x4 vec7;
+    public CompStruct1 vec8;
+}
+
+[Component]
+public struct CompStruct1
+{
+    public Vector3 vec3;
+    public Vector3 vec4;
+    public CompStruct2 vec5;
+    public Matrix4x4 vec6;
+    public CompStruct3 vec7;
+}
+[Component]
+public struct CompStruct2
+{
+    public float vec1;
+    public Vector2 vec2;
+    public Vector3 vec3;
+    public Vector3 vec4;
+    public Quaternion vec5;
+    public Matrix4x4 vec6;
+    public CompStruct3 vec7;
+}
+[Component]
+public struct CompStruct3
+{
+    public float vec1;
+    public Vector2 vec2;
+    public Vector3 vec3;
+    public Vector3 vec4;
+    public Quaternion vec5;
+    public Matrix4x4 vec6;
+}
+

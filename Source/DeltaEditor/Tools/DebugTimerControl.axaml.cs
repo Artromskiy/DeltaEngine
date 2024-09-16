@@ -28,6 +28,6 @@ public partial class DebugTimerControl : UserControl
 
     private static int SmoothInt(int value1, int value2, int smoothing)
     {
-        return ((value1 * smoothing) + value2) / (smoothing + 1);
+        return (value1 * smoothing + value2) / (smoothing + 1);
     }
 }

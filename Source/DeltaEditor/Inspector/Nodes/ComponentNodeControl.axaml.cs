@@ -2,16 +2,18 @@ using Arch.Core;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Media;
+using DeltaEditor.Hierarchy;
 using DeltaEditor.Inspector;
 using DeltaEditor.Inspector.Internal;
 using System;
 
 namespace DeltaEditor;
 
-internal partial class ComponentNodeControl : UserControl, INode
+internal partial class ComponentNodeControl : InspectorNode
 {
     public static readonly StyledProperty<Controls?> ComponentGridChildrenProperty =
-        AvaloniaProperty.Register<ComponentNodeControl, Controls?>(nameof(Rows));
+        AvaloniaProperty.Register<ComponentNodeControl, Controls?>(nameof(Children));
 
     public static readonly StyledProperty<bool> CollapsedProperty =
         AvaloniaProperty.Register<ComponentNodeControl, bool>(nameof(Collapsed), false);
@@ -19,11 +21,13 @@ internal partial class ComponentNodeControl : UserControl, INode
     private const string CollapsedSvgPath = "/Assets/Icons/collapsed.svg";
     private const string ExpandedSvgPath = "/Assets/Icons/expanded.svg";
 
-    private readonly INode[] _fields;
+    private IListWrapper<InspectorNode, Control> ChildrenNodes => new(ChildrenStack.Children);
+
     private readonly NodeData _nodeData;
+    public Type ComponentType => _nodeData.Component;
     public event Action<Type> OnComponentRemoveRequest;
 
-    public Controls? Rows => ChildrenGrid.Children;
+    public Controls? Children => ChildrenStack.Children;
 
 
     public bool Collapsed
@@ -33,7 +37,7 @@ internal partial class ComponentNodeControl : UserControl, INode
         {
             SetValue(CollapsedProperty, value);
             CollapseIcon.Path = value ? CollapsedSvgPath : ExpandedSvgPath;
-            MainGrid.RowDefinitions[1].Height = value ? new GridLength(0) : GridLength.Star;
+            ChildrenStack.IsVisible = !value;
         }
     }
     private void OnCollapseClick(object? sender, RoutedEventArgs e) => Collapsed = !Collapsed;
@@ -45,31 +49,25 @@ internal partial class ComponentNodeControl : UserControl, INode
         _nodeData = nodeData;
         ComponentName.Content = _nodeData.FieldName;
         int fieldsCount = _nodeData.FieldNames.Length;
-        _fields = new INode[fieldsCount];
-        ChildrenGrid.RowDefinitions = [];
-        for (int i = 0; i < fieldsCount; i++)
-            ChildrenGrid.RowDefinitions.Add(new RowDefinition(1, GridUnitType.Star));
         for (int i = 0; i < fieldsCount; i++)
         {
-            var node = NodeFactory.CreateNode(_nodeData.ChildData(_nodeData.FieldNames[i]));
-            var control = (Control)node;
-            _fields[i] = node;
-            control[Grid.RowProperty] = i;
-            ChildrenGrid.Children.Add(control);
+            var childNodeData = _nodeData.ChildData(_nodeData.FieldNames[i]);
+            ChildrenNodes.Add(NodeFactory.CreateNode(childNodeData));
         }
     }
 
-    public bool UpdateData(ref EntityReference entity)
+    public override bool UpdateData(ref EntityReference entity)
     {
         DebugTimer.StartDebug();
 
         bool changed = false;
-        if (!Collapsed)
-            for (int i = 0; i < _fields.Length; i++)
-                changed |= _fields[i].UpdateData(ref entity);
+        if (ClipVisible && !Collapsed)
+            foreach (var node in ChildrenNodes)
+                changed |= node.UpdateData(ref entity);
 
         DebugTimer.StopDebug();
-
         return changed;
     }
+
+    public override void SetLabelColor(IBrush brush)=> ComponentName.Foreground = brush;
 }

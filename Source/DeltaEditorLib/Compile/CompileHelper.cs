@@ -37,7 +37,6 @@ internal class CompileHelper(IProjectPath projectPath)
         allowUnsafe: true
     );
 
-
     public string CompileScripts()
     {
         var sourceFiles = Directory.EnumerateFiles(_projectPath.ScriptsDirectory, CsSearch, SearchOption.AllDirectories);
@@ -50,7 +49,6 @@ internal class CompileHelper(IProjectPath projectPath)
         var references = GetReferences(trees);
 
         var compilation = CSharpCompilation.Create(Scripts, trees, references, _compilationOptions);
-
         var dllPath = RandomScriptsDllName;
         var result = compilation.Emit(dllPath, RandomPdbName);
 

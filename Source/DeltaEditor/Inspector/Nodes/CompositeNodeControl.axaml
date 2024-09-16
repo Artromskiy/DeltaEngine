@@ -4,36 +4,21 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="DeltaEditor.CompositeNodeControl">
-  <Grid>
-    <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="20"/>
-      <ColumnDefinition Width="*"/>
-    </Grid.ColumnDefinitions>
-    
-    <Border Grid.Column="0"
-            Background="Cyan"/>
-    
-    <Grid Grid.Column="1">
-      <Grid.RowDefinitions>
-        <RowDefinition Height="20"/>
-        <RowDefinition Height="*"/>
-      </Grid.RowDefinitions>
-      
-      <Label Grid.Row="0"
-             x:Name="FieldName"
-             x:FieldModifier="private"
-             Padding="0"
-             FontSize="12"
-             Background="Magenta"
-             VerticalContentAlignment="Center">
-        fieldName
-      </Label>
+  <Grid RowDefinitions="20,Auto">
 
-      <Grid Grid.Row="1"
-            x:Name="ChildrenGrid"
-            x:FieldModifier="private">
-      </Grid>
+    <Label Grid.Row="0"
+           x:Name="FieldName"
+           x:FieldModifier="private"
+           FontSize="12"
+           VerticalAlignment="Center"
+           Content="fieldName"/>
 
+    <Grid Grid.Row="1"
+          ColumnDefinitions="20,*">
+      <StackPanel Grid.Column="1"
+                  x:Name="ChildrenStack"
+                  x:FieldModifier="private"
+                  Orientation="Vertical"/>
     </Grid>
   </Grid>
 </UserControl>

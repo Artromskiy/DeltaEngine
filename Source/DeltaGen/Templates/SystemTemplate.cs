@@ -59,17 +59,4 @@ file static class {{Model.TypeName}}File
             sb.AppendLine().Append("}").AppendLine();
         return sb.ToString();
     }
-
-
-    private string ContainingTypeClose(INamedTypeSymbol symbol)
-    {
-        var containingType = symbol.ContainingType;
-        StringBuilder sb = new();
-        while (containingType != null)
-        {
-            sb.Append("}");
-            containingType = containingType.ContainingType;
-        }
-        return sb.ToString();
-    }
 }

@@ -3,20 +3,20 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="20"
-             x:Class="DeltaEditor.GuidAssetNodeControl">
+             x:Class="DeltaEditor.GuidAssetNodeControl"
+             Background="Transparent"
+             Focusable="True">
 
-  <Grid Grid.Column="0"
-        Height="20"
+  <Grid Height="20"
         x:Name="ContainerGrid"
         x:FieldModifier="private"
-        ColumnDefinitions="*,3*">
+        ColumnDefinitions="*,4*">
 
     <Label Grid.Column="0"
            x:Name="NameLabel"
            x:FieldModifier="private"
            FontSize="12"
-           HorizontalAlignment="Right"
-           Padding="5,0,5,0"
+           HorizontalAlignment="Left"
            VerticalContentAlignment="Center"
            Content="SomeField"/>
     <Grid ColumnDefinitions="*,20"
@@ -26,26 +26,29 @@
            x:Name="GuidLabel"
            x:FieldModifier="private"
            FontSize="12"
-           CornerRadius="0,3,3,0"
-           BorderThickness="0,0,1,0"
+           CornerRadius="3,0,0,3"
            Padding="5,0,0,0"
            MinHeight="0"
            Height="20"
+           BorderThickness="1,1,0,1"
+           BorderBrush="DarkViolet"
+           Classes="Ghost"
            VerticalContentAlignment="Center"
            Content="E1HKfn68Pkms5zsZsvKONw"/>
       
       <!--Change Asset-->
       <Button Grid.Column="1"
               Click="OnSelectAssetClick"
+              BorderThickness="0,1,1,1"
               CornerRadius="0,0,3,0"
-              BorderThickness="0"
-              Padding = "0"
+              BorderBrush="DarkViolet"
+              Padding="3"
+              MinHeight="0"
               Width="20"
               Height="20">
         <Svg x:Name="CollapseIcon"
              x:FieldModifier="private"
-             Path="/Assets/Icons/expanded.svg"
-             Margin="3"/>
+             Path="/Assets/Icons/expanded.svg"/>
       </Button>
       
     </Grid>

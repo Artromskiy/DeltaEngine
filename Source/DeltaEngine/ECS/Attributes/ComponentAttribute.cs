@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Delta.ECS.Attributes;
 
@@ -7,10 +9,16 @@ public class ComponentAttribute : Attribute, IComparable<ComponentAttribute>
 {
     public readonly bool builtIn;
     public readonly int order;
-    internal ComponentAttribute(int order, bool builtIn)
+
+    public readonly int sourceLineNumber;
+    public readonly string sourceFilePath;
+
+    internal ComponentAttribute(int order, bool builtIn, [CallerLineNumber] int sourceLineNumber = 0, [CallerFilePath] string sourceFilePath = "")
     {
         this.order = order;
         this.builtIn = builtIn;
+        this.sourceLineNumber = sourceLineNumber;
+        this.sourceFilePath = sourceFilePath;
     }
 
     public ComponentAttribute(int order = 0) : this(order, false) { }

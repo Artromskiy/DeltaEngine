@@ -1,12 +1,13 @@
 using Arch.Core;
 using Avalonia.Controls;
+using Avalonia.Media;
 using DeltaEditor.Inspector.Internal;
 using System;
 using System.Numerics;
 
 namespace DeltaEditor;
 
-public partial class QuaternionNodeControl : UserControl, INode
+internal partial class QuaternionNodeControl : InspectorNode
 {
     private readonly NodeData _nodeData;
     public QuaternionNodeControl() => InitializeComponent();
@@ -15,8 +16,13 @@ public partial class QuaternionNodeControl : UserControl, INode
         FieldName.Content = (_nodeData = nodeData).FieldName;
     }
 
-    public bool UpdateData(ref EntityReference entity)
+    public override void SetLabelColor(IBrush brush)=> FieldName.Foreground = brush;
+
+    public override bool UpdateData(ref EntityReference entity)
     {
+        if (!ClipVisible)
+            return false;
+
         var euler = Degrees(_nodeData.GetData<Quaternion>(ref entity));
 
         bool changed = SetField(FieldX.FieldData, ref euler.X) |

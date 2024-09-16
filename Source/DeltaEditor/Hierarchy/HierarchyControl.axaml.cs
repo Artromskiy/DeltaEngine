@@ -49,8 +49,10 @@ public partial class HierarchyControl : UserControl
 
     private void CreateNewEntity(object? sender, RoutedEventArgs e)
     {
+        if (Program.RuntimeLoader == null)
+            return;
         Program.RuntimeLoader.OnRuntimeThread += AddEntity;
-        void AddEntity(IRuntimeContext ctx)
+        static void AddEntity(IRuntimeContext ctx)
         {
             Debug.Assert(ctx.SceneManager.CurrentScene != null);
             ctx.SceneManager.CurrentScene.AddEntity();

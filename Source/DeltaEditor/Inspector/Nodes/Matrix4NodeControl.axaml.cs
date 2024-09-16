@@ -1,10 +1,10 @@
 using Arch.Core;
-using Avalonia.Controls;
+using Avalonia.Media;
 using DeltaEditor.Inspector.Internal;
 
 namespace DeltaEditor;
 
-public partial class Matrix4NodeControl : UserControl, INode
+internal partial class Matrix4NodeControl : InspectorNode
 {
     private readonly NodeData _nodeData;
 
@@ -49,23 +49,30 @@ public partial class Matrix4NodeControl : UserControl, INode
         _nodeDataM44 = _nodeData.ChildData(_nodeData.FieldNames[15]);
     }
 
-    public bool UpdateData(ref EntityReference entity)
+    public override void SetLabelColor(IBrush brush)=> FieldName.Foreground = brush;
+
+    public override bool UpdateData(ref EntityReference entity)
     {
-        return _nodeDataM11.UpdateFloat(FieldM11.FieldData, ref entity) |
-               _nodeDataM12.UpdateFloat(FieldM12.FieldData, ref entity) |
-               _nodeDataM13.UpdateFloat(FieldM13.FieldData, ref entity) |
-               _nodeDataM14.UpdateFloat(FieldM14.FieldData, ref entity) |
-               _nodeDataM21.UpdateFloat(FieldM21.FieldData, ref entity) |
-               _nodeDataM22.UpdateFloat(FieldM22.FieldData, ref entity) |
-               _nodeDataM23.UpdateFloat(FieldM23.FieldData, ref entity) |
-               _nodeDataM24.UpdateFloat(FieldM24.FieldData, ref entity) |
-               _nodeDataM31.UpdateFloat(FieldM31.FieldData, ref entity) |
-               _nodeDataM32.UpdateFloat(FieldM32.FieldData, ref entity) |
-               _nodeDataM33.UpdateFloat(FieldM33.FieldData, ref entity) |
-               _nodeDataM34.UpdateFloat(FieldM34.FieldData, ref entity) |
-               _nodeDataM41.UpdateFloat(FieldM41.FieldData, ref entity) |
-               _nodeDataM42.UpdateFloat(FieldM42.FieldData, ref entity) |
-               _nodeDataM43.UpdateFloat(FieldM43.FieldData, ref entity) |
-               _nodeDataM44.UpdateFloat(FieldM44.FieldData, ref entity);
+        if (!ClipVisible)
+            return false;
+
+        bool changed = _nodeDataM11.UpdateFloat(FieldM11.FieldData, ref entity) |
+                      _nodeDataM12.UpdateFloat(FieldM12.FieldData, ref entity) |
+                      _nodeDataM13.UpdateFloat(FieldM13.FieldData, ref entity) |
+                      _nodeDataM14.UpdateFloat(FieldM14.FieldData, ref entity) |
+                      _nodeDataM21.UpdateFloat(FieldM21.FieldData, ref entity) |
+                      _nodeDataM22.UpdateFloat(FieldM22.FieldData, ref entity) |
+                      _nodeDataM23.UpdateFloat(FieldM23.FieldData, ref entity) |
+                      _nodeDataM24.UpdateFloat(FieldM24.FieldData, ref entity) |
+                      _nodeDataM31.UpdateFloat(FieldM31.FieldData, ref entity) |
+                      _nodeDataM32.UpdateFloat(FieldM32.FieldData, ref entity) |
+                      _nodeDataM33.UpdateFloat(FieldM33.FieldData, ref entity) |
+                      _nodeDataM34.UpdateFloat(FieldM34.FieldData, ref entity) |
+                      _nodeDataM41.UpdateFloat(FieldM41.FieldData, ref entity) |
+                      _nodeDataM42.UpdateFloat(FieldM42.FieldData, ref entity) |
+                      _nodeDataM43.UpdateFloat(FieldM43.FieldData, ref entity) |
+                      _nodeDataM44.UpdateFloat(FieldM44.FieldData, ref entity);
+
+        return changed;
     }
 }

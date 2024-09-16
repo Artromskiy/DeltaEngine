@@ -55,10 +55,7 @@ public sealed class Runtime : IRuntime, IDisposable
             try
             {
                 RuntimeCall?.Invoke();
-                if (IRuntimeContext.Current.Running)
                     IRuntimeContext.Current.SceneManager.CurrentScene?.Run();
-                else
-                    IRuntimeContext.Current.SceneManager.CurrentScene?.RunDefault();
 
                 if (IRuntimeContext.Current.SceneManager.CurrentScene != null)
                     IRuntimeContext.Current.GraphicsModule.Execute();

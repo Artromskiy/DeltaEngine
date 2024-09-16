@@ -5,8 +5,7 @@
              mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="100"
              x:Class="DeltaEditor.AddComponentItemControl"
              Height="20">
-  <Grid ColumnDefinitions="30,*"
-        Background="Magenta">
+  <Grid ColumnDefinitions="30,*">
 
     <Svg Grid.Column="0"
          Margin="3"

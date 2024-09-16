@@ -7,14 +7,13 @@
              x:Class="DeltaEditor.Matrix4NodeControl">
 
   <Grid Margin="0"
-        ColumnDefinitions="*,3*">
+        ColumnDefinitions="*,4*">
     
     <Label Grid.Column="0"
            x:Name="FieldName"
            x:FieldModifier="private"
            VerticalContentAlignment="Center"
            VerticalAlignment="Top"
-           Padding="25,0,0,0"
            Height="20"
            FontSize="12"
            Content="fieldName"/>

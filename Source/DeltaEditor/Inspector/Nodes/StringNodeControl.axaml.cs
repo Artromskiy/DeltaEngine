@@ -1,10 +1,12 @@
 using Arch.Core;
-using Avalonia.Controls;
+using Avalonia;
+using Avalonia.Media;
+using Avalonia.VisualTree;
 using DeltaEditor.Inspector.Internal;
 
 namespace DeltaEditor;
 
-public partial class StringNodeControl : UserControl, INode
+internal partial class StringNodeControl : InspectorNode
 {
     private readonly NodeData _nodeData;
     public StringNodeControl() => InitializeComponent();
@@ -12,5 +14,15 @@ public partial class StringNodeControl : UserControl, INode
     {
         Field.FieldName = (_nodeData = nodeData).FieldName;
     }
-    public bool UpdateData(ref EntityReference entity) => _nodeData.UpdateString(Field.FieldData, ref entity);
+
+    public override void SetLabelColor(IBrush brush)=> Field.SetFieldColor(brush);
+
+    public override bool UpdateData(ref EntityReference entity)
+    {
+        if (!ClipVisible)
+            return false;
+        bool changed = _nodeData.UpdateString(Field.FieldData, ref entity);
+
+        return changed;
+    }
 }

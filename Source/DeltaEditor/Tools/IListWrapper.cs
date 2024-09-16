@@ -34,12 +34,12 @@ internal readonly struct IListWrapper<T, K> : IList<T> where T : K
     public IEnumerator<T> GetEnumerator() => new IEnumeratorWrapper(_list.GetEnumerator());
     IEnumerator IEnumerable.GetEnumerator() => new IEnumeratorWrapper(_list.GetEnumerator());
 
-    private struct IEnumeratorWrapper(IEnumerator<K> enumerator) : IEnumerator<T>
+    private readonly struct IEnumeratorWrapper(IEnumerator<K> enumerator) : IEnumerator<T>
     {
-        public T Current => (T)enumerator.Current;
-        object IEnumerator.Current => enumerator.Current;
-        public void Dispose() => enumerator.Dispose();
-        public bool MoveNext() => enumerator.MoveNext();
-        public void Reset() => enumerator.Dispose();
+        public readonly T Current => (T)enumerator.Current!;
+        readonly object IEnumerator.Current => enumerator.Current!;
+        public readonly void Dispose() => enumerator.Dispose();
+        public readonly bool MoveNext() => enumerator.MoveNext();
+        public readonly void Reset() => enumerator.Dispose();
     }
 }
