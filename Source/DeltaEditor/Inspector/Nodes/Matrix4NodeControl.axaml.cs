@@ -49,7 +49,7 @@ internal partial class Matrix4NodeControl : InspectorNode
         _nodeDataM44 = _nodeData.ChildData(_nodeData.FieldNames[15]);
     }
 
-    public override void SetLabelColor(IBrush brush)=> FieldName.Foreground = brush;
+    public override void SetLabelColor(IBrush brush) => FieldName.Foreground = brush;
 
     public override bool UpdateData(ref EntityReference entity)
     {

@@ -16,7 +16,7 @@ internal partial class QuaternionNodeControl : InspectorNode
         FieldName.Content = (_nodeData = nodeData).FieldName;
     }
 
-    public override void SetLabelColor(IBrush brush)=> FieldName.Foreground = brush;
+    public override void SetLabelColor(IBrush brush) => FieldName.Foreground = brush;
 
     public override bool UpdateData(ref EntityReference entity)
     {

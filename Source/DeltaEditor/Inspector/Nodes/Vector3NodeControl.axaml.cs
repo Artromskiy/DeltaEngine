@@ -1,5 +1,4 @@
 using Arch.Core;
-using Avalonia.Controls;
 using Avalonia.Media;
 using DeltaEditor.Inspector.Internal;
 
@@ -20,7 +19,7 @@ internal partial class Vector3NodeControl : InspectorNode
         _nodeDataZ = _nodeData.ChildData(_nodeData.FieldNames[2]);
     }
 
-    public override void SetLabelColor(IBrush brush)=> FieldName.Foreground = brush;
+    public override void SetLabelColor(IBrush brush) => FieldName.Foreground = brush;
 
     public override bool UpdateData(ref EntityReference entity)
     {

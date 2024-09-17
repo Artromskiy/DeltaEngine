@@ -71,6 +71,6 @@ public partial class EditorPanelHeader : UserControl
             DebugTimer.StopDebug();
     }
 
-    public EditorPanelHeader()=> InitializeComponent();
+    public EditorPanelHeader() => InitializeComponent();
 
 }

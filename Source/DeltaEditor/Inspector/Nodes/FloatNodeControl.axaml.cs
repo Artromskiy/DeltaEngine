@@ -13,7 +13,7 @@ internal partial class FloatNodeControl : InspectorNode
         Field.FieldName = (_nodeData = nodeData).FieldName;
     }
 
-    public override void SetLabelColor(IBrush brush)=> Field.SetFieldColor(brush);
+    public override void SetLabelColor(IBrush brush) => Field.SetFieldColor(brush);
 
     public override bool UpdateData(ref EntityReference entity)
     {

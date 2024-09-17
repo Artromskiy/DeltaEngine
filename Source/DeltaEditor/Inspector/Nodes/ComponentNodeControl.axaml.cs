@@ -69,5 +69,5 @@ internal partial class ComponentNodeControl : InspectorNode
         return changed;
     }
 
-    public override void SetLabelColor(IBrush brush)=> ComponentName.Foreground = brush;
+    public override void SetLabelColor(IBrush brush) => ComponentName.Foreground = brush;
 }

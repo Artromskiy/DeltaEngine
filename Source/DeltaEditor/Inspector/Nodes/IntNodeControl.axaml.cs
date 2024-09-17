@@ -1,7 +1,6 @@
 using Arch.Core;
 using Avalonia.Media;
 using DeltaEditor.Inspector.Internal;
-using System.Threading.Channels;
 
 namespace DeltaEditor;
 
@@ -14,7 +13,7 @@ internal partial class IntNodeControl : InspectorNode
         Field.FieldName = (_nodeData = nodeData).FieldName;
     }
 
-    public override void SetLabelColor(IBrush brush)=> Field.SetFieldColor(brush);
+    public override void SetLabelColor(IBrush brush) => Field.SetFieldColor(brush);
 
     public override bool UpdateData(ref EntityReference entity)
     {

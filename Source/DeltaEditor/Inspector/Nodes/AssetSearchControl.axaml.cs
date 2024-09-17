@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using Avalonia.Interactivity;
 using Delta.Files;
 using Delta.Runtime;
 using DeltaEditor.Hierarchy;
