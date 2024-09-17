@@ -18,10 +18,13 @@ There's also some [notes](https://github.com/Artromskiy/DeltaEngine/blob/main/No
 
 To know which libraries and other third-party solutions used see [**Third-party**](https://github.com/Artromskiy/DeltaEngine/blob/main/Third-party.md).
 
+Here's editor
+![image](https://github.com/user-attachments/assets/0f48b8f4-78c7-4ab7-914f-5a7e9ff61160)
 
-Here's fourth letter :)
+Editor wip (old one using MAUI)
+![image](https://github.com/Artromskiy/DeltaEngine/assets/47901401/c9ef1b42-5504-4191-b614-07a620dd166a)
+
+Here's fourth letter :) (it was at the very beginning)
 ![image](https://github.com/Artromskiy/DeltaEngine/assets/47901401/442aabe0-061f-4497-aec7-f45e5c2b7bb1)
 
-Editor wip
-![image](https://github.com/Artromskiy/DeltaEngine/assets/47901401/c9ef1b42-5504-4191-b614-07a620dd166a)
 
