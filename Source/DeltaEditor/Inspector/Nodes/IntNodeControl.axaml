@@ -7,7 +7,7 @@
              x:Class="DeltaEditor.IntNodeControl">
 
   <uc:NamedTextField x:Name="Field"
-                     FieldName="fieldName"
+                     FieldName="FieldName"
                      x:FieldModifier="private"
                      Data="42"
                      Cursor="SizeWestEast"/>

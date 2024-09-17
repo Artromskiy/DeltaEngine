@@ -25,6 +25,7 @@
              FontSize="12"
              BorderThickness="1"
              MinHeight="0"
+             HorizontalAlignment="Stretch"
              Classes="Bordered"
              Height="18"
              VerticalContentAlignment="Center"

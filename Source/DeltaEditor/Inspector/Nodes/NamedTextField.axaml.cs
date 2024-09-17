@@ -41,7 +41,7 @@ public partial class NamedTextField : UserControl
             NameLabel.Content = value;
             ContainerGrid.ColumnDefinitions = string.IsNullOrEmpty(value) ?
                 [new ColumnDefinition(0, GridUnitType.Pixel), new ColumnDefinition(1, GridUnitType.Star)] :
-                [new ColumnDefinition(1, GridUnitType.Star), new ColumnDefinition(3, GridUnitType.Star)];
+                [new ColumnDefinition(1, GridUnitType.Star), new ColumnDefinition(4, GridUnitType.Star)];
         }
     }
 
