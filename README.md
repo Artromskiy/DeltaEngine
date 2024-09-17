@@ -18,7 +18,8 @@ There's also some [notes](https://github.com/Artromskiy/DeltaEngine/blob/main/No
 
 To know which libraries and other third-party solutions used see [**Third-party**](https://github.com/Artromskiy/DeltaEngine/blob/main/Third-party.md).
 
-Here's editor
+Here's editor app:
+
 ![image](https://github.com/user-attachments/assets/0f48b8f4-78c7-4ab7-914f-5a7e9ff61160)
 
 Editor wip (old one using MAUI)
