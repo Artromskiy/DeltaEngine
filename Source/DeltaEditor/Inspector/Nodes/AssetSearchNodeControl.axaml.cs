@@ -7,11 +7,10 @@ namespace DeltaEditor;
 public sealed partial class AssetSearchNodeControl : UserControl, IDisposable
 {
     private readonly AssetSearchControl _creator;
-    private Guid _assetGuid;
-    public Guid AssetGuid
+    public Guid assetGuid;
+    public string GuidAssetName
     {
-        get => _assetGuid;
-        set => AssetName.Content = (_assetGuid = value).ToString();
+        set=> AssetName.Content = value;
     }
 
     public AssetSearchNodeControl() => InitializeComponent();
@@ -22,8 +21,8 @@ public sealed partial class AssetSearchNodeControl : UserControl, IDisposable
 
     public void Dispose()
     {
-        AssetGuid = Guid.Empty;
+        assetGuid = Guid.Empty;
         _creator.ReturnNode(this);
     }
-    private void AssetSelected(object? sender, TappedEventArgs e) => _creator?.SelectGuid(_assetGuid);
+    private void AssetSelected(object? sender, TappedEventArgs e) => _creator?.SelectGuid(assetGuid);
 }

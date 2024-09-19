@@ -1,6 +1,5 @@
-﻿using Delta.ECS.Attributes;
-using Delta.Files;
-using Delta.Rendering;
+﻿using Delta.Assets;
+using Delta.ECS.Attributes;
 using System;
 
 namespace Delta.ECS.Components;
@@ -9,7 +8,7 @@ namespace Delta.ECS.Components;
 public struct Render : IEquatable<Render>, IComparable<Render>
 {
     internal GuidAsset<ShaderData> _shader;
-    internal GuidAsset<MaterialData> _material;
+    public GuidAsset<MaterialData> material;
     public GuidAsset<MeshData> mesh;
 
     public readonly GuidAsset<ShaderData> Shader
@@ -18,30 +17,20 @@ public struct Render : IEquatable<Render>, IComparable<Render>
         get => _shader;
     }
 
-    public GuidAsset<MaterialData> Material
-    {
-        [Imp(Inl)]
-        readonly get => _material;
-        [Imp(Inl)]
-        set
-        {
-            _material = value;
-            _shader = value.GetAsset().shader;
-        }
-    }
+    public readonly bool IsValid => _shader.guid != Guid.Empty && material.guid != Guid.Empty && mesh.guid != Guid.Empty;
 
 
     [Imp(Inl)]
-    public readonly bool Equals(Render other) => _shader.Equals(other._shader) && _material.Equals(other._material) && mesh.Equals(other.mesh);
+    public readonly bool Equals(Render other) => _shader.Equals(other._shader) && material.Equals(other.material) && mesh.Equals(other.mesh);
     [Imp(Inl)]
     public override readonly bool Equals(object? obj) => obj is Render render && Equals(render);
     [Imp(Inl)]
-    public override readonly int GetHashCode() => HashCode.Combine(_shader, _material, mesh);
+    public override readonly int GetHashCode() => HashCode.Combine(_shader, material, mesh);
     [Imp(Inl)]
     public readonly int CompareTo(Render other)
     {
         var byShader = _shader.CompareTo(other._shader);
-        var byMaterial = _material.CompareTo(other._material);
+        var byMaterial = material.CompareTo(other.material);
         var byMesh = mesh.CompareTo(other.mesh);
         return byShader == 0 ? byMaterial == 0 ? byMesh == 0 ? 1 : byMesh : byMaterial : byShader;
     }

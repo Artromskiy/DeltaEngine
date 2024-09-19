@@ -2,7 +2,7 @@
 using System;
 using System.Text.Json.Serialization;
 
-namespace Delta.Files;
+namespace Delta.Assets;
 
 public class MeshData : IAsset
 {

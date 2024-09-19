@@ -6,36 +6,47 @@ namespace DeltaEditor;
 
 public partial class AddComponentItemControl : UserControl
 {
+    private bool _selected;
     public event Action<Type>? OnClick;
+    public readonly Type ComponentType;
 
     public AddComponentItemControl()
     {
         InitializeComponent();
         Tapped += OnTap;
-        PointerEntered += OnHighlight;
-        PointerExited += OnDehighlight;
     }
 
-    private readonly Type _componentType;
-    public AddComponentItemControl(Type type) : this()
+    public AddComponentItemControl(Type type, Action<Type> onClick) : this()
     {
-        _componentType = type;
-        ComponentNameLabel.Content = _componentType.ToString();
+        ComponentType = type;
+        ComponentNameLabel.Content = ComponentType.ToString();
+        OnClick += onClick;
     }
 
+    public bool Selected
+    {
+        get => _selected;
+        set
+        {
+            _selected = value;
+            BorderBrush = value ? Tools.Colors.FocusedBrush : Tools.Colors.UnfocusedBorderBrush;
+        }
+    }
 
     private void OnTap(object? sender, TappedEventArgs e)
     {
-        OnClick?.Invoke(_componentType);
+        OnClick?.Invoke(ComponentType);
     }
 
-    private void OnHighlight(object? sender, PointerEventArgs e)
+    private void UserControl_PointerEntered(object? sender, PointerEventArgs e)
     {
-
+        if(!_selected)
+            BorderBrush = Tools.Colors.FocusedBrush;
     }
 
-    private void OnDehighlight(object? sender, PointerEventArgs e)
+    private void UserControl_PointerExited(object? sender, PointerEventArgs e)
     {
-
+        if(!_selected)
+            BorderBrush = Tools.Colors.UnfocusedBorderBrush;
     }
 }

@@ -35,6 +35,25 @@ public class NodeData(RootData root, PathData path)
         return changed;
     }
 
+    public void DragFloat(TextBox fieldData, float delta, float multiplier)
+    {
+        if (!fieldData.IsFocused)
+            fieldData.Focus();
+
+        if (fieldData.Text.ParseToFloat(out var value))
+            value += delta * multiplier;
+        fieldData.Text = value.ParseToStringHighRes();
+    }
+
+    public void DragInt(TextBox fieldData, float delta)
+    {
+        if (!fieldData.IsFocused)
+            fieldData.Focus();
+        if(int.TryParse(fieldData.Text, out int value))
+            value += MathF.Sign(delta);
+        fieldData.Text = value.ParseToString();
+    }
+
     public bool UpdateString(TextBox FieldData, ref EntityReference entity)
     {
         bool changed = FieldData.IsFocused;
@@ -49,7 +68,7 @@ public class NodeData(RootData root, PathData path)
     {
         bool changed = fieldData.IsFocused;
         if (!changed)
-            fieldData.Text = GetData<int>(ref entity).LookupString();
+            fieldData.Text = GetData<int>(ref entity).ParseToString();
         else
         {
             if (string.IsNullOrEmpty(fieldData.Text))

@@ -1,4 +1,4 @@
-﻿using Delta.Files;
+﻿using Delta.Assets;
 using System;
 using System.Collections.Generic;
 
@@ -10,7 +10,10 @@ internal class GlobalAssetCollection : IAssetCollection
     {
         {typeof(MeshData), new MeshCollection() },
     };
-
+    public void SaveAsset<T>(T asset, string path) where T : class, IAsset =>
+        GetAssetCollection<T>().SaveAsset(asset, path);
+    public T LoadAsset<T>(string path) where T : class, IAsset =>
+        GetAssetCollection<T>().LoadAsset(path);
     public string GetPath<T>(GuidAsset<T> asset) where T : class, IAsset =>
         GetAssetCollection<T>().GetPath(asset);
     public string GetName<T>(GuidAsset<T> asset) where T : class, IAsset =>

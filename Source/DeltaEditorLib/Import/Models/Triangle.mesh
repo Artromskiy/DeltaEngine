@@ -1,0 +1,26 @@
+{
+  "vertexCount": 3,
+  "vertices": [
+    "AAAAAAAAAL8AAAAAmpkZPwAAAD8AAAAAmpkZvwAAAD8AAAAA",
+    "AAAAAAAAAL+amRk/AAAAP5qZGb8AAAA/",
+    "AAAAAAAAAAAAAIA/AACAPwAAAAAAAIA/AAAAAAAAgD8AAIA/AAAAAAAAAAAAAIA/",
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "indices": [
+    0,
+    1,
+    2
+  ]
+}

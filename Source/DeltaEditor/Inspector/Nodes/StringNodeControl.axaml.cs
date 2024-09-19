@@ -1,5 +1,6 @@
 using Arch.Core;
 using Avalonia.Media;
+using Delta.Runtime;
 using DeltaEditor.Inspector.Internal;
 
 namespace DeltaEditor;
@@ -13,9 +14,9 @@ internal partial class StringNodeControl : InspectorNode
         Field.FieldName = (_nodeData = nodeData).FieldName;
     }
 
-    public override void SetLabelColor(IBrush brush) => Field.SetFieldColor(brush);
+    public override void SetLabelColor(IBrush brush) {}
 
-    public override bool UpdateData(ref EntityReference entity)
+    public override bool UpdateData(ref EntityReference entity, IRuntimeContext ctx)
     {
         if (!ClipVisible)
             return false;

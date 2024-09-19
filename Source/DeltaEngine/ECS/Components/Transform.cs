@@ -11,6 +11,13 @@ public struct Transform
     public Quaternion rotation;
     public Vector3 scale;
 
+    public Transform()
+    {
+        position = Vector3.Zero;
+        rotation = Quaternion.Identity;
+        scale = Vector3.One;
+    }
+
     public readonly Matrix4x4 LocalMatrix
     {
         [Imp(Inl)]

@@ -1,4 +1,4 @@
-﻿using Delta.Files;
+﻿using Delta.Assets;
 using Delta.Rendering.Collections;
 using Delta.Rendering.Internal;
 using Delta.Utilities;
@@ -501,7 +501,6 @@ internal static unsafe class RenderHelper
             SType = StructureType.CommandBufferBeginInfo,
             Flags = CommandBufferUsageFlags.OneTimeSubmitBit
         };
-        _ = vk.BeginCommandBuffer(cmdBuffer, &beginInfo);
         BufferImageCopy copy = new()
         {
             BufferImageHeight = (uint)height,
@@ -527,8 +526,6 @@ internal static unsafe class RenderHelper
                 BaseArrayLayer = 0
             }
         };
-        vk.CmdCopyImageToBuffer(cmdBuffer, source, ImageLayout.TransferSrcOptimal, destionation, 1, copy);
-        _ = vk.EndCommandBuffer(cmdBuffer);
         var waitStageFlags = PipelineStageFlags.TransferBit;
         SubmitInfo submitInfo = new()
         {
@@ -539,6 +536,9 @@ internal static unsafe class RenderHelper
             WaitSemaphoreCount = 1,
             PWaitDstStageMask = &waitStageFlags
         };
+        _ = vk.BeginCommandBuffer(cmdBuffer, &beginInfo);
+        vk.CmdCopyImageToBuffer(cmdBuffer, source, ImageLayout.TransferSrcOptimal, destionation, 1, copy);
+        _ = vk.EndCommandBuffer(cmdBuffer);
         _ = vk.QueueSubmit(deviceQ.GetQueue(QueueType.Transfer), 1, &submitInfo, signalFence);
     }
 

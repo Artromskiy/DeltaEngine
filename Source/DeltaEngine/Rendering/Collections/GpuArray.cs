@@ -1,6 +1,7 @@
 ﻿using Delta.Rendering.Internal;
 using Silk.NET.Vulkan;
 using System;
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using Buffer = Silk.NET.Vulkan.Buffer;
@@ -69,10 +70,11 @@ internal unsafe class GpuArray<T> : IDisposable where T : unmanaged
             [Imp(Inl)]
             get
             {
-                _ = index >= 0 && index < _length;
+                Debug.Assert(index >= 0 && index < _length);
                 return ref Unsafe.Add(ref Unsafe.AsRef<T>((void*)_pData), index);
             }
         }
+        public ReadOnlySpan<T> Data => new(_pData.ToPointer(), (int)_length);
     }
 
     public void Flush(uint min, uint max) // TODO use these ranges according to vulkan docs about MappedMemoryRange and "multiple of n bytes per fucking transfer"

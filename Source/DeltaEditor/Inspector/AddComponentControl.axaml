@@ -4,12 +4,49 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="450"
              xmlns:uc="clr-namespace:DeltaEditor;assembly=DeltaEditor"
-             x:Class="DeltaEditor.AddComponentControl">
-  
-  <StackPanel Orientation="Vertical"
-              x:Name="ComponentsStackPanel"
-              x:FieldModifier="private">
+             x:Class="DeltaEditor.AddComponentControl"
+             Focusable="True"
+             LostFocus="SearchLostFocus"
+             GotFocus="Opened">
 
-    
-  </StackPanel>
+  <Grid RowDefinitions="20,*">
+
+    <Grid Grid.Row="0"
+          ColumnDefinitions="*,15">
+
+      <!--Search field-->
+      <TextBox Grid.Column="0"
+               FontSize="12"
+               MinHeight="0"
+               CornerRadius="3"
+               x:Name="SearchTextBox"
+               x:FieldModifier="private"
+               VerticalAlignment="Stretch"
+               VerticalContentAlignment="Center"
+               KeyDown="SearchKeyDown"
+               TextChanged="SearchTextChanged"
+               Watermark="Search"/>
+
+      <Border/>
+
+    </Grid>
+
+    <ScrollViewer Grid.Row="1"
+                  ScrollViewer.VerticalScrollBarVisibility="Visible">
+      <StackPanel Orientation="Vertical"
+                  x:Name="ComponentsStackPanel"
+                  Spacing="2"
+                  x:FieldModifier="private"
+                  Margin="0,2,15,0">
+        <uc:AddComponentItemControl/>
+        <uc:AddComponentItemControl/>
+        <uc:AddComponentItemControl/>
+        <uc:AddComponentItemControl/>
+        <uc:AddComponentItemControl/>
+        <uc:AddComponentItemControl/>
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+
+
 </UserControl>

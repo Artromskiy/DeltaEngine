@@ -14,10 +14,10 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.1.0" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.1.0" />
-    <PackageReference Include="Avalonia.Svg.Skia" Version="11.1.0" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.1.0" />
+    <PackageReference Include="Avalonia" Version="11.1.3" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.1.3" />
+    <PackageReference Include="Avalonia.Svg.Skia" Version="11.1.0.1" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.1.3" />
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
     <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.1.0" />
     <PackageReference Include="Semi.Avalonia" Version="11.1.0.4" />
@@ -27,11 +27,12 @@
     <Content Include="Assets\Icons\**">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-  </ItemGroup>
-
-  <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
     <AvaloniaResource Include="Assets\Icons\**" />
+    <AvaloniaXaml Remove="Assets\SmallButtonStyle.axaml" />
+    <AvaloniaResource Update="Assets\SmallButtonStyle.axaml">
+      <SubType>Designer</SubType>
+    </AvaloniaResource>
   </ItemGroup>
 
   <ItemGroup>
@@ -39,6 +40,7 @@
     <ProjectReference Include="..\DeltaEngine\DeltaEngine.csproj" />
   </ItemGroup>
 
+<!--
   <ItemGroup>
     <Compile Update="Hierarchy\HierarchyControl.axaml.cs">
       <DependentUpon>HierarchyControl.axaml</DependentUpon>
@@ -59,5 +61,5 @@
       <DependentUpon>QuaternionNodeControl.axaml</DependentUpon>
     </Compile>
   </ItemGroup>
-
+-->
 </Project>

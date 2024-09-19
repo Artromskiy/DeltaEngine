@@ -5,14 +5,13 @@ using Delta.ECS.Attributes;
 using Delta.ECS.Components;
 using Delta.Rendering;
 using Delta.Runtime;
-using Delta.Scenes;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading;
 
-namespace Delta.Files.Defaults;
+namespace Delta.Assets.Defaults;
 internal static class TestScene
 {
     public static Scene Scene => NewScene();
@@ -33,135 +32,14 @@ internal static class TestScene
     private static Scene NewScene()
     {
         var scene = new Scene();
-        InitWorldSimple(scene);
         var graphics = IRuntimeContext.Current.GraphicsModule;
         if (graphics is not DummyGraphics)
             graphics.AddRenderBatcher(new SceneBatcher());
-        scene.AddSystem(new MoveTransformsJob(scene._world, scene.DeltaTime));
-        //scene.AddJob(new RemoveDirtyJob(scene._world));
-        //scene.AddJob(new FpsDropper(60, scene.DeltaTime));
 
         scene._world.TrimExcess();
         GC.Collect();
         return scene;
     }
-
-    private static void InitWorldSimple(Scene scene)
-    {
-        CreateManyTriangles(scene, N);
-        //CreateOneDelta(scene);
-        CreateCamera(scene);
-        CreateEmptyTestComponent(scene);
-        CreateFullTestComponent(scene);
-        MarkTransformsDirty(scene);
-    }
-
-    private static void CreateCamera(Scene scene)
-    {
-        var cameraEntity = scene.AddEntity().Entity;
-        cameraEntity.Add<Transform>(new()
-        {
-            position = new Vector3(0, 0, -2),
-            rotation = Quaternion.Identity,
-            scale = Vector3.One
-        });
-        cameraEntity.Add<Camera>(new()
-        {
-            fieldOfView = 90,
-            aspectRation = 1,
-            nearPlaneDistance = float.Epsilon,
-            farPlaneDistance = 1000
-        });
-        cameraEntity.Add<EntityName>(new("Camera"));
-    }
-
-    private static void CreateEmptyTestComponent(Scene scene)
-    {
-        var testEntity = scene.AddEntity().Entity;
-        testEntity.Add<EntityName>(new("Empty"));
-        testEntity.Add<TestArraysAndSoOn>(new());
-    }
-
-    private static void CreateFullTestComponent(Scene scene)
-    {
-        var testEntity = scene.AddEntity().Entity;
-        testEntity.Add<EntityName>(new("Full"));
-        testEntity.Add<TestArraysAndSoOn>(new()
-        {
-            stringsDictionary = [],
-            stringsList = [],
-            stringsSet = []
-        });
-        testEntity.Add<CompStruct>();
-    }
-
-    private static void MarkTransformsDirty(Scene scene)
-    {
-        var tr = new QueryDescription().WithAll<Transform>();
-        scene._world.Add<DirtyFlag<Transform>>(tr);
-    }
-
-    private static void CreateManyTriangles(Scene scene, int count)
-    {
-        Transform defaultTransform = new() { rotation = Quaternion.Identity, scale = Vector3.One };
-        for (int i = 0; i < count; i++)
-        {
-            scene.AddEntity().Entity.Add(defaultTransform);
-        }
-        var transforms = ArrayPool<Entity>.Shared.Rent(count);
-        scene._world.GetEntities(new QueryDescription().WithAll<Transform>(), transforms);
-        var material = VCShader.VCMat;
-        Render deltaRend = new()
-        {
-            Material = material,
-            mesh = DeltaMesh.Mesh
-        };
-        Render triangleRend = new()
-        {
-            Material = material,
-            mesh = TriangleMesh.Mesh
-        };
-
-        int deltaCount = 0;
-        int triangleCount = 0;
-        for (int i = 0; i < count; i++)
-        {
-            bool delta = rnd.NextSingle() > 0.5f;
-            transforms[i].Add(delta ? deltaRend : triangleRend);
-            transforms[i].Add(delta ?
-            new MoveToTarget()
-            {
-                speed = 0.5f
-            } :
-            new MoveToTarget()
-            {
-                speed = 0.25f
-            });
-            deltaCount += delta ? 1 : 0;
-            triangleCount += delta ? 0 : 1;
-        }
-
-        Console.WriteLine($"Delta count {deltaCount}");
-        Console.WriteLine($"Triangle count {triangleCount}");
-
-        ArrayPool<Entity>.Shared.Return(transforms);
-        scene._world.TrimExcess();
-    }
-
-    private static void CreateOneDelta(Scene scene)
-    {
-        var entity = scene.AddEntity().Entity;
-        Transform defaultTransform = new()
-        {
-            scale = Vector3.One * 1f,
-            rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI * 0.5f),
-            position = new Vector3(0.5f, 0, 10)
-        };
-        Render deltaRend = new() { Material = VCShader.VCMat, mesh = DeltaMesh.Mesh };
-        entity.Add(defaultTransform);
-        entity.Add(deltaRend);
-    }
-
 
     private readonly struct MoveTransformsJob(World world, Func<float> deltaTime) : ISystem
     {
@@ -198,17 +76,6 @@ internal static class TestScene
         }
     }
 
-
-    private readonly struct RemoveDirtyJob(World world) : ISystem
-    {
-        private readonly QueryDescription _dirtyTransforms = new QueryDescription().WithAll<DirtyFlag<Transform>>();
-        private readonly QueryDescription _dirtyRenders = new QueryDescription().WithAll<DirtyFlag<Render>>();
-        public void Execute()
-        {
-            world.Remove<DirtyFlag<Transform>>(_dirtyTransforms);
-            world.Remove<DirtyFlag<Render>>(_dirtyRenders);
-        }
-    }
 
     private static readonly Random rnd = Random.Shared;
 

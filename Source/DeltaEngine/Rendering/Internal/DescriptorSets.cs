@@ -85,14 +85,7 @@ internal class DescriptorSets : IDisposable
 
     public unsafe void BindDescriptorSets(CommandBuffer commandBuffer)
     {
-        for (uint i = 0; i < RendConst.SetsCount; i++)
-        {
-            _vk.CmdBindDescriptorSets(
-                commandBuffer,
-                PipelineBindPoint.Graphics,
-                _pipelineLayout,
-                i, 1, _descriptorSets[i], 0, 0);
-        }
+        _vk.CmdBindDescriptorSets(commandBuffer, PipelineBindPoint.Graphics, _pipelineLayout, 0, _descriptorSets, []);
     }
 
     public unsafe void Dispose()

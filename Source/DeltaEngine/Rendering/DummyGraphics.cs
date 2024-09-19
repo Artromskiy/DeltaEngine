@@ -7,7 +7,7 @@ namespace Delta.Rendering;
 internal class DummyGraphics : IGraphicsModule
 {
     RenderBase IGraphicsModule.RenderData => throw new NotImplementedException();
-    public Memory<byte> RenderStream => throw new NotImplementedException();
+    public Memory<byte> RenderStream => Memory<byte>.Empty;
     public (int width, int height) Size
     {
         get => default;

@@ -1,10 +1,27 @@
-﻿using Delta.Files;
+﻿using Delta.Assets;
+using System.Reflection;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace ConsoleModelImporter
 {
     internal class Program
     {
+        private static readonly JsonSerializerOptions _options = new(JsonSerializerOptions.Default)
+        {
+            IgnoreReadOnlyFields = false,
+            IncludeFields = true,
+            IgnoreReadOnlyProperties = true,
+            AllowTrailingCommas = false,
+            WriteIndented = true,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
+            TypeInfoResolver = new DefaultJsonTypeInfoResolver
+            {
+                Modifiers = { AddPrivateFieldsModifier }
+            },
+        };
         private static void Main(string[] args)
         {
             Console.WriteLine("Hello, World!");
@@ -20,7 +37,7 @@ namespace ConsoleModelImporter
                    + Path.GetFileNameWithoutExtension(args[0])
                    + "_" + name + "mesh";
                 path = CreateIndexedFile(path);
-                Serialization.Serialize(path, meshData);
+                Serialize(path, meshData);
             }
         }
 
@@ -55,6 +72,26 @@ namespace ConsoleModelImporter
             while (File.Exists(alternateFilename = sb.ToString()));
 
             return alternateFilename;
+        }
+        private static void AddPrivateFieldsModifier(JsonTypeInfo jsonTypeInfo)
+        {
+            if (jsonTypeInfo.Kind != JsonTypeInfoKind.Object)
+                return;
+
+            foreach (FieldInfo field in jsonTypeInfo.Type.GetFields(BindingFlags.Instance | BindingFlags.NonPublic))
+            {
+                JsonPropertyInfo jsonPropertyInfo = jsonTypeInfo.CreateJsonPropertyInfo(field.FieldType, field.Name);
+                jsonPropertyInfo.Get = field.GetValue;
+                jsonPropertyInfo.Set = field.SetValue;
+
+                jsonTypeInfo.Properties.Add(jsonPropertyInfo);
+            }
+        }
+
+        public static void Serialize<T>(string path, T value)
+        {
+            using FileStream stream = File.Create(path);
+            JsonSerializer.Serialize(stream, value, _options);
         }
     }
 }

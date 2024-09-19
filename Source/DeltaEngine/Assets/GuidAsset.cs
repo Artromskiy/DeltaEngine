@@ -1,11 +1,13 @@
 ﻿using Delta.Runtime;
 using System;
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 
-namespace Delta.Files;
+namespace Delta.Assets;
 
 public interface IAsset { }
 
+[DebuggerDisplay("guid = {guid}")]
 public readonly struct GuidAsset<T> : IEquatable<GuidAsset<T>>, IComparable<GuidAsset<T>> where T : class, IAsset
 {
     public readonly Guid guid;
@@ -14,7 +16,7 @@ public readonly struct GuidAsset<T> : IEquatable<GuidAsset<T>>, IComparable<Guid
     internal GuidAsset(Guid guid) => this.guid = guid;
 
     public readonly T GetAsset() => IRuntimeContext.Current.AssetImporter.GetAsset(this);
-    public readonly Guid GetGuid() => guid;
+    public override string ToString() => guid == Guid.Empty ? "null" : IRuntimeContext.Current.AssetImporter.GetName(this);
 
     [Imp(Inl)]
     public static implicit operator T(GuidAsset<T> guidAsset) => IRuntimeContext.Current.AssetImporter.GetAsset(guidAsset);
@@ -33,4 +35,6 @@ public readonly struct GuidAsset<T> : IEquatable<GuidAsset<T>>, IComparable<Guid
     public static bool operator ==(GuidAsset<T> left, GuidAsset<T> right) => left.Equals(right);
     [Imp(Inl)]
     public static bool operator !=(GuidAsset<T> left, GuidAsset<T> right) => !left.Equals(right);
+
+    public bool Null => guid == Guid.Empty;
 }

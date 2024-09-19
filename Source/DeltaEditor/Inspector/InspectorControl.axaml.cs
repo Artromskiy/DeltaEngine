@@ -45,7 +45,7 @@ public partial class InspectorControl : UserControl
     public void SetSelectedEntity(EntityReference entityReference)
     {
         SelectedEntity = entityReference;
-        this.Focus();
+        Focus();
     }
 
     public void UpdateInspector(IRuntimeContext ctx)
@@ -57,7 +57,7 @@ public partial class InspectorControl : UserControl
             EntityNameTextBox.Text = string.Empty;
             ChildrenNodes.Clear();
             AddComponentButton.IsVisible = false;
-            AddComponentControlFlyout.UpdateComponents(_notUsedComponentTypes);
+            AddComponentControlFlyout.FillComponentsData(_notUsedComponentTypes);
             PanelHeader.StopDebug();
             return;
         }
@@ -66,12 +66,12 @@ public partial class InspectorControl : UserControl
         {
             CurrentArch = SelectedEntity.Entity.GetArchetype();
             ChildrenNodes.Clear();
-            RebuildInspectorComponents(ctx);
-            AddComponentControlFlyout.UpdateComponents(_notUsedComponentTypes);
+            RebuildInspectorComponents();
+            AddComponentControlFlyout.FillComponentsData(_notUsedComponentTypes);
         }
         UpdateName();
         foreach (var item in ChildrenNodes)
-            if (item.UpdateData(ref SelectedEntity))
+            if (item.UpdateData(ref SelectedEntity, ctx))
                 SelectedEntity.Entity.MarkDirty(item.ComponentType);
 
         PanelHeader.StopDebug();
@@ -96,22 +96,22 @@ public partial class InspectorControl : UserControl
                 string.Empty;
     }
 
-    private void RebuildInspectorComponents(IRuntimeContext ctx)
+    private void RebuildInspectorComponents()
     {
         Debug.Assert(_accessors != null);
-        var a = AttributeCache.GetAttribute<ComponentAttribute, Camera>();
         var types = SelectedEntity.Entity.GetComponentTypes();
         Span<ComponentType> typesSpan = stackalloc ComponentType[types.Length];
         types.CopyTo(typesSpan);
         typesSpan.Sort(NullSafeComponentAttributeComparer<ComponentAttribute>.Default);
         _notUsedComponentTypes.Clear();
         _notUsedComponentTypes.UnionWith(_components);
+        _notUsedComponentTypes.Remove(typeof(EntityName));
         foreach (var type in typesSpan)
         {
             _notUsedComponentTypes.Remove(type);
             if (!_accessors.AllAccessors.ContainsKey(type) || typeof(EntityName) == type.Type)
                 continue;
-            var componentInspector = GetOrCreateInspector(ctx, type);
+            var componentInspector = GetOrCreateInspector(type);
             ChildrenNodes.Add(componentInspector);
         }
     }
@@ -138,7 +138,7 @@ public partial class InspectorControl : UserControl
         SelectedEntity = EntityReference.Null;
         CurrentArch = null;
     }
-    private ComponentNodeControl GetOrCreateInspector(IRuntimeContext _, Type type)
+    private ComponentNodeControl GetOrCreateInspector(Type type)
     {
         if (!_loadedComponentInspectors.TryGetValue(type, out var inspector))
         {
@@ -150,5 +150,19 @@ public partial class InspectorControl : UserControl
             _loadedComponentInspectors[type] = inspector = componentInspector;
         }
         return inspector;
+    }
+
+    private void InspectorControlKeyUp(object? sender, Avalonia.Input.KeyEventArgs e)
+    {
+        if (IsFocused && e.Key == Avalonia.Input.Key.C && e.KeyModifiers.HasFlag(Avalonia.Input.KeyModifiers.Shift))
+            AddComponentButton.Flyout.ShowAt(AddComponentButton);
+        if (IsFocused && e.Key == Avalonia.Input.Key.R && e.KeyModifiers.HasFlag(Avalonia.Input.KeyModifiers.Shift))
+            EntityNameTextBox.Focus();
+    }
+
+    private void EntityNameTextBoxKeyUp(object? sender, Avalonia.Input.KeyEventArgs e)
+    {
+        if (EntityNameTextBox.IsFocused && (e.Key == Avalonia.Input.Key.Escape || e.Key == Avalonia.Input.Key.Enter))
+            Focus();
     }
 }

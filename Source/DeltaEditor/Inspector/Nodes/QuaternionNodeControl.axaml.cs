@@ -1,7 +1,9 @@
 using Arch.Core;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Delta.Runtime;
 using DeltaEditor.Inspector.Internal;
+using ExCSS;
 using System;
 using System.Numerics;
 
@@ -14,11 +16,14 @@ internal partial class QuaternionNodeControl : InspectorNode
     public QuaternionNodeControl(NodeData nodeData) : this()
     {
         FieldName.Content = (_nodeData = nodeData).FieldName;
+        FieldX.OnDrag += x => _nodeData.DragFloat(FieldX.FieldData, x, 1);
+        FieldY.OnDrag += x => _nodeData.DragFloat(FieldY.FieldData, x, 1);
+        FieldZ.OnDrag += x => _nodeData.DragFloat(FieldZ.FieldData, x, 1);
     }
 
     public override void SetLabelColor(IBrush brush) => FieldName.Foreground = brush;
 
-    public override bool UpdateData(ref EntityReference entity)
+    public override bool UpdateData(ref EntityReference entity, IRuntimeContext ctx)
     {
         if (!ClipVisible)
             return false;
@@ -64,13 +69,21 @@ internal partial class QuaternionNodeControl : InspectorNode
         };
     }
 
-    public static Vector3 Degrees(Quaternion r)
+    public static Vector3 Degrees(Quaternion q)
     {
-        var rx2 = r.X * r.X;
-        var x = MathF.Atan2(2.0f * ((r.Y * r.W) + (r.X * r.Z)), 1.0f - (2.0f * (rx2 + (r.Y * r.Y))));
-        var z = MathF.Atan2(2.0f * ((r.X * r.Y) + (r.Z * r.W)), 1.0f - (2.0f * (rx2 + (r.Z * r.Z))));
-        var y = MathF.Asin(2.0f * ((r.X * r.W) - (r.Y * r.Z)));
-        return new Vector3(x, y, z) * 180 / MathF.PI;
+        var qY2 = q.Y * q.Y;
+        float sinr_cosp = 2 * (q.W * q.X + q.Y * q.Z);
+        float siny_cosp = 2 * (q.W * q.Z + q.X * q.Y);
+        float cosr_cosp = 1 - (2 * (q.X * q.X + qY2));
+        float cosy_cosp = 1 - (2 * (qY2 + q.Z * q.Z));
+        float sinp = 2 * (q.W * q.Y - q.Z * q.X);
+        float toDegrees = 180f / MathF.PI;
+        return new()
+        {
+            X = MathF.Atan2(sinr_cosp, cosr_cosp) * toDegrees,
+            Y = (MathF.Abs(sinp) >= 1 ? MathF.CopySign(MathF.PI / 2, sinp) : MathF.Asin(sinp)) * toDegrees,
+            Z = (MathF.Atan2(siny_cosp, cosy_cosp)) * toDegrees,
+        };
     }
 
 }

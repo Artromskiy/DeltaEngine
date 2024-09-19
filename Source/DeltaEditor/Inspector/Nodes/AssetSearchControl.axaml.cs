@@ -1,5 +1,5 @@
 using Avalonia.Controls;
-using Delta.Files;
+using Delta.Assets;
 using Delta.Runtime;
 using DeltaEditor.Hierarchy;
 using System;
@@ -9,7 +9,7 @@ namespace DeltaEditor;
 
 public partial class AssetSearchControl : UserControl
 {
-    private IGenericGuidAssetProxy _genericProxy;
+    private IGuidAssetProxy _genericProxy;
     private Action<Guid>? _onAssetSelected;
 
     public event Action<bool>? OnOpenedChanged;
@@ -38,7 +38,10 @@ public partial class AssetSearchControl : UserControl
         var guids = _genericProxy.GetAssetsGuids(ctx);
         UpdateChildrenCount(guids.Length);
         for (int i = 0; i < guids.Length; i++)
-            ChildrenNodes[i].AssetGuid = guids[i];
+        {
+            ChildrenNodes[i].assetGuid = guids[i].guid;
+            ChildrenNodes[i].GuidAssetName = guids[i].name;
+        }
     }
 
     private void CloseAssetSearch()
@@ -85,27 +88,27 @@ public partial class AssetSearchControl : UserControl
         return node;
     }
 
-    private IGenericGuidAssetProxy CreateProxy(Type type)
+    private IGuidAssetProxy CreateProxy(Type type)
     {
         var genericProxy = typeof(GenericGuidAssetProxy<>);
-        return (IGenericGuidAssetProxy)Activator.CreateInstance(genericProxy.MakeGenericType(type))!;
+        return (IGuidAssetProxy)Activator.CreateInstance(genericProxy.MakeGenericType(type))!;
     }
 
-    private readonly struct GenericGuidAssetProxy<T> : IGenericGuidAssetProxy where T : class, IAsset
+    private readonly struct GenericGuidAssetProxy<T> : IGuidAssetProxy where T : class, IAsset
     {
-        public readonly Guid[] GetAssetsGuids(IRuntimeContext ctx)
+        public readonly (Guid guid, string name)[] GetAssetsGuids(IRuntimeContext ctx)
         {
             var assets = ctx.AssetImporter.GetAllAssets<T>();
             int count = assets.Length;
-            Guid[] guids = new Guid[count];
+            (Guid guid, string name)[] guids = new (Guid guid, string name)[count];
             for (int i = 0; i < count; i++)
-                guids[i] = assets[i].guid;
+                guids[i] = (assets[i].guid, assets[i].ToString());
             return guids;
         }
     }
 
-    private interface IGenericGuidAssetProxy
+    private interface IGuidAssetProxy
     {
-        Guid[] GetAssetsGuids(IRuntimeContext ctx);
+        (Guid guid, string name)[] GetAssetsGuids(IRuntimeContext ctx);
     }
 }

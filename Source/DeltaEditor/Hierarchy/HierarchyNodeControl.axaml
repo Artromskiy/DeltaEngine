@@ -22,11 +22,7 @@
               x:FieldModifier="private"
               Click="OnCollapseClick"
               CornerRadius="0,0,3,0"
-              Theme="{DynamicResource BorderlessButton}"
-              BorderThickness="0"
-              Padding="3"
-              MinHeight="0"
-              Height="20">
+              Classes="Iconed">
         <Svg x:Name="CollapseIcon"
              x:FieldModifier="private"
              Path="/Assets/Icons/collapsed.svg"/>
@@ -53,12 +49,9 @@
       <Button Grid.Column="3"
               x:Name="RemoveButton"
               x:FieldModifier="private"
-              Theme="{DynamicResource BorderlessButton}"
               Click="OnRemoveClick"
               CornerRadius="0,0,0,3"
-              BorderThickness="0"
-              Padding = "3"
-              MinHeight="0"
+              Classes="Iconed"
               IsVisible="False">
         <Svg Path="/Assets/Icons/close.svg"/>
       </Button>

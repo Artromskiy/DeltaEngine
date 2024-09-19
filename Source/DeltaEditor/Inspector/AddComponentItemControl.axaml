@@ -4,22 +4,29 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="100"
              x:Class="DeltaEditor.AddComponentItemControl"
+             Background="Transparent"
+             BorderThickness="1"
+             CornerRadius="3"
+             BorderBrush="{DynamicResource DefaultBorderBrush}"
+             PointerEntered="UserControl_PointerEntered"
+             PointerExited="UserControl_PointerExited"
              Height="20">
+
   <Grid ColumnDefinitions="30,*">
 
     <Svg Grid.Column="0"
          Margin="3"
-         Path="/Assets/Icons/inspector.svg"
+         Path="/Assets/Icons/code.svg"
          VerticalAlignment="Center"/>
 
     <Label Grid.Column="1"
            x:Name="ComponentNameLabel"
            x:FieldModifier="private"
-           FontWeight="Bold"
            FontSize="12"
            HorizontalAlignment="Left"
            VerticalAlignment="Center"
            Content="Transform"
+           BorderThickness="1"
            VerticalContentAlignment="Center"/>
   </Grid>
 

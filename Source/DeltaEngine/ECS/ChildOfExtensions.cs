@@ -1,5 +1,4 @@
 ﻿using Arch.Core;
-using Arch.Core.Extensions;
 using Delta.ECS.Components;
 using System;
 using System.Numerics;

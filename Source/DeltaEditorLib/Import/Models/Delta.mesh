@@ -1,0 +1,41 @@
+{
+  "vertexCount": 6,
+  "vertices": [
+    "AAAAAAAAAL8AAAAAmpkZPwAAAD8AAAAAmpkZvwAAAD8AAAAAAAAAAAAAgL4AAAAAMzOzPjMzsz4AAAAAMzOzvjMzsz4AAAAA",
+    "AAAAAAAAAL+amRk/AAAAP5qZGb8AAAA/AAAAAAAAgL4zM7M+MzOzPjMzs74zM7M+",
+    "AAAAAAAAAAAAAIA/AACAPwAAAAAAAIA/AAAAAAAAgD8AAIA/AAAAAAAAAAAAAIA/AACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAgD8AAAAAAACAPwAAAAAAAIA/",
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "indices": [
+    0,
+    1,
+    3,
+    1,
+    2,
+    4,
+    2,
+    0,
+    5,
+    3,
+    1,
+    4,
+    4,
+    2,
+    5,
+    5,
+    0,
+    3
+  ]
+}

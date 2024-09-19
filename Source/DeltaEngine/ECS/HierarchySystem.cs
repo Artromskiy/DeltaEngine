@@ -38,13 +38,7 @@ internal class HierarchySystem
     public int RootEntitiesCount => Root.children.Count;
     public int EntitiesCount => _entityToNode.Count;
 
-    public void UpdateOrders()
-    {
-        Stopwatch sw = Stopwatch.StartNew();
-        UpdateOrders(Root.children);
-        sw.Stop();
-        Debug.WriteLine($"Update orders took {(int)sw.Elapsed.TotalMicroseconds}us");
-    }
+    public void UpdateOrders()=> UpdateOrders(Root.children);
 
     public EntityReference[] GetRootEntities()
     {
@@ -235,6 +229,8 @@ internal class HierarchySystem
 
             _entitiesToDestroy.Clear();
             world.GetEntities(_destroyDescription, _entitiesToDestroy);
+            if (_entitiesToDestroy.Count == 0)
+                return;
 
             // Do not include items which has parent with DestroyFlag
             _entitiesToDestroy.RemoveAll(static x => x.GetLastParent<DestroyFlag>(out var _));

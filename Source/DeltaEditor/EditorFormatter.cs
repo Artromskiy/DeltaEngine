@@ -12,7 +12,6 @@ internal static class EditorFormatter
     private static readonly Dictionary<int, string> _lookupInt = [];
     private static readonly Dictionary<Guid, string> _lookupGuid = [];
     private static readonly Dictionary<EntityReference, string> _lookupEntityReference = [];
-    private const NumberStyles FloatNumberStyles = NumberStyles.Float;
     private static readonly CultureInfo _editorCulture;
     static EditorFormatter()
     {
@@ -21,11 +20,8 @@ internal static class EditorFormatter
         _editorCulture.NumberFormat.NumberDecimalSeparator = ".";
     }
 
-    public static string ParseToString(this float value)
-    {
-        var val = value.ToString(FloatFormat, _editorCulture);
-        return val;
-    }
+    public static string ParseToString(this float value)=> value.ToString(FloatFormat, _editorCulture);
+    public static string ParseToStringHighRes(this float value) => value.ToString("F", _editorCulture);
 
     public static bool ParseToFloat(this string? value, out float parsed)
     {
@@ -37,23 +33,7 @@ internal static class EditorFormatter
         return false;
     }
 
-    public static string LookupString(this int value)
-    {
-        if (!_lookupInt.TryGetValue(value, out var result))
-            _lookupInt[value] = result = value.ToString();
-        return result;
-    }
-
-    public static string LookupString(this Guid value)
-    {
-        if (!_lookupGuid.TryGetValue(value, out var result))
-        {
-            Span<byte> guidBytes = stackalloc byte[16];
-            value.TryWriteBytes(guidBytes);
-            _lookupGuid[value] = result = Convert.ToBase64String(guidBytes);
-        }
-        return result;
-    }
+    public static string ParseToString(this int value) => value.ToString();
 
     public static string LookupString(this EntityReference value)
     {

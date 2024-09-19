@@ -1,9 +1,10 @@
 ﻿using Delta.Runtime;
+using Delta.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Delta.Files;
+namespace Delta.Assets;
 internal class DefaultAssetCollection<T> : IAssetCollection<T> where T : class, IAsset
 {
     private const string MetaEnding = ".meta";
@@ -17,7 +18,7 @@ internal class DefaultAssetCollection<T> : IAssetCollection<T> where T : class, 
             _runtimeAssetsData.TryGetValue(guidAsset.guid, out result);
         return result?.path ?? string.Empty;
     }
-    public string GetName(GuidAsset<T> guidAsset) => Path.GetFileName(GetPath(guidAsset));
+    public string GetName(GuidAsset<T> guidAsset) => Path.GetFileNameWithoutExtension(GetPath(guidAsset));
 
     public T GetAsset(GuidAsset<T> guidAsset)
     {
@@ -63,8 +64,8 @@ internal class DefaultAssetCollection<T> : IAssetCollection<T> where T : class, 
         return new GuidAsset<T>(guid);
     }
 
-    protected virtual void SaveAsset(T asset, string path) => Serialization.Serialize(path, asset);
-    protected virtual T LoadAsset(string path) => Serialization.Deserialize<T>(path);
+    public virtual void SaveAsset(T asset, string path) => Serialization.Serialize(path, asset);
+    public virtual T LoadAsset(string path) => Serialization.Deserialize<T>(path);
 
     public GuidAsset<T>[] GetAssets()
     {
@@ -98,7 +99,6 @@ internal class DefaultAssetCollection<T> : IAssetCollection<T> where T : class, 
     public int GetAssetsCount() => _assetsData.Count;
     public int GetRuntimeAssetsCount() => _runtimeAssetsData.Count;
     public int GetAllAssetsCount() => _assetsData.Count + _runtimeAssetsData.Count;
-
 
     private class GuidAssetData
     {

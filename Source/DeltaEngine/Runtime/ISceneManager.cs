@@ -1,5 +1,4 @@
-﻿using Delta.Scenes;
-using System;
+﻿using System;
 
 namespace Delta.Runtime;
 public interface ISceneManager

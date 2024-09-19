@@ -5,8 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
+using System.Numerics;
+using Scene = Silk.NET.Assimp.Scene;
 
-namespace Delta.Files;
+namespace Delta.Assets;
 
 public class ModelImporter : IDisposable
 {
@@ -56,12 +58,24 @@ public class ModelImporter : IDisposable
             indexNum += count;
         }
         int vertexCount = (int)mesh->MNumVertices;
+        var vertices2 = Array.ConvertAll(new Span<Vector3>(mesh->MVertices, vertexCount).ToArray(), x => new Vector2(x.X, x.Y));
         var meshData = new MeshData(vertexCount, indices.ToArray());
         meshData.SetData(VertexAttribute.Pos3, mesh->MVertices);
+        fixed (Vector2* v2 = vertices2)
+            meshData.SetData(VertexAttribute.Pos2, v2);
         meshData.SetData(VertexAttribute.Norm, mesh->MNormals);
         meshData.SetData(VertexAttribute.Bitan, mesh->MBitangents);
         meshData.SetData(VertexAttribute.Tan, mesh->MTangents);
-        meshData.SetData(VertexAttribute.Col, mesh->MColors[0]);
+        if (mesh->MColors[0] != null)
+            meshData.SetData(VertexAttribute.Col, mesh->MColors[0]);
+        else
+        {
+            var white = new Vector4[vertexCount];
+            Array.Fill(white, new Vector4(1, 1, 1, 1));
+            fixed (Vector4* c = white)
+                meshData.SetData(VertexAttribute.Col, c);
+        }
+
         return (meshData, mesh->MName);
     }
 }

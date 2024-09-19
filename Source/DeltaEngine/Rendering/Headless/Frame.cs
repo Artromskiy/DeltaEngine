@@ -158,8 +158,14 @@ internal class Frame : IDisposable
         frameDescriptorSets.BindDescriptorSets(_commandBuffer);
 
         uint firstInstance = 0;
-        foreach (var (rend, count) in frameDescriptorSets.RenderList)
+        var length = frameDescriptorSets.RenderList.Length;
+        var renderList = frameDescriptorSets.RenderList;
+        for (int i = 0; i < length; firstInstance += renderList[i].count, i++)
         {
+            var (rend, count) = renderList[i];
+            if (!rend.IsValid)
+                continue;
+
             var itemShader = rend._shader;
             var itemMesh = rend.mesh;
 
@@ -180,7 +186,6 @@ internal class Frame : IDisposable
                 _rendererBase.vk.CmdBindIndexBuffer(_commandBuffer, indices, 0, IndexType.Uint32);
             }
             _rendererBase.vk.CmdDrawIndexed(_commandBuffer, indicesCount, count, 0, 0, firstInstance);
-            firstInstance += count;
         }
 
     }

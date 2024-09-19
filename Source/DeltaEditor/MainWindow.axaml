@@ -60,30 +60,24 @@
         <StackPanel Orientation="Vertical"
                   Spacing="25">
 
-          <Button x:Name="CreateSceneButton"
+          <Button Click="CreateTestScene"
                   Content="Create new scene"/>
 
-          <Button x:Name="SaveSceneButton"
+          <Button 
                   Content="Save scene"/>
 
-          <Button x:Name="CompileButton"
+          <Button 
                   Content="Try compile project"/>
 
-          <Button x:Name="UpdateHierarchyButton"
-                  Content="Update Hierarchy"/>
+          <Button Click="OpenProjectFolder"
+                  Content="Open project folder"/>
 
-          <Button x:Name="ImportFbx"
-                  Content="Import Fbx"/>
+          <Button Click="OpenTempFolder"
+                  Content="Open temp folder"/>
 
         </StackPanel>
       </ScrollViewer>
 
-      <!--
-      <ScrollViewer Grid.Row="1"
-                  x:Name="ExplorerScrollView"
-                  VerticalScrollBarVisibility="Visible">
-      </ScrollViewer>
-      -->
     </Grid>
 
   </Grid>

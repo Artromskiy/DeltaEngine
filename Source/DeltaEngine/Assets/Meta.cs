@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.Json.Serialization;
 
-namespace Delta.Files;
+namespace Delta.Assets;
 
 [method: JsonConstructor]
 internal readonly struct Meta(Guid guid, int version)

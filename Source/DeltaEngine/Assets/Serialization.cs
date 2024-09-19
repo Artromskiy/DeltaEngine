@@ -7,9 +7,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 
-namespace Delta.Files;
+namespace Delta.Assets;
 
-public static class Serialization
+internal static class Serialization
 {
     private static readonly JsonSerializerOptions _options;
     public static JsonSerializerOptions Options => _options;

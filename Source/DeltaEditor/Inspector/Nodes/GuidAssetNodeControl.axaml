@@ -31,21 +31,17 @@
            MinHeight="0"
            Height="20"
            BorderThickness="1,1,0,1"
-           BorderBrush="DarkViolet"
-           Classes="Ghost"
+           BorderBrush="{DynamicResource TextBoxBorderedDefaultBorderBrush}"
            VerticalContentAlignment="Center"
            Content="E1HKfn68Pkms5zsZsvKONw"/>
       
       <!--Change Asset-->
       <Button Grid.Column="1"
               Click="OnSelectAssetClick"
+              Classes="Iconed"
               BorderThickness="0,1,1,1"
               CornerRadius="0,0,3,0"
-              BorderBrush="DarkViolet"
-              Padding="3"
-              MinHeight="0"
-              Width="20"
-              Height="20">
+              BorderBrush="{DynamicResource TextBoxBorderedDefaultBorderBrush}">
         <Svg x:Name="CollapseIcon"
              x:FieldModifier="private"
              Path="/Assets/Icons/expanded.svg"/>

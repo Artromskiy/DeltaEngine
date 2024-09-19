@@ -1,7 +1,6 @@
-﻿using Delta.Files;
-using System;
+﻿using System;
 
-namespace Delta.Rendering;
+namespace Delta.Assets;
 
 public class ShaderData : IAsset
 {

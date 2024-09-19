@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Delta.Runtime;
 using DeltaEditor.Hierarchy;
 using DeltaEditor.Inspector;
 using DeltaEditor.Inspector.Internal;
@@ -56,14 +57,14 @@ internal partial class ComponentNodeControl : InspectorNode
         }
     }
 
-    public override bool UpdateData(ref EntityReference entity)
+    public override bool UpdateData(ref EntityReference entity, IRuntimeContext ctx)
     {
         DebugTimer.StartDebug();
 
         bool changed = false;
         if (ClipVisible && !Collapsed)
             foreach (var node in ChildrenNodes)
-                changed |= node.UpdateData(ref entity);
+                changed |= node.UpdateData(ref entity, ctx);
 
         DebugTimer.StopDebug();
         return changed;

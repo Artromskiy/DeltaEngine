@@ -1,5 +1,6 @@
 using Arch.Core;
 using Avalonia.Media;
+using Delta.Runtime;
 using DeltaEditor.Inspector.Internal;
 
 namespace DeltaEditor;
@@ -51,7 +52,7 @@ internal partial class Matrix4NodeControl : InspectorNode
 
     public override void SetLabelColor(IBrush brush) => FieldName.Foreground = brush;
 
-    public override bool UpdateData(ref EntityReference entity)
+    public override bool UpdateData(ref EntityReference entity, IRuntimeContext ctx)
     {
         if (!ClipVisible)
             return false;

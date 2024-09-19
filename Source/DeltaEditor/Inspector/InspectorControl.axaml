@@ -6,7 +6,8 @@
              mc:Ignorable="d" d:DesignWidth="455" d:DesignHeight="612"
              x:Class="DeltaEditor.InspectorControl"
              Background="Transparent"
-             Focusable="True">
+             Focusable="True"
+             KeyUp="InspectorControlKeyUp">
 
   <Grid RowDefinitions="20,*,Auto">
 
@@ -42,6 +43,7 @@
           <TextBox Grid.Column="2"
                    x:Name="EntityNameTextBox"
                    x:FieldModifier="private"
+                   KeyUp="EntityNameTextBoxKeyUp"
                    MinHeight="0"
                    Height="20"
                    FontSize="12"

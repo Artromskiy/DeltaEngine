@@ -7,7 +7,7 @@
              x:Class="DeltaEditor.HierarchyControl">
 
   <Grid RowDefinitions="20,20,*">
-    
+
     <!--Menu Name-->
     <uc:EditorPanelHeader PanelName="Hierarchy"
                           PanelIcon="/Assets/Icons/hierarchy.svg"
@@ -20,13 +20,9 @@
 
       <!--Add Entity etc-->
       <Button Grid.Column="0"
-              Width="20"
-              Height="20"
-              MinHeight="0"
-              BorderThickness="0"
+              Classes="Iconed"
               CornerRadius="3,0,0,3"
-              Click="CreateNewEntity"
-              Padding="3">
+              Click="CreateNewEntity">
         <Svg Path="/Assets/Icons/add.svg"/>
       </Button>
 
@@ -35,19 +31,14 @@
                MinHeight="0"
                VerticalAlignment="Stretch"
                CornerRadius="0"
-               BorderThickness="0"
                FontSize="12"
                VerticalContentAlignment="Center"
                Watermark="Search"/>
 
       <Button Grid.Column="2"
-              Padding="0"
-              MinHeight="0"
-              CornerRadius="0,3,3,0"
-              VerticalAlignment="Stretch">
-        
-        <Svg Path="/Assets/Icons/search.svg"
-             Margin="3"/>
+              Classes="Iconed"
+              CornerRadius="0,3,3,0">
+        <Svg Path="/Assets/Icons/search.svg"/>
       </Button>
     </Grid>
 
@@ -57,6 +48,7 @@
                     Padding="0,0,15,0">
         <StackPanel x:Name="EntityNodeStack"
                     x:FieldModifier="private">
+
           <!--TestEntity-->
 
           <!--

@@ -2,11 +2,10 @@
 using System;
 using System.Collections.Generic;
 
-namespace Delta.Files;
+namespace Delta.Assets;
 internal class MeshCollection : DefaultAssetCollection<MeshData>
 {
     private readonly Dictionary<Guid, Dictionary<VertexAttribute, WeakReference<byte[]?>>> _meshMapVariants = [];
-    private readonly Dictionary<Guid, WeakReference<MeshData?>> _meshDataMap = [];
 
     public unsafe byte[] GetMeshVariant(VertexAttribute vertexMask, Guid guid)
     {
@@ -32,7 +31,7 @@ internal class MeshCollection : DefaultAssetCollection<MeshData>
             for (int i = 0; i < meshData.vertexCount; i++)
             {
                 var source = attribArray.Slice(attribSize * i, attribSize);
-                var destination = new Span<byte>(result, (i * vertexSize) + offset, attribSize);
+                var destination = new Span<byte>(result, i * vertexSize + offset, attribSize);
                 source.CopyTo(destination);
             }
             offset += attribSize;

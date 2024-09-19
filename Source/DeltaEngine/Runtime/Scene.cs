@@ -1,15 +1,13 @@
 ﻿using Arch.Core;
-using Arch.Core.Extensions;
+using Delta.Assets;
 using Delta.ECS;
 using Delta.ECS.Components;
-using Delta.Files;
-using Delta.Runtime;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text.Json.Serialization;
 
-namespace Delta.Scenes;
+namespace Delta.Runtime;
 
 public sealed class Scene : IDisposable, IAsset
 {
@@ -57,7 +55,11 @@ public sealed class Scene : IDisposable, IAsset
     [Imp(Sync)]
     public void RemoveSystem(ISystem job) => _jobs.Remove(job);
     [Imp(Sync)]
-    public void RemoveEntity(EntityReference entityRef) => entityRef.Entity.AddOrGet<DestroyFlag>();
+    public void RemoveEntity(EntityReference entityRef)
+    {
+        Debug.Assert(IRuntimeContext.Current.SceneManager.CurrentScene != null);
+        IRuntimeContext.Current.SceneManager.CurrentScene._world.AddOrGet<DestroyFlag>(entityRef);
+    }
 
     [Imp(Sync)]
     public EntityReference AddEntity()

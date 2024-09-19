@@ -1,6 +1,7 @@
 using Arch.Core;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Delta.Assets;
 using Delta.Runtime;
 using DeltaEditor.Inspector.Internal;
 using System;
@@ -15,20 +16,20 @@ internal partial class GuidAssetNodeControl : InspectorNode
 
     private Guid? _guidToSet;
 
+    private readonly IGuidAssetProxy _guidProxy;
+
     public GuidAssetNodeControl() => InitializeComponent();
     public GuidAssetNodeControl(NodeData nodeData) : this()
     {
         _nodeData = nodeData;
         _guidData = _nodeData.ChildData(_nodeData.FieldNames[0]);
         _assetType = _nodeData.FieldType.GenericTypeArguments[0];
+        _guidProxy = (IGuidAssetProxy)Activator.CreateInstance(typeof(GuidAssetProxy<>).MakeGenericType(_assetType))!;
     }
 
-    public override void SetLabelColor(IBrush brush)
-    {
-        //throw new NotImplementedException();
-    }
+    public override void SetLabelColor(IBrush brush) { }
 
-    public override bool UpdateData(ref EntityReference entity)
+    public override bool UpdateData(ref EntityReference entity, IRuntimeContext ctx)
     {
         if (!ClipVisible)
             return false;
@@ -38,21 +39,16 @@ internal partial class GuidAssetNodeControl : InspectorNode
             _guidData.SetData(ref entity, _guidToSet!.Value);
             _guidToSet = null;
         }
-        var currentGuid = _guidData.GetData<Guid>(ref entity);
-        GuidLabel.Content = GuidToShortString(currentGuid);
+        GuidLabel.Content = _guidProxy.GetName(_nodeData, ref entity, ctx);
         NameLabel.Content = _nodeData.FieldName;
         return changed;
     }
 
-    private string GuidToShortString(Guid guid)
-    {
-        Span<byte> guidBytes = stackalloc byte[16];
-        guid.TryWriteBytes(guidBytes);
-        return Convert.ToBase64String(guidBytes);
-    }
 
     private void OnSelectAssetClick(object? sender, RoutedEventArgs e)
     {
+        if (Program.RuntimeLoader == null)
+            return;
         Program.RuntimeLoader.OnUIThread += OpenAssetSearch;
         void OpenAssetSearch(IRuntimeContext ctx)
         {
@@ -63,5 +59,16 @@ internal partial class GuidAssetNodeControl : InspectorNode
                 Focus();
             });
         }
+    }
+
+
+    private readonly struct GuidAssetProxy<T> : IGuidAssetProxy where T: class, IAsset
+    {
+        public string GetName(NodeData nodeData, ref EntityReference entityRef, IRuntimeContext ctx)=> nodeData.GetData<GuidAsset<T>>(ref entityRef).ToString();
+    }
+
+    private interface IGuidAssetProxy
+    {
+        public string GetName(NodeData nodeData, ref EntityReference entityRef, IRuntimeContext ctx);
     }
 }

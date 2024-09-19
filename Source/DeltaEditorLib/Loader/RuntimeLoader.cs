@@ -1,9 +1,10 @@
-﻿using Delta.Runtime;
+﻿using Delta.Assets;
+using Delta.Assets.Defaults;
+using Delta.Runtime;
 using DeltaEditorLib.Compile;
 using DeltaEditorLib.Scripting;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 
 namespace DeltaEditorLib.Loader;
@@ -49,6 +50,8 @@ public class RuntimeLoader
         _compilerModule.Recompile();
         _runtime = new Runtime(_projectPath);
         _executionModule = new RuntimeScheduler(_runtime, _uiThreadGetter);
+        VCShader.Init();
+        DefaultsImporter<MeshData>.Import(_runtime.Context, Path.Combine(Directory.GetCurrentDirectory(), "Import", "Models"));
     }
 
     public void ReloadRuntime()
@@ -60,15 +63,5 @@ public class RuntimeLoader
 
         _runtime = new Runtime(_projectPath);
         _executionModule = new RuntimeScheduler(_runtime, _uiThreadGetter);
-    }
-
-    public void OpenProjectFolder()
-    {
-        try
-        {
-            if (Directory.Exists(_projectPath.RootDirectory))
-                Process.Start("explorer.exe", _projectPath.RootDirectory);
-        }
-        catch { }
     }
 }

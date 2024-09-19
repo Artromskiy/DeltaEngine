@@ -1,5 +1,4 @@
 ﻿using Arch.Core;
-using Arch.Core.Extensions;
 using Collections.Pooled;
 using Delta.ECS;
 using Delta.ECS.Components;
@@ -16,7 +15,7 @@ using System.Threading;
 namespace Delta.Rendering;
 internal class SceneBatcher : IRenderBatcher
 {
-    private readonly Queue<uint> _free;
+    private readonly Stack<uint> _free;
 
     public GpuArray<GpuCameraData> Camera { get; private set; }
     public GpuArray<Matrix4x4> Transforms { get; private set; }
@@ -63,9 +62,10 @@ internal class SceneBatcher : IRenderBatcher
 
         _transferIndicesSet = [];
         _forceTrsWrite = [];
-        _free = new Queue<uint>((int)Transforms.Length);
-        for (uint i = 0; i < Transforms.Length; i++)
-            _free.Enqueue(i);
+        _free = new Stack<uint>((int)Transforms.Length);
+        for (uint i = Transforms.Length - 1; i > 0; i--)
+            _free.Push(i);
+        _free.Push(0);
 
         _removeEntity = new RemoveEntity(_free, _rendGroupData);
         _removeRender = new RemoveRender(_free, _rendGroupData);
@@ -112,7 +112,7 @@ internal class SceneBatcher : IRenderBatcher
         _sortWriteRender.Execute();
         _writeTrs.Execute();
         _writeCamera.Execute();
-    }
+        }
 
     public ReadOnlySpan<(Render rend, uint count)> RendGroups
     {
@@ -143,12 +143,13 @@ internal class SceneBatcher : IRenderBatcher
             Transforms.Resize(newLength);
             TransformIds.Resize(newLength);
             _free.EnsureCapacity((int)newLength);
-            for (uint i = length; i < newLength; i++)
-                _free.Enqueue(i);
+            for (uint i = newLength - 1; i > length; i--)
+                _free.Push(i);
+            _free.Push(length);
         }
     }
 
-    private readonly struct RemoveEntity(Queue<uint> freeIds, RenderGroupData rendGroupData) : ISystem
+    private readonly struct RemoveEntity(Stack<uint> freeIds, RenderGroupData rendGroupData) : ISystem
     {
         [Imp(Inl)]
         public readonly void Execute()
@@ -162,19 +163,19 @@ internal class SceneBatcher : IRenderBatcher
             world.Remove<RendId, RenderGroup, Render>(_removeEntityDescription);
         }
 
-        private readonly struct InlineRemover(Queue<uint> free, RenderGroupData rendGroupData)
+        private readonly struct InlineRemover(Stack<uint> free, RenderGroupData rendGroupData)
             : IForEach<RendId, RenderGroup>
         {
             [Imp(Inl)]
             public readonly void Update(ref RendId id, ref RenderGroup group)
             {
                 rendGroupData.Remove(group);
-                free.Enqueue(id.trsId);
+                free.Push(id.trsId);
             }
         }
     }
 
-    private readonly struct RemoveRender(Queue<uint> freeIds, RenderGroupData rendGroupData) : ISystem
+    private readonly struct RemoveRender(Stack<uint> freeIds, RenderGroupData rendGroupData) : ISystem
     {
         [Imp(Inl)]
         public readonly void Execute()
@@ -188,19 +189,19 @@ internal class SceneBatcher : IRenderBatcher
             world.Remove<RendId, RenderGroup>(_removeRenderDescription);
         }
 
-        private readonly struct InlineRemover(Queue<uint> free, RenderGroupData rendGroupData)
+        private readonly struct InlineRemover(Stack<uint> free, RenderGroupData rendGroupData)
             : IForEach<RendId, RenderGroup>
         {
             [Imp(Inl)]
             public readonly void Update(ref RendId id, ref RenderGroup group)
             {
                 rendGroupData.Remove(group);
-                free.Enqueue(id.trsId);
+                free.Push(id.trsId);
             }
         }
     }
 
-    private readonly struct AddRender(Queue<uint> free,
+    private readonly struct AddRender(Stack<uint> free,
         RenderGroupData rendGroupData,
         PooledSet<uint> forceUpdate) : ISystem
     {
@@ -224,7 +225,7 @@ internal class SceneBatcher : IRenderBatcher
         }
 
         private struct InlineAdder(
-            Queue<uint> free,
+            Stack<uint> free,
             RenderGroupData rendGroupData,
             PooledSet<uint> forceUpdate)
             : IForEach<Render, RendId, RenderGroup>
@@ -232,7 +233,9 @@ internal class SceneBatcher : IRenderBatcher
             [Imp(Inl)]
             public readonly void Update(ref Render render, ref RendId id, ref RenderGroup group)
             {
-                uint index = free.Dequeue();
+                render._shader = render.material.Null ? new() : render.material.GetAsset().shader;
+
+                uint index = free.Pop();
                 group = rendGroupData.Add(ref render);
                 id = new RendId(index);
                 forceUpdate.Add(index);
@@ -259,6 +262,8 @@ internal class SceneBatcher : IRenderBatcher
             [Imp(Inl)]
             public readonly void Update(ref Render render, ref RenderGroup group)
             {
+                render._shader = render.material.Null ? new() : render.material.GetAsset().shader;
+
                 rendGroupData.Remove(group);
                 group = rendGroupData.Add(ref render);
             }
@@ -275,7 +280,7 @@ internal class SceneBatcher : IRenderBatcher
             Debug.Assert(IRuntimeContext.Current.SceneManager.CurrentScene != null);
             var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
             var offsetsCount = rendGroupData.rendToGroup.Count;
-            Debug.Assert(offsetsCount != 0);
+            //Debug.Assert(offsetsCount != 0);
             var offsets = ArrayPool<uint>.Shared.Rent(offsetsCount);
             foreach (var item in rendGroupData.groupToCount)
                 offsets[item.Key.id] = item.Value;
@@ -412,6 +417,7 @@ internal class SceneBatcher : IRenderBatcher
     /// Specifies unique id of <see cref="Render"/>.
     /// </summary>
     /// <param name="trsId">index of Transform in TRS buffer</param>
+    [DebuggerDisplay("trsId = {trsId}")]
     private readonly struct RendId(uint trsId)
     {
         public readonly uint trsId = trsId;
@@ -422,6 +428,7 @@ internal class SceneBatcher : IRenderBatcher
     /// Used to improve performance when sorting <see cref="Render"/>s
     /// </summary>
     /// <param name="id"></param>
+    [DebuggerDisplay("id = {id}")]
     internal readonly struct RenderGroup(uint id) : IEquatable<RenderGroup>
     {
         public readonly uint id = id;

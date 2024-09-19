@@ -5,6 +5,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.VisualTree;
 using DeltaEditor.Inspector.Internal;
+using System;
 
 namespace DeltaEditor;
 
@@ -20,7 +21,10 @@ public partial class NamedTextField : UserControl
         AvaloniaProperty.Register<ComponentNodeControl, Cursor?>(nameof(FieldCursor));
 
     public static readonly StyledProperty<HorizontalAlignment> FieldNameAlignmentProperty =
-        AvaloniaProperty.Register<ComponentNodeControl, HorizontalAlignment>(nameof(FieldCursor));
+        AvaloniaProperty.Register<ComponentNodeControl, HorizontalAlignment>(nameof(FieldNameAlignment));
+
+    private bool _dragging = false;
+    private Point _prevPosition;
 
     public Cursor? FieldCursor
     {
@@ -65,7 +69,8 @@ public partial class NamedTextField : UserControl
         }
     }
 
-    public void SetFieldColor(IBrush brush) => NameLabel.Foreground = brush;
+    private void SetFieldColor(IBrush brush) => NameLabel.Foreground = brush;
+    public event Action<float>? OnDrag;
 
     public TextBox FieldData => DataTextBox;
 
@@ -76,15 +81,41 @@ public partial class NamedTextField : UserControl
 
     private void DataTextBox_GotFocus(object? sender, GotFocusEventArgs e)
     {
+        var brush = Tools.Colors.FocusedBrush;
+        SetFieldColor(brush);
         foreach (var item in this.GetVisualAncestors())
             if (item is InspectorNode node)
-                node.SetLabelColor(Tools.Colors.FocusedLabelBrush);
+                node.SetLabelColor(brush);
     }
 
     private void DataTextBox_LostFocus(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
+        var brush = Tools.Colors.UnfocusedLabelBrush;
+        SetFieldColor(brush);
         foreach (var item in this.GetVisualAncestors())
             if (item is InspectorNode node)
-                node.SetLabelColor(Tools.Colors.UnfocusedLabelBrush);
+                node.SetLabelColor(brush);
+    }
+
+    private void BeginDrag(object? sender, PointerPressedEventArgs e)
+    {
+        _dragging = true;
+        _prevPosition = e.GetPosition(this);
+        OnDrag?.Invoke(0);
+    }
+
+    private void EndDrag(object? sender, PointerReleasedEventArgs e) => _dragging = false;
+
+    private void Drag(object? sender, PointerEventArgs e)
+    {
+        if (!_dragging)
+            return;
+
+        var pos = e.GetPosition(this);
+        var deltaPos = pos - _prevPosition;
+
+        _prevPosition = pos;
+
+        OnDrag?.Invoke((float)(deltaPos.X));
     }
 }

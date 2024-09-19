@@ -1,6 +1,7 @@
 using Arch.Core;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Delta.Runtime;
 using DeltaEditor.Hierarchy;
 using DeltaEditor.Inspector;
 using DeltaEditor.Inspector.Internal;
@@ -23,14 +24,14 @@ internal partial class CompositeNodeControl : InspectorNode
         }
     }
 
-    public override bool UpdateData(ref EntityReference entity)
+    public override bool UpdateData(ref EntityReference entity, IRuntimeContext ctx)
     {
         if (!ClipVisible)
             return false;
 
         bool changed = false;
         for (int i = 0; i < ChildrenNodes.Count; i++)
-            changed |= ChildrenNodes[i].UpdateData(ref entity);
+            changed |= ChildrenNodes[i].UpdateData(ref entity, ctx);
 
 
         return changed;

@@ -60,14 +60,15 @@ public sealed class Runtime : IRuntime, IDisposable
                 if (IRuntimeContext.Current.SceneManager.CurrentScene != null)
                     IRuntimeContext.Current.GraphicsModule.Execute();
                 DestroySystem.Execute();
+                DirtyFlagClearSystem.Execute();
             }
             catch (Exception e)
             {
                 Debug.Assert(false, e.Message);
             }
             sw.Stop();
-            Debug.WriteLine($"{(int)sw.Elapsed.TotalMicroseconds} us");
-            Debug.WriteLine($"{1.0 / sw.Elapsed.TotalSeconds:0.00} fps");
+            //Debug.WriteLine($"{(int)sw.Elapsed.TotalMicroseconds} us");
+            //Debug.WriteLine($"{1.0 / sw.Elapsed.TotalSeconds:0.00} fps");
         }
 
         World.SharedJobScheduler?.Dispose();

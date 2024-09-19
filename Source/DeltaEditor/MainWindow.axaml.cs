@@ -1,5 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using System.Diagnostics;
+using System.IO;
 
 namespace DeltaEditor;
 
@@ -20,11 +22,30 @@ public partial class MainWindow : Window
         //Program.RuntimeLoader.OnUIThreadLoop += _explorer.UpdateExplorer;
 
         Hierarchy.OnEntitySelected += Inspector.SetSelectedEntity;
-        CreateSceneButton.Click += Button_Click;
     }
 
-    public void Button_Click(object? sender, RoutedEventArgs e)
+    private void CreateTestScene(object? sender, RoutedEventArgs e)
     {
         Program.RuntimeLoader.OnRuntimeThread += ctx => ctx.SceneManager.CreateTestScene();
+    }
+
+    private void OpenProjectFolder(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (Directory.Exists(Program.ProjectPath.RootDirectory))
+                Process.Start("explorer.exe", Program.ProjectPath.RootDirectory);
+        }
+        catch { }
+    }
+
+    private void OpenTempFolder(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (Directory.Exists(Program.ProjectPath.TempDirectory))
+                Process.Start("explorer.exe", Program.ProjectPath.TempDirectory);
+        }
+        catch { }
     }
 }
