@@ -47,8 +47,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Arch" Version="1.2.8" />
-    <PackageReference Include="Arch.Persistence" Version="1.0.4" />
     <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.2.2" />
     <PackageReference Include="Silk.NET.Assimp" Version="2.20.0" />
     <PackageReference Include="Silk.NET.SDL" Version="2.20.0" />
@@ -64,6 +62,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Depend\Arch\src\Arch\Arch.csproj" />
     <ProjectReference Include="..\DeltaGen\DeltaGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
   

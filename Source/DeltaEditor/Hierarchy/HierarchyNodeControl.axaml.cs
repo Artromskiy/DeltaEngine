@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Delta.ECS;
 using Delta.ECS.Components;
 using Delta.Runtime;
 using DeltaEditor.Hierarchy;

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.Json.Serialization;
 
 namespace Delta.Assets;
 
@@ -10,6 +11,7 @@ public class ShaderData : IAsset
     public ReadOnlySpan<byte> GetVertBytes() => vert;
     public ReadOnlySpan<byte> GetFragBytes() => frag;
 
+    [JsonConstructor]
     public ShaderData(byte[] vert, byte[] frag)
     {
         this.vert = (byte[])vert.Clone();

@@ -1,7 +1,7 @@
 ﻿using Arch.Core;
-using Arch.Core.Extensions;
 using Arch.Core.Extensions.Dangerous;
 using Arch.Core.Utils;
+using Delta.ECS;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -17,22 +17,16 @@ public static class AccessorContainerExtensions
         return type;
     }
 
-    public static unsafe K GetComponentFieldValue<K>(this IAccessorsContainer container, EntityReference entityReference, ComponentType componentType, ReadOnlySpan<string> path)
+    public static unsafe K GetComponentFieldValue<K>(this IAccessorsContainer container, EntityReference entityReference, Type componentType, ReadOnlySpan<string> path)
     {
-        ref readonly var chunk = ref entityReference.Entity.GetChunk();
-        (var componentIndex, var _) = World.Worlds[entityReference.Entity.WorldId].GetSlot(entityReference.Entity);
-        ref byte startRef = ref MemoryMarshal.GetArrayDataReference(chunk.GetArray(componentType));
-        ref byte cmpRef = ref Unsafe.AddByteOffset(ref startRef, componentType.ByteSize * componentIndex);
-        return container.GetFieldValue<K>(componentType.Type, new(Unsafe.AsPointer(ref cmpRef)), path);
+        ref byte cmpRef = ref entityReference.GetComponentByteRef(componentType);
+        return container.GetFieldValue<K>(componentType, new(Unsafe.AsPointer(ref cmpRef)), path);
     }
 
-    public static unsafe void SetComponentFieldValue<K>(this IAccessorsContainer container, EntityReference entityReference, ComponentType componentType, ReadOnlySpan<string> path, K value)
+    public static unsafe void SetComponentFieldValue<K>(this IAccessorsContainer container, EntityReference entityReference, Type componentType, ReadOnlySpan<string> path, K value)
     {
-        ref readonly var chunk = ref entityReference.Entity.GetChunk();
-        (var componentIndex, var _) = World.Worlds[entityReference.Entity.WorldId].GetSlot(entityReference.Entity);
-        ref byte startRef = ref MemoryMarshal.GetArrayDataReference(chunk.GetArray(componentType));
-        ref byte cmpRef = ref Unsafe.AddByteOffset(ref startRef, componentType.ByteSize * componentIndex);
-        container.SetFieldValue(componentType.Type, new(Unsafe.AsPointer(ref cmpRef)), path, value);
+        ref byte cmpRef = ref entityReference.GetComponentByteRef(componentType);
+        container.SetFieldValue(componentType, new(Unsafe.AsPointer(ref cmpRef)), path, value);
     }
 
     public static unsafe K GetFieldValue<K>(this IAccessorsContainer container, Type type, nint ptr, ReadOnlySpan<string> path)

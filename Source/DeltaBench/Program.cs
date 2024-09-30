@@ -11,7 +11,7 @@ internal class Program
 #if DEBUG
         config = new DebugInProcessConfig();
 #endif
-        var summary = BenchmarkRunner.Run<ByteArrayCopyBench>(config);
+        //var summary = BenchmarkRunner.Run<ByteArrayCopyBench>(config);
         Console.ReadKey();
     }
 }

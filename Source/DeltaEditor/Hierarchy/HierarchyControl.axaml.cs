@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.Core.Extensions;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Delta.ECS;
 using Delta.ECS.Components;
 using Delta.Runtime;
 using DeltaEditor.Hierarchy;

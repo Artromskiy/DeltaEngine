@@ -1,5 +1,4 @@
 ﻿using Arch.Core;
-using Arch.Persistence;
 using System;
 using System.IO;
 using System.Reflection;
@@ -29,7 +28,7 @@ internal static class Serialization
                 Modifiers = { AddPrivateFieldsModifier }
             },
         };
-        _options.Converters.Add(new WorldConverter());
+        //_options.Converters.Add(new WorldConverter());
     }
 
     public static void Serialize<T>(Stream stream, T value)
@@ -64,7 +63,7 @@ internal static class Serialization
             jsonTypeInfo.Properties.Add(jsonPropertyInfo);
         }
     }
-
+    /*
     private class WorldConverter : JsonConverter<World>
     {
         private readonly ArchJsonSerializer _serializer = new();
@@ -77,4 +76,5 @@ internal static class Serialization
             writer.WriteBase64StringValue(_serializer.Serialize(value));
         }
     }
+    */
 }

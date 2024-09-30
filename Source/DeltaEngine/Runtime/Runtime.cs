@@ -1,7 +1,5 @@
-﻿using Arch.Core;
-using Delta.ECS;
+﻿using Delta.ECS;
 using Delta.Rendering;
-using Schedulers;
 using System;
 using System.Diagnostics;
 
@@ -12,14 +10,6 @@ public sealed class Runtime : IRuntime, IDisposable
     public IRuntimeContext Context { get; }
 
     private bool _disposed = false;
-
-    private JobScheduler.Config _jobConfig = new()
-    {
-        ThreadPrefixName = "Arch.Multithreading",
-        ThreadCount = 0,
-        MaxExpectedConcurrentJobs = 64,
-        StrictAllocationMode = false,
-    };
 
     public Runtime(IProjectPath projectPath)
     {
@@ -37,7 +27,7 @@ public sealed class Runtime : IRuntime, IDisposable
     public void Run()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        World.SharedJobScheduler ??= new JobScheduler(_jobConfig);
+        JobScheduler.JobScheduler.Instance ??= new JobScheduler.JobScheduler("Arch.Multithreading");
         try
         {
             IRuntimeContext.Current.SceneManager.CurrentScene.Run();
@@ -53,8 +43,8 @@ public sealed class Runtime : IRuntime, IDisposable
 
     public void Dispose()
     {
-        World.SharedJobScheduler?.Dispose();
-        World.SharedJobScheduler = null;
+        JobScheduler.JobScheduler.Instance.Dispose();
+        JobScheduler.JobScheduler.Instance = null!;
         _disposed = true;
     }
 }

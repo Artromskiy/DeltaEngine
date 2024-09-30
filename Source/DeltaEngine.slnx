@@ -4,6 +4,10 @@
     <BuildType Name="DebugPerf" />
     <BuildType Name="Perf" />
     <BuildType Name="Release" />
+    <BuildType Name="Debug-Events" />
+    <BuildType Name="Debug-PureECS" />
+    <BuildType Name="Release-Events" />
+    <BuildType Name="Release-PureECS" />
   </Configurations>
   <Folder Name="/Solution Items/">
     <File Path="DeltaEngine\.editorconfig" />
@@ -11,35 +15,152 @@
   <Project Path="ConsoleModelImporter\ConsoleModelImporter.csproj">
     <BuildType Solution="DebugPerf|*" Project="Debug" />
     <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Debug-Events|*" Project="Debug" />
+    <BuildType Solution="Debug-PureECS|*" Project="Debug" />
+    <BuildType Solution="Release-Events|*" Project="Release" />
+    <BuildType Solution="Release-PureECS|*" Project="Release" />
   </Project>
   <Project Path="DeltaBench\DeltaBench.csproj">
     <BuildType Solution="DebugPerf|*" Project="Debug" />
     <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Debug-Events|*" Project="Debug" />
+    <BuildType Solution="Debug-PureECS|*" Project="Debug" />
+    <BuildType Solution="Release-Events|*" Project="Release" />
+    <BuildType Solution="Release-PureECS|*" Project="Release" />
   </Project>
   <Project Path="DeltaEditorLib\DeltaEditorLib.csproj">
     <BuildType Solution="DebugPerf|*" Project="Debug" />
     <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Debug-Events|*" Project="Debug" />
+    <BuildType Solution="Debug-PureECS|*" Project="Debug" />
+    <BuildType Solution="Release-Events|*" Project="Release" />
+    <BuildType Solution="Release-PureECS|*" Project="Release" />
   </Project>
   <Project Path="DeltaEditor\DeltaEditor.csproj">
     <BuildType Solution="DebugPerf|*" Project="Debug" />
     <BuildType Solution="Perf|*" Project="Debug" />
+    <BuildType Solution="Debug-Events|*" Project="Debug" />
+    <BuildType Solution="Debug-PureECS|*" Project="Debug" />
+    <BuildType Solution="Release-Events|*" Project="Release" />
+    <BuildType Solution="Release-PureECS|*" Project="Release" />
   </Project>
-  <Project Path="DeltaEngine\DeltaEngine.csproj" />
+  <Project Path="DeltaEngine\DeltaEngine.csproj">
+    <BuildType Solution="Debug-Events|*" Project="DebugPerf" />
+    <BuildType Solution="Debug-PureECS|*" Project="DebugPerf" />
+    <BuildType Solution="Release-Events|*" Project="Release" />
+    <BuildType Solution="Release-PureECS|*" Project="Release" />
+  </Project>
   <Project Path="DeltaGenTest\DeltaGenTest.csproj">
     <BuildType Solution="DebugPerf|*" Project="Debug" />
     <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Debug-Events|*" Project="Debug" />
+    <BuildType Solution="Debug-PureECS|*" Project="Debug" />
+    <BuildType Solution="Release-Events|*" Project="Release" />
+    <BuildType Solution="Release-PureECS|*" Project="Release" />
   </Project>
   <Project Path="DeltaGen\DeltaGen.csproj">
     <BuildType Solution="DebugPerf|*" Project="Debug" />
     <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Debug-Events|*" Project="Debug" />
+    <BuildType Solution="Debug-PureECS|*" Project="Debug" />
+    <BuildType Solution="Release-Events|*" Project="Release" />
+    <BuildType Solution="Release-PureECS|*" Project="Release" />
   </Project>
   <Project Path="DeltaHub\DeltaHub.csproj">
     <BuildType Solution="DebugPerf|*" Project="Debug" />
     <BuildType Solution="Perf|*" Project="Release" />
     <Deploy />
+    <BuildType Solution="Debug-Events|*" Project="Debug" />
+    <BuildType Solution="Debug-PureECS|*" Project="Debug" />
+    <BuildType Solution="Release-Events|*" Project="Release" />
+    <BuildType Solution="Release-PureECS|*" Project="Release" />
   </Project>
-  <Project Path="EngineRunner\EngineRunner.csproj" />
+  <Project Path="EngineRunner\EngineRunner.csproj">
+    <BuildType Solution="Debug-Events|*" Project="DebugPerf" />
+    <BuildType Solution="Debug-PureECS|*" Project="DebugPerf" />
+    <BuildType Solution="Release-Events|*" Project="Release" />
+    <BuildType Solution="Release-PureECS|*" Project="Release" />
+  </Project>
   <Properties Name="Visual Studio">
     <Property Name="OpenWith" Value="17" />
   </Properties>
+  <Project Path="..\..\..\..\..\..\Documents\GitHub\DeltaEngine\Depend\Arch\src\Arch\Arch.csproj">
+    <BuildType Solution="DebugPerf|*" Project="Debug-PureECS" />
+    <BuildType Solution="Debug|*" Project="Release-PureECS" />
+    <BuildType Solution="Perf|*" Project="Debug" />
+  </Project>
+  <Project Path="..\..\..\..\..\..\Documents\GitHub\DeltaEngine\Source\ConsoleModelImporter\ConsoleModelImporter.csproj">
+    <BuildType Solution="Debug-Events|*" Project="Debug" />
+    <BuildType Solution="Debug-PureECS|*" Project="Debug" />
+    <BuildType Solution="DebugPerf|*" Project="Debug" />
+    <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Release-Events|*" Project="Release" />
+    <BuildType Solution="Release-PureECS|*" Project="Release" />
+  </Project>
+  <Project Path="..\..\..\..\..\..\Documents\GitHub\DeltaEngine\Source\DeltaBench\DeltaBench.csproj">
+    <BuildType Solution="Debug-Events|*" Project="Debug" />
+    <BuildType Solution="Debug-PureECS|*" Project="Debug" />
+    <BuildType Solution="DebugPerf|*" Project="Debug" />
+    <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Release-Events|*" Project="Release" />
+    <BuildType Solution="Release-PureECS|*" Project="Release" />
+  </Project>
+  <Project Path="..\..\..\..\..\..\Documents\GitHub\DeltaEngine\Source\DeltaEditorLib\DeltaEditorLib.csproj">
+    <BuildType Solution="Debug-Events|*" Project="Debug" />
+    <BuildType Solution="Debug-PureECS|*" Project="Debug" />
+    <BuildType Solution="DebugPerf|*" Project="Debug" />
+    <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Release-Events|*" Project="Release" />
+    <BuildType Solution="Release-PureECS|*" Project="Release" />
+  </Project>
+  <Project Path="..\..\..\..\..\..\Documents\GitHub\DeltaEngine\Source\DeltaEditor\DeltaEditor.csproj">
+    <BuildType Solution="Debug-Events|*" Project="Debug" />
+    <BuildType Solution="Debug-PureECS|*" Project="Debug" />
+    <BuildType Solution="DebugPerf|*" Project="Debug" />
+    <BuildType Solution="Perf|*" Project="Debug" />
+    <BuildType Solution="Release-Events|*" Project="Release" />
+    <BuildType Solution="Release-PureECS|*" Project="Release" />
+  </Project>
+  <Project Path="..\..\..\..\..\..\Documents\GitHub\DeltaEngine\Source\DeltaEngine\DeltaEngine.csproj">
+    <BuildType Solution="Debug-Events|*" Project="DebugPerf" />
+    <BuildType Solution="Debug-PureECS|*" Project="DebugPerf" />
+    <BuildType Solution="Release-Events|*" Project="Release" />
+    <BuildType Solution="Release-PureECS|*" Project="Release" />
+  </Project>
+  <Project Path="..\..\..\..\..\..\Documents\GitHub\DeltaEngine\Source\DeltaGenTest\DeltaGenTest.csproj">
+    <BuildType Solution="Debug-Events|*" Project="Debug" />
+    <BuildType Solution="Debug-PureECS|*" Project="Debug" />
+    <BuildType Solution="DebugPerf|*" Project="Debug" />
+    <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Release-Events|*" Project="Release" />
+    <BuildType Solution="Release-PureECS|*" Project="Release" />
+  </Project>
+  <Project Path="..\..\..\..\..\..\Documents\GitHub\DeltaEngine\Source\DeltaGen\DeltaGen.csproj">
+    <BuildType Solution="Debug-Events|*" Project="Debug" />
+    <BuildType Solution="Debug-PureECS|*" Project="Debug" />
+    <BuildType Solution="DebugPerf|*" Project="Debug" />
+    <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Release-Events|*" Project="Release" />
+    <BuildType Solution="Release-PureECS|*" Project="Release" />
+  </Project>
+  <Project Path="..\..\..\..\..\..\Documents\GitHub\DeltaEngine\Source\DeltaHub\DeltaHub.csproj">
+    <BuildType Solution="Debug-Events|*" Project="Debug" />
+    <BuildType Solution="Debug-PureECS|*" Project="Debug" />
+    <BuildType Solution="DebugPerf|*" Project="Debug" />
+    <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Release-Events|*" Project="Release" />
+    <BuildType Solution="Release-PureECS|*" Project="Release" />
+    <Deploy />
+  </Project>
+  <Project Path="..\..\..\..\..\..\Documents\GitHub\DeltaEngine\Source\EngineRunner\EngineRunner.csproj">
+    <BuildType Solution="Debug-Events|*" Project="DebugPerf" />
+    <BuildType Solution="Debug-PureECS|*" Project="DebugPerf" />
+    <BuildType Solution="Release-Events|*" Project="Release" />
+    <BuildType Solution="Release-PureECS|*" Project="Release" />
+  </Project>
+  <Project Path="..\Depend\Arch\src\Arch\Arch.csproj">
+    <BuildType Solution="DebugPerf|*" Project="Debug-PureECS" />
+    <BuildType Solution="Debug|*" Project="Release-PureECS" />
+    <BuildType Solution="Perf|*" Project="Debug" />
+  </Project>
 </Solution>

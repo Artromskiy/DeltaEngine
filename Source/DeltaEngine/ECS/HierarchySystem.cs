@@ -38,7 +38,7 @@ internal class HierarchySystem
     public int RootEntitiesCount => Root.children.Count;
     public int EntitiesCount => _entityToNode.Count;
 
-    public void UpdateOrders()=> UpdateOrders(Root.children);
+    public void UpdateOrders() => UpdateOrders(Root.children);
 
     public EntityReference[] GetRootEntities()
     {

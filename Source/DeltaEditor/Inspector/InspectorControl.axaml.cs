@@ -1,12 +1,10 @@
 using Arch.Core;
-using Arch.Core.Extensions;
 using Arch.Core.Utils;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Delta.ECS;
 using Delta.ECS.Attributes;
 using Delta.ECS.Components;
-using Delta.Runtime;
 using Delta.Utilities;
 using DeltaEditor.Hierarchy;
 using DeltaEditor.Inspector.Internal;
@@ -25,7 +23,7 @@ public partial class InspectorControl : UserControl
     private IListWrapper<ComponentNodeControl, Control> ChildrenNodes => new(InspectorStack.Children);
 
     private EntityReference SelectedEntity = EntityReference.Null;
-    private Archetype? CurrentArch;
+    private ComponentType[] PrevComponents;
 
     private readonly IAccessorsContainer? _accessors;
     private readonly ImmutableArray<Type> _components;
@@ -61,9 +59,10 @@ public partial class InspectorControl : UserControl
             return;
         }
         AddComponentButton.IsVisible = true;
-        if (CurrentArch != SelectedEntity.Entity.GetArchetype()) // Arch changed
+        var currentComponents = SelectedEntity.Entity.GetComponentTypes();
+        if (PrevComponents == null || !MemoryExtensions.SequenceEqual(PrevComponents, currentComponents)) // Arch changed
         {
-            CurrentArch = SelectedEntity.Entity.GetArchetype();
+            PrevComponents = SelectedEntity.Entity.GetComponentTypes().ToArray();
             ChildrenNodes.Clear();
             RebuildInspectorComponents();
         }
@@ -132,12 +131,12 @@ public partial class InspectorControl : UserControl
 
     private void OnComponentRemoveRequest(Type type)
     {
-        SelectedEntity.Entity.RemoveRange(type);
+        SelectedEntity.Entity.Remove(type);
     }
     private void ClearHandledEntityData()
     {
         SelectedEntity = EntityReference.Null;
-        CurrentArch = null;
+        PrevComponents = null;
     }
     private ComponentNodeControl GetOrCreateInspector(Type type)
     {
