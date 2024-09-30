@@ -3,31 +3,29 @@ using Silk.NET.Vulkan;
 using System;
 
 namespace Delta.Rendering.Internal;
-internal class CommonDescriptorSetLayouts : IDisposable
+internal class SimpleShaderLayouts : IDisposable, IShaderLayouts
 {
+    private const ShaderStageFlags StageFlags = ShaderStageFlags.VertexBit | ShaderStageFlags.FragmentBit;
+
     private readonly Vk _vk;
     private readonly DeviceQueues _deviceQ;
-    public DescriptorSetLayout Instance { get; private set; }
-    public DescriptorSetLayout Scene { get; private set; }
-    public DescriptorSetLayout Material { get; private set; }
-
     private readonly DescriptorSetLayout[] _layouts;
-    public ReadOnlySpan<DescriptorSetLayout> Layouts => _layouts;
 
-    public unsafe CommonDescriptorSetLayouts(Vk vk, DeviceQueues deviceQ)
+    public ReadOnlySpan<DescriptorSetLayout> Layouts => _layouts;
+    public readonly PipelineLayout pipelineLayout;
+
+    public unsafe SimpleShaderLayouts(Vk vk, DeviceQueues deviceQ)
     {
         _vk = vk;
         _deviceQ = deviceQ;
 
-        Instance = CreateDescriptorSetLayout([MatricesBindings, IdsBindings]);
-        Scene = CreateDescriptorSetLayout([CameraBindings]);
-        Material = CreateDescriptorSetLayout([MaterialBindings]);
-
         _layouts = new DescriptorSetLayout[RendConst.SetsCount];
 
-        _layouts[RendConst.InsSet] = Instance;
-        _layouts[RendConst.ScnSet] = Scene;
-        _layouts[RendConst.MatSet] = Material;
+        _layouts[RendConst.InsSet] = CreateDescriptorSetLayout([MatricesBindings, IdsBindings]);
+        _layouts[RendConst.MatSet] = CreateDescriptorSetLayout([CameraBindings]);
+        _layouts[RendConst.ScnSet] = CreateDescriptorSetLayout([MaterialBindings]);
+
+        pipelineLayout = CreatePipelineLayout(_vk, _deviceQ, Layouts);
     }
 
     private unsafe DescriptorSetLayout CreateDescriptorSetLayout(ReadOnlySpan<DescriptorSetLayoutBinding> bindingsArray)
@@ -44,7 +42,22 @@ internal class CommonDescriptorSetLayouts : IDisposable
         return setLayout;
     }
 
-    private const ShaderStageFlags StageFlags = ShaderStageFlags.VertexBit | ShaderStageFlags.FragmentBit;
+    private unsafe static PipelineLayout CreatePipelineLayout(Vk vk, Device device, ReadOnlySpan<DescriptorSetLayout> layouts)
+    {
+        PipelineLayout result;
+        fixed (DescriptorSetLayout* layoutsPtr = layouts)
+        {
+            PipelineLayoutCreateInfo pipelineLayoutInfo = new()
+            {
+                SType = StructureType.PipelineLayoutCreateInfo,
+                SetLayoutCount = (uint)layouts.Length,
+                PSetLayouts = layoutsPtr,
+            };
+            _ = vk.CreatePipelineLayout(device, pipelineLayoutInfo, null, out result);
+        }
+        return result;
+    }
+
 
     private static readonly unsafe DescriptorSetLayoutBinding MatricesBindings = new(RendConst.MatricesBinding, DescriptorType.StorageBuffer, 1, StageFlags);
     private static readonly unsafe DescriptorSetLayoutBinding IdsBindings = new(RendConst.IdsBinding, DescriptorType.StorageBuffer, 1, StageFlags);
@@ -53,6 +66,7 @@ internal class CommonDescriptorSetLayouts : IDisposable
 
     public unsafe void Dispose()
     {
+        _vk.DestroyPipelineLayout(_deviceQ, pipelineLayout, null);
         foreach (var item in _layouts)
             _vk.DestroyDescriptorSetLayout(_deviceQ, item, null);
     }

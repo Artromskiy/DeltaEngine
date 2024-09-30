@@ -5,6 +5,7 @@
         <ResourceDictionary x:Key="Light">
           <SolidColorBrush x:Key="DefaultBorderBrush" Opacity="0.12" Color="White"/>
           <SolidColorBrush x:Key="DefaultBorderFocusBrush" Color="#AF32F0"/>
+          <SolidColorBrush x:Key="DefaultBorderOverBrush" Color="#C160F6"/>
           <SolidColorBrush x:Key="TextBoxFocusBorderBrush" Color="#AF32F0"/>
           <SolidColorBrush x:Key="TextBoxBorderedPointeroverBorderBrush" Color="#C160F6"/>
           
@@ -12,8 +13,8 @@
         <ResourceDictionary x:Key="Dark">
           <SolidColorBrush x:Key="DefaultBorderBrush" Opacity="0.12" Color="White"/>
           <SolidColorBrush x:Key="DefaultBorderFocusBrush" Color="#AF32F0"/>
+          <SolidColorBrush x:Key="DefaultBorderOverBrush" Color="#C160F6"/>
           <SolidColorBrush x:Key="TextBoxFocusBorderBrush" Color="#AF32F0"/>
-          
           <SolidColorBrush x:Key="TextBoxBorderedPointeroverBorderBrush" Color="#C160F6"/>
         </ResourceDictionary>
       </ResourceDictionary.ThemeDictionaries>

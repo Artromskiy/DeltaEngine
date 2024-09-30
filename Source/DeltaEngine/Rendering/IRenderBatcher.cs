@@ -13,12 +13,12 @@ internal interface IRenderBatcher : IDisposable
     /// <summary>
     /// Contains indices to elements of <see cref="Transforms"/> ordered by <see cref="Render"/>
     /// </summary>
-    public GpuArray<uint> TransformIds { get; } // send to compute to sort trs on device
+    public GpuArray<int> TransformIds { get; } // send to compute to sort trs on device
     /// <summary>
     /// Contains information about Camera
     /// </summary>
     public GpuArray<GpuCameraData> Camera { get; }
 
-    ReadOnlySpan<(Render rend, uint count)> RendGroups { get; }
+    ReadOnlySpan<(Render rend, int count)> RendGroups { get; }
     void Execute();
 }

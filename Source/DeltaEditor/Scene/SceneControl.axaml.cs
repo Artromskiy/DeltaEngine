@@ -17,7 +17,7 @@ public partial class SceneControl : UserControl
         InitializeComponent();
     }
 
-    public void UpdateScene(IRuntimeContext ctx)
+    public void UpdateScene()
     {
         PanelHeader.StartDebug();
         var bounds = RenderBorder.Bounds;
@@ -35,12 +35,12 @@ public partial class SceneControl : UserControl
         {
             _prevBitmap?.Dispose();
             _prevBitmap = null;
-            WriteBitmap(ctx, _bitmap!, _bitmapMemoryManager);
+            WriteBitmap(_bitmap!, _bitmapMemoryManager);
             Render.InvalidateVisual();
         }
         else
         {
-            ctx.GraphicsModule.Size = (w, h);
+            IRuntimeContext.Current.GraphicsModule.Size = (w, h);
         }
         PanelHeader.StopDebug();
     }
@@ -50,13 +50,13 @@ public partial class SceneControl : UserControl
         return width != 0 && height != 0 && double.IsNormal(width) && double.IsNormal(height);
     }
 
-    private static unsafe void WriteBitmap(IRuntimeContext ctx, WriteableBitmap bitmap, UnmanagedMemoryManager<byte> bitmapMemoryManager)
+    private static unsafe void WriteBitmap(WriteableBitmap bitmap, UnmanagedMemoryManager<byte> bitmapMemoryManager)
     {
         using var frameBuffer = bitmap.Lock();
-        var renderStream = ctx.GraphicsModule.RenderStream;
+        var renderStream = IRuntimeContext.Current.GraphicsModule.RenderStream;
         var size = frameBuffer.RowBytes * frameBuffer.Size.Height;
         bitmapMemoryManager.UpdateSource(frameBuffer.Address, size);
-        ctx.GraphicsModule.RenderStream.CopyToParallel(bitmapMemoryManager.Memory, 8);
+        IRuntimeContext.Current.GraphicsModule.RenderStream.CopyToParallel(bitmapMemoryManager.Memory, 8);
     }
 
 

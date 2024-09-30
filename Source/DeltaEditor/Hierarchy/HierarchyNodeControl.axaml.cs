@@ -63,24 +63,24 @@ public sealed partial class HierarchyNodeControl : UserControl, IDisposable
     private void OnCollapseClick(object? sender, RoutedEventArgs e) => Collapsed = !Collapsed;
     private void OnRemoveClick(object? sender, RoutedEventArgs e) => _creator?.CallRemove(_entity);
     private void OnSelectClick(object? sender, TappedEventArgs e) => _creator?.CallSelect(_entity);
-    public void UpdateEntity(IRuntimeContext ctx, EntityReference entityReference)
+    public void UpdateEntity(EntityReference entityReference)
     {
         _entity = entityReference;
         NodeName.Content = EntityString(_entity);
-        var count = _creator.GetChildrenCount(ctx, _entity);
+        var count = _creator.GetChildrenCount(_entity);
         Collapsed |= count == 0;
         CollapseButton.IsVisible = count != 0;
         if (!Collapsed)
-            UpdateChildren(ctx);
+            UpdateChildren();
     }
 
-    private void UpdateChildren(IRuntimeContext ctx)
+    private void UpdateChildren()
     {
-        var children = _creator.GetChildren(ctx, _entity);
+        var children = _creator.GetChildren(_entity);
         var count = children.Length;
         UpdateChildrenCount(count);
         for (int i = 0; i < count; i++)
-            ChildrenNodes[i].UpdateEntity(ctx, children[i]);
+            ChildrenNodes[i].UpdateEntity(children[i]);
     }
 
     private void UpdateChildrenCount(int neededNodesCount)

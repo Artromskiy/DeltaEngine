@@ -8,7 +8,6 @@ try
     var projectPath = new EditorPaths(directoryPath);
     ProjectCreator.CreateProject(projectPath);
     using var eng = new Runtime(projectPath);
-    eng.Context.SceneManager.CreateTestScene();
     //eng.RuntimeCall += eng.Context.SceneManager.CreateTestScene;
     eng.Context.Running = true;
 

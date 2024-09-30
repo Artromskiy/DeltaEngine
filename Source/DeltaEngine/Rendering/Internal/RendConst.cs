@@ -12,4 +12,5 @@ internal struct RendConst
     public const uint MaterialBinding = 0;
     public const uint MatricesBinding = 0;
     public const uint IdsBinding = 1;
+    public const uint BordersBinding = 2;
 }

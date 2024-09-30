@@ -17,39 +17,28 @@ public class RuntimeLoader
     private readonly ICompilerModule _compilerModule;
     private IRuntimeScheduler _executionModule;
 
-    private readonly IUIThreadGetter? _uiThreadGetter;
+    private readonly IThreadGetter? _threadGetter;
 
     public IAccessorsContainer Accessors => _compilerModule.Accessors!;
     public List<Type> Components => _compilerModule.Components;
 
-    public event Action<IRuntimeContext> OnUIThreadLoop
+    public event Action OnLoop
     {
-        add => _executionModule.OnUIThreadLoop += value;
-        remove => _executionModule.OnUIThreadLoop -= value;
+        add => _executionModule.OnLoop += value;
+        remove => _executionModule.OnLoop -= value;
     }
 
-    public event Action<IRuntimeContext> OnUIThread
-    {
-        add => _executionModule.OnUIThread += value;
-        remove => _executionModule.OnUIThread -= value;
-    }
 
-    public event Action<IRuntimeContext> OnRuntimeThread
-    {
-        add => _executionModule.OnRuntimeThread += value;
-        remove => _executionModule.OnRuntimeThread -= value;
-    }
-
-    public RuntimeLoader(IProjectPath projectPath, IUIThreadGetter? uiThreadGetter)
+    public RuntimeLoader(IProjectPath projectPath, IThreadGetter? uiThreadGetter)
     {
         _projectPath = projectPath;
-        _uiThreadGetter = uiThreadGetter;
+        _threadGetter = uiThreadGetter;
 
         _compilerModule = new CompilerModule(_projectPath);
 
         _compilerModule.Recompile();
         _runtime = new Runtime(_projectPath);
-        _executionModule = new RuntimeScheduler(_runtime, _uiThreadGetter);
+        _executionModule = new RuntimeScheduler(_runtime, _threadGetter);
         VCShader.Init();
         DefaultsImporter<MeshData>.Import(_runtime.Context, Path.Combine(Directory.GetCurrentDirectory(), "Import", "Models"));
     }
@@ -62,6 +51,8 @@ public class RuntimeLoader
         _compilerModule.Recompile();
 
         _runtime = new Runtime(_projectPath);
-        _executionModule = new RuntimeScheduler(_runtime, _uiThreadGetter);
+        _executionModule = new RuntimeScheduler(_runtime, _threadGetter);
     }
+
+    public void Init() => _executionModule.Init();
 }

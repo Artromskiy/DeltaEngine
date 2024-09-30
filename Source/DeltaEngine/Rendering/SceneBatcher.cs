@@ -15,17 +15,17 @@ using System.Threading;
 namespace Delta.Rendering;
 internal class SceneBatcher : IRenderBatcher
 {
-    private readonly Stack<uint> _free;
+    private readonly Stack<int> _free;
 
     public GpuArray<GpuCameraData> Camera { get; private set; }
     public GpuArray<Matrix4x4> Transforms { get; private set; }
-    public GpuArray<uint> TransformIds { get; private set; }
+    public GpuArray<int> TransformIds { get; private set; }
 
     // TODO
-    private readonly GpuArray<uint> TransformIdsToTransfer; // send to compute to transfer new trs from host to device
+    private readonly GpuArray<int> TransformIdsToTransfer; // send to compute to transfer new trs from host to device
 
-    private readonly PooledSet<uint> _forceTrsWrite;
-    private readonly List<uint> _transferIndicesSet;
+    private readonly PooledSet<int> _forceTrsWrite;
+    private readonly List<int> _transferIndicesSet;
 
     private static readonly QueryDescription _cameraDescription = new QueryDescription().WithAll<Camera, Transform>();
 
@@ -40,7 +40,7 @@ internal class SceneBatcher : IRenderBatcher
 
     private readonly RenderGroupData _rendGroupData = new();
 
-    private readonly List<(Render rend, uint count)> _renders = [];
+    private readonly List<(Render rend, int count)> _renders = [];
 
     private const bool ForceWrites = true;
     private readonly RemoveEntity _removeEntity;
@@ -54,18 +54,17 @@ internal class SceneBatcher : IRenderBatcher
     public SceneBatcher()
     {
         var renderBase = IRuntimeContext.Current.GraphicsModule.RenderData;
-        Camera = new GpuArray<GpuCameraData>(renderBase.vk, renderBase.deviceQ, 1);
-        TransformIds = new GpuArray<uint>(renderBase.vk, renderBase.deviceQ, 1);
-        Transforms = new GpuArray<Matrix4x4>(renderBase.vk, renderBase.deviceQ, 1);
+        Camera = new(1);
+        TransformIds = new(1);
+        Transforms = new(1);
 
-        TransformIdsToTransfer = new GpuArray<uint>(renderBase.vk, renderBase.deviceQ, 1);
+        TransformIdsToTransfer = new(1);
 
         _transferIndicesSet = [];
         _forceTrsWrite = [];
-        _free = new Stack<uint>((int)Transforms.Length);
-        for (uint i = Transforms.Length - 1; i > 0; i--)
+        _free = new Stack<int>(Transforms.Length);
+        for (int i = Transforms.Length - 1; i >= 0; i--)
             _free.Push(i);
-        _free.Push(0);
 
         _removeEntity = new RemoveEntity(_free, _rendGroupData);
         _removeRender = new RemoveRender(_free, _rendGroupData);
@@ -100,9 +99,6 @@ internal class SceneBatcher : IRenderBatcher
         _forceTrsWrite.TrimExcess(); // we assume it's better to free this, as large changes will create large internal array
         _transferIndicesSet.Clear();
 
-        if (IRuntimeContext.Current.SceneManager.CurrentScene == null)
-            return;
-
         BufferResize();
 
         _removeEntity.Execute();
@@ -112,9 +108,9 @@ internal class SceneBatcher : IRenderBatcher
         _sortWriteRender.Execute();
         _writeTrs.Execute();
         _writeCamera.Execute();
-        }
+    }
 
-    public ReadOnlySpan<(Render rend, uint count)> RendGroups
+    public ReadOnlySpan<(Render rend, int count)> RendGroups
     {
         get
         {
@@ -130,7 +126,6 @@ internal class SceneBatcher : IRenderBatcher
     /// </summary>
     private void BufferResize()
     {
-        Debug.Assert(IRuntimeContext.Current.SceneManager.CurrentScene != null);
         var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
         var countToAdd = world.CountEntities(_addDescription);
         var countToRemove = world.CountEntities(_removeRenderDescription);
@@ -139,22 +134,20 @@ internal class SceneBatcher : IRenderBatcher
         if (delta > 0)
         {
             var length = Transforms.Length;
-            var newLength = BitOperations.RoundUpToPowerOf2((uint)(length + delta));
+            var newLength = (int)BitOperations.RoundUpToPowerOf2((uint)(length + delta));
             Transforms.Resize(newLength);
             TransformIds.Resize(newLength);
-            _free.EnsureCapacity((int)newLength);
-            for (uint i = newLength - 1; i > length; i--)
+            _free.EnsureCapacity(newLength);
+            for (int i = newLength - 1; i >= length; i--)
                 _free.Push(i);
-            _free.Push(length);
         }
     }
 
-    private readonly struct RemoveEntity(Stack<uint> freeIds, RenderGroupData rendGroupData) : ISystem
+    private readonly struct RemoveEntity(Stack<int> freeIds, RenderGroupData rendGroupData) : ISystem
     {
         [Imp(Inl)]
         public readonly void Execute()
         {
-            Debug.Assert(IRuntimeContext.Current.SceneManager.CurrentScene != null);
             var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
             if (!world.Has(_removeEntityDescription))
                 return;
@@ -163,7 +156,7 @@ internal class SceneBatcher : IRenderBatcher
             world.Remove<RendId, RenderGroup, Render>(_removeEntityDescription);
         }
 
-        private readonly struct InlineRemover(Stack<uint> free, RenderGroupData rendGroupData)
+        private readonly struct InlineRemover(Stack<int> free, RenderGroupData rendGroupData)
             : IForEach<RendId, RenderGroup>
         {
             [Imp(Inl)]
@@ -175,12 +168,11 @@ internal class SceneBatcher : IRenderBatcher
         }
     }
 
-    private readonly struct RemoveRender(Stack<uint> freeIds, RenderGroupData rendGroupData) : ISystem
+    private readonly struct RemoveRender(Stack<int> freeIds, RenderGroupData rendGroupData) : ISystem
     {
         [Imp(Inl)]
         public readonly void Execute()
         {
-            Debug.Assert(IRuntimeContext.Current.SceneManager.CurrentScene != null);
             var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
             if (!world.Has(_removeRenderDescription))
                 return;
@@ -189,7 +181,7 @@ internal class SceneBatcher : IRenderBatcher
             world.Remove<RendId, RenderGroup>(_removeRenderDescription);
         }
 
-        private readonly struct InlineRemover(Stack<uint> free, RenderGroupData rendGroupData)
+        private readonly struct InlineRemover(Stack<int> free, RenderGroupData rendGroupData)
             : IForEach<RendId, RenderGroup>
         {
             [Imp(Inl)]
@@ -201,9 +193,9 @@ internal class SceneBatcher : IRenderBatcher
         }
     }
 
-    private readonly struct AddRender(Stack<uint> free,
+    private readonly struct AddRender(Stack<int> free,
         RenderGroupData rendGroupData,
-        PooledSet<uint> forceUpdate) : ISystem
+        PooledSet<int> forceUpdate) : ISystem
     {
         private static readonly QueryDescription _addTag = new QueryDescription().WithAll<AddTag>();
         private readonly struct AddTag();
@@ -211,7 +203,6 @@ internal class SceneBatcher : IRenderBatcher
         [Imp(Inl)]
         public readonly void Execute()
         {
-            Debug.Assert(IRuntimeContext.Current.SceneManager.CurrentScene != null);
             var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
             if (!world.Has(_addDescription))
                 return;
@@ -225,9 +216,9 @@ internal class SceneBatcher : IRenderBatcher
         }
 
         private struct InlineAdder(
-            Stack<uint> free,
+            Stack<int> free,
             RenderGroupData rendGroupData,
-            PooledSet<uint> forceUpdate)
+            PooledSet<int> forceUpdate)
             : IForEach<Render, RendId, RenderGroup>
         {
             [Imp(Inl)]
@@ -235,7 +226,7 @@ internal class SceneBatcher : IRenderBatcher
             {
                 render._shader = render.material.Null ? new() : render.material.GetAsset().shader;
 
-                uint index = free.Pop();
+                int index = free.Pop();
                 group = rendGroupData.Add(ref render);
                 id = new RendId(index);
                 forceUpdate.Add(index);
@@ -248,7 +239,6 @@ internal class SceneBatcher : IRenderBatcher
         [Imp(Inl)]
         public readonly void Execute()
         {
-            Debug.Assert(IRuntimeContext.Current.SceneManager.CurrentScene != null);
             var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
             if (!world.Has(_changeDescription))
                 return;
@@ -271,20 +261,19 @@ internal class SceneBatcher : IRenderBatcher
     }
 
     private readonly struct SortWriteRender(
-        GpuArray<uint> rendersArray,
+        GpuArray<int> rendersArray,
         RenderGroupData rendGroupData) : ISystem
     {
         [Imp(Inl)]
         public readonly void Execute()
         {
-            Debug.Assert(IRuntimeContext.Current.SceneManager.CurrentScene != null);
             var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
             var offsetsCount = rendGroupData.rendToGroup.Count;
             //Debug.Assert(offsetsCount != 0);
-            var offsets = ArrayPool<uint>.Shared.Rent(offsetsCount);
+            var offsets = ArrayPool<int>.Shared.Rent(offsetsCount);
             foreach (var item in rendGroupData.groupToCount)
                 offsets[item.Key.id] = item.Value;
-            uint index = 0;
+            int index = 0;
             foreach (var item in rendGroupData.sortedRendToGroup)
             {
                 var tmp = offsets[item.Value.id];
@@ -293,10 +282,10 @@ internal class SceneBatcher : IRenderBatcher
             }
             RenderWriter writer = new(rendersArray.Writer, offsets);
             world.InlineQuery<RenderWriter, RenderGroup, RendId>(_renderDescription, ref writer);
-            ArrayPool<uint>.Shared.Return(offsets);
+            ArrayPool<int>.Shared.Return(offsets);
         }
 
-        private readonly struct RenderWriter(GpuArray<uint>.GpuWriter writer, uint[] offsets) :
+        private readonly struct RenderWriter(PointerWriter<int> writer, int[] offsets) :
             IForEach<RenderGroup, RendId>
         {
             [Imp(Inl)]
@@ -308,16 +297,15 @@ internal class SceneBatcher : IRenderBatcher
         }
     }
 
-    private readonly struct WriteTrs(GpuArray<Matrix4x4> trs, List<uint> trsTransferIndices, PooledSet<uint> forceWrite) : ISystem
+    private readonly struct WriteTrs(GpuArray<Matrix4x4> trs, List<int> trsTransferIndices, PooledSet<int> forceWrite) : ISystem
     {
-        private readonly ThreadLocal<PooledList<uint>> _threadTransfer = new(() => new PooledList<uint>(ClearMode.Never), true);
+        private readonly ThreadLocal<PooledList<int>> _threadTransfer = new(() => new PooledList<int>(ClearMode.Never), true);
 
         [Imp(Inl)]
         public readonly void Execute()
         {
-            Debug.Assert(IRuntimeContext.Current.SceneManager.CurrentScene != null);
             var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
-            var writer = trs.Writer;
+            PointerWriter<Matrix4x4> writer = trs.Writer;
             WorldContext ctx = new(world);
             TrsWriterWithTransform trsWithTransform = new(ctx, writer, _threadTransfer, forceWrite);
             TrsWriterWithParent trsWithParent = new(ctx, writer, _threadTransfer, forceWrite);
@@ -330,8 +318,8 @@ internal class SceneBatcher : IRenderBatcher
             }
         }
 
-        private readonly struct TrsWriterWithTransform(WorldContext ctx, GpuArray<Matrix4x4>.GpuWriter trsArray,
-            ThreadLocal<PooledList<uint>> transfer, PooledSet<uint> forceWrite) :
+        private readonly struct TrsWriterWithTransform(WorldContext ctx, PointerWriter<Matrix4x4> trsArray,
+            ThreadLocal<PooledList<int>> transfer, PooledSet<int> forceWrite) :
             IForEachWithEntity<RendId>
         {
             [Imp(Inl)]
@@ -344,8 +332,8 @@ internal class SceneBatcher : IRenderBatcher
             }
         }
 
-        private readonly struct TrsWriterWithParent(WorldContext ctx, GpuArray<Matrix4x4>.GpuWriter trsArray,
-            ThreadLocal<PooledList<uint>> transfer, PooledSet<uint> forceWrite) :
+        private readonly struct TrsWriterWithParent(WorldContext ctx, PointerWriter<Matrix4x4> trsArray,
+            ThreadLocal<PooledList<int>> transfer, PooledSet<int> forceWrite) :
             IForEachWithEntity<RendId>
         {
             [Imp(Inl)]
@@ -363,7 +351,6 @@ internal class SceneBatcher : IRenderBatcher
     {
         public void Execute()
         {
-            Debug.Assert(IRuntimeContext.Current.SceneManager.CurrentScene != null);
             var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
             var writer = _cameraArray.Writer;
             if (world.CountEntities(_cameraDescription) != 0)
@@ -381,7 +368,7 @@ internal class SceneBatcher : IRenderBatcher
     {
         public readonly Dictionary<Render, RenderGroup> rendToGroup = [];
         public readonly SortedDictionary<Render, RenderGroup> sortedRendToGroup = [];
-        public readonly Dictionary<RenderGroup, uint> groupToCount = [];
+        public readonly Dictionary<RenderGroup, int> groupToCount = [];
 
         /// <summary>
         /// Creates new <see cref="RenderGroup"/> if not present, increments count of entities in this group
@@ -418,9 +405,9 @@ internal class SceneBatcher : IRenderBatcher
     /// </summary>
     /// <param name="trsId">index of Transform in TRS buffer</param>
     [DebuggerDisplay("trsId = {trsId}")]
-    private readonly struct RendId(uint trsId)
+    private readonly struct RendId(int trsId)
     {
-        public readonly uint trsId = trsId;
+        public readonly int trsId = trsId;
     }
 
     /// <summary>

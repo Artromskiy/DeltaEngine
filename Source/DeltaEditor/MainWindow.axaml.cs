@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Delta.Runtime;
 using System.Diagnostics;
 using System.IO;
 
@@ -14,27 +15,23 @@ public partial class MainWindow : Window
             return;
 
         //Program.RuntimeLoader
-        Program.RuntimeLoader.OnUIThreadLoop += Inspector.UpdateInspector;
-        Program.RuntimeLoader.OnUIThreadLoop += Hierarchy.UpdateHierarchy;
-        Program.RuntimeLoader.OnUIThreadLoop += Scene.UpdateScene;
-        AssetSearch.OnOpenedChanged += x => Inspector.IsVisible = !x;
-
-        //Program.RuntimeLoader.OnUIThreadLoop += _explorer.UpdateExplorer;
+        new FlyoutSearchControl();
+        Program.RuntimeLoader.OnLoop += Inspector.UpdateInspector;
+        Program.RuntimeLoader.OnLoop += Hierarchy.UpdateHierarchy;
+        Program.RuntimeLoader.OnLoop += Scene.UpdateScene;
 
         Hierarchy.OnEntitySelected += Inspector.SetSelectedEntity;
+        Program.RuntimeLoader.Init();
     }
 
-    private void CreateTestScene(object? sender, RoutedEventArgs e)
-    {
-        Program.RuntimeLoader.OnRuntimeThread += ctx => ctx.SceneManager.CreateTestScene();
-    }
+    private void CreateTestScene(object? sender, RoutedEventArgs e) { }
 
     private void OpenProjectFolder(object? sender, RoutedEventArgs e)
     {
         try
         {
-            if (Directory.Exists(Program.ProjectPath.RootDirectory))
-                Process.Start("explorer.exe", Program.ProjectPath.RootDirectory);
+            if (Directory.Exists(IRuntimeContext.Current.ProjectPath.RootDirectory))
+                Process.Start("explorer.exe", IRuntimeContext.Current.ProjectPath.RootDirectory);
         }
         catch { }
     }
@@ -43,8 +40,8 @@ public partial class MainWindow : Window
     {
         try
         {
-            if (Directory.Exists(Program.ProjectPath.TempDirectory))
-                Process.Start("explorer.exe", Program.ProjectPath.TempDirectory);
+            if (Directory.Exists(IRuntimeContext.Current.ProjectPath.TempDirectory))
+                Process.Start("explorer.exe", IRuntimeContext.Current.ProjectPath.TempDirectory);
         }
         catch { }
     }

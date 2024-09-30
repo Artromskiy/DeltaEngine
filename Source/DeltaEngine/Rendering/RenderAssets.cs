@@ -15,24 +15,22 @@ internal class RenderAssets : IDisposable
 
     private readonly Vk _vk;
     private readonly DeviceQueues _deviceQ;
-    private readonly PipelineLayout _pipelineLayout;
     private readonly RenderPass _renderPass;
 
     public RenderAssets(RenderBase renderBase)
     {
         _vk = renderBase.vk;
         _deviceQ = renderBase.deviceQ;
-        _pipelineLayout = renderBase.pipelineLayout;
         _renderPass = renderBase.renderPass;
         _renderToPipeline = [];
         _renderToMeshHandler = [];
     }
 
-    public (Pipeline pipeline, VertexAttribute mask) GetPipelineAndAttributes(GuidAsset<ShaderData> shader)
+    public (Pipeline pipeline, VertexAttribute mask) GetPipelineAndAttributes(GuidAsset<ShaderData> shader, PipelineLayout layout)
     {
         if (!_renderToPipeline.TryGetValue(shader, out var maskedPipeline))
         {
-            var pipeline = RenderHelper.CreateGraphicsPipeline(_vk, _deviceQ, _pipelineLayout, _renderPass, shader, out var mask);
+            var pipeline = RenderHelper.CreateGraphicsPipeline(_vk, _deviceQ, layout, _renderPass, shader, out var mask);
             _renderToPipeline[shader] = maskedPipeline = (pipeline, mask);
         }
         return maskedPipeline;

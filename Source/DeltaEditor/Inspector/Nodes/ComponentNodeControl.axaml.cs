@@ -57,14 +57,14 @@ internal partial class ComponentNodeControl : InspectorNode
         }
     }
 
-    public override bool UpdateData(ref EntityReference entity, IRuntimeContext ctx)
+    public override bool UpdateData(ref EntityReference entity)
     {
         DebugTimer.StartDebug();
 
         bool changed = false;
         if (ClipVisible && !Collapsed)
             foreach (var node in ChildrenNodes)
-                changed |= node.UpdateData(ref entity, ctx);
+                changed |= node.UpdateData(ref entity);
 
         DebugTimer.StopDebug();
         return changed;

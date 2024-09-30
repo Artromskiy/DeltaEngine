@@ -1,80 +1,61 @@
 ﻿using Delta.Runtime;
 using DeltaEditorLib.Loader;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Threading;
 
 namespace DeltaEditorLib.Scripting;
 
-internal class RuntimeScheduler : IRuntimeScheduler
+internal sealed class RuntimeScheduler : IRuntimeScheduler, IDisposable
 {
     private readonly IRuntime _runtime;
-    private readonly IUIThreadGetter? _uiThreadGetter;
-
-    private readonly List<Action<IRuntimeContext>> _uiActionsLoop = [];
-    private readonly Queue<Action<IRuntimeContext>> _uiActions = [];
-    private readonly ConcurrentQueue<Action<IRuntimeContext>> _runtimeActions = [];
+    private readonly IThreadGetter? _uiThreadGetter;
+    private Thread? _runtimeThread;
+    private bool _disposed = false;
 
 
-    public event Action<IRuntimeContext> OnUIThreadLoop
+    private readonly List<Action> _actionsLoop = [];
+
+
+    public event Action OnLoop
     {
-        add => _uiActionsLoop.Add(value);
-        remove => _uiActionsLoop.Remove(value);
+        add => _actionsLoop.Add(value);
+        remove => _actionsLoop.Remove(value);
     }
 
-    public event Action<IRuntimeContext> OnUIThread
-    {
-        add => _uiActions.Enqueue(value);
-        remove => _ = 0;
-    }
-
-    public event Action<IRuntimeContext> OnRuntimeThread
-    {
-        add => _runtimeActions.Enqueue(value);
-        remove => _ = 0;
-    }
-
-    public RuntimeScheduler(IRuntime runtime, IUIThreadGetter? uiThreadGetter)
+    public RuntimeScheduler(IRuntime runtime, IThreadGetter? uiThreadGetter)
     {
         _runtime = runtime;
         _uiThreadGetter = uiThreadGetter;
-        _runtime.RuntimeCall += Execute;
+    }
+
+    public void Init()
+    {
+        _runtimeThread = new Thread(Loop);
+        _runtimeThread.Name = "RuntimeThread." + _runtimeThread.ManagedThreadId;
+        _runtimeThread.Start();
+    }
+
+    private void Loop()
+    {
+        while (!_disposed)
+        {
+            if (_uiThreadGetter != null && _uiThreadGetter.Thread != null)
+                _uiThreadGetter.Thread(Execute).Wait();
+            else
+                Execute();
+        }
     }
 
     private void Execute()
     {
-        UIThreadCall();
-        RuntimeThreadCalls();
+        foreach (var action in _actionsLoop)
+            action.Invoke();
+        _runtime.Run();
     }
 
-    private void UIThreadCall()
+    public void Dispose()
     {
-        try
-        {
-            if (_uiActions.Count == 0 && _uiActionsLoop.Count == 0)
-                return;
-
-            _uiThreadGetter?.Thread?.Invoke(UIThreadCalls)?.Wait();
-        }
-        catch (Exception e)
-        {
-            Debug.Assert(true, e.Message);
-        }
-    }
-
-    private void RuntimeThreadCalls()
-    {
-        while (_runtimeActions.TryDequeue(out var action))
-            action.Invoke(_runtime.Context);
-    }
-
-    private void UIThreadCalls()
-    {
-        while (_uiActions.TryDequeue(out var action))
-            action.Invoke(_runtime.Context);
-
-        foreach (var action in _uiActionsLoop)
-            action.Invoke(_runtime.Context);
+        _disposed = true;
     }
 }

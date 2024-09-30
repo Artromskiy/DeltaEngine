@@ -1,15 +1,16 @@
+using Arch.Core;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.VisualTree;
+using Delta.Runtime;
 using DeltaEditor.Inspector.Internal;
 using System;
 
 namespace DeltaEditor;
 
-public partial class NamedTextField : UserControl
+internal partial class NamedTextField : InspectorNode
 {
     public static readonly StyledProperty<string?> FieldNameProperty =
         AvaloniaProperty.Register<ComponentNodeControl, string?>(nameof(FieldName));
@@ -69,32 +70,21 @@ public partial class NamedTextField : UserControl
         }
     }
 
-    private void SetFieldColor(IBrush brush) => NameLabel.Foreground = brush;
     public event Action<float>? OnDrag;
 
     public TextBox FieldData => DataTextBox;
 
-    public NamedTextField()
-    {
-        InitializeComponent();
-    }
+    public NamedTextField()=> InitializeComponent();
 
     private void DataTextBox_GotFocus(object? sender, GotFocusEventArgs e)
     {
-        var brush = Tools.Colors.FocusedBrush;
-        SetFieldColor(brush);
-        foreach (var item in this.GetVisualAncestors())
-            if (item is InspectorNode node)
-                node.SetLabelColor(brush);
+        IColorMarkable.MarkedNode = this;
     }
 
     private void DataTextBox_LostFocus(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        var brush = Tools.Colors.UnfocusedLabelBrush;
-        SetFieldColor(brush);
-        foreach (var item in this.GetVisualAncestors())
-            if (item is InspectorNode node)
-                node.SetLabelColor(brush);
+        if (IColorMarkable.MarkedNode == this)
+            IColorMarkable.MarkedNode = null;
     }
 
     private void BeginDrag(object? sender, PointerPressedEventArgs e)
@@ -116,6 +106,9 @@ public partial class NamedTextField : UserControl
 
         _prevPosition = pos;
 
-        OnDrag?.Invoke((float)(deltaPos.X));
+        OnDrag?.Invoke((float)deltaPos.X);
     }
+
+    public override bool UpdateData(ref EntityReference entity) => false;
+    public override void SetLabelColor(IBrush brush) => NameLabel.Foreground = brush;
 }

@@ -32,7 +32,7 @@ internal partial class FloatNodeControl : InspectorNode
 
     public override void SetLabelColor(IBrush brush) {}
 
-    public override bool UpdateData(ref EntityReference entity, IRuntimeContext ctx)
+    public override bool UpdateData(ref EntityReference entity)
     {
         if (!ClipVisible)
             return false;

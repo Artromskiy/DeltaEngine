@@ -19,7 +19,7 @@ internal class Program
         string directoryPath = ProjectCreator.GetExecutableDirectory();
         ProjectPath = new EditorPaths(directoryPath);
         ProjectCreator.CreateProject(ProjectPath);
-        IUIThreadGetter uiThreadGetter = new AvaloniaThreadGetter();
+        IThreadGetter uiThreadGetter = new AvaloniaThreadGetter();
         RuntimeLoader = new RuntimeLoader(ProjectPath, uiThreadGetter);
 
         BuildAvaloniaApp()

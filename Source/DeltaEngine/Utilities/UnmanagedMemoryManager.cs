@@ -35,17 +35,17 @@ public sealed unsafe class UnmanagedMemoryManager<T> : MemoryManager<T>
         _pointer = pointer;
         _length = length;
     }
+    public UnmanagedMemoryManager(nint pointer, int length)
+    {
+        _pointer = (T*)pointer.ToPointer();
+        _length = length;
+    }
 
     public void UpdateSource(nint address, int length)
     {
         _pointer = (T*)address.ToPointer();
         _length = length;
     }
-
-    /// <summary>
-    /// Create a new UnmanagedMemoryManager instance at the given pointer and size
-    /// </summary>
-    public UnmanagedMemoryManager(IntPtr pointer, int length) : this((T*)pointer.ToPointer(), length) { }
 
     /// <summary>
     /// Obtains a span that represents the region

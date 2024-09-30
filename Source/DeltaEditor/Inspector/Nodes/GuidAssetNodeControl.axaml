@@ -5,6 +5,8 @@
              mc:Ignorable="d" d:DesignWidth="455" d:DesignHeight="20"
              x:Class="DeltaEditor.GuidAssetNodeControl"
              Background="Transparent"
+             PointerEntered="UserControl_PointerEntered"
+             PointerExited="UserControl_PointerExited"
              Focusable="True">
 
   <Grid Height="20"
@@ -31,17 +33,19 @@
            MinHeight="0"
            Height="20"
            BorderThickness="1,1,0,1"
-           BorderBrush="{DynamicResource TextBoxBorderedDefaultBorderBrush}"
+           BorderBrush="{DynamicResource DefaultBorderBrush}"
            VerticalContentAlignment="Center"
            Content="E1HKfn68Pkms5zsZsvKONw"/>
       
       <!--Change Asset-->
       <Button Grid.Column="1"
+              x:Name="SelectAssetButton"
+              x:FieldModifier="private"
               Click="OnSelectAssetClick"
               Classes="Iconed"
               BorderThickness="0,1,1,1"
               CornerRadius="0,0,3,0"
-              BorderBrush="{DynamicResource TextBoxBorderedDefaultBorderBrush}">
+              BorderBrush="{DynamicResource DefaultBorderBrush}">
         <Svg x:Name="CollapseIcon"
              x:FieldModifier="private"
              Path="/Assets/Icons/expanded.svg"/>

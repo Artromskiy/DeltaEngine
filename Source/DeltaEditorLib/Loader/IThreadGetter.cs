@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 namespace DeltaEditorLib.Loader;
 
-public interface IUIThreadGetter
+public interface IThreadGetter
 {
     public Func<Action, Task>? Thread { get; }
 }

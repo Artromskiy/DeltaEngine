@@ -7,7 +7,8 @@
              x:Class="DeltaEditor.InspectorControl"
              Background="Transparent"
              Focusable="True"
-             KeyUp="InspectorControlKeyUp">
+             KeyUp="InspectorControlKeyUp"
+             GotFocus="UserControl_GotFocus">
 
   <Grid RowDefinitions="20,*,Auto">
 
@@ -74,16 +75,10 @@
             Content="Add Component"
             FontSize="12"
             FontWeight="Bold"
+            Click="AddComponentButtonClick"
             x:Name="AddComponentButton"
-            x:FieldModifier="private">
+            x:FieldModifier="private"/>
 
-      <Button.Flyout>
-        <Flyout>
-          <uc:AddComponentControl x:Name="AddComponentControlFlyout"
-                                  x:FieldModifier="private"/>
-        </Flyout>
-      </Button.Flyout>
-    </Button>
 
   </Grid>
 </UserControl>

@@ -11,7 +11,7 @@ public interface IRuntimeContext
     public IGraphicsModule GraphicsModule { get; }
 
     private static IRuntimeContext? _current;
-    internal static IRuntimeContext Current
+    public static IRuntimeContext Current
     {
         get => _current!;
         set => _current = value ?? throw new InvalidOperationException($"{nameof(IRuntimeContext)} can not be set to null");

@@ -224,7 +224,6 @@ internal class HierarchySystem
         private static readonly List<Entity> _entitiesToDestroy = [];
         public readonly void Execute()
         {
-            Debug.Assert(IRuntimeContext.Current.SceneManager.CurrentScene != null);
             var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
 
             _entitiesToDestroy.Clear();

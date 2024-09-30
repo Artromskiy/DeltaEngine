@@ -7,7 +7,6 @@ using Delta.Runtime;
 using DeltaEditor.Hierarchy;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace DeltaEditor;
 
@@ -28,20 +27,17 @@ public partial class HierarchyControl : UserControl
         _hierarchyNodeCreator.OnEntitySelectRequest += SelectEntity;
     }
 
-    public void UpdateHierarchy(IRuntimeContext ctx)
+    public void UpdateHierarchy()
     {
         PanelHeader.StartDebug();
 
-        if (ctx.SceneManager.CurrentScene == null)
-            return;
-
-        var entities = ctx.SceneManager.CurrentScene.GetRootEntities();
+        var entities = IRuntimeContext.Current.SceneManager.CurrentScene.GetRootEntities();
         int count = entities.Length;
 
         UpdateChildrenCount(count);
 
         for (int i = 0; i < count; i++)
-            ChildrenNodes[i].UpdateEntity(ctx, entities[i]);
+            ChildrenNodes[i].UpdateEntity(entities[i]);
 
         PanelHeader.StopDebug();
     }
@@ -49,24 +45,12 @@ public partial class HierarchyControl : UserControl
 
     private void CreateNewEntity(object? sender, RoutedEventArgs e)
     {
-        if (Program.RuntimeLoader == null)
-            return;
-        Program.RuntimeLoader.OnRuntimeThread += AddEntity;
-        static void AddEntity(IRuntimeContext ctx)
-        {
-            Debug.Assert(ctx.SceneManager.CurrentScene != null);
-            ctx.SceneManager.CurrentScene.AddEntity();
-        }
+        SelectEntity(IRuntimeContext.Current.SceneManager.CurrentScene.AddEntity());
     }
 
     private void RemoveEntity(EntityReference entity)
     {
-        Program.RuntimeLoader.OnRuntimeThread += RemoveEntity;
-        void RemoveEntity(IRuntimeContext ctx)
-        {
-            Debug.Assert(ctx.SceneManager.CurrentScene != null);
-            ctx.SceneManager.CurrentScene.RemoveEntity(entity);
-        }
+        IRuntimeContext.Current.SceneManager.CurrentScene.RemoveEntity(entity);
     }
 
     private void UpdateChildrenCount(int neededNodesCount)

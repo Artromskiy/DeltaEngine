@@ -39,10 +39,6 @@
       <uc:InspectorControl x:Name="Inspector"
                            Grid.Column="4"/>
 
-      <uc:AssetSearchControl x:Name="AssetSearch"
-                             Grid.Column="4"
-                             IsVisible="False"/>
-
     </Grid>
 
     <GridSplitter Grid.Row="2"

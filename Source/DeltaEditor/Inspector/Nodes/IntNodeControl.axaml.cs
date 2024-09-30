@@ -17,7 +17,7 @@ internal partial class IntNodeControl : InspectorNode
 
     public override void SetLabelColor(IBrush brush) {}
 
-    public override bool UpdateData(ref EntityReference entity, IRuntimeContext ctx)
+    public override bool UpdateData(ref EntityReference entity)
     {
         if (!ClipVisible)
             return false;

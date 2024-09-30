@@ -52,7 +52,7 @@ internal partial class Matrix4NodeControl : InspectorNode
 
     public override void SetLabelColor(IBrush brush) => FieldName.Foreground = brush;
 
-    public override bool UpdateData(ref EntityReference entity, IRuntimeContext ctx)
+    public override bool UpdateData(ref EntityReference entity)
     {
         if (!ClipVisible)
             return false;

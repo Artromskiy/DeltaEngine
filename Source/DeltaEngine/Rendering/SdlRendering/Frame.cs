@@ -71,7 +71,7 @@ internal class Frame : IDisposable
     public void AddBatcher(IRenderBatcher renderBatcher)
     {
         var sets = new DescriptorSets(_rendererBase.vk, _rendererBase.deviceQ,
-            _rendererBase.descriptorPool, _rendererBase.pipelineLayout, _rendererBase.descriptorSetLayouts);
+            _rendererBase.descriptorPool, _rendererBase.descriptorSetLayouts);
         _batchedSets.Add(renderBatcher, sets);
     }
     public void RemoveBatcher(IRenderBatcher renderBatcher)
@@ -171,7 +171,7 @@ internal class Frame : IDisposable
 
         frameDescriptorSets.BindDescriptorSets(_commandBuffer);
 
-        uint firstInstance = 0;
+        int firstInstance = 0;
         foreach (var (rend, count) in frameDescriptorSets.RenderList)
         {
             var itemShader = rend._shader;
@@ -179,7 +179,7 @@ internal class Frame : IDisposable
 
             if (itemShader.guid != currentShader) // shader switch
             {
-                (var pipeline, attributeMask) = _renderAssets.GetPipelineAndAttributes(itemShader);
+                (var pipeline, attributeMask) = _renderAssets.GetPipelineAndAttributes(itemShader, frameDescriptorSets.descriptorSetLayouts.pipelineLayout);
                 _rendererBase.vk.CmdBindPipeline(_commandBuffer, PipelineBindPoint.Graphics, pipeline);
                 currentShader = itemShader.guid;
             }
@@ -193,7 +193,7 @@ internal class Frame : IDisposable
                 _rendererBase.vk.CmdBindVertexBuffers(_commandBuffer, 0, 1, vertices, 0);
                 _rendererBase.vk.CmdBindIndexBuffer(_commandBuffer, indices, 0, IndexType.Uint32);
             }
-            _rendererBase.vk.CmdDrawIndexed(_commandBuffer, indicesCount, count, 0, 0, firstInstance);
+            _rendererBase.vk.CmdDrawIndexed(_commandBuffer, indicesCount, (uint)count, 0, 0, (uint)firstInstance);
             firstInstance += count;
         }
 

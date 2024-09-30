@@ -11,7 +11,6 @@ internal class DynamicBuffer
     protected readonly Vk _vk;
     protected readonly DeviceQueues _deviceQ;
 
-
     private Buffer _buffer;
     private DeviceMemory _memory;
 
@@ -20,10 +19,10 @@ internal class DynamicBuffer
 
     public bool ChangedBuffer { get; set; } = true;
 
-    private ulong _size;
-    public ulong Size => _size;
+    private int _size;
+    public int Size => _size;
 
-    public DynamicBuffer(Vk vk, DeviceQueues deviceQ, ulong sizeBytes)
+    public DynamicBuffer(Vk vk, DeviceQueues deviceQ, int sizeBytes)
     {
         _vk = vk;
         _deviceQ = deviceQ;
@@ -36,13 +35,13 @@ internal class DynamicBuffer
     public Buffer GetBuffer() => _buffer;
     public static implicit operator Buffer(DynamicBuffer buffer) => buffer._buffer;
 
-    private unsafe void CreateBuffer(ref ulong size, out Buffer buffer, out DeviceMemory memory)
+    private unsafe void CreateBuffer(ref int size, out Buffer buffer, out DeviceMemory memory)
     {
         var usage = BufferUsageFlags.StorageBufferBit | BufferUsageFlags.TransferDstBit;
         BufferCreateInfo createInfo = new()
         {
             SType = StructureType.BufferCreateInfo,
-            Size = size,
+            Size = (ulong)size,
             Usage = usage,
             SharingMode = SharingMode.Exclusive,
             Flags = default,
@@ -64,7 +63,7 @@ internal class DynamicBuffer
             AllocationSize = reqs.Size,
             MemoryTypeIndex = memType
         };
-        size = reqs.Size;
+        size = (int)reqs.Size;
         _ = _vk.AllocateMemory(_deviceQ, allocateInfo, null, out memory);
         _ = _vk.BindBufferMemory(_deviceQ, buffer, memory, 0);
     }
@@ -78,16 +77,16 @@ internal class DynamicBuffer
         CopyBuffer(array.Buffer, sourceSize, _buffer, sourceSize);
     }
 
-    public unsafe void EnsureSize(ulong size)
+    public unsafe void EnsureSize(int size)
     {
-        ulong newSize = BitOperations.RoundUpToPowerOf2(size);
+        int newSize = (int)BitOperations.RoundUpToPowerOf2((uint)size);
         if (_size < newSize)
             Resize(newSize);
     }
 
-    private unsafe void Resize(ulong size)
+    private unsafe void Resize(int size)
     {
-        ulong newSize = BitOperations.RoundUpToPowerOf2(size);
+        int newSize = (int)BitOperations.RoundUpToPowerOf2((uint)size);
         CreateBuffer(ref newSize, out var newBuffer, out var newMemory);
         _vk.DestroyBuffer(_deviceQ, _buffer, null);
         _vk.FreeMemory(_deviceQ, _memory, null);
@@ -98,7 +97,7 @@ internal class DynamicBuffer
     }
 
     [Imp(Inl)]
-    private unsafe void CopyBuffer(Buffer source, ulong sourceSize, Buffer destionation, ulong destinationSize)
+    private unsafe void CopyBuffer(Buffer source, int sourceSize, Buffer destionation, int destinationSize)
     {
         CommandBuffer cmdBuffer = _cmdBuffer;
         CommandBufferBeginInfo beginInfo = new()
@@ -107,7 +106,7 @@ internal class DynamicBuffer
             Flags = CommandBufferUsageFlags.OneTimeSubmitBit
         };
         _ = _vk.BeginCommandBuffer(cmdBuffer, &beginInfo);
-        BufferCopy copy = new(0, 0, Math.Min(sourceSize, destinationSize));
+        BufferCopy copy = new(0, 0, (ulong)Math.Min(sourceSize, destinationSize));
         _vk.CmdCopyBuffer(cmdBuffer, source, destionation, 1, &copy);
         _ = _vk.EndCommandBuffer(cmdBuffer);
         SubmitInfo submitInfo = new()

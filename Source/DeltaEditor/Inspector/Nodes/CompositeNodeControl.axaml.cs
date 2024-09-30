@@ -24,14 +24,14 @@ internal partial class CompositeNodeControl : InspectorNode
         }
     }
 
-    public override bool UpdateData(ref EntityReference entity, IRuntimeContext ctx)
+    public override bool UpdateData(ref EntityReference entity)
     {
         if (!ClipVisible)
             return false;
 
         bool changed = false;
         for (int i = 0; i < ChildrenNodes.Count; i++)
-            changed |= ChildrenNodes[i].UpdateData(ref entity, ctx);
+            changed |= ChildrenNodes[i].UpdateData(ref entity);
 
 
         return changed;

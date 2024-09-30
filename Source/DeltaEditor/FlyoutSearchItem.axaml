@@ -2,32 +2,35 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="100"
-             x:Class="DeltaEditor.AddComponentItemControl"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="DeltaEditor.FlyoutSearchItem"
              Background="Transparent"
              BorderThickness="1"
              CornerRadius="3"
              BorderBrush="{DynamicResource DefaultBorderBrush}"
              PointerEntered="UserControl_PointerEntered"
              PointerExited="UserControl_PointerExited"
+             Tapped="OnTap"
              Height="20">
 
   <Grid ColumnDefinitions="30,*">
 
-    <Svg Grid.Column="0"
+    <Svg Path="/Assets/Icons/entity.svg"
          Margin="3"
-         Path="/Assets/Icons/code.svg"
+         Grid.Column="0"
          VerticalAlignment="Center"/>
 
-    <Label Grid.Column="1"
-           x:Name="ComponentNameLabel"
+    <!--Entity Name-->
+    <Label x:Name="AssetNameLabel"
            x:FieldModifier="private"
+           Grid.Column="1"
            FontSize="12"
            HorizontalAlignment="Left"
            VerticalAlignment="Center"
            Content="Transform"
            BorderThickness="1"
            VerticalContentAlignment="Center"/>
+
   </Grid>
 
 </UserControl>

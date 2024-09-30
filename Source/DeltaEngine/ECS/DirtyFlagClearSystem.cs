@@ -14,8 +14,6 @@ internal static class DirtyFlagClearSystem
     private static readonly Dictionary<Type, IGenericRemoveWrapper> _removers = [];
     public static void Execute()
     {
-        if (IRuntimeContext.Current.SceneManager.CurrentScene == null)
-            return;
         foreach (var type in ComponentRegistry.Types)
         {
             if (type == null || !AttributeCache.HasAttribute<DirtyAttribute>(type))
@@ -33,7 +31,6 @@ internal static class DirtyFlagClearSystem
         private static readonly QueryDescription _removeDescription = new QueryDescription().WithAll<DirtyFlag<T>>();
         public readonly void Remove()
         {
-            Debug.Assert(IRuntimeContext.Current.SceneManager.CurrentScene != null);
             IRuntimeContext.Current.SceneManager.CurrentScene._world.Remove<DirtyFlag<T>>(_removeDescription);
         }
     }

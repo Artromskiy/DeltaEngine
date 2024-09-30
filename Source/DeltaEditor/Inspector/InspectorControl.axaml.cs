@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.Core.Extensions;
 using Arch.Core.Utils;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Delta.ECS;
 using Delta.ECS.Attributes;
 using Delta.ECS.Components;
@@ -39,7 +40,6 @@ public partial class InspectorControl : UserControl
 
         _accessors = Program.RuntimeLoader.Accessors;
         _components = [.. Program.RuntimeLoader.Components];
-        AddComponentControlFlyout.OnComponentAddRequested += OnComponentAddRequest;
     }
 
     public void SetSelectedEntity(EntityReference entityReference)
@@ -48,7 +48,7 @@ public partial class InspectorControl : UserControl
         Focus();
     }
 
-    public void UpdateInspector(IRuntimeContext ctx)
+    public void UpdateInspector()
     {
         PanelHeader.StartDebug();
         if (!SelectedEntity.IsAlive()) // Dead entity
@@ -57,7 +57,6 @@ public partial class InspectorControl : UserControl
             EntityNameTextBox.Text = string.Empty;
             ChildrenNodes.Clear();
             AddComponentButton.IsVisible = false;
-            AddComponentControlFlyout.FillComponentsData(_notUsedComponentTypes);
             PanelHeader.StopDebug();
             return;
         }
@@ -67,11 +66,10 @@ public partial class InspectorControl : UserControl
             CurrentArch = SelectedEntity.Entity.GetArchetype();
             ChildrenNodes.Clear();
             RebuildInspectorComponents();
-            AddComponentControlFlyout.FillComponentsData(_notUsedComponentTypes);
         }
         UpdateName();
         foreach (var item in ChildrenNodes)
-            if (item.UpdateData(ref SelectedEntity, ctx))
+            if (item.UpdateData(ref SelectedEntity))
                 SelectedEntity.Entity.MarkDirty(item.ComponentType);
 
         PanelHeader.StopDebug();
@@ -116,22 +114,25 @@ public partial class InspectorControl : UserControl
         }
     }
 
+    private void AddComponentButtonClick(object? sender, RoutedEventArgs e)=> OpenFlyout();
+    private void OpenFlyout()
+    {
+        ISearchFlyoutViewModel[] vms = new ISearchFlyoutViewModel[_notUsedComponentTypes.Count];
+        int i = 0;
+        foreach (var item in _notUsedComponentTypes)
+            vms[i++] = new SearchFlyoutViewModel<Type>(item, item.ToString());
+        FlyoutSearchControl.Instance.OpenAssetSearch(AddComponentButton, vms, x => OnComponentAddRequest(((SearchFlyoutViewModel<Type>)x).Data));
+    }
+
     private void OnComponentAddRequest(Type type)
     {
-        Program.RuntimeLoader.OnRuntimeThread += AddComponent;
-        void AddComponent(IRuntimeContext ctx)
-        {
-            var instance = Activator.CreateInstance(type);
-            SelectedEntity.Entity.Add(instance!);
-        }
+        var instance = Activator.CreateInstance(type);
+        SelectedEntity.Entity.Add(instance!);
     }
+
     private void OnComponentRemoveRequest(Type type)
     {
-        Program.RuntimeLoader.OnRuntimeThread += RemoveComponent;
-        void RemoveComponent(IRuntimeContext ctx)
-        {
-            SelectedEntity.Entity.RemoveRange(type);
-        }
+        SelectedEntity.Entity.RemoveRange(type);
     }
     private void ClearHandledEntityData()
     {
@@ -151,18 +152,18 @@ public partial class InspectorControl : UserControl
         }
         return inspector;
     }
-
     private void InspectorControlKeyUp(object? sender, Avalonia.Input.KeyEventArgs e)
     {
-        if (IsFocused && e.Key == Avalonia.Input.Key.C && e.KeyModifiers.HasFlag(Avalonia.Input.KeyModifiers.Shift))
-            AddComponentButton.Flyout.ShowAt(AddComponentButton);
-        if (IsFocused && e.Key == Avalonia.Input.Key.R && e.KeyModifiers.HasFlag(Avalonia.Input.KeyModifiers.Shift))
+        if (SelectedEntity.IsAlive() && e.Key == Avalonia.Input.Key.C && e.KeyModifiers.HasFlag(Avalonia.Input.KeyModifiers.Shift))
+            OpenFlyout();
+        if (SelectedEntity.IsAlive() && e.Key == Avalonia.Input.Key.R && e.KeyModifiers.HasFlag(Avalonia.Input.KeyModifiers.Shift))
             EntityNameTextBox.Focus();
     }
-
     private void EntityNameTextBoxKeyUp(object? sender, Avalonia.Input.KeyEventArgs e)
     {
         if (EntityNameTextBox.IsFocused && (e.Key == Avalonia.Input.Key.Escape || e.Key == Avalonia.Input.Key.Enter))
             Focus();
     }
+
+    private void UserControl_GotFocus(object? sender, Avalonia.Input.GotFocusEventArgs e) => IColorMarkable.Unmark();
 }

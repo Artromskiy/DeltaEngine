@@ -1,9 +1,9 @@
 ﻿using Arch.Core;
 using Delta.ECS;
+using Delta.Rendering;
 using Schedulers;
 using System;
 using System.Diagnostics;
-using System.Threading;
 
 namespace Delta.Runtime;
 
@@ -11,11 +11,8 @@ public sealed class Runtime : IRuntime, IDisposable
 {
     public IRuntimeContext Context { get; }
 
-    public event Action? RuntimeCall;
-
     private bool _disposed = false;
 
-    private readonly Thread _runtimeThread;
     private JobScheduler.Config _jobConfig = new()
     {
         ThreadPrefixName = "Arch.Multithreading",
@@ -30,54 +27,34 @@ public sealed class Runtime : IRuntime, IDisposable
         var assets = new GlobalAssetCollection();
         var sceneManager = new SceneManager();
         var graphics = new Rendering.Headless.HeadlessGraphicsModule("Delta Editor");
-        //var graphics = new Rendering.SdlRendering.SdlGraphicsModule("Delta Editor");
-        //var graphics = new DummyGraphics();
 
         Context = new DefaultRuntimeContext(path, assets, sceneManager, graphics);
-
-        _runtimeThread = new Thread(Loop);
-        _runtimeThread.Name = "RuntimeThread." + _runtimeThread.ManagedThreadId;
-        _runtimeThread.Start();
-
         IRuntimeContext.Current = Context;
+
+        graphics.AddRenderBatcher(new SceneBatcher());
     }
 
-    private void Loop()
+    public void Run()
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         World.SharedJobScheduler ??= new JobScheduler(_jobConfig);
-        Stopwatch sw = new();
-        while (!_disposed)
+        try
         {
-            if (_disposed)
-                break;
-            sw.Restart();
-
-            try
-            {
-                RuntimeCall?.Invoke();
-                IRuntimeContext.Current.SceneManager.CurrentScene?.Run();
-
-                if (IRuntimeContext.Current.SceneManager.CurrentScene != null)
-                    IRuntimeContext.Current.GraphicsModule.Execute();
-                DestroySystem.Execute();
-                DirtyFlagClearSystem.Execute();
-            }
-            catch (Exception e)
-            {
-                Debug.Assert(false, e.Message);
-            }
-            sw.Stop();
-            //Debug.WriteLine($"{(int)sw.Elapsed.TotalMicroseconds} us");
-            //Debug.WriteLine($"{1.0 / sw.Elapsed.TotalSeconds:0.00} fps");
+            IRuntimeContext.Current.SceneManager.CurrentScene.Run();
+            IRuntimeContext.Current.GraphicsModule.Execute();
+            DestroySystem.Execute();
+            DirtyFlagClearSystem.Execute();
         }
-
-        World.SharedJobScheduler?.Dispose();
-        World.SharedJobScheduler = null;
+        catch (Exception e)
+        {
+            Debug.Assert(false, e.Message);
+        }
     }
 
     public void Dispose()
     {
-        RuntimeCall = null;
+        World.SharedJobScheduler?.Dispose();
+        World.SharedJobScheduler = null;
         _disposed = true;
     }
 }

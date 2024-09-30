@@ -6,9 +6,9 @@ using Delta.Runtime;
 
 namespace DeltaEditor.Inspector.Internal;
 
-internal abstract class InspectorNode : UserControl
+internal abstract class InspectorNode : UserControl, IColorMarkable
 {
-    public abstract bool UpdateData(ref EntityReference entity, IRuntimeContext ctx);
+    public abstract bool UpdateData(ref EntityReference entity);
     protected bool ClipVisible
     {
         get
@@ -20,4 +20,6 @@ internal abstract class InspectorNode : UserControl
     }
 
     public abstract void SetLabelColor(IBrush brush);
+
+    public virtual void SetBorderColor(IBrush brush) { }
 }

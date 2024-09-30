@@ -7,16 +7,28 @@ namespace Delta.Assets;
 
 public interface IAsset { }
 
-[DebuggerDisplay("guid = {guid}")]
+[DebuggerDisplay("Short Guid = {this.ToString()}")]
 public readonly struct GuidAsset<T> : IEquatable<GuidAsset<T>>, IComparable<GuidAsset<T>> where T : class, IAsset
 {
+    private const string NullDataString = "null";
     public readonly Guid guid;
 
     [JsonConstructor]
     internal GuidAsset(Guid guid) => this.guid = guid;
 
     public readonly T GetAsset() => IRuntimeContext.Current.AssetImporter.GetAsset(this);
-    public override string ToString() => guid == Guid.Empty ? "null" : IRuntimeContext.Current.AssetImporter.GetName(this);
+    public readonly string GetAssetNameOrDefault() => Null ? NullDataString : IRuntimeContext.Current.AssetImporter.GetName(this);
+    public override string ToString()
+    {
+        if (Null)
+            return NullDataString;
+        Span<byte> guidBytes = stackalloc byte[16];
+        Span<char> guidChars = stackalloc char[16];
+        guid.TryWriteBytes(guidBytes);
+        Convert.TryToBase64Chars(guidBytes, guidChars, out var written);
+        guidChars = guidChars[..written];
+        return new string(guidChars);
+    }
 
     [Imp(Inl)]
     public static implicit operator T(GuidAsset<T> guidAsset) => IRuntimeContext.Current.AssetImporter.GetAsset(guidAsset);

@@ -3,6 +3,7 @@ using Delta.Rendering.Collections;
 using Delta.Rendering.Internal;
 using Delta.Utilities;
 using Silk.NET.Core;
+using Silk.NET.Core.Contexts;
 using Silk.NET.Core.Native;
 using Silk.NET.SDL;
 using Silk.NET.SPIRV;
@@ -92,7 +93,7 @@ internal static unsafe class RenderHelper
     public static void CopyCmd<T>(Vk vk, GpuArray<T> source, DynamicBuffer destination, CommandBuffer cmdBuffer) where T : unmanaged
     {
         destination.EnsureSize(source.Size);
-        BufferCopy copy = new(0, 0, Math.Min(source.Size, destination.Size));
+        BufferCopy copy = new(0, 0, (ulong)Math.Min(source.Size, destination.Size));
         vk.CmdCopyBuffer(cmdBuffer, source.Buffer, destination.GetBuffer(), 1, &copy);
     }
 
@@ -171,6 +172,14 @@ internal static unsafe class RenderHelper
         var nondispatchable = new VkNonDispatchableHandle();
         _ = sdl.VulkanCreateSurface(window, instance.ToHandle(), ref nondispatchable);
         return nondispatchable.ToSurface();
+    }
+
+    public static string[] GetSilkVulkanExtensions(IVkSurface vkSurface)
+    {
+        nint extensionsPtr = new(vkSurface.GetRequiredExtensions(out var count));
+        string[] extensions = new string[count];
+        SilkMarshal.CopyPtrToStringArray(extensionsPtr, extensions);
+        return extensions;
     }
 
     public static (Buffer buffer, DeviceMemory memory) CreateBufferAndMemory(Vk vk, DeviceQueues deviceQ, ulong size, BufferUsageFlags bufferUsageFlags, MemoryPropertyFlags memoryPropertyFlags)
@@ -399,22 +408,6 @@ internal static unsafe class RenderHelper
         };
         _ = vk.CreateGraphicsPipelines(deviceQ, default, 1, pipelineInfo, null, out var graphicsPipeline);
         return graphicsPipeline;
-    }
-
-    public static PipelineLayout CreatePipelineLayout(Vk vk, Device device, ReadOnlySpan<DescriptorSetLayout> layouts)
-    {
-        PipelineLayout result;
-        fixed (DescriptorSetLayout* layoutsPtr = layouts)
-        {
-            PipelineLayoutCreateInfo pipelineLayoutInfo = new()
-            {
-                SType = StructureType.PipelineLayoutCreateInfo,
-                SetLayoutCount = (uint)layouts.Length,
-                PSetLayouts = layoutsPtr,
-            };
-            _ = vk.CreatePipelineLayout(device, pipelineLayoutInfo, null, out result);
-        }
-        return result;
     }
 
 
@@ -748,7 +741,7 @@ internal static unsafe class RenderHelper
                     goto end;
                 }
             }
-        end:;
+        end: { }
         }
         return new FamilyQueues(selected);
     }

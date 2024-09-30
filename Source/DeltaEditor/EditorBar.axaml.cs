@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Delta.Runtime;
 
 namespace DeltaEditor;
 
@@ -39,6 +40,6 @@ public partial class EditorBar : UserControl
 
         var running = PlayButton.IsChecked ?? default;
         var pausing = PauseButton.IsChecked ?? default;
-        Program.RuntimeLoader.OnRuntimeThread += r => r.Running = running && !pausing;
+        IRuntimeContext.Current.Running = running && !pausing;
     }
 }

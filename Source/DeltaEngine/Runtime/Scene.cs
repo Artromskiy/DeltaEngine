@@ -2,6 +2,7 @@
 using Delta.Assets;
 using Delta.ECS;
 using Delta.ECS.Components;
+using Delta.Rendering;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -28,13 +29,13 @@ public sealed class Scene : IDisposable, IAsset
         _jobs = [];
         _defaultJobs = [_hierarchySystem.MarkDestroySystem()];
     }
+
     public float DeltaTime() => _deltaTime;
 
     public void Run(float deltaTime)
     {
         if (IRuntimeContext.Current.Running)
         {
-            _hierarchySystem.UpdateOrders();
             _deltaTime = deltaTime;
             foreach (var item in _jobs)
                 item.Execute();
@@ -57,7 +58,6 @@ public sealed class Scene : IDisposable, IAsset
     [Imp(Sync)]
     public void RemoveEntity(EntityReference entityRef)
     {
-        Debug.Assert(IRuntimeContext.Current.SceneManager.CurrentScene != null);
         IRuntimeContext.Current.SceneManager.CurrentScene._world.AddOrGet<DestroyFlag>(entityRef);
     }
 

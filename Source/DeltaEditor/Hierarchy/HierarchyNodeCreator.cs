@@ -34,17 +34,15 @@ namespace DeltaEditor.Hierarchy
                 _expandedNodes.Add(entityRef);
         }
 
-        public ReadOnlySpan<EntityReference> GetChildren(IRuntimeContext ctx, EntityReference entityRef)
+        public ReadOnlySpan<EntityReference> GetChildren(EntityReference entityRef)
         {
-            Debug.Assert(ctx.SceneManager.CurrentScene != null);
-            ctx.SceneManager.CurrentScene.GetFirstChildren(entityRef, _childrenListCached);
+            IRuntimeContext.Current.SceneManager.CurrentScene.GetFirstChildren(entityRef, _childrenListCached);
             return CollectionsMarshal.AsSpan(_childrenListCached);
         }
 
-        public int GetChildrenCount(IRuntimeContext ctx, EntityReference entityRef)
+        public int GetChildrenCount(EntityReference entityRef)
         {
-            Debug.Assert(ctx.SceneManager.CurrentScene != null);
-            return ctx.SceneManager.CurrentScene.GetFirstChildrenCount(entityRef);
+            return IRuntimeContext.Current.SceneManager.CurrentScene.GetFirstChildrenCount(entityRef);
         }
 
         public HierarchyNodeControl GetOrCreateNode()

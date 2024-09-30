@@ -40,6 +40,15 @@
     <ProjectReference Include="..\DeltaEngine\DeltaEngine.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="FlyoutSearchControl.axaml.cs">
+      <DependentUpon>FlyoutSearchControl.axaml</DependentUpon>
+    </Compile>
+    <Compile Update="FlyoutSearchItem.axaml.cs">
+      <DependentUpon>FlyoutSearchItem.axaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
 <!--
   <ItemGroup>
     <Compile Update="Hierarchy\HierarchyControl.axaml.cs">

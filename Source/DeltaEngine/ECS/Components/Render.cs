@@ -17,7 +17,7 @@ public struct Render : IEquatable<Render>, IComparable<Render>
         get => _shader;
     }
 
-    public readonly bool IsValid => _shader.guid != Guid.Empty && material.guid != Guid.Empty && mesh.guid != Guid.Empty;
+    public readonly bool IsValid => !_shader.Null && !material.Null && !mesh.Null;
 
 
     [Imp(Inl)]

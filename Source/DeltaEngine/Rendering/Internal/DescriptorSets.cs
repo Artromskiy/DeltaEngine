@@ -12,10 +12,9 @@ internal class DescriptorSets : IDisposable
     private readonly Vk _vk;
     private readonly DeviceQueues _deviceQ;
     private readonly DescriptorPool _descriptorPool;
-    private readonly CommonDescriptorSetLayouts _descriptorSetLayouts;
-    private readonly PipelineLayout _pipelineLayout;
+    public readonly SimpleShaderLayouts descriptorSetLayouts;
 
-    private readonly List<(Render rend, uint count)> _renderList = [];
+    private readonly List<(Render rend, int count)> _renderList = [];
 
     private readonly BindedDynamicBuffer _matrices;
     private readonly BindedDynamicBuffer _ids;
@@ -28,22 +27,21 @@ internal class DescriptorSets : IDisposable
     private DescriptorSet Material => _descriptorSets[RendConst.MatSet];
     private DescriptorSet Instance => _descriptorSets[RendConst.InsSet];
 
-    public ReadOnlySpan<(Render rend, uint count)> RenderList => CollectionsMarshal.AsSpan(_renderList);
+    public ReadOnlySpan<(Render rend, int count)> RenderList => CollectionsMarshal.AsSpan(_renderList);
     public DynamicBuffer Camera => _camera;
     public DynamicBuffer Materials => _materials;
     public DynamicBuffer Matrices => _matrices;
     public DynamicBuffer Ids => _ids;
-    private CommonDescriptorSetLayouts SetLayouts => _descriptorSetLayouts;
 
-    public DescriptorSets(Vk vk, DeviceQueues deviceQ, DescriptorPool descriptorPool, PipelineLayout pipelineLayout, CommonDescriptorSetLayouts descriptorSetLayouts)
+    public DescriptorSets(Vk vk, DeviceQueues deviceQ, DescriptorPool descriptorPool, SimpleShaderLayouts descriptorSetLayouts)
     {
         _vk = vk;
         _deviceQ = deviceQ;
         _descriptorPool = descriptorPool;
-        _descriptorSetLayouts = descriptorSetLayouts;
-        _pipelineLayout = pipelineLayout;
-        _descriptorSets = new DescriptorSet[RendConst.SetsCount];
-        for (uint i = 0; i < RendConst.SetsCount; i++)
+        this.descriptorSetLayouts = descriptorSetLayouts;
+        int setsCount = descriptorSetLayouts.Layouts.Length;
+        _descriptorSets = new DescriptorSet[setsCount];
+        for (uint i = 0; i < setsCount; i++)
             _descriptorSets[i] = CreateDescriptorSet(i);
 
         _matrices = new(_vk, _deviceQ, Instance, RendConst.MatricesBinding, DescriptorType.StorageBuffer);
@@ -63,7 +61,7 @@ internal class DescriptorSets : IDisposable
 
     private unsafe DescriptorSet CreateDescriptorSet(uint setId)
     {
-        DescriptorSetLayout setLayout = SetLayouts.Layouts[(int)setId];
+        DescriptorSetLayout setLayout = descriptorSetLayouts.Layouts[(int)setId];
         DescriptorSetAllocateInfo allocateInfo = new()
         {
             SType = StructureType.DescriptorSetAllocateInfo,
@@ -85,7 +83,7 @@ internal class DescriptorSets : IDisposable
 
     public unsafe void BindDescriptorSets(CommandBuffer commandBuffer)
     {
-        _vk.CmdBindDescriptorSets(commandBuffer, PipelineBindPoint.Graphics, _pipelineLayout, 0, _descriptorSets, []);
+        _vk.CmdBindDescriptorSets(commandBuffer, PipelineBindPoint.Graphics, descriptorSetLayouts.pipelineLayout, 0, _descriptorSets, []);
     }
 
     public unsafe void Dispose()

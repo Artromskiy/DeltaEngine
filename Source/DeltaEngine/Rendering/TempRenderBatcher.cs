@@ -11,10 +11,10 @@ internal class TempRenderBatcher : IRenderBatcher
 {
     public GpuArray<GpuCameraData> Camera { get; private set; }
     public GpuArray<Matrix4x4> Transforms { get; private set; }
-    public GpuArray<uint> TransformIds { get; private set; }
-    public ReadOnlySpan<(Render rend, uint count)> RendGroups => CollectionsMarshal.AsSpan(_rendersToCount);
+    public GpuArray<int> TransformIds { get; private set; }
+    public ReadOnlySpan<(Render rend, int count)> RendGroups => CollectionsMarshal.AsSpan(_rendersToCount);
 
-    private readonly List<(Render rend, uint count)> _rendersToCount = [];
+    private readonly List<(Render rend, int count)> _rendersToCount = [];
     private readonly List<(Render rend, Matrix4x4 matrix)> _tempRenders = [];
 
     public GpuCameraData CameraData { get; set; }
@@ -22,7 +22,7 @@ internal class TempRenderBatcher : IRenderBatcher
     public TempRenderBatcher(RenderBase renderBase)
     {
         Camera = new GpuArray<GpuCameraData>(renderBase.vk, renderBase.deviceQ, 1);
-        TransformIds = new GpuArray<uint>(renderBase.vk, renderBase.deviceQ, 1);
+        TransformIds = new GpuArray<int>(renderBase.vk, renderBase.deviceQ, 1);
         Transforms = new GpuArray<Matrix4x4>(renderBase.vk, renderBase.deviceQ, 1);
     }
 
@@ -55,8 +55,8 @@ internal class TempRenderBatcher : IRenderBatcher
             else
                 _rendersToCount.Add((current = _tempRenders[i].rend, 1));
 
-            trs[(uint)i] = _tempRenders[i].matrix;
-            ids[(uint)i] = (uint)i;
+            trs[i] = _tempRenders[i].matrix;
+            ids[i] = i;
         }
 
         _tempRenders.Clear();

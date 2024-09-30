@@ -5,14 +5,8 @@ using System.Threading.Tasks;
 
 namespace DeltaEditor;
 
-internal class AvaloniaThreadGetter : IUIThreadGetter
+internal class AvaloniaThreadGetter : IThreadGetter
 {
     private Func<Action, Task>? _thread;
-    public Func<Action, Task>? Thread
-    {
-        get
-        {
-            return _thread ??= static x => Dispatcher.UIThread.InvokeAsync(x, DispatcherPriority.Input).GetTask();
-        }
-    }
+    public Func<Action, Task>? Thread => _thread ??= static x => Dispatcher.UIThread.InvokeAsync(x, DispatcherPriority.Input).GetTask();
 }

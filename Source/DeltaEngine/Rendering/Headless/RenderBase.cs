@@ -19,11 +19,9 @@ internal class RenderBase : IDisposable
 
     public readonly DescriptorPool descriptorPool;
 
-    public readonly PipelineLayout pipelineLayout;
-
     public readonly RenderPass renderPass;
 
-    public readonly CommonDescriptorSetLayouts descriptorSetLayouts;
+    public readonly SimpleShaderLayouts descriptorSetLayouts;
 
     private const string RendererName = "Delta Renderer";
 
@@ -55,9 +53,7 @@ internal class RenderBase : IDisposable
 
         descriptorPool = RenderHelper.CreateDescriptorPool(vk, deviceQ);
 
-        descriptorSetLayouts = new CommonDescriptorSetLayouts(vk, deviceQ);
-
-        pipelineLayout = RenderHelper.CreatePipelineLayout(vk, deviceQ, descriptorSetLayouts.Layouts);
+        descriptorSetLayouts = new SimpleShaderLayouts(vk, deviceQ);
 
         renderPass = RenderHelper.CreateRenderPass(vk, deviceQ, Format, RenderPassFinalLayout);
     }
@@ -77,7 +73,6 @@ internal class RenderBase : IDisposable
     public unsafe void Dispose()
     {
         vk.DestroyRenderPass(deviceQ, renderPass, null);
-        vk.DestroyPipelineLayout(deviceQ, pipelineLayout, null);
         descriptorSetLayouts.Dispose();
         vk.DestroyDescriptorPool(deviceQ, descriptorPool, null);
         deviceQ.Dispose();

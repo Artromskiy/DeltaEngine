@@ -1,4 +1,5 @@
 using Arch.Core;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Delta.Assets;
@@ -24,12 +25,11 @@ internal partial class GuidAssetNodeControl : InspectorNode
         _nodeData = nodeData;
         _guidData = _nodeData.ChildData(_nodeData.FieldNames[0]);
         _assetType = _nodeData.FieldType.GenericTypeArguments[0];
-        _guidProxy = (IGuidAssetProxy)Activator.CreateInstance(typeof(GuidAssetProxy<>).MakeGenericType(_assetType))!;
+        _guidProxy = CreateProxy(_assetType);
     }
 
-    public override void SetLabelColor(IBrush brush) { }
 
-    public override bool UpdateData(ref EntityReference entity, IRuntimeContext ctx)
+    public override bool UpdateData(ref EntityReference entity)
     {
         if (!ClipVisible)
             return false;
@@ -39,7 +39,7 @@ internal partial class GuidAssetNodeControl : InspectorNode
             _guidData.SetData(ref entity, _guidToSet!.Value);
             _guidToSet = null;
         }
-        GuidLabel.Content = _guidProxy.GetName(_nodeData, ref entity, ctx);
+        GuidLabel.Content = _guidProxy.GetName(ref entity, _nodeData);
         NameLabel.Content = _nodeData.FieldName;
         return changed;
     }
@@ -47,28 +47,66 @@ internal partial class GuidAssetNodeControl : InspectorNode
 
     private void OnSelectAssetClick(object? sender, RoutedEventArgs e)
     {
-        if (Program.RuntimeLoader == null)
-            return;
-        Program.RuntimeLoader.OnUIThread += OpenAssetSearch;
-        void OpenAssetSearch(IRuntimeContext ctx)
-        {
-            AssetSearchControl.Instance.OpenAssetSearch(ctx, _assetType, guid =>
-            {
-                _guidToSet = guid;
-                // in case we somehow scrolled out and field will not be updated as it's out of render viewport
-                Focus();
-            });
-        }
+        IColorMarkable.MarkedNode = this;
+
+        FlyoutSearchControl.Instance.OpenAssetSearch(GuidLabel, _guidProxy.GetSearchVMs(),
+            guid => _guidToSet = ((SearchFlyoutViewModel<Guid>)guid).Data);
     }
 
 
-    private readonly struct GuidAssetProxy<T> : IGuidAssetProxy where T: class, IAsset
+    private static IGuidAssetProxy CreateProxy(Type type)
     {
-        public string GetName(NodeData nodeData, ref EntityReference entityRef, IRuntimeContext ctx)=> nodeData.GetData<GuidAsset<T>>(ref entityRef).ToString();
+        var genericProxy = typeof(GenericGuidAssetProxy<>);
+        return (IGuidAssetProxy)Activator.CreateInstance(genericProxy.MakeGenericType(type))!;
+    }
+
+    private readonly struct GenericGuidAssetProxy<T> : IGuidAssetProxy where T : class, IAsset
+    {
+        public readonly ISearchFlyoutViewModel[] GetSearchVMs()
+        {
+            var assets = IRuntimeContext.Current.AssetImporter.GetAllAssets<T>();
+            int count = assets.Length;
+            ISearchFlyoutViewModel[] guids = new ISearchFlyoutViewModel[count];
+            for (int i = 0; i < count; i++)
+                guids[i] = new SearchFlyoutViewModel<Guid>(assets[i].guid, assets[i].GetAssetNameOrDefault());
+            return guids;
+        }
+        public readonly string GetName(ref EntityReference entityRef, NodeData nodeData)
+        {
+            var data = nodeData.GetData<GuidAsset<T>>(ref entityRef);
+            return data.GetAssetNameOrDefault();
+        }
     }
 
     private interface IGuidAssetProxy
     {
-        public string GetName(NodeData nodeData, ref EntityReference entityRef, IRuntimeContext ctx);
+        ISearchFlyoutViewModel[] GetSearchVMs();
+        public string GetName(ref EntityReference entityRef, NodeData nodeData);
+    }
+
+    private void UserControl_PointerEntered(object? sender, PointerEventArgs e)
+    {
+        if (IColorMarkable.MarkedNode == this)
+            return;
+        GuidLabel.BorderBrush = Tools.Colors.DefaultBorderOverBrush;
+        SelectAssetButton.BorderBrush = Tools.Colors.DefaultBorderOverBrush;
+    }
+
+    private void UserControl_PointerExited(object? sender, PointerEventArgs e)
+    {
+        if (IColorMarkable.MarkedNode == this)
+            return;
+        GuidLabel.BorderBrush = Tools.Colors.DefaultBorderBrush;
+        SelectAssetButton.BorderBrush = Tools.Colors.DefaultBorderBrush;
+    }
+
+    public override void SetLabelColor(IBrush brush)
+    {
+        NameLabel.Foreground = brush;
+    }
+    public override void SetBorderColor(IBrush brush)
+    {
+        GuidLabel.BorderBrush = brush;
+        SelectAssetButton.BorderBrush = brush;
     }
 }
