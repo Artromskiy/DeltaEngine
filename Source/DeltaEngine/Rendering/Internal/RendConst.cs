@@ -8,9 +8,9 @@ internal struct RendConst
     public const uint MatSet = 1;
     public const uint ScnSet = 2;
 
-    public const uint CameraBinding = 0;
-    public const uint MaterialBinding = 0;
-    public const uint MatricesBinding = 0;
-    public const uint IdsBinding = 1;
-    public const uint BordersBinding = 2;
+    public const int CameraBinding = 0;
+    public const int MaterialBinding = 0;
+    public const int MatricesBinding = 0;
+    public const int IdsBinding = 1;
+    public const int BordersBinding = 2;
 }

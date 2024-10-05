@@ -1,6 +1,7 @@
 ﻿using Delta.Assets;
 using Delta.Rendering.Collections;
 using Delta.Rendering.Internal;
+using Delta.Runtime;
 using Delta.Utilities;
 using Silk.NET.Core;
 using Silk.NET.Core.Contexts;
@@ -91,6 +92,13 @@ internal static unsafe class RenderHelper
     }
 
     public static void CopyCmd<T>(Vk vk, GpuArray<T> source, DynamicBuffer destination, CommandBuffer cmdBuffer) where T : unmanaged
+    {
+        destination.EnsureSize(source.Size);
+        BufferCopy copy = new(0, 0, (ulong)Math.Min(source.Size, destination.Size));
+        vk.CmdCopyBuffer(cmdBuffer, source.Buffer, destination.GetBuffer(), 1, &copy);
+    }
+
+    public static void CopyCmd(Vk vk, GpuByteArray source, DynamicBuffer destination, CommandBuffer cmdBuffer)
     {
         destination.EnsureSize(source.Size);
         BufferCopy copy = new(0, 0, (ulong)Math.Min(source.Size, destination.Size));
@@ -671,6 +679,43 @@ internal static unsafe class RenderHelper
         return ImmutableArray.Create(imageViews);
     }
 
+    public static unsafe DescriptorSetLayout CreateDescriptorSetLayout(ReadOnlySpan<int> bindingsArray)
+    {
+        var renderData = IRuntimeContext.Current.GraphicsModule.RenderData;
+        var vk = renderData.vk;
+        var deviceQ = renderData.deviceQ;
+        const ShaderStageFlags StageFlags = ShaderStageFlags.VertexBit | ShaderStageFlags.FragmentBit;
+        var bindings = stackalloc DescriptorSetLayoutBinding[bindingsArray.Length];
+        for (int i = 0; i < bindingsArray.Length; i++)
+            bindings[i] = new(checked((uint)bindingsArray[i]), DescriptorType.StorageBuffer, 1, StageFlags);
+        DescriptorSetLayoutCreateInfo createInfo = new()
+        {
+            SType = StructureType.DescriptorSetLayoutCreateInfo,
+            BindingCount = (uint)bindingsArray.Length,
+            PBindings = bindings,
+        };
+        _ = vk.CreateDescriptorSetLayout(deviceQ, &createInfo, null, out DescriptorSetLayout setLayout);
+        return setLayout;
+    }
+
+    public unsafe static PipelineLayout CreatePipelineLayout(ReadOnlySpan<DescriptorSetLayout> layouts)
+    {
+        var renderData = IRuntimeContext.Current.GraphicsModule.RenderData;
+        var vk = renderData.vk;
+        var deviceQ = renderData.deviceQ;
+        PipelineLayout result;
+        fixed (DescriptorSetLayout* layoutsPtr = layouts)
+        {
+            PipelineLayoutCreateInfo pipelineLayoutInfo = new()
+            {
+                SType = StructureType.PipelineLayoutCreateInfo,
+                SetLayoutCount = (uint)layouts.Length,
+                PSetLayouts = layoutsPtr,
+            };
+            _ = vk.CreatePipelineLayout(deviceQ, pipelineLayoutInfo, null, out result);
+        }
+        return result;
+    }
 
     public static ImmutableArray<Framebuffer> CreateFramebuffers(Vk vk, Device device, ReadOnlySpan<ImageView> imageViews, RenderPass renderPass, int width, int height)
     {

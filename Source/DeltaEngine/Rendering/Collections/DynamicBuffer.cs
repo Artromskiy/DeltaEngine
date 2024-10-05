@@ -77,6 +77,15 @@ internal class DynamicBuffer
         CopyBuffer(array.Buffer, sourceSize, _buffer, sourceSize);
     }
 
+    [Imp(Inl)]
+    public void UpdateFrom(GpuByteArray array)
+    {
+        var sourceSize = array.Size;
+        if (sourceSize > _size)
+            Resize(sourceSize);
+        CopyBuffer(array.Buffer, sourceSize, _buffer, sourceSize);
+    }
+
     public unsafe void EnsureSize(int size)
     {
         int newSize = (int)BitOperations.RoundUpToPowerOf2((uint)size);

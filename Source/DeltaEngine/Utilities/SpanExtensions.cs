@@ -155,7 +155,7 @@ public static class SpanExtensions
         return lastNonDuplicate;
     }
 
-    public static int Distinct<T>(this Span<T> items, EqualityComparer<T> comparer)
+    public static int Distinct<T>(this Span<T> items, IEqualityComparer<T> comparer)
     {
         int count = items.Length;
         int lastNonDuplicate = 0;

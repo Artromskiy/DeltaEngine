@@ -21,8 +21,6 @@ internal class RenderBase : IDisposable
 
     public readonly RenderPass renderPass;
 
-    public readonly SimpleShaderLayouts descriptorSetLayouts;
-
     private const string RendererName = "Delta Renderer";
 
     private static readonly string[] _validationLayers = ["VK_LAYER_KHRONOS_validation"];
@@ -53,8 +51,6 @@ internal class RenderBase : IDisposable
 
         descriptorPool = RenderHelper.CreateDescriptorPool(vk, deviceQ);
 
-        descriptorSetLayouts = new SimpleShaderLayouts(vk, deviceQ);
-
         renderPass = RenderHelper.CreateRenderPass(vk, deviceQ, Format, RenderPassFinalLayout);
     }
     protected virtual int DeviceSelector(PhysicalDevice device)
@@ -73,7 +69,6 @@ internal class RenderBase : IDisposable
     public unsafe void Dispose()
     {
         vk.DestroyRenderPass(deviceQ, renderPass, null);
-        descriptorSetLayouts.Dispose();
         vk.DestroyDescriptorPool(deviceQ, descriptorPool, null);
         deviceQ.Dispose();
         vk.DestroyInstance(instance, null);

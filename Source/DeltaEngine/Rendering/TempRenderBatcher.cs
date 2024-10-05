@@ -1,6 +1,7 @@
 ﻿using Delta.ECS.Components;
 using Delta.Rendering.Collections;
 using Delta.Rendering.Headless;
+using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -18,6 +19,14 @@ internal class TempRenderBatcher : IRenderBatcher
     private readonly List<(Render rend, Matrix4x4 matrix)> _tempRenders = [];
 
     public GpuCameraData CameraData { get; set; }
+
+    public ReadOnlySpan<GpuByteArray> Buffers => throw new NotImplementedException();
+
+    public ReadOnlySpan<DescriptorSetLayout> Layouts => throw new NotImplementedException();
+
+    public ReadOnlySpan<int> Bindings => throw new NotImplementedException();
+
+    public PipelineLayout PipelineLayout => throw new NotImplementedException();
 
     public TempRenderBatcher(RenderBase renderBase)
     {

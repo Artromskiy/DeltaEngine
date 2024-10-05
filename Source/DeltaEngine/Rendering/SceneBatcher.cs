@@ -4,6 +4,7 @@ using Delta.ECS;
 using Delta.ECS.Components;
 using Delta.Rendering.Collections;
 using Delta.Runtime;
+using Silk.NET.Vulkan;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -13,13 +14,24 @@ using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace Delta.Rendering;
+
+//internal class SceneBatcher : GenericBatcher<Matrix4x4, int, GpuCameraData>, IRenderBatcher
 internal class SceneBatcher : IRenderBatcher
 {
     private readonly Stack<int> _free;
 
-    public GpuArray<GpuCameraData> Camera { get; private set; }
-    public GpuArray<Matrix4x4> Transforms { get; private set; }
-    public GpuArray<int> TransformIds { get; private set; }
+    private readonly GpuArray<GpuCameraData> _camera;
+    private readonly GpuArray<Matrix4x4> _transforms;
+    private readonly GpuArray<int> _transformIds;
+
+    private readonly GpuByteArray[] _buffers;
+    private readonly DescriptorSetLayout[] _layouts;
+    private readonly int[] _bindings;
+    private readonly PipelineLayout _pipelineLayout;
+    public ReadOnlySpan<GpuByteArray> Buffers => _buffers;
+    public ReadOnlySpan<DescriptorSetLayout> Layouts => _layouts;
+    public ReadOnlySpan<int> Bindings => _bindings;
+    public PipelineLayout PipelineLayout => _pipelineLayout;
 
     // TODO
     private readonly GpuArray<int> TransformIdsToTransfer; // send to compute to transfer new trs from host to device
@@ -53,33 +65,46 @@ internal class SceneBatcher : IRenderBatcher
 
     public SceneBatcher()
     {
-        var renderBase = IRuntimeContext.Current.GraphicsModule.RenderData;
-        Camera = new(1);
-        TransformIds = new(1);
-        Transforms = new(1);
+        _buffers =
+        [
+            _transforms = new(1),
+            _transformIds = new(1),
+            _camera = new(1),
+        ];
+        _layouts =
+        [
+            RenderHelper.CreateDescriptorSetLayout([0, 1]),
+            RenderHelper.CreateDescriptorSetLayout([0]),
+            RenderHelper.CreateDescriptorSetLayout([0]),
+        ];
+        _bindings =
+        [
+            0,1,0
+        ];
+        _pipelineLayout = RenderHelper.CreatePipelineLayout(Layouts);
 
         TransformIdsToTransfer = new(1);
 
         _transferIndicesSet = [];
         _forceTrsWrite = [];
-        _free = new Stack<int>(Transforms.Length);
-        for (int i = Transforms.Length - 1; i >= 0; i--)
+        _free = new Stack<int>(_transforms.Length);
+        for (int i = _transforms.Length - 1; i >= 0; i--)
             _free.Push(i);
 
         _removeEntity = new RemoveEntity(_free, _rendGroupData);
         _removeRender = new RemoveRender(_free, _rendGroupData);
         _addRender = new AddRender(_free, _rendGroupData, _forceTrsWrite);
         _changeRender = new ChangeRender(_rendGroupData);
-        _sortWriteRender = new SortWriteRender(TransformIds, _rendGroupData);
-        _writeTrs = new WriteTrs(Transforms, _transferIndicesSet, _forceTrsWrite);
-        _writeCamera = new WriteCamera(Camera);
+        _sortWriteRender = new SortWriteRender(_transformIds, _rendGroupData);
+        _writeTrs = new WriteTrs(_transforms, _transferIndicesSet, _forceTrsWrite);
+        _writeCamera = new WriteCamera(_camera);
     }
 
     public void Dispose()
     {
-        Camera.Dispose();
-        TransformIds.Dispose();
-        Transforms.Dispose();
+        _camera.Dispose();
+        _transformIds.Dispose();
+        _transforms.Dispose();
         TransformIdsToTransfer.Dispose();
         _forceTrsWrite.Dispose();
         _renders.Clear();
@@ -133,10 +158,10 @@ internal class SceneBatcher : IRenderBatcher
         var delta = countToAdd - wholeFree;
         if (delta > 0)
         {
-            var length = Transforms.Length;
+            var length = _transforms.Length;
             var newLength = (int)BitOperations.RoundUpToPowerOf2((uint)(length + delta));
-            Transforms.Resize(newLength);
-            TransformIds.Resize(newLength);
+            _transforms.Resize(newLength);
+            _transformIds.Resize(newLength);
             _free.EnsureCapacity(newLength);
             for (int i = newLength - 1; i >= length; i--)
                 _free.Push(i);

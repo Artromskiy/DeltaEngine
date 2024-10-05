@@ -16,7 +16,7 @@ internal class Frame : IDisposable
 
     private CommandBuffer _commandBuffer;
 
-    private readonly Dictionary<IRenderBatcher, DescriptorSets> _batchedSets = [];
+    private readonly Dictionary<IRenderBatcher, DynamicDescriptorSets> _batchedSets = [];
 
     private Semaphore _batchersSemaphore;
 
@@ -64,15 +64,15 @@ internal class Frame : IDisposable
     public void CopyBatchersData(CommandBuffer commandBuffer)
     {
         foreach (var item in _batchedSets)
-            item.Value.CopyBatcherData(item.Key, commandBuffer);
+            item.Value.CopyBatcherData(commandBuffer);
     }
     public void Sync() => _rendererBase.vk.WaitForFences(_rendererBase.deviceQ, 1, _renderFinishedFence, true, ulong.MaxValue);
     public bool Synced() => _rendererBase.vk.GetFenceStatus(_rendererBase.deviceQ, _renderFinishedFence) == Result.Success;
     public void AddSemaphore(Semaphore semaphore) => _batchersSemaphore = semaphore;
     public void AddBatcher(IRenderBatcher renderBatcher)
     {
-        var sets = new DescriptorSets(_rendererBase.vk, _rendererBase.deviceQ,
-            _rendererBase.descriptorPool, _rendererBase.descriptorSetLayouts);
+        var sets = new DynamicDescriptorSets(_rendererBase.vk, _rendererBase.deviceQ,
+            _rendererBase.descriptorPool, renderBatcher);
         _batchedSets.Add(renderBatcher, sets);
     }
     public void RemoveBatcher(IRenderBatcher renderBatcher)
@@ -95,7 +95,7 @@ internal class Frame : IDisposable
             item.Value.UpdateDescriptorSets();
         BeginRecordCommandBuffer(imageIndex);
         foreach (var item in _batchedSets)
-            RecordCommandBuffer(item.Value);
+            RecordCommandBuffer(item.Key, item.Value);
         EndRecordCommandBuffer();
 
         var buffer = _commandBuffer;
@@ -147,7 +147,7 @@ internal class Frame : IDisposable
         _rendererBase.vk.CmdSetScissor(_commandBuffer, 0, 1, &renderRect);
     }
 
-    private unsafe void RecordCommandBuffer(DescriptorSets frameDescriptorSets)
+    private unsafe void RecordCommandBuffer(IRenderBatcher batcher, DynamicDescriptorSets descriptorSets)
     {
         Guid currentShader = Guid.Empty;
         //Guid currentMaterial = Guid.Empty;
@@ -155,10 +155,10 @@ internal class Frame : IDisposable
         VertexAttribute attributeMask = (VertexAttribute)(-1);
         uint indicesCount = 0;
 
-        frameDescriptorSets.BindDescriptorSets(_commandBuffer);
+        descriptorSets.BindDescriptorSets(_commandBuffer);
 
         int firstInstance = 0;
-        var renderList = frameDescriptorSets.RenderList;
+        var renderList = batcher.RendGroups;
         var length = renderList.Length;
         for (int i = 0; i < length; firstInstance += renderList[i].count, i++)
         {
@@ -171,7 +171,7 @@ internal class Frame : IDisposable
 
             if (itemShader.guid != currentShader) // shader switch
             {
-                (var pipeline, attributeMask) = _renderAssets.GetPipelineAndAttributes(itemShader, frameDescriptorSets.descriptorSetLayouts.pipelineLayout);
+                (var pipeline, attributeMask) = _renderAssets.GetPipelineAndAttributes(itemShader, batcher.PipelineLayout);
                 _rendererBase.vk.CmdBindPipeline(_commandBuffer, PipelineBindPoint.Graphics, pipeline);
                 currentShader = itemShader.guid;
             }

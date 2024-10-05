@@ -8,10 +8,10 @@ internal class BindedDynamicBuffer : DynamicBuffer
     private readonly uint _binding;
     private readonly DescriptorType _descriptorType;
 
-    public BindedDynamicBuffer(Vk vk, DeviceQueues deviceQ, DescriptorSet descriptorSet, uint binding, DescriptorType descriptorType) : base(vk, deviceQ, 1)
+    public BindedDynamicBuffer(Vk vk, DeviceQueues deviceQ, DescriptorSet descriptorSet, int binding, DescriptorType descriptorType) : base(vk, deviceQ, 1)
     {
         _descriptorSet = descriptorSet;
-        _binding = binding;
+        _binding = checked((uint)binding);
         _descriptorType = descriptorType;
     }
 

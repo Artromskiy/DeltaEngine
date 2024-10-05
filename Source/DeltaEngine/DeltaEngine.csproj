@@ -64,6 +64,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Depend\Arch\src\Arch\Arch.csproj" />
     <ProjectReference Include="..\DeltaGen\DeltaGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\DeltaGenInternal\DeltaGenInternal.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
   
   <ItemGroup>
