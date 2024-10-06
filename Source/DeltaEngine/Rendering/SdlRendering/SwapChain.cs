@@ -60,9 +60,7 @@ internal class SwapChain : IDisposable
             OldSwapchain = default,
             Flags = SwapchainCreateFlagsKHR.None
         };
-        SwapchainKHR swapchainKHR;
-        _ = khrSw.CreateSwapchain(data.deviceQ, creatInfo, null, &swapchainKHR);
-        swapChain = swapchainKHR;
+        _ = khrSw.CreateSwapchain(data.deviceQ, creatInfo, null, out swapChain);
         uint imCount = (uint)imageCount;
         _ = khrSw.GetSwapchainImages(data.deviceQ, swapChain, &imCount, null);
         Span<Image> imageSpan = stackalloc Image[(int)imCount];

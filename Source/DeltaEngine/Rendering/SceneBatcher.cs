@@ -4,7 +4,7 @@ using Delta.ECS;
 using Delta.ECS.Components;
 using Delta.Rendering.Collections;
 using Delta.Runtime;
-using Silk.NET.Vulkan;
+using Delta.Utilities;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -15,24 +15,17 @@ using System.Threading;
 
 namespace Delta.Rendering;
 
-//internal class SceneBatcher : GenericBatcher<Matrix4x4, int, GpuCameraData>, IRenderBatcher
-internal class SceneBatcher : IRenderBatcher
+internal class SceneBatcher : GenericBatcher<Matrix4x4, int, int, GpuCameraData>
 {
     private readonly Stack<int> _free;
 
-    private readonly GpuArray<GpuCameraData> _camera;
-    private readonly GpuArray<Matrix4x4> _transforms;
-    private readonly GpuArray<int> _transformIds;
+    private readonly int[][] _bindings = [[0, 1], [0], [0]];
+    public override JaggedSpan<int> DescriptorSetBindings => _bindings;
 
-    private readonly GpuByteArray[] _buffers;
-    private readonly DescriptorSetLayout[] _layouts;
-    private readonly int[] _bindings;
-    private readonly PipelineLayout _pipelineLayout;
-    public ReadOnlySpan<GpuByteArray> Buffers => _buffers;
-    public ReadOnlySpan<DescriptorSetLayout> Layouts => _layouts;
-    public ReadOnlySpan<int> Bindings => _bindings;
-    public PipelineLayout PipelineLayout => _pipelineLayout;
-
+    private GpuArray<Matrix4x4> Trs => _bufferT0;
+    private GpuArray<int> TrsIds => _bufferT1;
+    private GpuArray<int> Materials => _bufferT2;
+    private GpuArray<GpuCameraData> Camera => _bufferT3;
     // TODO
     private readonly GpuArray<int> TransformIdsToTransfer; // send to compute to transfer new trs from host to device
 
@@ -65,46 +58,28 @@ internal class SceneBatcher : IRenderBatcher
 
     public SceneBatcher()
     {
-        _buffers =
-        [
-            _transforms = new(1),
-            _transformIds = new(1),
-            _camera = new(1),
-        ];
-        _layouts =
-        [
-            RenderHelper.CreateDescriptorSetLayout([0, 1]),
-            RenderHelper.CreateDescriptorSetLayout([0]),
-            RenderHelper.CreateDescriptorSetLayout([0]),
-        ];
-        _bindings =
-        [
-            0,1,0
-        ];
-        _pipelineLayout = RenderHelper.CreatePipelineLayout(Layouts);
-
         TransformIdsToTransfer = new(1);
 
         _transferIndicesSet = [];
         _forceTrsWrite = [];
-        _free = new Stack<int>(_transforms.Length);
-        for (int i = _transforms.Length - 1; i >= 0; i--)
+        _free = new Stack<int>(Trs.Length);
+        for (int i = Trs.Length - 1; i >= 0; i--)
             _free.Push(i);
 
         _removeEntity = new RemoveEntity(_free, _rendGroupData);
         _removeRender = new RemoveRender(_free, _rendGroupData);
         _addRender = new AddRender(_free, _rendGroupData, _forceTrsWrite);
         _changeRender = new ChangeRender(_rendGroupData);
-        _sortWriteRender = new SortWriteRender(_transformIds, _rendGroupData);
-        _writeTrs = new WriteTrs(_transforms, _transferIndicesSet, _forceTrsWrite);
-        _writeCamera = new WriteCamera(_camera);
+        _sortWriteRender = new SortWriteRender(TrsIds, _rendGroupData);
+        _writeTrs = new WriteTrs(Trs, _transferIndicesSet, _forceTrsWrite);
+        _writeCamera = new WriteCamera(Camera);
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
-        _camera.Dispose();
-        _transformIds.Dispose();
-        _transforms.Dispose();
+        Camera.Dispose();
+        TrsIds.Dispose();
+        Trs.Dispose();
         TransformIdsToTransfer.Dispose();
         _forceTrsWrite.Dispose();
         _renders.Clear();
@@ -118,7 +93,7 @@ internal class SceneBatcher : IRenderBatcher
         //     _free.Enqueue(i);
     }
 
-    public void Execute()
+    public override void Execute()
     {
         _forceTrsWrite.Clear();
         _forceTrsWrite.TrimExcess(); // we assume it's better to free this, as large changes will create large internal array
@@ -135,7 +110,7 @@ internal class SceneBatcher : IRenderBatcher
         _writeCamera.Execute();
     }
 
-    public ReadOnlySpan<(Render rend, int count)> RendGroups
+    public override ReadOnlySpan<(Render rend, int count)> RendGroups
     {
         get
         {
@@ -158,10 +133,10 @@ internal class SceneBatcher : IRenderBatcher
         var delta = countToAdd - wholeFree;
         if (delta > 0)
         {
-            var length = _transforms.Length;
+            var length = Trs.Length;
             var newLength = (int)BitOperations.RoundUpToPowerOf2((uint)(length + delta));
-            _transforms.Resize(newLength);
-            _transformIds.Resize(newLength);
+            Trs.Resize(newLength);
+            TrsIds.Resize(newLength);
             _free.EnsureCapacity(newLength);
             for (int i = newLength - 1; i >= length; i--)
                 _free.Push(i);

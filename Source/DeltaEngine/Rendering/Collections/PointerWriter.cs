@@ -9,12 +9,12 @@ namespace Delta.Rendering.Collections;
 /// </summary>
 /// <param name="length"></param>
 /// <param name="pData"></param>
-public readonly unsafe struct PointerWriter<T>(nint pData, int length)
+public readonly struct PointerWriter<T>(nint pData, int length)
 {
     private readonly nint _pData = pData;
     private readonly int _length = length;
 
-    public readonly ref T this[int index]
+    public readonly unsafe ref T this[int index]
     {
         [Imp(Inl)]
         get
@@ -23,5 +23,5 @@ public readonly unsafe struct PointerWriter<T>(nint pData, int length)
             return ref Unsafe.Add(ref Unsafe.AsRef<T>(_pData.ToPointer()), index);
         }
     }
-    public ReadOnlySpan<T> Data => new(_pData.ToPointer(), _length);
+    public unsafe ReadOnlySpan<T> Data => new(_pData.ToPointer(), _length);
 }

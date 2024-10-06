@@ -18,11 +18,18 @@ $$"""
     internal abstract class {{Name}}<{{JoinRange(count, t => $"T{t}", ",")}}> : RenderBatcher
     {{LoopRange(count, t => $"where T{t} : unmanaged")}}    
     {
+        {{LoopRange(count, t => $"protected readonly GpuArray<T{t}> _bufferT{t} = new GpuArray<T{t}>(1);")}}
+
         public override ReadOnlySpan<GpuByteArray> Buffers => _buffers;
-        private readonly GpuByteArray[] _buffers =
-        [
-            {{LoopRange(count, t => $"new GpuArray<T{t}>(1),")}}
-        ];
+        private readonly GpuByteArray[] _buffers;
+
+        public {{Name}}() : base()
+        {
+            _buffers = 
+            [
+                {{LoopRange(count, t => $"_bufferT{t},")}}
+            ];
+        }
     }
 """
 )}}

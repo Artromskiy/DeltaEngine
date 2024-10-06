@@ -1,14 +1,15 @@
-﻿using Delta.ECS;
+﻿using Arch.Core;
+using Delta.ECS;
 using Delta.Rendering;
 using System;
 using System.Diagnostics;
+using Schedulers;
 
 namespace Delta.Runtime;
 
 public sealed class Runtime : IRuntime, IDisposable
 {
     public IRuntimeContext Context { get; }
-
     private bool _disposed = false;
 
     public Runtime(IProjectPath projectPath)
@@ -23,11 +24,20 @@ public sealed class Runtime : IRuntime, IDisposable
 
         graphics.AddRenderBatcher(new SceneBatcher());
     }
+    public Runtime(IRuntimeContext context)
+    {
+        Context = context;
+        IRuntimeContext.Current = Context;
+        IRuntimeContext.Current.GraphicsModule.AddRenderBatcher(new SceneBatcher());
+    }
 
     public void Run()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        JobScheduler.JobScheduler.Instance ??= new JobScheduler.JobScheduler("Arch.Multithreading");
+        World.SharedJobScheduler ??= new JobScheduler(new JobScheduler.Config()
+        {
+            ThreadPrefixName = "Arch.Multithreading",
+        });
         try
         {
             IRuntimeContext.Current.SceneManager.CurrentScene.Run();
@@ -43,8 +53,8 @@ public sealed class Runtime : IRuntime, IDisposable
 
     public void Dispose()
     {
-        JobScheduler.JobScheduler.Instance.Dispose();
-        JobScheduler.JobScheduler.Instance = null!;
+        World.SharedJobScheduler?.Dispose();
+        World.SharedJobScheduler = null!;
         _disposed = true;
     }
 }

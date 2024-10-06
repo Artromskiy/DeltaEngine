@@ -3,7 +3,7 @@ using Silk.NET.Vulkan.Extensions.KHR;
 using System;
 
 namespace Delta.Rendering.Internal;
-internal class Gpu
+internal readonly struct Gpu
 {
     private readonly PhysicalDevice physicalDevice;
     private readonly QueueFamilyProperties[] queueFamilies;

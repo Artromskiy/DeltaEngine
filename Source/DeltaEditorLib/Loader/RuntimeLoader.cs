@@ -37,10 +37,13 @@ public class RuntimeLoader
         _compilerModule = new CompilerModule(_projectPath);
 
         _compilerModule.Recompile();
-        _runtime = new Runtime(_projectPath);
+
+        var ctx = RuntimeContextFactory.CreateHeadlessContext(_projectPath);
+        _runtime = new Runtime(ctx);
+
         _executionModule = new RuntimeScheduler(_runtime, _threadGetter);
         VCShader.Init();
-        DefaultsImporter<MeshData>.Import(_runtime.Context, Path.Combine(Directory.GetCurrentDirectory(), "Import", "Models"));
+        DefaultsImporter<MeshData>.Import(Path.Combine(Directory.GetCurrentDirectory(), "Import", "Models"));
     }
 
     public void ReloadRuntime()
@@ -50,7 +53,8 @@ public class RuntimeLoader
 
         _compilerModule.Recompile();
 
-        _runtime = new Runtime(_projectPath);
+        var ctx = RuntimeContextFactory.CreateHeadlessContext(_projectPath);
+        _runtime = new Runtime(ctx);
         _executionModule = new RuntimeScheduler(_runtime, _threadGetter);
     }
 

@@ -1,6 +1,4 @@
-﻿using Delta.Assets;
-
-namespace Delta.Assets.Defaults;
+﻿namespace Delta.Assets.Defaults;
 public class Defaults
 {
     public static MeshData Delta => DeltaMesh.MeshData;

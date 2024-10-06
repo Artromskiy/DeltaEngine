@@ -93,7 +93,7 @@ internal class Frame : IDisposable
 
         foreach (var item in _batchedSets)
             item.Value.UpdateDescriptorSets();
-        BeginRecordCommandBuffer(imageIndex);
+        BeginRecordCommandBuffer(checked((int)imageIndex));
         foreach (var item in _batchedSets)
             RecordCommandBuffer(item.Key, item.Value);
         EndRecordCommandBuffer();
@@ -133,7 +133,7 @@ internal class Frame : IDisposable
             _ = res;
     }
 
-    private unsafe void BeginRecordCommandBuffer(uint imageIndex)
+    private unsafe void BeginRecordCommandBuffer(int imageIndex)
     {
         CommandBufferBeginInfo beginInfo = new(StructureType.CommandBufferBeginInfo);
         ClearValue clearColor = new(new ClearColorValue(0.05f, 0.05f, 0.05f, 1));
@@ -142,7 +142,7 @@ internal class Frame : IDisposable
         {
             SType = StructureType.RenderPassBeginInfo,
             RenderPass = _rendererBase.renderPass,
-            Framebuffer = _swapChain.frameBuffers[(int)imageIndex],
+            Framebuffer = _swapChain.frameBuffers[imageIndex],
             ClearValueCount = 1,
             PClearValues = &clearColor,
             RenderArea = renderRect
@@ -170,10 +170,16 @@ internal class Frame : IDisposable
         uint indicesCount = 0;
 
         frameDescriptorSets.BindDescriptorSets(_commandBuffer);
-
         int firstInstance = 0;
-        foreach (var (rend, count) in batcher.RendGroups)
+        var renderList = batcher.RendGroups;
+        var length = renderList.Length;
+
+        for (int i = 0; i < length; firstInstance += renderList[i].count, i++)
         {
+            var (rend, count) = renderList[i];
+            if (!rend.IsValid)
+                continue;
+
             var itemShader = rend._shader;
             var itemMesh = rend.mesh;
 
@@ -194,9 +200,7 @@ internal class Frame : IDisposable
                 _rendererBase.vk.CmdBindIndexBuffer(_commandBuffer, indices, 0, IndexType.Uint32);
             }
             _rendererBase.vk.CmdDrawIndexed(_commandBuffer, indicesCount, (uint)count, 0, 0, (uint)firstInstance);
-            firstInstance += count;
         }
-
     }
 
     private void EndRecordCommandBuffer()

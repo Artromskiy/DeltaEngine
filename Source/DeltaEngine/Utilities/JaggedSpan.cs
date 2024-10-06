@@ -15,4 +15,6 @@ internal readonly ref struct JaggedSpan<T>
     }
 
     public readonly ReadOnlySpan<T> this[int index] => new(Unsafe.Add(ref _reference, (nint)(uint)index));
+
+    public static implicit operator JaggedSpan<T>(T[][] jaggedArray) => new(jaggedArray);
 }

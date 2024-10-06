@@ -26,7 +26,10 @@ internal class TempRenderBatcher : IRenderBatcher
 
     public ReadOnlySpan<int> Bindings => throw new NotImplementedException();
 
+    public ReadOnlySpan<int> Sets => throw new NotImplementedException();
+
     public PipelineLayout PipelineLayout => throw new NotImplementedException();
+
 
     public TempRenderBatcher(RenderBase renderBase)
     {

@@ -1,4 +1,5 @@
 ﻿using Delta.Rendering.Internal;
+using Delta.Runtime;
 using Silk.NET.Vulkan;
 using System;
 using System.Numerics;
@@ -17,7 +18,7 @@ internal class DynamicBuffer
     private Fence _copyFence;
     private CommandBuffer _cmdBuffer;
 
-    public bool ChangedBuffer { get; set; } = true;
+    public bool ChangedBuffer { get; protected set; } = true;
 
     private int _size;
     public int Size => _size;
@@ -28,7 +29,18 @@ internal class DynamicBuffer
         _deviceQ = deviceQ;
         _size = sizeBytes;
         CreateBuffer(ref _size, out _buffer, out _memory);
-        _copyFence = RenderHelper.CreateFence(vk, deviceQ, false);
+        _copyFence = RenderHelper.CreateFence(_vk, _deviceQ, false);
+        _cmdBuffer = RenderHelper.CreateCommandBuffer(_vk, _deviceQ, _deviceQ.GetCmdPool(QueueType.Transfer));
+    }
+
+    public DynamicBuffer(int sizeBytes)
+    {
+        var data = IRuntimeContext.Current.GraphicsModule.RenderData;
+        _vk = data.vk;
+        _deviceQ = data.deviceQ;
+        _size = sizeBytes;
+        CreateBuffer(ref _size, out _buffer, out _memory);
+        _copyFence = RenderHelper.CreateFence(_vk, _deviceQ, false);
         _cmdBuffer = RenderHelper.CreateCommandBuffer(_vk, _deviceQ, _deviceQ.GetCmdPool(QueueType.Transfer));
     }
 

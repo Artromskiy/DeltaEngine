@@ -175,6 +175,12 @@ internal static unsafe class RenderHelper
         return extensions;
     }
 
+    public static string[] GetVulkanExtensions(Silk.NET.Windowing.IWindow window)
+    {
+        byte** ptr = window.VkSurface!.GetRequiredExtensions(out var extensionsCount);
+        return SilkMarshal.PtrToStringArray((nint)ptr, (int)extensionsCount);
+    }
+
     public static SurfaceKHR CreateSurface(Sdl sdl, Window* window, Instance instance)
     {
         var nondispatchable = new VkNonDispatchableHandle();

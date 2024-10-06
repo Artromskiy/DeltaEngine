@@ -8,4 +8,6 @@ internal record DefaultRuntimeContext(
     : IRuntimeContext
 {
     public bool Running { get; set; }
+    public IRuntimeContext? PreviousContext { get; set; }
 }
+

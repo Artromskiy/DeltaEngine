@@ -3,44 +3,43 @@ using Delta.Utilities;
 using Silk.NET.SDL;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
+using Silk.NET.Windowing;
 using System;
 
 namespace Delta.Rendering.SdlRendering;
 
 internal class RenderBase : Headless.RenderBase, IDisposable
 {
-    public readonly Sdl sdl = Sdl.GetApi();
+    //public readonly Sdl sdl = Sdl.GetApi();
 
-    private unsafe Window* _window;
-    public unsafe Window* Window => _window == default ?
-        _window = RenderHelper.CreateWindow(sdl, appName) : _window;
+    public readonly IWindow _window;
 
     private SurfaceKHR? _surface;
-    public unsafe SurfaceKHR Surface => _surface ??=
-        RenderHelper.CreateSurface(sdl, Window, instance);
-
     private KhrSurface? _khrsf;
-    public KhrSurface Khrsf => _khrsf ??=
-        GetKhrsf();
-
     private SwapChainSupportDetails? _swapChainSupport;
-    public SwapChainSupportDetails SwapChainSupport => _swapChainSupport ??=
-        new SwapChainSupportDetails(gpu, Surface, Khrsf);
-
     private readonly ColorSpaceKHR _targetColorSpace = ColorSpaceKHR.SpaceAdobergbLinearExt;
-    public virtual SurfaceFormatKHR SurfaceFormat =>
-        RenderHelper.ChooseSwapSurfaceFormat(SwapChainSupport.Formats, new(base.Format, _targetColorSpace));
-
+    private readonly Format _targetFormat = Format.R8G8B8A8Unorm;
     private string[]? _instanceExtensions;
-    protected override unsafe ReadOnlySpan<string> InstanceExtensions => _instanceExtensions ??=
-        [.. base.InstanceExtensions, .. RenderHelper.GetSdlVulkanExtensions(sdl, Window)];
-
     private string[]? _deviceExtensions;
+    public unsafe SurfaceKHR Surface => _surface ??=
+        _window.VkSurface!.Create<nint>(new(instance.Handle), null).ToSurface();
+
+    public KhrSurface Khrsf => _khrsf ??= GetKhrsf();
+    public SwapChainSupportDetails SwapChainSupport => _swapChainSupport ??=
+        new(gpu, Surface, Khrsf);
+    public virtual SurfaceFormatKHR SurfaceFormat =>
+        RenderHelper.ChooseSwapSurfaceFormat(SwapChainSupport.Formats, new(_targetFormat, _targetColorSpace));
+    protected override unsafe ReadOnlySpan<string> InstanceExtensions => _instanceExtensions ??=
+        [.. base.InstanceExtensions, .. RenderHelper.GetVulkanExtensions(_window)];
     protected override ReadOnlySpan<string> DeviceExtensions => _deviceExtensions ??=
         [.. base.DeviceExtensions, KhrSwapchain.ExtensionName];
+    public override Format Format => SurfaceFormat.Format;
     protected override ImageLayout RenderPassFinalLayout => ImageLayout.PresentSrcKhr;
 
-    public RenderBase(string appName) : base(appName) { }
+    public RenderBase(IWindow window, string appName) : base(appName)
+    {
+        _window = window;
+    }
 
     protected override int DeviceSelector(PhysicalDevice device)
     {
@@ -54,7 +53,6 @@ internal class RenderBase : Headless.RenderBase, IDisposable
         return SdlRenderHelper.CreateLogicalDevice(vk, gpu, Surface, Khrsf, DeviceExtensions);
     }
 
-
     private KhrSurface GetKhrsf()
     {
         _ = vk.TryGetInstanceExtension<KhrSurface>(instance, out var khrsf);
@@ -64,7 +62,7 @@ internal class RenderBase : Headless.RenderBase, IDisposable
     public unsafe void Dispose()
     {
         Khrsf.DestroySurface(instance, Surface, null);
-        sdl.DestroyWindow(Window);
+        //sdl.DestroyWindow(Window);
     }
 
     public void UpdateSupportDetails()

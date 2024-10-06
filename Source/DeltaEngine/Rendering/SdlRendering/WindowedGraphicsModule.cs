@@ -3,19 +3,21 @@ using Delta.Rendering.Internal;
 using Delta.Runtime;
 using Delta.Utilities;
 using Silk.NET.Vulkan;
+using Silk.NET.Windowing;
 using System;
 using System.Collections.Generic;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 
 namespace Delta.Rendering.SdlRendering;
 
-internal class SdlGraphicsModule : IGraphicsModule, IDisposable
+internal class WindowedGraphicsModule : IGraphicsModule, IDisposable
 {
     private readonly RenderBase _sdlRenderBase;
     public Headless.RenderBase RenderData
     {
         get => _sdlRenderBase;
     }
+    private IWindow window;
 
     private readonly string _appName;
 
@@ -42,11 +44,14 @@ internal class SdlGraphicsModule : IGraphicsModule, IDisposable
 
     private CommandBuffer _copyCmdBuffer;
 
-    public unsafe SdlGraphicsModule(string appName)
+    public unsafe WindowedGraphicsModule(string appName)
     {
         _appName = appName;
-        _sdlRenderBase = new RenderBase(_appName);
-        var (width, height) = GetSdlWindowSize();
+        window = Window.Create(new WindowOptions(true, new(0, 0), new(1000, 1000), 60, 60, new GraphicsAPI(ContextAPI.Vulkan, new APIVersion(1, 0)), appName, WindowState.Normal, WindowBorder.Hidden, false, false, default));
+        window.Initialize();
+        _sdlRenderBase = new RenderBase(window, _appName);
+        _sdlRenderBase.Init();
+        var (width, height) = Size;
         _swapChain = new SwapChain(_sdlRenderBase, Buffering, _sdlRenderBase.SurfaceFormat, width, height);
         _renderAssets = new RenderAssets(RenderData);
 
@@ -80,7 +85,11 @@ internal class SdlGraphicsModule : IGraphicsModule, IDisposable
 
     private void Sync()
     {
-        _sdlRenderBase.sdl.PumpEvents();
+        window.DoEvents();
+        window.DoUpdate();
+        window.DoRender();
+        window.SwapBuffers();
+
         if (!_skippedFrame)
             _frames.Enqueue(_frames.Dequeue());
 
@@ -150,7 +159,7 @@ internal class SdlGraphicsModule : IGraphicsModule, IDisposable
     {
         _swapChain.Dispose();
         _sdlRenderBase.UpdateSupportDetails();
-        var (width, height) = GetSdlWindowSize();
+        var (width, height) = Size;
         _swapChain = new SwapChain(_sdlRenderBase, 3, _sdlRenderBase.SurfaceFormat, width, height);
 
         if (_swapChain.imageCount == _frames.Count)
@@ -171,24 +180,15 @@ internal class SdlGraphicsModule : IGraphicsModule, IDisposable
     public void DrawMesh(Render render, Transform transform) => throw new NotImplementedException();
     public (int width, int height) Size
     {
-        get => GetSdlWindowSize();
+        get
+        {
+            var size= _sdlRenderBase._window.Size;
+            return (size.X, size.Y);
+        }
         set
         {
-            unsafe
-            {
-                _sdlRenderBase.sdl.SetWindowSize(_sdlRenderBase.Window, value.width, value.height);
-            }
+            _sdlRenderBase._window.Size = new(value.width, value.height);
             OnResize();
         }
-    }
-
-    private (int width, int height) GetSdlWindowSize()
-    {
-        int w = 0, h = 0;
-        unsafe
-        {
-            _sdlRenderBase.sdl.VulkanGetDrawableSize(_sdlRenderBase.Window, ref w, ref h);
-        }
-        return (w, h);
     }
 }

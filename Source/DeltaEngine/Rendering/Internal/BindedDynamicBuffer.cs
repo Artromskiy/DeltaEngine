@@ -15,6 +15,13 @@ internal class BindedDynamicBuffer : DynamicBuffer
         _descriptorType = descriptorType;
     }
 
+    public BindedDynamicBuffer(DescriptorSet descriptorSet, int binding, DescriptorType descriptorType) : base(1)
+    {
+        _descriptorSet = descriptorSet;
+        _binding = checked((uint)binding);
+        _descriptorType = descriptorType;
+    }
+
     public void UpdateDescriptorSet()
     {
         if (ChangedBuffer)

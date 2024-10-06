@@ -41,6 +41,7 @@ internal class HeadlessGraphicsModule : IGraphicsModule, IDisposable
     {
         _appName = appName;
         RenderData = new RenderBase(_appName);
+        RenderData.Init();
         _swapChain = new SwapChain(RenderData, Buffering, RenderData.Format, 1024, 1024);
         _renderAssets = new RenderAssets(RenderData);
 

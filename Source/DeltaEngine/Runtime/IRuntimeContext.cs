@@ -2,8 +2,9 @@
 
 namespace Delta.Runtime;
 
-public interface IRuntimeContext
+public interface IRuntimeContext : IDisposable
 {
+    internal IRuntimeContext? PreviousContext { get; set; }
     public bool Running { get; set; }
     public IAssetCollection AssetImporter { get; }
     public IProjectPath ProjectPath { get; }
@@ -14,6 +15,16 @@ public interface IRuntimeContext
     public static IRuntimeContext Current
     {
         get => _current!;
-        set => _current = value ?? throw new InvalidOperationException($"{nameof(IRuntimeContext)} can not be set to null");
+        set
+        {
+            value.PreviousContext = _current;
+            _current = value ??
+                throw new InvalidOperationException($"{nameof(IRuntimeContext)} can not be set to null");
+        }
+    }
+    void IDisposable.Dispose()
+    {
+        _current = PreviousContext ?? _current;
+        PreviousContext = null;
     }
 }

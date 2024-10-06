@@ -25,11 +25,12 @@ internal class DynamicDescriptorSets : IDisposable
         _descriptorSets = new DescriptorSet[setsCount];
         for (int i = 0; i < setsCount; i++)
             _descriptorSets[i] = CreateDescriptorSet(_batcher.Layouts[i]);
-
+        
         int buffersCount = _batcher.Buffers.Length;
         _buffers = new BindedDynamicBuffer[buffersCount];
         for (int i = 0; i < buffersCount; i++)
-            _buffers[i] = new(_vk, _deviceQ, _descriptorSets[i], _batcher.Bindings[i], DescriptorType.StorageBuffer);
+            //_buffers[i] = new(_descriptorSets[i], _batcher.Bindings[i], DescriptorType.StorageBuffer);
+            _buffers[i] = new(_descriptorSets[_batcher.Sets[i]], _batcher.Bindings[i], DescriptorType.StorageBuffer);
     }
 
 
