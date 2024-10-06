@@ -6,20 +6,19 @@ using Silk.NET.Vulkan;
 using Silk.NET.Windowing;
 using System;
 using System.Collections.Generic;
-using Semaphore = Silk.NET.Vulkan.Semaphore;
 
-namespace Delta.Rendering.SdlRendering;
+namespace Delta.Rendering.Windowed;
 
 internal class WindowedGraphicsModule : IGraphicsModule, IDisposable
 {
-    private readonly RenderBase _sdlRenderBase;
+    private readonly string _appName;
+    private readonly IWindow _window;
+    private readonly RenderBase _renderBase;
     public Headless.RenderBase RenderData
     {
-        get => _sdlRenderBase;
+        get => _renderBase;
     }
-    private IWindow window;
 
-    private readonly string _appName;
 
     private SwapChain _swapChain;
 
@@ -47,16 +46,16 @@ internal class WindowedGraphicsModule : IGraphicsModule, IDisposable
     public unsafe WindowedGraphicsModule(string appName)
     {
         _appName = appName;
-        window = Window.Create(new WindowOptions(true, new(0, 0), new(1000, 1000), 60, 60, new GraphicsAPI(ContextAPI.Vulkan, new APIVersion(1, 0)), appName, WindowState.Normal, WindowBorder.Hidden, false, false, default));
-        window.Initialize();
-        _sdlRenderBase = new RenderBase(window, _appName);
-        _sdlRenderBase.Init();
+        _window = Window.Create(new WindowOptions(true, new(0, 0), new(1000, 1000), 60, 60, new GraphicsAPI(ContextAPI.Vulkan, new APIVersion(1, 0)), appName, WindowState.Normal, WindowBorder.Hidden, false, false, default));
+        _window.Initialize();
+        _renderBase = new RenderBase(_window, _appName);
+        _renderBase.Init();
         var (width, height) = Size;
-        _swapChain = new SwapChain(_sdlRenderBase, Buffering, _sdlRenderBase.SurfaceFormat, width, height);
+        _swapChain = new SwapChain(_renderBase, Buffering, _renderBase.SurfaceFormat, width, height);
         _renderAssets = new RenderAssets(RenderData);
 
         for (int i = 0; i < _swapChain.imageCount; i++)
-            _frames.Enqueue(new Frame(_sdlRenderBase, _renderAssets, _swapChain));
+            _frames.Enqueue(new Frame(_renderBase, _renderAssets, _swapChain));
 
         _copyCmdBuffer = RenderHelper.CreateCommandBuffer(RenderData.vk, RenderData.deviceQ, RenderData.deviceQ.GetCmdPool(QueueType.Transfer));
         _copyFence = RenderHelper.CreateFence(RenderData.vk, RenderData.deviceQ, true);
@@ -85,10 +84,10 @@ internal class WindowedGraphicsModule : IGraphicsModule, IDisposable
 
     private void Sync()
     {
-        window.DoEvents();
-        window.DoUpdate();
-        window.DoRender();
-        window.SwapBuffers();
+        _window.DoEvents();
+        _window.DoUpdate();
+        _window.DoRender();
+        _window.SwapBuffers();
 
         if (!_skippedFrame)
             _frames.Enqueue(_frames.Dequeue());
@@ -158,9 +157,9 @@ internal class WindowedGraphicsModule : IGraphicsModule, IDisposable
     private void OnResize()
     {
         _swapChain.Dispose();
-        _sdlRenderBase.UpdateSupportDetails();
+        _renderBase.UpdateSupportDetails();
         var (width, height) = Size;
-        _swapChain = new SwapChain(_sdlRenderBase, 3, _sdlRenderBase.SurfaceFormat, width, height);
+        _swapChain = new SwapChain(_renderBase, 3, _renderBase.SurfaceFormat, width, height);
 
         if (_swapChain.imageCount == _frames.Count)
         {
@@ -172,7 +171,7 @@ internal class WindowedGraphicsModule : IGraphicsModule, IDisposable
         _frames.Dispose();
         _frames.Clear();
         for (int i = 0; i < _swapChain.imageCount; i++)
-            _frames.Enqueue(new Frame(_sdlRenderBase, _renderAssets, _swapChain));
+            _frames.Enqueue(new Frame(_renderBase, _renderAssets, _swapChain));
     }
 
 
@@ -182,12 +181,12 @@ internal class WindowedGraphicsModule : IGraphicsModule, IDisposable
     {
         get
         {
-            var size= _sdlRenderBase._window.Size;
+            var size= _renderBase._window.Size;
             return (size.X, size.Y);
         }
         set
         {
-            _sdlRenderBase._window.Size = new(value.width, value.height);
+            _renderBase._window.Size = new(value.width, value.height);
             OnResize();
         }
     }

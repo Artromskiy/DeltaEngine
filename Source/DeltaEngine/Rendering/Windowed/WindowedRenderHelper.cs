@@ -4,8 +4,8 @@ using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
 using System;
 
-namespace Delta.Rendering.SdlRendering;
-internal static unsafe class SdlRenderHelper
+namespace Delta.Rendering.Windowed;
+internal static unsafe class WindowedRenderHelper
 {
     internal static DeviceQueues CreateLogicalDevice(Vk vk, Gpu gpu, SurfaceKHR surface, KhrSurface khrsf, ReadOnlySpan<string> deviceExtensions)
     {

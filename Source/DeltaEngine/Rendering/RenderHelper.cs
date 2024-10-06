@@ -6,7 +6,6 @@ using Delta.Utilities;
 using Silk.NET.Core;
 using Silk.NET.Core.Contexts;
 using Silk.NET.Core.Native;
-using Silk.NET.SDL;
 using Silk.NET.SPIRV;
 using Silk.NET.SPIRV.Cross;
 using Silk.NET.Vulkan;
@@ -17,25 +16,11 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using Buffer = Silk.NET.Vulkan.Buffer;
-using Semaphore = Silk.NET.Vulkan.Semaphore;
 
 namespace Delta.Rendering;
 
 internal static unsafe class RenderHelper
 {
-    private const uint flags = (uint)
-    (
-          WindowFlags.Vulkan
-        | WindowFlags.Shown
-        | WindowFlags.Resizable
-        | WindowFlags.AllowHighdpi
-        | WindowFlags.SkipTaskbar
-   );
-
-    public static Window* CreateWindow(Sdl sdl, string title)
-    {
-        return sdl.CreateWindow(Encoding.UTF8.GetBytes(title), 100, 100, 1000, 1000, flags);
-    }
 
     public static Instance CreateVkInstance(Vk vk, string app, string engine,
         ReadOnlySpan<string> extensions, ReadOnlySpan<string> layers, void* instanceChain)
@@ -166,26 +151,11 @@ internal static unsafe class RenderHelper
         return renderPass;
     }
 
-    public static string[] GetSdlVulkanExtensions(Sdl sdl, Window* window)
-    {
-        uint extCount = 0;
-        _ = sdl.VulkanGetInstanceExtensions(window, &extCount, (byte**)null);
-        string[] extensions = new string[extCount];
-        _ = sdl.VulkanGetInstanceExtensions(window, &extCount, extensions);
-        return extensions;
-    }
 
     public static string[] GetVulkanExtensions(Silk.NET.Windowing.IWindow window)
     {
         byte** ptr = window.VkSurface!.GetRequiredExtensions(out var extensionsCount);
         return SilkMarshal.PtrToStringArray((nint)ptr, (int)extensionsCount);
-    }
-
-    public static SurfaceKHR CreateSurface(Sdl sdl, Window* window, Instance instance)
-    {
-        var nondispatchable = new VkNonDispatchableHandle();
-        _ = sdl.VulkanCreateSurface(window, instance.ToHandle(), ref nondispatchable);
-        return nondispatchable.ToSurface();
     }
 
     public static string[] GetSilkVulkanExtensions(IVkSurface vkSurface)
@@ -830,7 +800,7 @@ internal static unsafe class RenderHelper
         }
         bool hasGraphics = queueFamilies.Exist(f => f.QueueFlags.HasFlag(QueueFlags.GraphicsBit));
         bool extensionsSupported = CheckDeviceExtensionsSupport(vk, gpu, neededExtensions);
-        return hasGraphics && hasPresent && extensionsSupported && SdlRendering.SwapChainSupportDetails.Adequate(gpu, surface, khrsf);
+        return hasGraphics && hasPresent && extensionsSupported && Windowed.SwapChainSupportDetails.Adequate(gpu, surface, khrsf);
     }
 
     public static bool IsDeviceSuitable(Vk vk, PhysicalDevice device, ReadOnlySpan<string> neededExtensions)

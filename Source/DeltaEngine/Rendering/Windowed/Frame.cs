@@ -3,7 +3,7 @@ using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;
 
-namespace Delta.Rendering.SdlRendering;
+namespace Delta.Rendering.Windowed;
 internal class Frame : IDisposable
 {
     private readonly RenderBase _rendererBase;

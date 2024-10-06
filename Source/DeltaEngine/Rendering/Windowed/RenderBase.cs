@@ -1,18 +1,16 @@
 ﻿using Delta.Rendering.Internal;
 using Delta.Utilities;
-using Silk.NET.SDL;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
 using Silk.NET.Windowing;
 using System;
 
-namespace Delta.Rendering.SdlRendering;
+namespace Delta.Rendering.Windowed;
 
 internal class RenderBase : Headless.RenderBase, IDisposable
 {
-    //public readonly Sdl sdl = Sdl.GetApi();
-
     public readonly IWindow _window;
+
 
     private SurfaceKHR? _surface;
     private KhrSurface? _khrsf;
@@ -50,7 +48,7 @@ internal class RenderBase : Headless.RenderBase, IDisposable
     }
     protected override DeviceQueues CreateLogicalDevice()
     {
-        return SdlRenderHelper.CreateLogicalDevice(vk, gpu, Surface, Khrsf, DeviceExtensions);
+        return WindowedRenderHelper.CreateLogicalDevice(vk, gpu, Surface, Khrsf, DeviceExtensions);
     }
 
     private KhrSurface GetKhrsf()
@@ -61,8 +59,8 @@ internal class RenderBase : Headless.RenderBase, IDisposable
 
     public unsafe void Dispose()
     {
+        base.Dispose();
         Khrsf.DestroySurface(instance, Surface, null);
-        //sdl.DestroyWindow(Window);
     }
 
     public void UpdateSupportDetails()

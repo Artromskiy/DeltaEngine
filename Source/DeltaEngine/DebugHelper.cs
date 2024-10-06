@@ -1,5 +1,4 @@
-﻿using Silk.NET.SDL;
-using Silk.NET.Vulkan;
+﻿using Silk.NET.Vulkan;
 using System.Diagnostics;
 
 namespace Delta;
@@ -7,7 +6,7 @@ namespace Delta;
 /// <summary>
 /// Helps debuggins condition results
 /// Currently supports implicit casts of
-/// Bool, SdlBool, Vulkan.Result.
+/// Bool, Vulkan.Result.
 /// 
 /// Should be used as static directive eg:
 /// using static DeltaEngine.DebugHelper
@@ -19,7 +18,7 @@ internal static unsafe class DebugHelper
     /// Discard symbol used to simplify debug
     /// It will do nothing if assignment is going under release mode
     /// Currently supports implicit casts of
-    /// Bool, SdlBool, Vulkan.Result.
+    /// Bool, Vulkan.Result.
     /// </summary>
     internal static object _
     {
@@ -28,7 +27,6 @@ internal static unsafe class DebugHelper
             ResultStruct result = value switch
             {
                 Result r => new ResultStruct(r == Result.Success, r.ToString()),
-                SdlBool r => new ResultStruct(r),
                 bool r => new ResultStruct(r),
                 _ => new ResultStruct()
             };
@@ -60,7 +58,6 @@ internal static unsafe class DebugHelper
         public ResultStruct() : this(false, string.Empty) { }
 
         public ResultStruct(Result r) : this(r == Result.Success, r.ToString()) { }
-        public ResultStruct(SdlBool r) : this(r == SdlBool.True) { }
         public ResultStruct(bool r) : this(r, string.Empty) { }
         public ResultStruct(object _) : this() { }
 
