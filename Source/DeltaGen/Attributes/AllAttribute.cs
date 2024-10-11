@@ -1,6 +1,4 @@
-﻿using DeltaGen.Templates;
-
-namespace DeltaGen.Attributes;
+﻿namespace DeltaGen.Attributes;
 internal class AllAttribute : GenericVariadicAttribute
 {
     public override string Name => nameof(AllAttribute);

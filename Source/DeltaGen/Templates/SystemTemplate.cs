@@ -1,5 +1,5 @@
-﻿using DeltaGen.Core;
-using DeltaGen.Models;
+﻿using DeltaGen.Models;
+using DeltaGenCore;
 using Microsoft.CodeAnalysis;
 using System.Linq;
 using System.Text;
@@ -23,7 +23,7 @@ file static class {{Model.TypeName}}File
     public static Type[] mutTypes = [{{Join("typeof({0})", ", ", Model.MutTypes)}}];
     public static Type[] readTypes = [{{Join("typeof({0})", ", ", Model.ReadTypes)}}];
     
-    {{Loop(Model.SystemCalls.Select(m => new SystemCallQueryTemplate(m)))}}
+    {{LoopSelect(Model.SystemCalls, m => new SystemCallQueryTemplate(m))}}
 }
 
 {{ContainingTypeOpen()}}
@@ -35,9 +35,9 @@ file static class {{Model.TypeName}}File
 
     public void Update(World world)
     {
-        {{Loop(Model.SystemCalls.Select(m => new SystemCallInvokeTemplate(m, "world")))}}
+        {{LoopSelect(Model.SystemCalls,m => new SystemCallInvokeTemplate(m, "world"))}}
     }
-    {{Loop(Model.SystemCalls.Select(m => new SystemCallTemplate(m)))}}
+    {{LoopSelect(Model.SystemCalls, m => new SystemCallTemplate(m))}}
 }
 
 {{ContainingTypeClose()}}

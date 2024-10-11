@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.9.2" />
+    <PackageReference Include="Silk.NET.Shaderc" Version="2.21.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,6 +25,14 @@
   <ItemGroup>
     <Folder Include="Import\Models\" />
     <Content Include="Import\Models\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Folder Include="Import\Shaders\" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <Content Include="Import\Shaders\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

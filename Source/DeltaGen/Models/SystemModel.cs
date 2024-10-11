@@ -1,4 +1,4 @@
-﻿using DeltaGen.Core;
+﻿using DeltaGenCore;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using System.Collections.Generic;

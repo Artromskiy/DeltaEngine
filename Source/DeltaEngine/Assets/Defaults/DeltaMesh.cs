@@ -13,12 +13,12 @@ public static class DeltaMesh
     private static readonly Vector4[] colors = [b, g, r, r, b, g];
     private static readonly Vector2[] positions =
     [
-        new(  0.00f,  -0.50f),
-        new(  0.60f,   0.50f),
-        new( -0.60f,   0.50f),
-        new(  0.00f,  -0.25f),
-        new(  0.35f,   0.35f),
-        new( -0.35f,   0.35f)
+        new(  0.00f,   0.50f),
+        new(  0.60f,  -0.50f),
+        new( -0.60f,  -0.50f),
+        new(  0.00f,   0.25f),
+        new(  0.35f,  -0.35f),
+        new( -0.35f,  -0.35f)
     ];
     private static readonly uint[] deltaLetterIndices =
     [
@@ -31,7 +31,7 @@ public static class DeltaMesh
     ];
 
     internal static GuidAsset<MeshData> Mesh => IRuntimeContext.Current.AssetImporter.CreateRuntimeAsset(MeshData);
-    public static void Init() => IRuntimeContext.Current.AssetImporter.CreateRuntimeAsset(MeshData, "Delta");
+    public static void Init() => IRuntimeContext.Current.AssetImporter.CreateRuntimeAsset(MeshData, "Delta.mesh");
 
     internal static MeshData MeshData
     {

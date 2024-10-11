@@ -29,6 +29,7 @@ public sealed class Runtime : IRuntime, IDisposable
         Context = context;
         IRuntimeContext.Current = Context;
         IRuntimeContext.Current.GraphicsModule.AddRenderBatcher(new SceneBatcher());
+        IRuntimeContext.Current.GraphicsModule.AddRenderBatcher(new UISceneBatcher());
     }
 
     public void Run()

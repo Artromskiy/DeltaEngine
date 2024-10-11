@@ -1,6 +1,6 @@
 ﻿using DeltaGen.Attributes;
-using DeltaGen.Core;
 using Microsoft.CodeAnalysis;
+using DeltaGenCore;
 
 namespace DeltaGen;
 

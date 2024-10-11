@@ -18,12 +18,14 @@ internal struct GpuCameraData
     public GpuCameraData(Camera camera, Matrix4x4 worldMatrix, float? aspect = null)
     {
         Matrix4x4.Decompose(worldMatrix, out var _, out rotation, out var position3);
-        var fwd = Vector3.Transform(Vector3.UnitZ, rotation);
+        var fwd = Vector3.Transform(-Vector3.UnitZ, rotation);
         var up = Vector3.Transform(Vector3.UnitY, rotation);
-        var view = Matrix4x4.CreateLookToLeftHanded(position3, fwd, up);
         position = new(position3, 0);
+        view = Matrix4x4.Identity;
+        proj = Matrix4x4.Identity;
+        view = Matrix4x4.CreateLookTo(position3, fwd, up);
         proj = GetProjection(camera, aspect);
-        projView = Matrix4x4.Multiply(view, proj); // inverted order, as vulkan/opengl uses other memory layout for matrices
+        projView = Matrix4x4.Multiply(proj, view);
     }
 
     private static Matrix4x4 GetProjection(Camera camera, float? aspect = null)

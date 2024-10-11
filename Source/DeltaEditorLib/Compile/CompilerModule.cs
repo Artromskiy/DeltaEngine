@@ -74,7 +74,7 @@ internal class CompilerModule : ICompilerModule
     {
         var contextAssemblies = AssemblyLoadContext.CurrentContextualReflectionContext!.Assemblies;
         var contextTypes = contextAssemblies.SelectMany(x => x.GetTypes());
-        return contextTypes.Where(t => typeof(IAccessorsContainer).IsAssignableFrom(t)).FirstOrDefault();
+        return contextTypes.Where(t => typeof(IAccessorsContainer).IsAssignableFrom(t)).FirstOrDefault()!;
     }
 
     private static IEnumerable<Type> GetComponents()

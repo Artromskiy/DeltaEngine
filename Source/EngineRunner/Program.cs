@@ -15,8 +15,9 @@ try
     var ctx = RuntimeContextFactory.CreateWindowedContext(projectPath);
     using var eng = new Runtime(ctx);
 
-    VCShader.Init();
+    //VCShader.Init();
     DefaultsImporter<MeshData>.Import(Path.Combine(Directory.GetCurrentDirectory(), "Import", "Models"));
+    //MaterialsImporter.Import(Path.Combine(Directory.GetCurrentDirectory(), "Import", "Shaders"));
 
     var camera = IRuntimeContext.Current.SceneManager.CurrentScene.AddEntity();
     camera.Entity.Add<Transform>();

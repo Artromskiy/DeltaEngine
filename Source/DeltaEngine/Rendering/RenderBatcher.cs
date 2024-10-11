@@ -22,25 +22,28 @@ internal abstract class RenderBatcher : IRenderBatcher
     public abstract void Dispose();
     public abstract void Execute();
 
-    public abstract JaggedSpan<int> DescriptorSetBindings { get; }
+    public abstract JaggedReadOnlySpan<int> DescriptorSetsBindings { get; }
 
     public RenderBatcher()
     {
-        var bindings = DescriptorSetBindings;
-        _layouts = new DescriptorSetLayout[bindings.Length];
+        var setsBindings = DescriptorSetsBindings;
+        var setsCount = setsBindings.Length;
+        _layouts = new DescriptorSetLayout[setsCount];
         int bindingsCount = 0;
-        for (int i = 0; i < bindings.Length; bindingsCount += bindings[i].Length, i++)
-            _layouts[i] = RenderHelper.CreateDescriptorSetLayout(bindings[i]);
+        for (int i = 0; i < setsCount; bindingsCount += setsBindings[i].Length, i++)
+            _layouts[i] = RenderHelper.CreateDescriptorSetLayout(setsBindings[i]);
+
         _bindings = new int[bindingsCount];
         _sets = new int[bindingsCount];
 
         bindingsCount = 0;
-        for (int i = 0; i < bindings.Length; i++)
+        for (int i = 0; i < setsCount; i++)
         {
-            for (int j = 0; j < bindings[i].Length; j++)
+            int bindingsILength = setsBindings[i].Length;
+            for (int j = 0; j < bindingsILength; bindingsCount++, j++)
             {
                 _sets[bindingsCount] = i;
-                _bindings[bindingsCount++] = bindings[i][j];
+                _bindings[bindingsCount] = setsBindings[i][j];
             }
         }
 

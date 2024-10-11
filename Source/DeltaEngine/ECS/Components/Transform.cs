@@ -24,40 +24,45 @@ public struct Transform
         get => ModelMatrix(position, rotation, scale);
     }
 
-
-    //[Imp(Inl)]
-    //private readonly Matrix4x4 LocalMatrixSlow() => Matrix4x4.CreateFromQuaternion(rotation) * Matrix4x4.CreateScale(scale) * Matrix4x4.CreateTranslation(position);
+    [Imp(Inl)]
+    private readonly Matrix4x4 LocalMatrixSlow() => Matrix4x4.CreateFromQuaternion(rotation) * Matrix4x4.CreateScale(scale) * Matrix4x4.CreateTranslation(position);
 
     [Imp(Inl)]
-    public static Matrix4x4 ModelMatrix(Vector3 translation, Quaternion rotation, Vector3 scale)
+    private static Matrix4x4 ModelMatrix(Vector3 translation, Quaternion rotation, Vector3 scale)
     {
-        // Faster simd creation of xx, xy, xz, xw
-        var x = rotation.X * Unsafe.As<Quaternion, Vector4>(ref rotation);
+        // every element in matrix except of translation
+        // ends up being multiplied by 2, so we multiply whole vector by sqrt2
+        // to skip multiplication at the end
+        const float sqrt2 = 1.4142135623730951f;
+        Vector4 rot = Unsafe.As<Quaternion, Vector4>(ref rotation) * sqrt2;
 
-        float yy = rotation.Y * rotation.Y;
-        float yz = rotation.Y * rotation.Z;
-        float yw = rotation.Y * rotation.W;
+        // xx is actually equals to rotation.x * rotation.x * 2
+        float xx = rot.X * rot.X;
+        float yy = rot.Y * rot.Y;
+        float zz = rot.Z * rot.Z;
 
-        float zz = rotation.Z * rotation.Z;
-        float zw = rotation.Z * rotation.W;
+        float xy = rot.X * rot.Y;
+        float xz = rot.X * rot.Z;
+        float xw = rot.X * rot.W;
+        float yz = rot.Y * rot.Z;
+        float yw = rot.Y * rot.W;
+        float zw = rot.Z * rot.W;
 
-        float scaleX2 = scale.X * 2;
-        float scaleY2 = scale.Y * 2;
-        float scaleZ2 = scale.Z * 2;
-        Matrix4x4 modelMatrix = Matrix4x4.Identity;
-        modelMatrix.M12 = scaleY2 * (x.Y - zw);
-        modelMatrix.M13 = scaleZ2 * (x.Z + yw);
-        modelMatrix.M21 = scaleX2 * (x.Y + zw);
-        modelMatrix.M23 = scaleZ2 * (-x.W + yz);
-        modelMatrix.M31 = scaleX2 * (x.Z - yw);
-        modelMatrix.M32 = scaleY2 * (x.W + yz);
-        modelMatrix.M11 = scale.X - (scaleX2 * (yy + zz));
-        modelMatrix.M22 = scale.Y - (scaleY2 * (x.X + zz));
-        modelMatrix.M33 = scale.Z - (scaleZ2 * (x.X + yy));
-        modelMatrix.M41 = translation.X;
-        modelMatrix.M42 = translation.Y;
-        modelMatrix.M43 = translation.Z;
+        Matrix4x4 mat4 = default;
+        mat4.M12 = scale.Y * (xy + zw);
+        mat4.M13 = scale.Z * (xz - yw);
+        mat4.M21 = scale.X * (xy - zw);
+        mat4.M23 = scale.Z * (yz + xw);
+        mat4.M31 = scale.X * (xz + yw);
+        mat4.M32 = scale.Y * (yz - xw);
+        mat4.M11 = scale.X * (1f - (yy + zz));
+        mat4.M22 = scale.Y * (1f - (xx + zz));
+        mat4.M33 = scale.Z * (1f - (xx + yy));
+        mat4.M41 = translation.X;
+        mat4.M42 = translation.Y;
+        mat4.M43 = translation.Z;
+        mat4.M44 = 1;
 
-        return modelMatrix;
+        return mat4;
     }
 }

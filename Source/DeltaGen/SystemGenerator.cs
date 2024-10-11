@@ -1,5 +1,5 @@
 ﻿using DeltaGen.Attributes;
-using DeltaGen.Core;
+using DeltaGenCore;
 using DeltaGen.Templates;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -28,11 +28,11 @@ public sealed class SystemGenerator : IIncrementalGenerator
         );
     }
 
-    private static bool IsTypeWithAttribute(SyntaxNode syntaxNode, string attributeSearch)
+    private static bool IsTypeWithAttribute(SyntaxNode syntaxNode, string attributeName)
     {
         if (syntaxNode is not BaseTypeDeclarationSyntax type)
             return false;
-        return type.AttributeLists.Any(l => l.Attributes.Any(a => a.Name.ToFullString() == attributeSearch));
+        return type.AttributeLists.Any(l => l.Attributes.Any(a => a.Name.ToFullString() == attributeName));
     }
 
     private static void Execute(Compilation compilation,
@@ -45,7 +45,7 @@ public sealed class SystemGenerator : IIncrementalGenerator
                 continue;
             if (!type.IsAllPartialToRoot(out var nonPartial))
             {
-                ctx.ReportNotPartial(nonPartial!.Identifier.GetLocation());
+                ctx.ReportNotPartial(nonPartial!.Identifier.GetLocation(), nameof(SystemAttribute));
                 continue;
             }
 
@@ -61,9 +61,9 @@ public sealed class SystemGenerator : IIncrementalGenerator
         ctx.AddSource(new SystemAttribute());
         ctx.AddSource(new SystemCallAttribute());
 
-        ctx.AddSource(new AllAttribute());
-        ctx.AddSource(new AnyAttribute());
-        ctx.AddSource(new NoneAttribute());
-        ctx.AddSource(new OnlyAttribute());
+        //ctx.AddSource(new AllAttribute());
+        //ctx.AddSource(new AnyAttribute());
+        //ctx.AddSource(new NoneAttribute());
+        //ctx.AddSource(new OnlyAttribute());
     }
 }

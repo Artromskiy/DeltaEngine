@@ -17,22 +17,22 @@ namespace Delta.Rendering;
 
 internal class SceneBatcher : GenericBatcher<Matrix4x4, int, int, GpuCameraData>
 {
-    private readonly Stack<int> _free;
+    private const bool ForceWrites = true;
 
-    private readonly int[][] _bindings = [[0, 1], [0], [0]];
-    public override JaggedSpan<int> DescriptorSetBindings => _bindings;
+    private readonly Stack<int> _freeIds;
 
     private GpuArray<Matrix4x4> Trs => _bufferT0;
     private GpuArray<int> TrsIds => _bufferT1;
     private GpuArray<int> Materials => _bufferT2;
     private GpuArray<GpuCameraData> Camera => _bufferT3;
+
+    private static readonly int[][] _bindings = [[0, 1], [0], [0]];
+    public override JaggedReadOnlySpan<int> DescriptorSetsBindings => _bindings;
     // TODO
     private readonly GpuArray<int> TransformIdsToTransfer; // send to compute to transfer new trs from host to device
 
     private readonly PooledSet<int> _forceTrsWrite;
     private readonly List<int> _transferIndicesSet;
-
-    private static readonly QueryDescription _cameraDescription = new QueryDescription().WithAll<Camera, Transform>();
 
     private static readonly QueryDescription _removeEntityDescription = new QueryDescription().WithAll<Render, RendId, RenderGroup, DestroyFlag>();
     private static readonly QueryDescription _removeRenderDescription = new QueryDescription().WithAll<RendId, RenderGroup>().WithNone<Render>();
@@ -43,32 +43,33 @@ internal class SceneBatcher : GenericBatcher<Matrix4x4, int, int, GpuCameraData>
     private static readonly QueryDescription _trsDescriptionTransform = new QueryDescription().WithAll<Render, RendId, RenderGroup, Transform>();
     private static readonly QueryDescription _trsDescriptionParent = new QueryDescription().WithAll<Render, RendId, RenderGroup, ChildOf>().WithNone<Transform>();
 
+    private static readonly QueryDescription _cameraDescription = new QueryDescription().WithAll<Camera, Transform>();
+
     private readonly RenderGroupData _rendGroupData = new();
 
     private readonly List<(Render rend, int count)> _renders = [];
 
-    private const bool ForceWrites = true;
     private readonly RemoveEntity _removeEntity;
     private readonly RemoveRender _removeRender;
     private readonly AddRender _addRender;
     private readonly ChangeRender _changeRender;
     private readonly SortWriteRender _sortWriteRender;
     private readonly WriteTrs _writeTrs;
+
     private readonly WriteCamera _writeCamera;
 
-    public SceneBatcher()
+    public SceneBatcher() : base()
     {
         TransformIdsToTransfer = new(1);
-
         _transferIndicesSet = [];
         _forceTrsWrite = [];
-        _free = new Stack<int>(Trs.Length);
+        _freeIds = new Stack<int>(Trs.Length);
         for (int i = Trs.Length - 1; i >= 0; i--)
-            _free.Push(i);
+            _freeIds.Push(i);
 
-        _removeEntity = new RemoveEntity(_free, _rendGroupData);
-        _removeRender = new RemoveRender(_free, _rendGroupData);
-        _addRender = new AddRender(_free, _rendGroupData, _forceTrsWrite);
+        _removeEntity = new RemoveEntity(_freeIds, _rendGroupData);
+        _removeRender = new RemoveRender(_freeIds, _rendGroupData);
+        _addRender = new AddRender(_freeIds, _rendGroupData, _forceTrsWrite);
         _changeRender = new ChangeRender(_rendGroupData);
         _sortWriteRender = new SortWriteRender(TrsIds, _rendGroupData);
         _writeTrs = new WriteTrs(Trs, _transferIndicesSet, _forceTrsWrite);
@@ -129,17 +130,17 @@ internal class SceneBatcher : GenericBatcher<Matrix4x4, int, int, GpuCameraData>
         var world = IRuntimeContext.Current.SceneManager.CurrentScene._world;
         var countToAdd = world.CountEntities(_addDescription);
         var countToRemove = world.CountEntities(_removeRenderDescription);
-        var wholeFree = _free.Count + countToRemove;
+        var wholeFree = _freeIds.Count + countToRemove;
         var delta = countToAdd - wholeFree;
         if (delta > 0)
         {
             var length = Trs.Length;
-            var newLength = (int)BitOperations.RoundUpToPowerOf2((uint)(length + delta));
+            var newLength = length + delta;
             Trs.Resize(newLength);
             TrsIds.Resize(newLength);
-            _free.EnsureCapacity(newLength);
+            _freeIds.EnsureCapacity(newLength);
             for (int i = newLength - 1; i >= length; i--)
-                _free.Push(i);
+                _freeIds.Push(i);
         }
     }
 
@@ -282,7 +283,7 @@ internal class SceneBatcher : GenericBatcher<Matrix4x4, int, int, GpuCameraData>
             }
             RenderWriter writer = new(rendersArray.Writer, offsets);
             world.InlineQuery<RenderWriter, RenderGroup, RendId>(_renderDescription, ref writer);
-            ArrayPool<int>.Shared.Return(offsets);
+            ArrayPool<int>.Shared.Return(offsets, true);
         }
 
         private readonly struct RenderWriter(PointerWriter<int> writer, int[] offsets) :

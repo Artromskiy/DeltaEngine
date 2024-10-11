@@ -7,7 +7,7 @@ namespace Delta.Assets;
 
 public interface IAsset { }
 
-[DebuggerDisplay("Short Guid = {this.ToString()}")]
+[DebuggerDisplay("{ToString(),nq}")]
 public readonly struct GuidAsset<T> : IEquatable<GuidAsset<T>>, IComparable<GuidAsset<T>> where T : class, IAsset
 {
     private const string NullDataString = "null";
@@ -18,16 +18,16 @@ public readonly struct GuidAsset<T> : IEquatable<GuidAsset<T>>, IComparable<Guid
 
     public readonly T GetAsset() => IRuntimeContext.Current.AssetImporter.GetAsset(this);
     public readonly string GetAssetNameOrDefault() => Null ? NullDataString : IRuntimeContext.Current.AssetImporter.GetName(this);
+
     public override string ToString()
     {
         if (Null)
             return NullDataString;
         Span<byte> guidBytes = stackalloc byte[16];
-        Span<char> guidChars = stackalloc char[16];
+        Span<char> guidChars = stackalloc char[24];
         guid.TryWriteBytes(guidBytes);
-        Convert.TryToBase64Chars(guidBytes, guidChars, out var written);
-        guidChars = guidChars[..written];
-        return new string(guidChars);
+        Convert.TryToBase64Chars(guidBytes, guidChars, out var _);
+        return new string(guidChars[..22]);
     }
 
     [Imp(Inl)]

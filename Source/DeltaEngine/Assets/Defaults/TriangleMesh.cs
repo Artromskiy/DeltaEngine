@@ -13,9 +13,9 @@ public class TriangleMesh
     private static readonly Vector4[] colors = [b, g, r];
     private static readonly Vector2[] positions =
     [
-        new(  0.00f,  -0.50f),
-        new(  0.60f,   0.50f),
-        new( -0.60f,   0.50f),
+        new(  0.00f,  0.50f),
+        new(  0.60f, -0.50f),
+        new( -0.60f, -0.50f),
     ];
     private static readonly uint[] deltaLetterIndices =
     [
@@ -23,7 +23,7 @@ public class TriangleMesh
     ];
 
     internal static GuidAsset<MeshData> Mesh => IRuntimeContext.Current.AssetImporter.CreateRuntimeAsset(MeshData);
-    public static void Init() => IRuntimeContext.Current.AssetImporter.CreateRuntimeAsset(MeshData, "Triangle");
+    public static void Init() => IRuntimeContext.Current.AssetImporter.CreateRuntimeAsset(MeshData, "Triangle.mesh");
     internal static MeshData MeshData
     {
         get

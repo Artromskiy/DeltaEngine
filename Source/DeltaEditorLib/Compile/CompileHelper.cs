@@ -60,6 +60,7 @@ internal class CompileHelper(IProjectPath projectPath)
     public string CompileAccessors(HashSet<Type> components)
     {
         var code = AccessorGenerator.GenerateAccessors(components);
+        code = CSharpSyntaxTree.ParseText(code).GetRoot().NormalizeWhitespace().SyntaxTree.GetText().ToString();
         SyntaxTree[] trees = [CSharpSyntaxTree.ParseText(SourceText.From(code), _parseOptions)];
 
         var references = GetReferences(trees);

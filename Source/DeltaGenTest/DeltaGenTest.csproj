@@ -15,6 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\DeltaEngine\DeltaEngine.csproj" />
     <ProjectReference Include="..\DeltaGen\DeltaGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\GLCSharp\GLCSharp.csproj" />
   </ItemGroup>
   <!--
   <ItemGroup>

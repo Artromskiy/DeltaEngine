@@ -68,9 +68,12 @@ internal class RenderAssets : IDisposable
                 _vk.DestroyPipeline(_deviceQ, item.Value.pipeline, null);
             foreach (var item in _renderToMeshHandler)
             {
-                _vk.DestroyBuffer(_deviceQ, item.Value.vertices, null);
+                if (item.Value.vertices.Handle != default)
+                    _vk.DestroyBuffer(_deviceQ, item.Value.vertices, null);
+                if (item.Value.verticesMemory.Handle != default)
+                    _vk.FreeMemory(_deviceQ, item.Value.verticesMemory, null);
+
                 _vk.DestroyBuffer(_deviceQ, item.Value.indices, null);
-                _vk.FreeMemory(_deviceQ, item.Value.verticesMemory, null);
                 _vk.FreeMemory(_deviceQ, item.Value.indicesMemory, null);
             }
         }

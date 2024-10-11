@@ -192,6 +192,8 @@ internal static unsafe class RenderHelper
     public static (Buffer buffer, DeviceMemory memory) CreateVertexBuffer(Vk vk, DeviceQueues deviceQ, MeshData meshData, VertexAttribute attributeMask)
     {
         var size = (uint)(attributeMask.GetVertexSize() * meshData.vertexCount);
+        if (size == 0)
+            return (default, default);
         var res = CreateBufferAndMemory(vk, deviceQ, size, BufferUsageFlags.VertexBufferBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit);
 
         void* datap;
@@ -251,40 +253,6 @@ internal static unsafe class RenderHelper
         }
     }
 
-    public static VertexAttribute GetInputAttributes(ReadOnlySpan<byte> shaderCode)
-    {
-        Context* context = default;
-        ParsedIr* ir = default;
-        Compiler* compiler = default;
-        Resources* resources = default;
-        ReflectedResource* list = default;
-        Set set = default;
-        nuint count;
-        nuint i;
-        VertexAttribute res = default;
-
-        using Cross api = Cross.GetApi();
-        api.ContextCreate(&context);
-
-        fixed (void* decodedPtr = shaderCode)
-        {
-            api.ContextParseSpirv(context, (uint*)decodedPtr, (uint)shaderCode.Length / 4, &ir);
-            api.ContextCreateCompiler(context, Backend.None, ir, CaptureMode.TakeOwnership, &compiler);
-            api.CompilerGetActiveInterfaceVariables(compiler, &set);
-            api.CompilerCreateShaderResources(compiler, &resources);
-            api.ResourcesGetResourceListForType(resources, ResourceType.StageInput, &list, &count);
-            for (i = 0; i < count; i++)
-            {
-                var loc = (int)api.CompilerGetDecoration(compiler, list[i].Id, Decoration.Location);
-                res |= (VertexAttribute)(1 << loc);
-                var binding = api.CompilerGetDecoration(compiler, list[i].Id, Decoration.Binding);
-                var dset = api.CompilerGetDecoration(compiler, list[i].Id, Decoration.DescriptorSet);
-            }
-        }
-        api.ContextDestroy(context);
-        return res;
-    }
-
     public static Pipeline CreateGraphicsPipeline(Vk vk, DeviceQueues deviceQ, PipelineLayout pipelineLayout, RenderPass renderPass, ShaderData shaderData, out VertexAttribute attributeMask)
     {
         using var vertShader = new PipelineShader(vk, deviceQ, ShaderStageFlags.VertexBit, shaderData.GetVertBytes());
@@ -294,7 +262,7 @@ internal static unsafe class RenderHelper
             ShaderModuleGroupCreator.Create(vertShader),
             ShaderModuleGroupCreator.Create(fragShader)
         };
-        attributeMask = GetInputAttributes(shaderData.GetVertBytes());
+        attributeMask = shaderData.attributeMask;
         var bind = GetBindingDescription(attributeMask);
         var attribCount = attributeMask.GetAttributesCount();
         var attr = stackalloc VertexInputAttributeDescription[attribCount];
@@ -337,7 +305,7 @@ internal static unsafe class RenderHelper
             RasterizerDiscardEnable = false,
             PolygonMode = PolygonMode.Fill,
             LineWidth = 1,
-            CullMode = CullModeFlags.BackBit,
+            CullMode = CullModeFlags.None,
             FrontFace = FrontFace.Clockwise,
             DepthBiasEnable = false,
         };

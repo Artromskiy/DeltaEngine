@@ -1,5 +1,5 @@
-﻿using DeltaGen.Core;
-using DeltaGen.Models;
+﻿using DeltaGen.Models;
+using DeltaGenCore;
 
 namespace DeltaGen.Templates;
 internal class SystemCallInvokeTemplate(SystemCallModel model, string worldParameterName) : Template<SystemCallModel>(model)

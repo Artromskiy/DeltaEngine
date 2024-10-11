@@ -150,7 +150,8 @@ internal class Frame : IDisposable
         Viewport viewport = new()
         {
             Width = _swapChain.extent.Width,
-            Height = _swapChain.extent.Height,
+            Height = -_swapChain.extent.Height,
+            Y = _swapChain.extent.Height,
             MinDepth = 0.0f,
             MaxDepth = 1.0f
         };
@@ -196,7 +197,8 @@ internal class Frame : IDisposable
             {
                 (var vertices, var indices, indicesCount) = _renderAssets.GetVertexIndexBuffersAndCount(itemMesh, attributeMask);
 
-                _rendererBase.vk.CmdBindVertexBuffers(_commandBuffer, 0, 1, vertices, 0);
+                if(vertices.Handle != default)
+                    _rendererBase.vk.CmdBindVertexBuffers(_commandBuffer, 0, 1, vertices, 0);
                 _rendererBase.vk.CmdBindIndexBuffer(_commandBuffer, indices, 0, IndexType.Uint32);
             }
             _rendererBase.vk.CmdDrawIndexed(_commandBuffer, indicesCount, (uint)count, 0, 0, (uint)firstInstance);

@@ -11,6 +11,13 @@ public struct Render : IEquatable<Render>, IComparable<Render>
     public GuidAsset<MaterialData> material;
     public GuidAsset<MeshData> mesh;
 
+    public Render(GuidAsset<MaterialData> material, GuidAsset<MeshData> mesh, bool initShader = false) : this()
+    {
+        this.material = material;
+        this.mesh = mesh;
+        _shader = initShader ? this.material.GetAsset().shader : default;
+    }
+
     public readonly GuidAsset<ShaderData> Shader
     {
         [Imp(Inl)]

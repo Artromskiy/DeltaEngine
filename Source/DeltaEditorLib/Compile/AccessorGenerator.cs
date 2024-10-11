@@ -1,13 +1,10 @@
 ﻿using Delta.Scripting;
 using DeltaEditorLib.Scripting;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-
 
 namespace DeltaEditorLib.Compile;
 // TODO: Rewrite with templates as DeltaGen
@@ -21,7 +18,6 @@ internal class AccessorGenerator
             if (item.IsPublic)
                 GetAvaliableTypes(item, visitedTypes);
         var code = GenerateAccessorClasses(visitedTypes);
-        code = CSharpSyntaxTree.ParseText(code).GetRoot().NormalizeWhitespace().SyntaxTree.GetText().ToString();
         return code;
     }
 
@@ -93,9 +89,7 @@ internal class AccessorGenerator
         GenerateFieldPointerGetter(code, fields, type);
 
         foreach (var field in fields)
-        {
             GenerateFieldAccessor(code, field, type);
-        }
 
         code.AppendLine().
         Append('}').
