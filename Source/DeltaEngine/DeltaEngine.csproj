@@ -3,13 +3,13 @@
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <TargetFramework>net8.0</TargetFramework>
-    
+
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    
+
     <RootNamespace>Delta</RootNamespace>
-    
+
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <PublishAot>false</PublishAot>
     <StripSymbols>false</StripSymbols>
@@ -18,7 +18,7 @@
     <Configurations>Debug;Release;DebugPerf;Perf</Configurations>
     <AnalysisLevel>latest</AnalysisLevel>
   </PropertyGroup>
-  
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>$(DefineConstants);ASSERT;DELTA_GEN_ATTRIBUTES;GLCSharp_GEN_ATTRIBUTES</DefineConstants>
     <DebugType>portable</DebugType>
@@ -66,8 +66,8 @@
     <ProjectReference Include="..\DeltaGenInternal\DeltaGenInternal.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\GLCSharp\GLCSharp.csproj"  OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
-  
-  
+
+
   <ItemGroup>
     <Using Include="Delta.DebugHelper">
       <Static>True</Static>

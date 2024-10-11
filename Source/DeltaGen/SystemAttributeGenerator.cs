@@ -5,11 +5,11 @@ using DeltaGenCore;
 namespace DeltaGen;
 
 [Generator]
-internal class SystemAttributeGenerator : IIncrementalGenerator
+internal class SystemAttributeGenerator : GeneratorBase
 {
-    public void Initialize(IncrementalGeneratorInitializationContext context)
+    public override void Generate(IncrementalGeneratorInitializationContext context)
     {
-        context.RegisterPostInitializationOutput(OnPostInitOutput);
+            context.RegisterPostInitializationOutput(OnPostInitOutput);
     }
 
     private void OnPostInitOutput(IncrementalGeneratorPostInitializationContext ctx)

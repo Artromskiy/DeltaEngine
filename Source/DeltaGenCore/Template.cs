@@ -2,11 +2,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace DeltaGenCore;
 public abstract class Template
 {
+    protected static string GetName([CallerMemberName] string name = default!) => name;
     public virtual string Name => string.Empty;
     public abstract override string ToString();
 

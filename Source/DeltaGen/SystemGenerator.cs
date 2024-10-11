@@ -10,9 +10,9 @@ using System.Linq;
 namespace DeltaGen;
 
 [Generator]
-public sealed class SystemGenerator : IIncrementalGenerator
+public sealed class SystemGenerator : GeneratorBase
 {
-    public void Initialize(IncrementalGeneratorInitializationContext context)
+    public override void Generate(IncrementalGeneratorInitializationContext context)
     {
         var attributeName = new SystemAttribute().ShortName;
         var classDeclarations = context.SyntaxProvider.CreateSyntaxProvider

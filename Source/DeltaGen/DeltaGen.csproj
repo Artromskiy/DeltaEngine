@@ -3,9 +3,8 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <IncludeBuildOutput>false</IncludeBuildOutput>
-    
+    <EmitCompilerGeneratedFiles>false</EmitCompilerGeneratedFiles>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
-    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <IsRoslynComponent>true</IsRoslynComponent>
     
     <ImplicitUsings>false</ImplicitUsings>
@@ -14,7 +13,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DeltaGenCore\DeltaGenCore.csproj" />
+    <ProjectReference Include="..\DeltaGenCore\DeltaGenCore.csproj" OutputItemType="Analyzer" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true"
+        PackagePath="analyzers/dotnet/cs" Visible="false" />
+  </ItemGroup>
+  
 </Project>

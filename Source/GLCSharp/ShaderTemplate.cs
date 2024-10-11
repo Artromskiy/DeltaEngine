@@ -10,6 +10,7 @@ internal class ShaderTemplate(ShaderModel model) : Template<ShaderModel>(model)
     public override string ToString() =>
 $$"""
 using System;
+using System.Numerics;
 
 namespace {{Model.TypeNamespace}};
 
@@ -25,7 +26,12 @@ namespace {{Model.TypeNamespace}};
         public readonly Vector3 Tan;
         public readonly Vector3 Binorm;
         public readonly Vector3 Bitan;
+
+        public int InstanceIndex;
+        public int VertexIndex;
+        public Vector4 Position;
     }
+
 
 {{LoopRange(Model.ContainingTypesCount(), s => "}\n")}}
 

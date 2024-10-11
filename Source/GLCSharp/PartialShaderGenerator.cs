@@ -9,10 +9,9 @@ using System.Linq;
 namespace GLCSharp
 {
     [Generator]
-    public sealed class PartialShaderGenerator : IIncrementalGenerator
+    public sealed class PartialShaderGenerator : GeneratorBase
     {
-
-        public void Initialize(IncrementalGeneratorInitializationContext context)
+        public override void Generate(IncrementalGeneratorInitializationContext context)
         {
             var attributeName = new ShaderAttribute().ShortName;
             var classDeclarations = context.SyntaxProvider.CreateSyntaxProvider

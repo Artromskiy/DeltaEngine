@@ -4,9 +4,9 @@ using Microsoft.CodeAnalysis;
 namespace DeltaGenInternal;
 
 [Generator]
-public sealed class SourceGenerator : IIncrementalGenerator
+public sealed class SourceGenerator : GeneratorBase
 {
-    public void Initialize(IncrementalGeneratorInitializationContext context)
+    public override void Generate(IncrementalGeneratorInitializationContext context)
     {
         context.RegisterPostInitializationOutput(OnPostInitOutput);
     }
