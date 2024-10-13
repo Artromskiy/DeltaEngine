@@ -48,9 +48,6 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.2.2" />
-    <PackageReference Include="Silk.NET.Assimp" Version="2.20.0" />
-    <PackageReference Include="Silk.NET.SPIRV.Cross" Version="2.20.0" />
-    <PackageReference Include="Silk.NET.SPIRV.Cross.Native" Version="2.20.0" />
     <PackageReference Include="Silk.NET.Vulkan" Version="2.20.0" />
     <PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" Version="2.20.0" />
     <PackageReference Include="Silk.NET.Vulkan.Extensions.KHR" Version="2.20.0" />
@@ -64,7 +61,6 @@
     <ProjectReference Include="..\..\Depend\Arch\src\Arch\Arch.csproj" />
     <ProjectReference Include="..\DeltaGen\DeltaGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\DeltaGenInternal\DeltaGenInternal.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-    <ProjectReference Include="..\GLCSharp\GLCSharp.csproj"  OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 

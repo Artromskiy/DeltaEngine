@@ -66,7 +66,7 @@ namespace ConsoleModelImporter
                 Append(directory).
                 Append(Path.DirectorySeparatorChar).
                 Append(plainName).
-                Append("_").
+                Append('_').
                 Append(fileNameIndex++).
                 Append(extension);
             while (File.Exists(alternateFilename = sb.ToString()));

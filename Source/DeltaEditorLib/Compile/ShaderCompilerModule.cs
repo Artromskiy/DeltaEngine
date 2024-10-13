@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 
 namespace DeltaEditorLib.Compile;
 internal unsafe class ShaderCompilerModule
@@ -70,8 +71,9 @@ internal unsafe class ShaderCompilerModule
         api.CompileOptionsSetOptimizationLevel(opts, OptimizationLevel.Performance);
         Compiler* compiler = api.CompilerInitialize();
         var fileName = Path.GetFileNameWithoutExtension(path);
-        var sourceBytes = File.ReadAllBytes(path);
-        CompilationResult* result = api.CompileIntoSpv(compiler, sourceBytes, (nuint)sourceBytes.Length, shaderKind, fileName, "main", opts);
+        var preprocessed = PreprocessIncludes(path);
+        Debug.WriteLine(preprocessed, "Shader compiler");
+        CompilationResult* result = api.CompileIntoSpv(compiler, preprocessed, (nuint)preprocessed.Length, shaderKind, fileName, "main", opts);
         var status = api.ResultGetCompilationStatus(result);
         Debug.Assert(status == CompilationStatus.Success, status.ToString(), api.ResultGetErrorMessageS(result));
         var length = api.ResultGetLength(result);
@@ -79,5 +81,30 @@ internal unsafe class ShaderCompilerModule
         api.ResultRelease(result);
         api.CompilerRelease(compiler);
         return spv;
+    }
+
+    private static string PreprocessIncludes(string path)
+    {
+        const string IncludeKeyword = "#include";
+        string directory = Path.GetDirectoryName(path)!;
+        StringBuilder preprocessed = new();
+        var shaderLines = File.ReadAllLines(path);
+        HashSet<string> includes = [];
+        for (int i = 0; i < shaderLines.Length; i++)
+        {
+            string? line = shaderLines[i];
+            if (!line.StartsWith(IncludeKeyword))
+            {
+                preprocessed.AppendLine(line);
+                continue;
+            }
+            var includePath = line[IncludeKeyword.Length..].Replace(" ", string.Empty).Replace("\"", string.Empty);
+            if (!includes.Contains(includePath))
+            {
+                var includeCode = File.ReadAllText(Path.Combine(directory, includePath));
+                preprocessed.Append(includeCode);
+            }
+        }
+        return preprocessed.ToString();
     }
 }

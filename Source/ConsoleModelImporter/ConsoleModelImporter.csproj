@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DeltaEngine\DeltaEngine.csproj" />
+    <ProjectReference Include="..\DeltaEditorLib\DeltaEditorLib.csproj" />
   </ItemGroup>
 
 </Project>

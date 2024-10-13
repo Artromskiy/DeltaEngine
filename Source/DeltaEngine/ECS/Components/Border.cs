@@ -1,5 +1,6 @@
 ﻿using Delta.Assets;
 using Delta.ECS.Attributes;
+using Delta.Rendering;
 using System.Numerics;
 
 namespace Delta.ECS.Components;
@@ -7,11 +8,17 @@ namespace Delta.ECS.Components;
 public struct Border
 {
     public Vector4 minMax;
+    public Vector4 uv;
     public Vector4 margin;
     public Vector4 padding;
-    public Vector4 colors;
+    //public Color colors;
+    //public Color borderColors;
     public Vector4 cornerRadius;
-    public Vector4 borderColors;
-    public Vector4 borderThickness;
+    public int borderThickness;
     public GuidAsset<ShaderData> shader;
+
+    public Border()
+    {
+        minMax = new(-1, -1, 1, 1);
+    }
 }

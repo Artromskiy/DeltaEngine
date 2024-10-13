@@ -1,14 +1,11 @@
 #version 450
 
-const int InsSet = 0;
-const int ScnSet = 1;
-
-#define ins gl_InstanceIndex
-#define vert gl_VertexIndex
+#include "VertexInput.glsl"
 
 struct Border
 {
     vec4 minMax;
+    vec4 uv;
     vec4 cornerRadius;
     vec4 borderThickness;
     uvec4 colorsRgba;
@@ -25,52 +22,59 @@ struct SceneData
     vec4 windowSize;
 };
 
-layout (set = InsSet, binding = 0) buffer InsTRS { Border insBorder[ ]; };
-layout (set = InsSet, binding = 1) buffer InsIds { int insIds[ ]; };
-layout (set = ScnSet, binding = 0) buffer ScnCam { SceneData scene; };
+layout (set = 0, binding = 0) buffer InsTRS { Border insBorder[ ]; };
+layout (set = 0, binding = 1) buffer InsIds { int insIds[ ]; };
+layout (set = 1, binding = 0) buffer ScnCam { SceneData scene; };
 
-layout(location = 0) out vec4 color;
-layout(location = 1) out vec4 borderColor;
-layout(location = 2) out flat int instanceId;
-
-int TrsId() { return insIds[ins]; }
-Border Model() { return insBorder[TrsId()]; }
+layout(location = 0) out flat int instanceIndex;
+layout(location = 1) out vec4 color;
+layout(location = 2) out vec4 borderColor;
+layout(location = 3) out vec2 uv;
 
 vec4 uintToRGBA(uint color)
 {
-    float r = float((color >> 24) & 0xFF) / 255.0;
-    float g = float((color >> 16) & 0xFF) / 255.0;
-    float b = float((color >> 8) & 0xFF) / 255.0;
-    float a = float(color & 0xFF) / 255.0;
-    return vec4(r, g, b, a);
+    float r = float((color >> 0 ) & 0xFF);
+    float g = float((color >> 8 ) & 0xFF);
+    float b = float((color >> 16) & 0xFF);
+    float a = float((color >> 24) & 0xFF);
+    return vec4(r, g, b, a) / 255.0f;
 }
 
-vec4 Pos()
-{    
-    vec4 minMax = Model().minMax;
-    uint xId = (vert / 2) * 2;
-    uint yId = ((vert + 1) % 4) / 2 * 2 + 1;
-    vec2 pos = vec2(minMax[xId], minMax[yId]);
-    return vec4(pos, 0.0f, 1.0f);
-}
-
-vec4 Color()
+vec4 PosUV()
 {
-    uint uColor = Model().colorsRgba[vert];
+    // should be done in compute, so all accesses with gl_InstanceIndex are valid
+    int id = insIds[gl_InstanceIndex];
+    vec4 minMaxPos = insBorder[id].minMax;
+    vec4 minMaxUV = insBorder[id].uv;
+    uint xId = (gl_VertexIndex / 2) * 2;
+    uint yId = ((gl_VertexIndex + 1) % 4) / 2 * 2 + 1;
+    return vec4(minMaxPos[xId], minMaxPos[yId], minMaxUV[xId], minMaxUV[yId]);
+}
+
+vec4 BackColor()
+{
+    // should be done in compute, so all accesses with gl_InstanceIndex are valid
+    int id = insIds[gl_InstanceIndex];
+    uint uColor = insBorder[id].colorsRgba[gl_VertexIndex];
     return uintToRGBA(uColor);
 }
 
 vec4 BorderColor()
 {
-    uint uColor = Model().borderColorsRgba[vert];
+    // should be done in compute, so all accesses with gl_InstanceIndex are valid
+    int id = insIds[gl_InstanceIndex];
+    uint uColor = insBorder[id].borderColorsRgba[gl_VertexIndex];
     return uintToRGBA(uColor);
 }
 
 void main()
 {
-    uint id = TrsId();
-    vec4 pos = Pos();
-    gl_Position = pos;
-    color = Color();
+    // should be done in compute, so all accesses with gl_InstanceIndex are valid
+    uint id = insIds[gl_InstanceIndex];
+    vec4 posUV = PosUV();
+    gl_Position = vec4(posUV.xy, 0, 1);
+    instanceIndex = gl_InstanceIndex;
+    uv = posUV.zw;
+    color = BackColor();
     borderColor = BorderColor();
 }

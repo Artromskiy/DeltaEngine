@@ -6,15 +6,12 @@ using Delta.Utilities;
 using Silk.NET.Core;
 using Silk.NET.Core.Contexts;
 using Silk.NET.Core.Native;
-using Silk.NET.SPIRV;
-using Silk.NET.SPIRV.Cross;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
 using System;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
 using Buffer = Silk.NET.Vulkan.Buffer;
 
 namespace Delta.Rendering;
@@ -320,7 +317,13 @@ internal static unsafe class RenderHelper
         PipelineColorBlendAttachmentState colorBlendAttachment = new()
         {
             ColorWriteMask = ColorComponentFlags.RBit | ColorComponentFlags.GBit | ColorComponentFlags.BBit | ColorComponentFlags.ABit,
-            BlendEnable = false,
+            BlendEnable = true,
+            SrcColorBlendFactor = BlendFactor.SrcAlpha,
+            DstColorBlendFactor = BlendFactor.OneMinusSrcAlpha,
+            ColorBlendOp = BlendOp.Add,
+            SrcAlphaBlendFactor = BlendFactor.One,
+            DstAlphaBlendFactor = BlendFactor.Zero,
+            AlphaBlendOp = BlendOp.Add,
         };
         //PipelineDepthStencilStateCreateInfo depthStencil = new()
         //{
@@ -642,7 +645,7 @@ internal static unsafe class RenderHelper
         return setLayout;
     }
 
-    public unsafe static PipelineLayout CreatePipelineLayout(ReadOnlySpan<DescriptorSetLayout> layouts)
+    public static unsafe PipelineLayout CreatePipelineLayout(ReadOnlySpan<DescriptorSetLayout> layouts)
     {
         var renderData = IRuntimeContext.Current.GraphicsModule.RenderData;
         var vk = renderData.vk;

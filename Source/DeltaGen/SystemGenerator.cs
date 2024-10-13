@@ -14,6 +14,17 @@ public sealed class SystemGenerator : GeneratorBase
 {
     public override void Generate(IncrementalGeneratorInitializationContext context)
     {
+        context.RegisterPostInitializationOutput(ctx =>
+        {
+            ctx.AddSource(new SystemAttribute());
+            ctx.AddSource(new SystemCallAttribute());
+
+            ctx.AddSource(new AllAttribute());
+            ctx.AddSource(new AnyAttribute());
+            ctx.AddSource(new NoneAttribute());
+            ctx.AddSource(new OnlyAttribute());
+        });
+
         var attributeName = new SystemAttribute().ShortName;
         var classDeclarations = context.SyntaxProvider.CreateSyntaxProvider
         (

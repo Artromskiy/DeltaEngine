@@ -10,6 +10,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using static Delta.Rendering.UISceneBatcher;
 
 namespace Delta.Rendering;
@@ -215,7 +216,9 @@ internal class UISceneBatcher : GenericBatcher<BorderData, int, SceneData>
             var offsets = ArrayPool<int>.Shared.Rent(offsetsCount);
             Array.Clear(offsets);
             RenderWriter writer = new(rendersArray.Writer, offsets);
+
             Debug.Assert(world.CountEntities(_renderDescription) <= 1);
+            // TODO replace ArrayPool with baked, as it doesn't guarantee to be cleared
             foreach (var item in offsets)
                 Debug.Assert(item == 0);
             world.InlineQuery<RenderWriter, BorderId>(_renderDescription, ref writer);
@@ -247,15 +250,18 @@ internal class UISceneBatcher : GenericBatcher<BorderData, int, SceneData>
             [Imp(Inl)]
             public readonly void Update(Entity entity, ref BorderId rendId, ref Border border)
             {
+                Color eP = new(175, 50, 240, 255);
+                Color ePD = new(13, 13, 13, 255);
+                //Vector4 evilPurpleDark = new Vector4(193, 96, 246, 255) / 255f;
                 trsArray[rendId.borderId] = new BorderData()
                 {
                     minMax = border.minMax,
-                    colorsRgba = (uint.MaxValue, uint.MaxValue, uint.MaxValue, uint.MaxValue),
-                    borderColorsRgba = (uint.MaxValue, uint.MaxValue, uint.MaxValue, uint.MaxValue),
-                    borderThickness = new(0, 0, 0, 0),
-                    cornerRadius = new(3, 3, 3, 3)
-                };// border;
-                Console.WriteLine($"{3}");
+                    uv = border.uv,
+                    colorsRgba = (ePD, ePD, ePD, ePD),
+                    borderColorsRgba = (eP, eP, eP, eP),
+                    borderThickness = new(border.borderThickness),
+                    cornerRadius = border.cornerRadius,
+                };
             }
         }
     }
@@ -274,6 +280,7 @@ internal class UISceneBatcher : GenericBatcher<BorderData, int, SceneData>
     public struct BorderData
     {
         public Vector4 minMax;
+        public Vector4 uv;
         public Vector4 cornerRadius;
         public Vector4 borderThickness;
         public (uint, uint, uint, uint) colorsRgba;

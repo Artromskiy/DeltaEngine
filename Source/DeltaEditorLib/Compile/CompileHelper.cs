@@ -37,6 +37,7 @@ internal class CompileHelper(IProjectPath projectPath)
         allowUnsafe: true
     );
 
+
     public string CompileScripts()
     {
         var sourceFiles = Directory.EnumerateFiles(_projectPath.ScriptsDirectory, CsSearch, SearchOption.AllDirectories);

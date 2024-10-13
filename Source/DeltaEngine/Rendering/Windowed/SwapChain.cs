@@ -11,7 +11,7 @@ internal class SwapChain : IDisposable
     public readonly ImmutableArray<ImageView> imageViews;
     public readonly ImmutableArray<Framebuffer> frameBuffers;
     public readonly SurfaceFormatKHR format;
-    public Extent2D extent;
+    public Extent2D Extent { get; private set; }
 
     public int imageCount;
 
@@ -29,7 +29,7 @@ internal class SwapChain : IDisposable
         format = RenderHelper.ChooseSwapSurfaceFormat(swSupport.Formats, targetFormat);
         var presentMode = PresentModeKHR.MailboxKhr; // swSupport.PresentModes.Contains(PresentModeKHR.ImmediateKhr) ? PresentModeKHR.ImmediateKhr : PresentModeKHR.FifoKhr;
 
-        extent = RenderHelper.ChooseSwapExtent(width, height, swSupport.Capabilities);
+        Extent = RenderHelper.ChooseSwapExtent(width, height, swSupport.Capabilities);
 
         uint maxImageCount = swSupport.Capabilities.MaxImageCount;
         maxImageCount = maxImageCount == 0 ? int.MaxValue : maxImageCount;
@@ -47,7 +47,7 @@ internal class SwapChain : IDisposable
             MinImageCount = (uint)imageCount,
             ImageFormat = format.Format,
             ImageColorSpace = format.ColorSpace,
-            ImageExtent = extent,
+            ImageExtent = Extent,
             ImageArrayLayers = 1,
             ImageUsage = ImageUsageFlags.ColorAttachmentBit,
             ImageSharingMode = sameFamily ? SharingMode.Exclusive : SharingMode.Concurrent,
@@ -67,7 +67,7 @@ internal class SwapChain : IDisposable
         _ = khrSw.GetSwapchainImages(data.deviceQ, swapChain, &imCount, imageSpan);
         images = ImmutableArray.Create(imageSpan);
         imageViews = RenderHelper.CreateImageViews(data.vk, data.deviceQ, [.. images], format.Format);
-        frameBuffers = RenderHelper.CreateFramebuffers(data.vk, data.deviceQ, [.. imageViews], data.renderPass, (int)extent.Width, (int)extent.Height);
+        frameBuffers = RenderHelper.CreateFramebuffers(data.vk, data.deviceQ, [.. imageViews], data.renderPass, (int)Extent.Width, (int)Extent.Height);
     }
 
     public unsafe uint GetImageIndex(Semaphore semaphore, out bool resize)

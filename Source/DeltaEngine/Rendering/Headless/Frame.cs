@@ -14,7 +14,8 @@ internal class Frame : IDisposable
     private Semaphore _renderedSemaphore;
     private Fence _renderFinishedFence;
 
-    private CommandBuffer _commandBuffer;
+    private CommandBuffer _graphCmdBuf;
+    private CommandBuffer _comptCmdBuf;
 
     private readonly Dictionary<IRenderBatcher, DynamicDescriptorSets> _batchedSets = [];
 
@@ -34,15 +35,23 @@ internal class Frame : IDisposable
         FenceCreateInfo fenceInfo = new(StructureType.FenceCreateInfo, null, FenceCreateFlags.SignaledBit);
         SemaphoreCreateInfo semaphoreInfo = new(StructureType.SemaphoreCreateInfo);
 
-        CommandBufferAllocateInfo allocInfo = new()
+        CommandBufferAllocateInfo graphAllocInfo = new()
         {
             SType = StructureType.CommandBufferAllocateInfo,
             CommandPool = _rendererBase.deviceQ.GetCmdPool(QueueType.Graphics),
             Level = CommandBufferLevel.Primary,
             CommandBufferCount = 1,
         };
+        CommandBufferAllocateInfo comptAllocInfo = new()
+        {
+            SType = StructureType.CommandBufferAllocateInfo,
+            CommandPool = _rendererBase.deviceQ.GetCmdPool(QueueType.Compute),
+            Level = CommandBufferLevel.Primary,
+            CommandBufferCount = 1,
+        };
 
-        _ = _rendererBase.vk.AllocateCommandBuffers(_rendererBase.deviceQ, allocInfo, out _commandBuffer);
+        _ = _rendererBase.vk.AllocateCommandBuffers(_rendererBase.deviceQ, graphAllocInfo, out _graphCmdBuf);
+        _ = _rendererBase.vk.AllocateCommandBuffers(_rendererBase.deviceQ, comptAllocInfo, out _comptCmdBuf);
         _ = _rendererBase.vk.CreateSemaphore(_rendererBase.deviceQ, semaphoreInfo, null, out _presentSemaphore);
         _ = _rendererBase.vk.CreateSemaphore(_rendererBase.deviceQ, semaphoreInfo, null, out _renderedSemaphore);
         _ = _rendererBase.vk.CreateFence(_rendererBase.deviceQ, fenceInfo, null, out _renderFinishedFence);
@@ -51,8 +60,7 @@ internal class Frame : IDisposable
     public unsafe void Dispose()
     {
         _rendererBase.vk.FreeCommandBuffers(_rendererBase.deviceQ,
-            _rendererBase.deviceQ.GetCmdPool(QueueType.Graphics), 1, in _commandBuffer);
-
+            _rendererBase.deviceQ.GetCmdPool(QueueType.Graphics), 1, in _graphCmdBuf);
         _rendererBase.vk.DestroySemaphore(_rendererBase.deviceQ, _presentSemaphore, null);
         _rendererBase.vk.DestroySemaphore(_rendererBase.deviceQ, _renderedSemaphore, null);
         _rendererBase.vk.DestroyFence(_rendererBase.deviceQ, _renderFinishedFence, null);
@@ -89,16 +97,19 @@ internal class Frame : IDisposable
         imageIndex = _swapChain.AcquireNextImage();
 
         _rendererBase.vk.ResetFences(_rendererBase.deviceQ, 1, _renderFinishedFence);
-        _rendererBase.vk.ResetCommandBuffer(_commandBuffer, 0);
+        _rendererBase.vk.ResetCommandBuffer(_graphCmdBuf, 0);
 
         foreach (var item in _batchedSets)
             item.Value.UpdateDescriptorSets();
+
+        // Compute stage
+
         BeginRecordCommandBuffer(imageIndex);
         foreach (var item in _batchedSets)
             RecordCommandBuffer(item.Key, item.Value);
         EndRecordCommandBuffer();
 
-        var buffer = _commandBuffer;
+        var buffer = _graphCmdBuf;
         var batchersSemaphore = _batchersSemaphore;
         var renderedSemaphore = _renderedSemaphore;
 
@@ -141,11 +152,11 @@ internal class Frame : IDisposable
             MinDepth = 0.0f,
             MaxDepth = 1.0f
         };
-        _ = _rendererBase.vk.BeginCommandBuffer(_commandBuffer, &beginInfo);
+        _ = _rendererBase.vk.BeginCommandBuffer(_graphCmdBuf, &beginInfo);
 
-        _rendererBase.vk.CmdBeginRenderPass(_commandBuffer, &renderPassInfo, SubpassContents.Inline);
-        _rendererBase.vk.CmdSetViewport(_commandBuffer, 0, 1, &viewport);
-        _rendererBase.vk.CmdSetScissor(_commandBuffer, 0, 1, &renderRect);
+        _rendererBase.vk.CmdBeginRenderPass(_graphCmdBuf, &renderPassInfo, SubpassContents.Inline);
+        _rendererBase.vk.CmdSetViewport(_graphCmdBuf, 0, 1, &viewport);
+        _rendererBase.vk.CmdSetScissor(_graphCmdBuf, 0, 1, &renderRect);
     }
 
     private unsafe void RecordCommandBuffer(IRenderBatcher batcher, DynamicDescriptorSets descriptorSets)
@@ -156,7 +167,7 @@ internal class Frame : IDisposable
         VertexAttribute attributeMask = (VertexAttribute)(-1);
         uint indicesCount = 0;
 
-        descriptorSets.BindDescriptorSets(_commandBuffer);
+        descriptorSets.BindDescriptorSets(_graphCmdBuf);
 
         int firstInstance = 0;
         var renderList = batcher.RendGroups;
@@ -173,7 +184,7 @@ internal class Frame : IDisposable
             if (itemShader.guid != currentShader) // shader switch
             {
                 (var pipeline, attributeMask) = _renderAssets.GetPipelineAndAttributes(itemShader, batcher.PipelineLayout);
-                _rendererBase.vk.CmdBindPipeline(_commandBuffer, PipelineBindPoint.Graphics, pipeline);
+                _rendererBase.vk.CmdBindPipeline(_graphCmdBuf, PipelineBindPoint.Graphics, pipeline);
                 currentShader = itemShader.guid;
             }
 
@@ -183,18 +194,18 @@ internal class Frame : IDisposable
             {
                 (var vertices, var indices, indicesCount) = _renderAssets.GetVertexIndexBuffersAndCount(itemMesh, attributeMask);
 
-                if(vertices.Handle != default)
-                    _rendererBase.vk.CmdBindVertexBuffers(_commandBuffer, 0, 1, vertices, 0);
-                _rendererBase.vk.CmdBindIndexBuffer(_commandBuffer, indices, 0, IndexType.Uint32);
+                if (vertices.Handle != default)
+                    _rendererBase.vk.CmdBindVertexBuffers(_graphCmdBuf, 0, 1, vertices, 0);
+                _rendererBase.vk.CmdBindIndexBuffer(_graphCmdBuf, indices, 0, IndexType.Uint32);
             }
-            _rendererBase.vk.CmdDrawIndexed(_commandBuffer, indicesCount, (uint)count, 0, 0, (uint)firstInstance);
+            _rendererBase.vk.CmdDrawIndexed(_graphCmdBuf, indicesCount, (uint)count, 0, 0, (uint)firstInstance);
         }
 
     }
 
     private void EndRecordCommandBuffer()
     {
-        _rendererBase.vk.CmdEndRenderPass(_commandBuffer);
-        _ = _rendererBase.vk.EndCommandBuffer(_commandBuffer);
+        _rendererBase.vk.CmdEndRenderPass(_graphCmdBuf);
+        _ = _rendererBase.vk.EndCommandBuffer(_graphCmdBuf);
     }
 }

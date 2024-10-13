@@ -5,7 +5,6 @@ using DeltaEditorLib.Compile;
 using DeltaEditorLib.Scripting;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 
 namespace DeltaEditorLib.Loader;
@@ -49,7 +48,6 @@ public class RuntimeLoader
 
         DefaultsImporter<MeshData>.Import(Path.Combine(directory, "Import", "Models"));
         _shaderCompilerModule.CompileAndImportShaders(Path.Combine(directory, "Import", "Shaders"));
-        //MaterialsImporter.Import(Path.Combine(directory, "Import", "Shaders"));
     }
 
     public void ReloadRuntime()

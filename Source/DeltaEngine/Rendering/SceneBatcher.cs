@@ -272,6 +272,10 @@ internal class SceneBatcher : GenericBatcher<Matrix4x4, int, int, GpuCameraData>
             var offsetsCount = rendGroupData.rendToGroup.Count;
             //Debug.Assert(offsetsCount != 0);
             var offsets = ArrayPool<int>.Shared.Rent(offsetsCount);
+
+            // TODO replace ArrayPool with baked, as it doesn't guarantee to be cleared
+            foreach (var item in offsets)
+                Debug.Assert(item == 0);
             foreach (var item in rendGroupData.groupToCount)
                 offsets[item.Key.id] = item.Value;
             int index = 0;
