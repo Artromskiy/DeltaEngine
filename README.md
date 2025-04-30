@@ -3,6 +3,7 @@ This repository contains the editor and game engine project.
 This is the very beginning of development and, like any other similar project, it can cease to exist even without becoming a minimum viable product. At least we tried.
 
 **For those who stumbled upon this repository and think it's gone**
+
 I realized that the current implementation heavily depends on Avalonia, since the engine is ultimately forced to work in the same thread with it, or very tightly synchronize with the ui thread, in addition, the render from the camera has to be copied from the GPU to the CPU to display it inside the ui of Avalonia. This leads to difficulties in development and support, and to the fact that a lot of processor time is spent copying the render. To solve this problem, I wanted to write a ui renderer on xaml and the current renderer, but it was necessary to standardize the shaders and the graphics pipeline in general. For this, I started the GLSH project, which is a mellinoe/ShaderGen recreated from scratch specifically for Vulcan. At the moment, I am working on developing the game and simultaneously developing and improving the code for GLSH.
 
 **Motivation**
