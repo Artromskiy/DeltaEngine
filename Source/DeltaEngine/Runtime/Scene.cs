@@ -1,14 +1,14 @@
 ﻿using Arch.Core;
-using Delta.Assets;
-using Delta.ECS;
-using Delta.ECS.Components;
-using Delta.Rendering;
+using DVG.Engine.Assets;
+using DVG.Engine.ECS;
+using DVG.Engine.ECS.Components;
+using DVG.Engine.Rendering;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text.Json.Serialization;
 
-namespace Delta.Runtime;
+namespace DVG.Engine.Runtime;
 
 public sealed class Scene : IDisposable, IAsset
 {

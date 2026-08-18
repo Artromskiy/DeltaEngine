@@ -2,7 +2,7 @@
 using Silk.NET.Vulkan.Extensions.KHR;
 using System;
 
-namespace Delta.Rendering.Internal;
+using DVG.Engine.Rendering.Internal;
 internal readonly struct Gpu
 {
     private readonly PhysicalDevice physicalDevice;

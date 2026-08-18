@@ -1,6 +1,6 @@
 ﻿using Avalonia.Media;
 
-namespace DeltaEditor.Tools
+DVG.Engine.Editor.Tools
 {
     internal class Colors
     {

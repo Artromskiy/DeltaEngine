@@ -1,4 +1,4 @@
-﻿namespace DeltaGenCore;
+namespace DVG.Engine.Generation.Core;
 
 public abstract class AttributeTemplate : Template
 {

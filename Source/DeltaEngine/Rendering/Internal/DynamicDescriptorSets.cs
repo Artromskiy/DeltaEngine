@@ -1,7 +1,7 @@
 ﻿using Silk.NET.Vulkan;
 using System;
 
-namespace Delta.Rendering.Internal;
+namespace DVG.Engine.Rendering.Internal;
 
 internal class DynamicDescriptorSets : IDisposable
 {

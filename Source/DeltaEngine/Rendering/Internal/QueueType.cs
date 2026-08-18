@@ -1,6 +1,6 @@
 ﻿using Silk.NET.Vulkan;
 
-namespace Delta.Rendering.Internal;
+using DVG.Engine.Rendering.Internal;
 internal enum QueueType
 {
     Graphics,

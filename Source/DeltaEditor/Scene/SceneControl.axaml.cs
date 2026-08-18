@@ -2,10 +2,10 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
-using Delta.Runtime;
-using Delta.Utilities;
+using DVG.Engine.Runtime;
+using DVG.Engine.Utilities;
 
-namespace DeltaEditor;
+namespace DVG.Engine.Editor;
 
 public partial class SceneControl : UserControl
 {

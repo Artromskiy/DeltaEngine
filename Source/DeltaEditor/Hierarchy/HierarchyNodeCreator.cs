@@ -1,11 +1,11 @@
 ﻿using Arch.Core;
-using Delta.Runtime;
+using DVG.Engine.Runtime;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace DeltaEditor.Hierarchy
+DVG.Engine.Editor.Hierarchy
 {
     public class HierarchyNodeCreator
     {

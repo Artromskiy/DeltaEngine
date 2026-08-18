@@ -4,11 +4,11 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Delta.Runtime;
-using DeltaEditor.Inspector.Internal;
+using DVG.Engine.Runtime;
+using DVG.Engine.Editor.Inspector.Internal;
 using System;
 
-namespace DeltaEditor;
+namespace DVG.Engine.Editor;
 
 internal partial class NamedTextField : InspectorNode
 {

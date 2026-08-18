@@ -1,9 +1,9 @@
-﻿using Delta.ECS.Components;
-using Delta.Rendering.Collections;
+using DVG.Engine.ECS.Components;
+using DVG.Engine.Rendering.Collections;
 using Silk.NET.Vulkan;
 using System;
 
-namespace Delta.Rendering;
+using DVG.Engine.Rendering;
 internal interface IRenderBatcher : IDisposable
 {
     public ReadOnlySpan<GpuByteArray> Buffers { get; }

@@ -1,6 +1,6 @@
 ﻿using System.IO;
 using System.Text;
-namespace DeltaEditorLib.Scripting;
+using DVG.Engine.EditorLib.Scripting;
 
 internal class TestCompileFiles
 {
@@ -8,8 +8,8 @@ internal class TestCompileFiles
     private const string TestCsFile =
         """
         using System;
-        using Delta;
-        using Delta.Scripting;
+using         DVG.Engine;
+using         DVG.Engine.Scripting;
         using System.Diagnostics;
 
         [Component]

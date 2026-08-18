@@ -1,7 +1,7 @@
-﻿using DeltaGen.Models;
-using DeltaGenCore;
+using DVG.Engine.Generation.Models;
+using DVG.Engine.Generation.Core;
 
-namespace DeltaGen.Templates;
+namespace DVG.Engine.Generation.Templates;
 
 internal class SystemCallTemplate(SystemCallModel model) : Template<SystemCallModel>(model)
 {

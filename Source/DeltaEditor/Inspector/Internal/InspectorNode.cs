@@ -2,9 +2,9 @@
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.VisualTree;
-using Delta.Runtime;
+using DVG.Engine.Runtime;
 
-namespace DeltaEditor.Inspector.Internal;
+namespace DVG.Engine.Editor.Inspector.Internal;
 
 internal abstract class InspectorNode : UserControl, IColorMarkable
 {

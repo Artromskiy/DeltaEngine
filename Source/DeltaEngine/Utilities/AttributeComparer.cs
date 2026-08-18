@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Delta.Utilities;
+using DVG.Engine.Utilities;
 public class AttributeComparer<A> : IComparer<ComponentType> where A : Attribute
 {
     private static readonly AttributeComparer<A> _defaultComparer = new();

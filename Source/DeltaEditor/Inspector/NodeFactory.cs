@@ -1,10 +1,10 @@
-﻿using Delta.Assets;
-using DeltaEditor.Inspector.Internal;
+using DVG.Engine.Assets;
+using DVG.Engine.Editor.Inspector.Internal;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
 
-namespace DeltaEditor.Inspector;
+namespace DVG.Engine.Editor.Inspector;
 
 internal static class NodeFactory
 {

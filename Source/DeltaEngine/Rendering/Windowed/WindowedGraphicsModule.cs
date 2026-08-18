@@ -1,13 +1,13 @@
-﻿using Delta.ECS.Components;
-using Delta.Rendering.Internal;
-using Delta.Runtime;
-using Delta.Utilities;
+using DVG.Engine.ECS.Components;
+using DVG.Engine.Rendering.Internal;
+using DVG.Engine.Runtime;
+using DVG.Engine.Utilities;
 using Silk.NET.Vulkan;
 using Silk.NET.Windowing;
 using System;
 using System.Collections.Generic;
 
-namespace Delta.Rendering.Windowed;
+namespace DVG.Engine.Rendering.Windowed;
 
 internal class WindowedGraphicsModule : IGraphicsModule, IDisposable
 {

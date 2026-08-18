@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-namespace Delta.Utilities;
+namespace DVG.Engine.Utilities;
 
 public static class AttributeCache
 {

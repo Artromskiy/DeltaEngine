@@ -1,7 +1,7 @@
 ﻿using Silk.NET.Vulkan;
 using System.Diagnostics;
 
-namespace Delta;
+namespace DVG.Engine;
 
 /// <summary>
 /// Helps debuggins condition results

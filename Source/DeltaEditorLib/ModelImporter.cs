@@ -1,5 +1,5 @@
-﻿using Delta.Rendering;
-using Delta.Runtime;
+using DVG.Engine.Rendering;
+using DVG.Engine.Runtime;
 using Silk.NET.Assimp;
 using System;
 using System.Collections.Generic;
@@ -8,7 +8,7 @@ using System.IO;
 using System.Numerics;
 using Scene = Silk.NET.Assimp.Scene;
 
-namespace Delta.Assets;
+namespace DVG.Engine.Assets;
 
 public class ModelImporter : IDisposable
 {

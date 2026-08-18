@@ -1,8 +1,8 @@
-﻿using Delta.Rendering;
+using DVG.Engine.Rendering;
 using System;
 using System.Text.Json.Serialization;
 
-namespace Delta.Assets;
+namespace DVG.Engine.Assets;
 
 public class MeshData : IAsset
 {

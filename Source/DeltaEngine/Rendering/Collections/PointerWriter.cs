@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace Delta.Rendering.Collections;
+namespace DVG.Engine.Rendering.Collections;
 
 /// <summary>
 /// Fastest way to write directly to gpu memory by pointer

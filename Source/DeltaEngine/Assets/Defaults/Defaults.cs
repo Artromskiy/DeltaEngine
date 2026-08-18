@@ -1,4 +1,4 @@
-﻿namespace Delta.Assets.Defaults;
+using DVG.Engine.Assets.Defaults;
 public class Defaults
 {
     public static MeshData Delta => DeltaMesh.MeshData;

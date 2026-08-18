@@ -1,12 +1,12 @@
 using Arch.Core;
 using Avalonia.Controls;
 using Avalonia.Media;
-using Delta.Runtime;
-using DeltaEditor.Hierarchy;
-using DeltaEditor.Inspector;
-using DeltaEditor.Inspector.Internal;
+using DVG.Engine.Runtime;
+using DVG.Engine.Editor.Hierarchy;
+using DVG.Engine.Editor.Inspector;
+using DVG.Engine.Editor.Inspector.Internal;
 
-namespace DeltaEditor;
+namespace DVG.Engine.Editor;
 
 internal partial class CompositeNodeControl : InspectorNode
 {

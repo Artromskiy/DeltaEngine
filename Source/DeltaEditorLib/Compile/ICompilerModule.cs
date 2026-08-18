@@ -1,8 +1,8 @@
-﻿using DeltaEditorLib.Scripting;
+using DVG.Engine.EditorLib.Scripting;
 using System;
 using System.Collections.Generic;
 
-namespace DeltaEditorLib.Compile;
+namespace DVG.Engine.EditorLib.Compile;
 
 internal interface ICompilerModule
 {

@@ -1,7 +1,7 @@
 ﻿global using Imp = System.Runtime.CompilerServices.MethodImplAttribute;
 using System.Runtime.CompilerServices;
 
-namespace Delta;
+using DVG.Engine;
 internal struct InlineConstants
 {
     public const MethodImplOptions Inl = MethodImplOptions.AggressiveInlining;

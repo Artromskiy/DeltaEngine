@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Delta.Runtime;
+namespace DVG.Engine.Runtime;
 
 public interface IRuntimeContext : IDisposable
 {

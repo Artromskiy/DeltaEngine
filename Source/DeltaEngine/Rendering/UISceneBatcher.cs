@@ -1,19 +1,19 @@
 ﻿using Arch.Core;
-using Delta.Assets;
-using Delta.ECS;
-using Delta.ECS.Components;
-using Delta.Rendering.Collections;
-using Delta.Runtime;
-using Delta.Utilities;
+using DVG.Engine.Assets;
+using DVG.Engine.ECS;
+using DVG.Engine.ECS.Components;
+using DVG.Engine.Rendering.Collections;
+using DVG.Engine.Runtime;
+using DVG.Engine.Utilities;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using static Delta.Rendering.UISceneBatcher;
+using static DVG.Engine.Rendering.UISceneBatcher;
 
-namespace Delta.Rendering;
+namespace DVG.Engine.Rendering;
 
 internal class UISceneBatcher : GenericBatcher<BorderData, int, SceneData>
 {

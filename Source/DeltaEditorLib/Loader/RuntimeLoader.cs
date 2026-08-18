@@ -1,13 +1,13 @@
-﻿using Delta.Assets;
-using Delta.Assets.Defaults;
-using Delta.Runtime;
-using DeltaEditorLib.Compile;
-using DeltaEditorLib.Scripting;
+using DVG.Engine.Assets;
+using DVG.Engine.Assets.Defaults;
+using DVG.Engine.Runtime;
+using DVG.Engine.EditorLib.Compile;
+using DVG.Engine.EditorLib.Scripting;
 using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace DeltaEditorLib.Loader;
+namespace DVG.Engine.EditorLib.Loader;
 
 public class RuntimeLoader
 {

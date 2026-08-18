@@ -1,10 +1,10 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Delta.Runtime;
+using DVG.Engine.Runtime;
 using System.Diagnostics;
 using System.IO;
 
-namespace DeltaEditor;
+namespace DVG.Engine.Editor;
 
 public partial class MainWindow : Window
 {

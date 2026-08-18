@@ -1,4 +1,4 @@
-<Application x:Class="DeltaEditor.App"
+<Application x:Class="DVG.Engine.Editor.App"
              xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:semi="https://irihi.tech/semi"

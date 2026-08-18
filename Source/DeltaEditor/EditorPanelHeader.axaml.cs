@@ -2,7 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using System;
 
-namespace DeltaEditor;
+namespace DVG.Engine.Editor;
 
 public partial class EditorPanelHeader : UserControl
 {

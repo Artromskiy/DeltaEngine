@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DeltaGenTest;
+namespace DVG.Engine.Generation.Tests;
 
 internal class Program
 {

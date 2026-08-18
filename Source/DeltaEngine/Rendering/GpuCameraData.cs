@@ -1,8 +1,8 @@
-﻿using Delta.ECS.Components;
+using DVG.Engine.ECS.Components;
 using System.Numerics;
 using System.Runtime.InteropServices;
 
-namespace Delta.Rendering;
+namespace DVG.Engine.Rendering;
 
 [StructLayout(LayoutKind.Sequential)]
 internal struct GpuCameraData

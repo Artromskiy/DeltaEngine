@@ -1,8 +1,8 @@
-﻿using Delta.Utilities;
+using DVG.Engine.Utilities;
 using System;
 using FamilyQueue = (uint family, uint queueNum);
 
-namespace Delta.Rendering.Internal;
+namespace DVG.Engine.Rendering.Internal;
 
 internal readonly struct FamilyQueues
 {

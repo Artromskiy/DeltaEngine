@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <RootNamespace>DVG.Engine.Generation.Core</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

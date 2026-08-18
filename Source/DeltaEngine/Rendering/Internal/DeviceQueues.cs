@@ -1,9 +1,9 @@
-﻿using Delta.Utilities;
+using DVG.Engine.Utilities;
 using Silk.NET.Core.Native;
 using Silk.NET.Vulkan;
 using System;
 
-namespace Delta.Rendering.Internal;
+using DVG.Engine.Rendering.Internal;
 internal readonly struct DeviceQueues : IDisposable
 {
     private readonly Vk _vk;

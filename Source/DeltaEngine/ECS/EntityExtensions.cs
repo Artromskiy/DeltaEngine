@@ -1,12 +1,12 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions.Dangerous;
 using Arch.Core.Utils;
-using Delta.Runtime;
+using DVG.Engine.Runtime;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Delta.ECS;
+namespace DVG.Engine.ECS;
 
 public static class EntityExtensions
 {

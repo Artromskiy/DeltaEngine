@@ -1,6 +1,6 @@
-﻿using DeltaGenCore;
+using DVG.Engine.Generation.Core;
 
-namespace DeltaGen.Attributes;
+namespace DVG.Engine.Generation.Attributes;
 
 internal class SystemAttribute : AttributeTemplate
 {
@@ -12,7 +12,7 @@ $$"""
 
 using System;
 
-namespace Delta;
+namespace DVG.Engine;
 
 [System.AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
 public class {{Name}} : System.Attribute { }

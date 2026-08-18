@@ -1,11 +1,11 @@
 ﻿using Arch.Core;
-using Delta.ECS;
-using Delta.Rendering;
+using DVG.Engine.ECS;
+using DVG.Engine.Rendering;
 using System;
 using System.Diagnostics;
 using Schedulers;
 
-namespace Delta.Runtime;
+namespace DVG.Engine.Runtime;
 
 public sealed class Runtime : IRuntime, IDisposable
 {

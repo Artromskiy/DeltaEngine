@@ -1,9 +1,9 @@
-﻿using Delta.ECS.Components;
-using Delta.Rendering;
-using Delta.Rendering.Headless;
+using DVG.Engine.ECS.Components;
+using DVG.Engine.Rendering;
+using DVG.Engine.Rendering.Headless;
 using System;
 
-namespace Delta.Runtime;
+using DVG.Engine.Runtime;
 public interface IGraphicsModule
 {
     internal RenderBase RenderData { get; }

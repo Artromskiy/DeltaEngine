@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Delta.Runtime;
+namespace DVG.Engine.Runtime;
 
 internal class ProjectScenes
 {

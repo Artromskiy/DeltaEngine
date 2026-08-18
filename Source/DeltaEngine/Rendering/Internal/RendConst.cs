@@ -1,4 +1,4 @@
-﻿namespace Delta.Rendering.Internal;
+namespace DVG.Engine.Rendering.Internal;
 
 internal struct RendConst
 {

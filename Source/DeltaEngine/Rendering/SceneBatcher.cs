@@ -1,10 +1,10 @@
 ﻿using Arch.Core;
 using Collections.Pooled;
-using Delta.ECS;
-using Delta.ECS.Components;
-using Delta.Rendering.Collections;
-using Delta.Runtime;
-using Delta.Utilities;
+using DVG.Engine.ECS;
+using DVG.Engine.ECS.Components;
+using DVG.Engine.Rendering.Collections;
+using DVG.Engine.Runtime;
+using DVG.Engine.Utilities;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -13,7 +13,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace Delta.Rendering;
+namespace DVG.Engine.Rendering;
 
 internal class SceneBatcher : GenericBatcher<Matrix4x4, int, int, GpuCameraData>
 {

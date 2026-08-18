@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace Delta.Runtime;
+namespace DVG.Engine.Runtime;
 
 public class EditorPaths(string path) : IProjectPath
 {

@@ -1,10 +1,10 @@
-﻿using Delta.Runtime;
-using Delta.Utilities;
+using DVG.Engine.Runtime;
+using DVG.Engine.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Delta.Assets;
+using DVG.Engine.Assets;
 internal class DefaultAssetCollection<T> : IAssetCollection<T> where T : class, IAsset
 {
     private const string MetaEnding = ".meta";

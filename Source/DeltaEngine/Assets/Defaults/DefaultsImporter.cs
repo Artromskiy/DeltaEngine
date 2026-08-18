@@ -1,7 +1,7 @@
-﻿using Delta.Runtime;
+using DVG.Engine.Runtime;
 using System.IO;
 
-namespace Delta.Assets.Defaults;
+namespace DVG.Engine.Assets.Defaults;
 
 public static class DefaultsImporter<T> where T : class, IAsset
 {

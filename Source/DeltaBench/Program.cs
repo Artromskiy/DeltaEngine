@@ -1,7 +1,7 @@
 ﻿using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Running;
 
-namespace DeltaBench;
+namespace DVG.Engine.Benchmarks;
 
 internal class Program
 {

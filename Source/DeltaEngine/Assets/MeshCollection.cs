@@ -1,8 +1,8 @@
-﻿using Delta.Rendering;
+using DVG.Engine.Rendering;
 using System;
 using System.Collections.Generic;
 
-namespace Delta.Assets;
+using DVG.Engine.Assets;
 internal class MeshCollection : DefaultAssetCollection<MeshData>
 {
     private readonly Dictionary<Guid, Dictionary<VertexAttribute, WeakReference<byte[]?>>> _meshMapVariants = [];

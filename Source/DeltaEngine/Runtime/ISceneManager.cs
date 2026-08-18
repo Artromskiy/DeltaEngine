@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Delta.Runtime;
+using DVG.Engine.Runtime;
 public interface ISceneManager
 {
     public event Action<Scene>? OnSceneChanged;

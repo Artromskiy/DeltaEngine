@@ -2,10 +2,10 @@ using Arch.Core;
 using Avalonia;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Delta.Runtime;
-using DeltaEditor.Inspector.Internal;
+using DVG.Engine.Runtime;
+using DVG.Engine.Editor.Inspector.Internal;
 
-namespace DeltaEditor;
+namespace DVG.Engine.Editor;
 
 internal partial class FloatNodeControl : InspectorNode
 {

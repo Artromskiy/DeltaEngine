@@ -1,4 +1,4 @@
-﻿namespace Delta.Runtime;
+namespace DVG.Engine.Runtime;
 
 public interface IProjectPath
 {

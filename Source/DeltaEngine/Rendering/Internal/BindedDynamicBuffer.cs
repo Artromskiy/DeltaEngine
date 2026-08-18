@@ -1,7 +1,7 @@
-﻿using Delta.Rendering.Collections;
+using DVG.Engine.Rendering.Collections;
 using Silk.NET.Vulkan;
 
-namespace Delta.Rendering.Internal;
+using DVG.Engine.Rendering.Internal;
 internal class BindedDynamicBuffer : DynamicBuffer
 {
     private readonly DescriptorSet _descriptorSet;

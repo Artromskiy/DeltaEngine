@@ -1,7 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 
-namespace DeltaEditor;
+namespace DVG.Engine.Editor;
 
 public partial class FlyoutSearchItem : UserControl
 {

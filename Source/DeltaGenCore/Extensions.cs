@@ -6,7 +6,7 @@ using System;
 using System.Linq;
 using System.Text;
 
-namespace DeltaGenCore;
+using DVG.Engine.Generation.Core;
 public static class Extensions
 {
     public static void AddSource(this IncrementalGeneratorPostInitializationContext ctx, Template template)

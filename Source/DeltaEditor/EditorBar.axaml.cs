@@ -1,8 +1,8 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Delta.Runtime;
+using DVG.Engine.Runtime;
 
-namespace DeltaEditor;
+namespace DVG.Engine.Editor;
 
 public partial class EditorBar : UserControl
 {

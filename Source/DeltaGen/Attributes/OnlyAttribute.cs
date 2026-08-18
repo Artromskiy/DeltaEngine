@@ -1,4 +1,4 @@
-﻿namespace DeltaGen.Attributes;
+using DVG.Engine.Generation.Attributes;
 internal class OnlyAttribute : GenericVariadicAttribute
 {
     public override string Name => nameof(OnlyAttribute);

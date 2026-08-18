@@ -1,9 +1,9 @@
-﻿using Delta.Rendering.Internal;
+using DVG.Engine.Rendering.Internal;
 using Silk.NET.Vulkan;
 using System;
 using System.Numerics;
 
-namespace Delta.Rendering.Collections;
+namespace DVG.Engine.Rendering.Collections;
 
 public unsafe class GpuArray<T> : GpuByteArray where T : unmanaged
 {

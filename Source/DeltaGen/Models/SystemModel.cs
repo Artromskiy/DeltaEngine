@@ -1,11 +1,11 @@
-﻿using DeltaGenCore;
+using DVG.Engine.Generation.Core;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 
-namespace DeltaGen.Models;
+using DVG.Engine.Generation.Models;
 internal record SystemModel : Model
 {
     public SystemModel(INamedTypeSymbol typeSymbol, string attributeSearch)

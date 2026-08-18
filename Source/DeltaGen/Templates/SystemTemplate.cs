@@ -1,10 +1,10 @@
-﻿using DeltaGen.Models;
-using DeltaGenCore;
+using DVG.Engine.Generation.Models;
+using DVG.Engine.Generation.Core;
 using Microsoft.CodeAnalysis;
 using System.Linq;
 using System.Text;
 
-namespace DeltaGen.Templates;
+namespace DVG.Engine.Generation.Templates;
 
 internal class SystemTemplate(SystemModel model) : Template<SystemModel>(model)
 {

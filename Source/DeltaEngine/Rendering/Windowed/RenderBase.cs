@@ -1,11 +1,11 @@
-﻿using Delta.Rendering.Internal;
-using Delta.Utilities;
+using DVG.Engine.Rendering.Internal;
+using DVG.Engine.Utilities;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
 using Silk.NET.Windowing;
 using System;
 
-namespace Delta.Rendering.Windowed;
+namespace DVG.Engine.Rendering.Windowed;
 
 internal class RenderBase : Headless.RenderBase, IDisposable
 {

@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 
-namespace DeltaEditor;
+namespace DVG.Engine.Editor;
 
 internal static class EditorFormatter
 {

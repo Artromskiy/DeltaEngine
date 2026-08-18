@@ -1,12 +1,12 @@
-﻿using Delta.Scripting;
-using DeltaEditorLib.Scripting;
+using DVG.Engine.Scripting;
+using DVG.Engine.EditorLib.Scripting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace DeltaEditorLib.Compile;
+using DVG.Engine.EditorLib.Compile;
 // TODO: Rewrite with templates as DeltaGen
 // Add support for generics components
 internal class AccessorGenerator

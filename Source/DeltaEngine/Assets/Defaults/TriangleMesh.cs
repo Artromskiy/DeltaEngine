@@ -1,10 +1,10 @@
-﻿using Delta.Rendering;
-using Delta.Runtime;
+using DVG.Engine.Rendering;
+using DVG.Engine.Runtime;
 using System;
 using System.Numerics;
 using System.Runtime.InteropServices;
 
-namespace Delta.Assets.Defaults;
+using DVG.Engine.Assets.Defaults;
 public class TriangleMesh
 {
     private static readonly Vector4 r = new(1.0f, 0.0f, 0.0f, 1.0f);

@@ -1,6 +1,6 @@
-﻿using Delta.ECS.Attributes;
-using Delta.Runtime;
-using DeltaEditorLib.Scripting;
+using DVG.Engine.ECS.Attributes;
+using DVG.Engine.Runtime;
+using DVG.Engine.EditorLib.Scripting;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,7 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
 
-namespace DeltaEditorLib.Compile;
+namespace DVG.Engine.EditorLib.Compile;
 
 internal class CompilerModule : ICompilerModule
 {

@@ -1,12 +1,12 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
-using Delta.ECS.Components;
-using Delta.Runtime;
+using DVG.Engine.ECS.Components;
+using DVG.Engine.Runtime;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace Delta.ECS;
+namespace DVG.Engine.ECS;
 
 internal class HierarchySystem
 {

@@ -1,9 +1,9 @@
-﻿using Delta.Rendering;
+using DVG.Engine.Rendering;
 using Silk.NET.SPIRV.Cross;
 using Silk.NET.SPIRV;
 using System;
 
-namespace DeltaEditorLib.Compile;
+using DVG.Engine.EditorLib.Compile;
 internal static class SpirvCrossHelper
 {
     public unsafe static VertexAttribute GetInputAttributes(ReadOnlySpan<byte> shaderCode)

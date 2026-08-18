@@ -1,11 +1,11 @@
-﻿using Delta.Rendering.Internal;
-using Delta.Runtime;
-using Delta.Utilities;
+using DVG.Engine.Rendering.Internal;
+using DVG.Engine.Runtime;
+using DVG.Engine.Utilities;
 using Silk.NET.Vulkan;
 using System;
 using Buffer = Silk.NET.Vulkan.Buffer;
 
-namespace Delta.Rendering.Collections;
+using DVG.Engine.Rendering.Collections;
 public unsafe class GpuByteArray : IDisposable
 {
     private readonly DeviceQueues _deviceQ;

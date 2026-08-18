@@ -1,8 +1,8 @@
-﻿using Delta.Assets;
-using Delta.ECS.Attributes;
+using DVG.Engine.Assets;
+using DVG.Engine.ECS.Attributes;
 using System;
 
-namespace Delta.ECS.Components;
+namespace DVG.Engine.ECS.Components;
 
 [Component, Dirty]
 public struct Render : IEquatable<Render>, IComparable<Render>

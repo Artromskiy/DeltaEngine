@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 
-namespace Delta.ECS.Attributes;
+namespace DVG.Engine.ECS.Attributes;
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
 public class ComponentAttribute : Attribute, IComparable<ComponentAttribute>

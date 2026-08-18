@@ -8,7 +8,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
-    <RootNamespace>Delta</RootNamespace>
+    <RootNamespace>DVG.Engine</RootNamespace>
 
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <PublishAot>false</PublishAot>
@@ -58,6 +58,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\DeltaEngine.Integration\DeltaEngine.Integration.csproj" />
     <ProjectReference Include="..\..\Depend\Arch\src\Arch\Arch.csproj" />
     <ProjectReference Include="..\DeltaGen\DeltaGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\DeltaGenInternal\DeltaGenInternal.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
@@ -65,11 +66,11 @@
 
 
   <ItemGroup>
-    <Using Include="Delta.DebugHelper">
+    <Using Include="DVG.Engine.DebugHelper">
       <Static>True</Static>
     </Using>
 
-    <Using Include="Delta.InlineConstants">
+    <Using Include="DVG.Engine.InlineConstants">
       <Static>True</Static>
     </Using>
 

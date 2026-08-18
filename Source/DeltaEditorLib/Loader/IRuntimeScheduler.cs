@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DeltaEditorLib.Loader;
+namespace DVG.Engine.EditorLib.Loader;
 
 public interface IRuntimeScheduler
 {

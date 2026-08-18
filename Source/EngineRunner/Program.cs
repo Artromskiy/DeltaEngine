@@ -1,9 +1,9 @@
-﻿using Delta.Assets.Defaults;
-using Delta.Assets;
-using Delta.ECS;
-using Delta.ECS.Components;
-using Delta.Runtime;
-using DeltaEditorLib.Loader;
+using DVG.Engine.Assets.Defaults;
+using DVG.Engine.Assets;
+using DVG.Engine.ECS;
+using DVG.Engine.ECS.Components;
+using DVG.Engine.Runtime;
+using DVG.Engine.EditorLib.Loader;
 using System.Diagnostics;
 using System.Numerics;
 

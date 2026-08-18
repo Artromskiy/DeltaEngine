@@ -1,14 +1,14 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
 using Arch.Core.Utils;
-using Delta.ECS.Attributes;
-using Delta.ECS.Components;
-using Delta.Runtime;
-using Delta.Utilities;
+using DVG.Engine.ECS.Attributes;
+using DVG.Engine.ECS.Components;
+using DVG.Engine.Runtime;
+using DVG.Engine.Utilities;
 using System;
 using System.Collections.Generic;
 
-namespace Delta.ECS;
+namespace DVG.Engine.ECS;
 
 public static class DirtyQueryExtensions
 {

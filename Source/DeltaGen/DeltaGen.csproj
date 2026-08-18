@@ -10,6 +10,7 @@
     <ImplicitUsings>false</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
+    <RootNamespace>DVG.Engine.Generation</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,13 +1,13 @@
-﻿using Delta.ECS.Components;
-using Delta.Rendering.Collections;
-using Delta.Rendering.Headless;
+using DVG.Engine.ECS.Components;
+using DVG.Engine.Rendering.Collections;
+using DVG.Engine.Rendering.Headless;
 using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.InteropServices;
 
-namespace Delta.Rendering;
+using DVG.Engine.Rendering;
 internal class TempRenderBatcher : IRenderBatcher
 {
     public GpuArray<GpuCameraData> Camera { get; private set; }

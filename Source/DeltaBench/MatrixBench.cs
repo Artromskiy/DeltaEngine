@@ -3,7 +3,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace DeltaBench;
+namespace DVG.Engine.Benchmarks;
 
 [SimpleJob(iterationCount: 30)]
 [MeanColumn, StdErrorColumn, StdDevColumn, MedianColumn, MemoryDiagnoser]

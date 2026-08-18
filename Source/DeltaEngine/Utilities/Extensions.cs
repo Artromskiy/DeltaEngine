@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Delta.Utilities;
+using DVG.Engine.Utilities;
 internal static class Extensions
 {
     /// <summary>

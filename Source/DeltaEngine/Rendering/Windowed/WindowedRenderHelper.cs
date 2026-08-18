@@ -1,10 +1,10 @@
-﻿using Delta.Rendering.Internal;
-using Delta.Utilities;
+using DVG.Engine.Rendering.Internal;
+using DVG.Engine.Utilities;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
 using System;
 
-namespace Delta.Rendering.Windowed;
+using DVG.Engine.Rendering.Windowed;
 internal static unsafe class WindowedRenderHelper
 {
     internal static DeviceQueues CreateLogicalDevice(Vk vk, Gpu gpu, SurfaceKHR surface, KhrSurface khrsf, ReadOnlySpan<string> deviceExtensions)

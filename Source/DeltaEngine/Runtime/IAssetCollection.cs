@@ -1,6 +1,6 @@
-﻿using Delta.Assets;
+using DVG.Engine.Assets;
 
-namespace Delta.Runtime;
+namespace DVG.Engine.Runtime;
 
 public interface IAssetCollection
 {

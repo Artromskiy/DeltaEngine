@@ -1,7 +1,7 @@
 using Avalonia.Controls;
 using System.Diagnostics;
 
-namespace DeltaEditor;
+namespace DVG.Engine.Editor;
 
 public partial class DebugTimerControl : UserControl
 {

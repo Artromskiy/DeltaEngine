@@ -1,8 +1,8 @@
 ﻿using Arch.Core;
-using Delta.ECS.Components;
+using DVG.Engine.ECS.Components;
 using System.Numerics;
 
-namespace Delta.ECS;
+namespace DVG.Engine.ECS;
 
 internal readonly struct WorldContext(World world)
 {

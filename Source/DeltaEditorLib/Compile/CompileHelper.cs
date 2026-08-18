@@ -1,4 +1,4 @@
-﻿using Delta.Runtime;
+using DVG.Engine.Runtime;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -11,7 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 
-namespace DeltaEditorLib.Compile;
+namespace DVG.Engine.EditorLib.Compile;
 
 internal class CompileHelper(IProjectPath projectPath)
 {

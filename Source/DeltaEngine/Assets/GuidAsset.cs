@@ -1,9 +1,9 @@
-﻿using Delta.Runtime;
+using DVG.Engine.Runtime;
 using System;
 using System.Diagnostics;
 using System.Text.Json.Serialization;
 
-namespace Delta.Assets;
+namespace DVG.Engine.Assets;
 
 public interface IAsset { }
 

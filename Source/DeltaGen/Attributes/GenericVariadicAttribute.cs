@@ -1,7 +1,7 @@
-﻿using DeltaGenCore;
+using DVG.Engine.Generation.Core;
 using System.Linq;
 
-namespace DeltaGen.Attributes;
+namespace DVG.Engine.Generation.Attributes;
 
 internal class GenericVariadicAttribute : AttributeTemplate
 {
@@ -10,7 +10,7 @@ $$"""
 #if {{Constants.GenerateAttributes}}
 
 using System;
-namespace Delta;
+using DVG.Engine;
 
 {{LoopSelect(Enumerable.Range(1, Constants.VariadicCount), GenericAttribute)}}
 

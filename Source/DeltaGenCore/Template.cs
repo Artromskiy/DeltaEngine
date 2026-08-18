@@ -5,7 +5,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace DeltaGenCore;
+using DVG.Engine.Generation.Core;
 public abstract class Template
 {
     protected static string GetName([CallerMemberName] string name = default!) => name;

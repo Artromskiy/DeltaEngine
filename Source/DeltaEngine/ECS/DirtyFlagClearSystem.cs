@@ -1,14 +1,14 @@
 ﻿using Arch.Core;
 using Arch.Core.Utils;
-using Delta.ECS.Attributes;
-using Delta.ECS.Components;
-using Delta.Runtime;
-using Delta.Utilities;
+using DVG.Engine.ECS.Attributes;
+using DVG.Engine.ECS.Components;
+using DVG.Engine.Runtime;
+using DVG.Engine.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace Delta.ECS;
+using DVG.Engine.ECS;
 internal static class DirtyFlagClearSystem
 {
     private static readonly Dictionary<Type, IGenericRemoveWrapper> _removers = [];

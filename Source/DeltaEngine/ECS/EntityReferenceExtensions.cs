@@ -1,7 +1,7 @@
 ﻿using Arch.Core;
-using Delta.Runtime;
+using DVG.Engine.Runtime;
 
-namespace Delta.ECS;
+using DVG.Engine.ECS;
 public static class EntityReferenceExtensions
 {
     public static bool IsAlive(this EntityReference entityRef)

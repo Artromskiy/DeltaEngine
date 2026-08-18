@@ -1,8 +1,8 @@
-﻿using Delta.Assets;
-using Delta.Rendering.Collections;
-using Delta.Rendering.Internal;
-using Delta.Runtime;
-using Delta.Utilities;
+using DVG.Engine.Assets;
+using DVG.Engine.Rendering.Collections;
+using DVG.Engine.Rendering.Internal;
+using DVG.Engine.Runtime;
+using DVG.Engine.Utilities;
 using Silk.NET.Core;
 using Silk.NET.Core.Contexts;
 using Silk.NET.Core.Native;
@@ -14,7 +14,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Buffer = Silk.NET.Vulkan.Buffer;
 
-namespace Delta.Rendering;
+namespace DVG.Engine.Rendering;
 
 internal static unsafe class RenderHelper
 {

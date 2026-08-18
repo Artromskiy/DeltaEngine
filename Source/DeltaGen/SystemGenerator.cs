@@ -1,13 +1,13 @@
-﻿using DeltaGen.Attributes;
-using DeltaGenCore;
-using DeltaGen.Templates;
+using DVG.Engine.Generation.Attributes;
+using DVG.Engine.Generation.Core;
+using DVG.Engine.Generation.Templates;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Collections.Immutable;
 using System.Linq;
 
-namespace DeltaGen;
+namespace DVG.Engine.Generation;
 
 [Generator]
 public sealed class SystemGenerator : GeneratorBase

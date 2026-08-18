@@ -1,7 +1,7 @@
-﻿using Delta.Utilities;
+using DVG.Engine.Utilities;
 using System;
 using System.Numerics;
-namespace Delta.Rendering;
+using DVG.Engine.Rendering;
 
 /// <summary>
 /// Vertex Attribute enum

@@ -1,6 +1,6 @@
-﻿using DeltaGenCore;
+using DVG.Engine.Generation.Core;
 
-namespace DeltaGenInternal;
+namespace DVG.Engine.Generation.Internal;
 
 internal class GenericBatcher : Template
 {
@@ -8,10 +8,10 @@ internal class GenericBatcher : Template
     public override string ToString() =>
 $$"""
 
-using Delta.Rendering.Collections;
+using DVG.Engine.Rendering.Collections;
 using System;
 
-namespace Delta.Rendering;
+namespace DVG.Engine.Rendering;
 
 {{LoopRange(1, Constants.VariadicCount, count =>
 $$""" 

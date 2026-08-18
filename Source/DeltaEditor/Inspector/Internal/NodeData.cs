@@ -1,11 +1,11 @@
 ﻿using Arch.Core;
 using Avalonia.Controls;
-using DeltaEditorLib.Scripting;
+using DVG.Engine.EditorLib.Scripting;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace DeltaEditor.Inspector.Internal;
+namespace DVG.Engine.Editor.Inspector.Internal;
 
 public class NodeData(RootData root, PathData path)
 {

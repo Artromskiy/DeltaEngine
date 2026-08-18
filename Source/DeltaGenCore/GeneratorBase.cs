@@ -2,7 +2,7 @@
 using System;
 using System.Diagnostics;
 
-namespace DeltaGenCore;
+namespace DVG.Engine.Generation.Core;
 
 public abstract class GeneratorBase : IIncrementalGenerator
 {

@@ -1,10 +1,10 @@
-﻿using Delta.Rendering.Internal;
+using DVG.Engine.Rendering.Internal;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
 using System;
 using System.Collections.Immutable;
 
-namespace Delta.Rendering.Windowed;
+using DVG.Engine.Rendering.Windowed;
 internal class SwapChain : IDisposable
 {
     public readonly ImmutableArray<Image> images;

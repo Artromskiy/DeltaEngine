@@ -1,8 +1,8 @@
 ﻿using Arch.Core;
-using Delta.ECS.Components;
-using Delta.Runtime;
+using DVG.Engine.ECS.Components;
+using DVG.Engine.Runtime;
 
-namespace Delta.ECS;
+using DVG.Engine.ECS;
 internal static class DestroySystem
 {
     private static readonly QueryDescription _destroyDescription = new QueryDescription().WithAll<DestroyFlag>();

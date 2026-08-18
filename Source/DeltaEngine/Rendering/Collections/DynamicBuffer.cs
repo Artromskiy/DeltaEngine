@@ -1,11 +1,11 @@
-﻿using Delta.Rendering.Internal;
-using Delta.Runtime;
+using DVG.Engine.Rendering.Internal;
+using DVG.Engine.Runtime;
 using Silk.NET.Vulkan;
 using System;
 using System.Numerics;
 using Buffer = Silk.NET.Vulkan.Buffer;
 
-namespace Delta.Rendering.Collections;
+namespace DVG.Engine.Rendering.Collections;
 
 internal class DynamicBuffer
 {

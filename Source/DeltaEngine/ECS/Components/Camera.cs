@@ -1,6 +1,6 @@
-﻿using Delta.ECS.Attributes;
+using DVG.Engine.ECS.Attributes;
 
-namespace Delta.ECS.Components;
+namespace DVG.Engine.ECS.Components;
 
 [Component(0)]
 public struct Camera

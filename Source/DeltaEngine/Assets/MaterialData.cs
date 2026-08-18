@@ -2,7 +2,7 @@
 using System.Numerics;
 using System.Text.Json.Serialization;
 
-namespace Delta.Assets;
+namespace DVG.Engine.Assets;
 
 public class MaterialData : IAsset
 {

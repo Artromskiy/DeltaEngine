@@ -1,12 +1,12 @@
-﻿using DeltaGen.Attributes;
-using DeltaGenCore;
+using DVG.Engine.Generation.Attributes;
+using DVG.Engine.Generation.Core;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 
-namespace DeltaGen.Models;
+namespace DVG.Engine.Generation.Models;
 
 internal record SystemCallModel : Model
 {

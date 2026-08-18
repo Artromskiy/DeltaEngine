@@ -2,10 +2,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:uc="clr-namespace:DeltaEditor;assembly=DeltaEditor"
+        xmlns:uc="clr-namespace:DVG.Engine.Editor;assembly=DVG.Engine.Editor"
         mc:Ignorable="d" d:DesignWidth="1920" d:DesignHeight="1200"
-        x:Class="DeltaEditor.MainWindow"
-        Title="DeltaEditor"
+        x:Class="DVG.Engine.Editor.MainWindow"
+        Title="DVG.Engine.Editor"
         
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaChromeHints="PreferSystemChrome"

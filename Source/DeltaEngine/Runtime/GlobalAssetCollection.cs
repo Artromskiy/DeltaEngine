@@ -1,8 +1,8 @@
-﻿using Delta.Assets;
+using DVG.Engine.Assets;
 using System;
 using System.Collections.Generic;
 
-namespace Delta.Runtime;
+namespace DVG.Engine.Runtime;
 
 internal class GlobalAssetCollection : IAssetCollection
 {

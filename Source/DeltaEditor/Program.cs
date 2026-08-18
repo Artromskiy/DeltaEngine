@@ -1,9 +1,9 @@
 ﻿using Avalonia;
-using Delta.Runtime;
-using DeltaEditorLib.Loader;
+using DVG.Engine.Runtime;
+using DVG.Engine.EditorLib.Loader;
 using System;
 
-namespace DeltaEditor;
+namespace DVG.Engine.Editor;
 
 internal class Program
 {

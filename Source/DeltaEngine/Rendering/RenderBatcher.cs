@@ -1,10 +1,10 @@
-﻿using Delta.ECS.Components;
-using Delta.Rendering.Collections;
-using Delta.Utilities;
+using DVG.Engine.ECS.Components;
+using DVG.Engine.Rendering.Collections;
+using DVG.Engine.Utilities;
 using Silk.NET.Vulkan;
 using System;
 
-namespace Delta.Rendering;
+using DVG.Engine.Rendering;
 internal abstract class RenderBatcher : IRenderBatcher
 {
     private readonly DescriptorSetLayout[] _layouts;

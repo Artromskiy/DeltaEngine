@@ -1,4 +1,4 @@
-﻿namespace Delta.ECS;
+namespace DVG.Engine.ECS;
 
 public interface ISystem
 {

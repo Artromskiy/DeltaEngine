@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Delta.ECS.Attributes;
+namespace DVG.Engine.ECS.Attributes;
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
 public class DirtyAttribute : Attribute { }

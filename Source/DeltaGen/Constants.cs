@@ -1,4 +1,4 @@
-﻿namespace DeltaGen;
+using DVG.Engine.Generation;
 internal class Constants
 {
     public const int VariadicCount = 25;

@@ -1,6 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 
-namespace DeltaGenCore;
+using DVG.Engine.Generation.Core;
 public static class DiagnosticHelper
 {
     private const string Prefix = "DE";

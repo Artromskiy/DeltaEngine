@@ -1,11 +1,11 @@
-﻿using Delta.Assets;
+using DVG.Engine.Assets;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 
-namespace ConsoleModelImporter
+DVG.Engine.ConsoleModelImporter
 {
     internal class Program
     {

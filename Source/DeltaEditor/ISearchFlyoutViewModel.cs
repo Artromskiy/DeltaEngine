@@ -1,4 +1,4 @@
-﻿namespace DeltaEditor
+using DVG.Engine.Editor
 {
     public interface ISearchFlyoutViewModel
     {

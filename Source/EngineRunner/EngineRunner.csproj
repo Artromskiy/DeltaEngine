@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <StripSymbols>true</StripSymbols>
+    <RootNamespace>DVG.Engine.Runner</RootNamespace>
     <Configurations>Debug;Release;DebugPerf;Perf</Configurations>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>

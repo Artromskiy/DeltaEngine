@@ -5,6 +5,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <RootNamespace>DVG.Engine.Generation.Tests</RootNamespace>
     <DefineConstants>$(DefineConstants);DELTA_GEN_ATTRIBUTES;GLCSharp_GEN_ATTRIBUTES</DefineConstants>
   </PropertyGroup>
 

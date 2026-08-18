@@ -1,5 +1,5 @@
 ﻿
-namespace Delta.ECS.Components;
+using DVG.Engine.ECS.Components;
 /// <summary>
 /// Stores information about order of entity in hierarchy.
 /// Root entity does not have <see cref="ChildOf"/> component,

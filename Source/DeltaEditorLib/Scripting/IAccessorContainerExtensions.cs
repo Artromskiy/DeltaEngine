@@ -1,12 +1,12 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions.Dangerous;
 using Arch.Core.Utils;
-using Delta.ECS;
+using DVG.Engine.ECS;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace DeltaEditorLib.Scripting;
+namespace DVG.Engine.EditorLib.Scripting;
 
 public static class AccessorContainerExtensions
 {

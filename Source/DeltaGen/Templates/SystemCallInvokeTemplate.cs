@@ -1,7 +1,7 @@
-﻿using DeltaGen.Models;
-using DeltaGenCore;
+using DVG.Engine.Generation.Models;
+using DVG.Engine.Generation.Core;
 
-namespace DeltaGen.Templates;
+using DVG.Engine.Generation.Templates;
 internal class SystemCallInvokeTemplate(SystemCallModel model, string worldParameterName) : Template<SystemCallModel>(model)
 {
     public override string ToString()

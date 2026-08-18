@@ -1,8 +1,8 @@
-﻿using Delta.ECS.Attributes;
+using DVG.Engine.ECS.Attributes;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
-namespace Delta.ECS.Components;
+namespace DVG.Engine.ECS.Components;
 
 [Component(0, true), Dirty]
 public struct Transform

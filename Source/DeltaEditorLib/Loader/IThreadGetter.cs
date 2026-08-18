@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
-namespace DeltaEditorLib.Loader;
+using DVG.Engine.EditorLib.Loader;
 
 public interface IThreadGetter
 {

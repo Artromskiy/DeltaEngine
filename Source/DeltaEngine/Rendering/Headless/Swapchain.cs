@@ -1,11 +1,11 @@
-﻿using Delta.Rendering.Internal;
-using Delta.Utilities;
+using DVG.Engine.Rendering.Internal;
+using DVG.Engine.Utilities;
 using Silk.NET.Vulkan;
 using System;
 using System.Collections.Immutable;
 using Buffer = Silk.NET.Vulkan.Buffer;
 
-namespace Delta.Rendering.Headless;
+using DVG.Engine.Rendering.Headless;
 internal class SwapChain : IDisposable
 {
     public readonly ImmutableArray<DeviceMemory> imagesMemory;

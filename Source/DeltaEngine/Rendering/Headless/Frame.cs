@@ -1,9 +1,9 @@
-﻿using Delta.Rendering.Internal;
+using DVG.Engine.Rendering.Internal;
 using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;
 
-namespace Delta.Rendering.Headless;
+using DVG.Engine.Rendering.Headless;
 internal class Frame : IDisposable
 {
     private readonly RenderBase _rendererBase;

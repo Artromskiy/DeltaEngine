@@ -3,7 +3,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Delta.Rendering;
+namespace DVG.Engine.Rendering;
 
 public struct Color
 {

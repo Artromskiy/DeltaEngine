@@ -1,9 +1,9 @@
-﻿using Delta.ECS.Components;
-using Delta.Rendering.Headless;
-using Delta.Runtime;
+using DVG.Engine.ECS.Components;
+using DVG.Engine.Rendering.Headless;
+using DVG.Engine.Runtime;
 using System;
 
-namespace Delta.Rendering;
+using DVG.Engine.Rendering;
 internal class DummyGraphics : IGraphicsModule
 {
     RenderBase IGraphicsModule.RenderData => throw new NotImplementedException();

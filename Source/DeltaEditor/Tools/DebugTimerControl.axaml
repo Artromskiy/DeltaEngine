@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="100" d:DesignHeight="20"
-             x:Class="DeltaEditor.DebugTimerControl">
+             x:Class="DVG.Engine.Editor.DebugTimerControl">
 
   <Label x:Name="DebugTimer"
          x:FieldModifier="private"

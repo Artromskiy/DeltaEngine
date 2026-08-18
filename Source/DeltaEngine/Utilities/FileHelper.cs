@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text;
 
-namespace Delta.Utilities;
+using DVG.Engine.Utilities;
 internal static class FileHelper
 {
     private const char Underscore = '_';

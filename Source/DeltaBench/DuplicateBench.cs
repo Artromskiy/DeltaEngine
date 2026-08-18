@@ -3,7 +3,7 @@ using Collections.Pooled;
 using System.Buffers;
 using System.Runtime.CompilerServices;
 
-namespace DeltaBench;
+namespace DVG.Engine.Benchmarks;
 
 //[SimpleJob(launchCount: 5, iterationCount: 50)]
 [SimpleJob(iterationCount: 50)]

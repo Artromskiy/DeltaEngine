@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 
-namespace DeltaEditor.Hierarchy;
+namespace DVG.Engine.Editor.Hierarchy;
 
 internal readonly struct IListWrapper<T, K> : IList<T> where T : K
 {

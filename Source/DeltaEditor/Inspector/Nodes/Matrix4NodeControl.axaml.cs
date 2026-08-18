@@ -1,9 +1,9 @@
 using Arch.Core;
 using Avalonia.Media;
-using Delta.Runtime;
-using DeltaEditor.Inspector.Internal;
+using DVG.Engine.Runtime;
+using DVG.Engine.Editor.Inspector.Internal;
 
-namespace DeltaEditor;
+namespace DVG.Engine.Editor;
 
 internal partial class Matrix4NodeControl : InspectorNode
 {

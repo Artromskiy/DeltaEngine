@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Delta.Utilities;
+using DVG.Engine.Utilities;
 internal readonly ref struct JaggedReadOnlySpan<T>
 {
     private readonly ref T[] _reference;

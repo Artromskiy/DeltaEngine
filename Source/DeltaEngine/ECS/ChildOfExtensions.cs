@@ -1,9 +1,9 @@
 ﻿using Arch.Core;
-using Delta.ECS.Components;
+using DVG.Engine.ECS.Components;
 using System;
 using System.Numerics;
 
-namespace Delta.ECS;
+using DVG.Engine.ECS;
 internal static class ChildOfExtensions
 {
     /// <summary>

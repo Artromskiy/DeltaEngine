@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Delta.Utilities;
+using DVG.Engine.Utilities;
 public class NullSafeComponentAttributeComparer<A> : IComparer<ComponentType> where A : Attribute
 {
     private static readonly NullSafeComponentAttributeComparer<A> _defaultComparer = new();

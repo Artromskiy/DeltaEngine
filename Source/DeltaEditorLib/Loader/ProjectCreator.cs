@@ -1,9 +1,9 @@
-﻿using Delta.Runtime;
+using DVG.Engine.Runtime;
 using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace DeltaEditorLib.Loader;
+namespace DVG.Engine.EditorLib.Loader;
 
 public static class ProjectCreator
 {

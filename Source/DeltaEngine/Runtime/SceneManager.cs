@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Delta.Runtime;
+using DVG.Engine.Runtime;
 internal class SceneManager : ISceneManager
 {
     private Scene _scene;

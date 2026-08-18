@@ -2,19 +2,19 @@ using Arch.Core;
 using Arch.Core.Utils;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Delta.ECS;
-using Delta.ECS.Attributes;
-using Delta.ECS.Components;
-using Delta.Utilities;
-using DeltaEditor.Hierarchy;
-using DeltaEditor.Inspector.Internal;
-using DeltaEditorLib.Scripting;
+using DVG.Engine.ECS;
+using DVG.Engine.ECS.Attributes;
+using DVG.Engine.ECS.Components;
+using DVG.Engine.Utilities;
+using DVG.Engine.Editor.Hierarchy;
+using DVG.Engine.Editor.Inspector.Internal;
+using DVG.Engine.EditorLib.Scripting;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 
-namespace DeltaEditor;
+namespace DVG.Engine.Editor;
 
 public partial class InspectorControl : UserControl
 {

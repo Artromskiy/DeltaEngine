@@ -1,9 +1,9 @@
-﻿using Delta.Assets;
-using Delta.ECS.Attributes;
-using Delta.Rendering;
+using DVG.Engine.Assets;
+using DVG.Engine.ECS.Attributes;
+using DVG.Engine.Rendering;
 using System.Numerics;
 
-namespace Delta.ECS.Components;
+using DVG.Engine.ECS.Components;
 [Component]
 public struct Border
 {

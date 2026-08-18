@@ -2,9 +2,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:uc="clr-namespace:DeltaEditor;assembly=DeltaEditor"
+             xmlns:uc="clr-namespace:DVG.Engine.Editor;assembly=DVG.Engine.Editor"
              mc:Ignorable="d" d:DesignWidth="455" d:DesignHeight="20"
-             x:Class="DeltaEditor.Vector4NodeControl">
+             x:Class="DVG.Engine.Editor.Vector4NodeControl">
   
   <Grid Height="20"
         ColumnDefinitions="*,4*">

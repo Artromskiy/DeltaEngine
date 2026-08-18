@@ -1,13 +1,13 @@
-﻿using Delta.Assets;
-using Delta.Rendering.Headless;
-using Delta.Rendering.Internal;
+using DVG.Engine.Assets;
+using DVG.Engine.Rendering.Headless;
+using DVG.Engine.Rendering.Internal;
 using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;
 using Buffer = Silk.NET.Vulkan.Buffer;
 
 
-namespace Delta.Rendering;
+using DVG.Engine.Rendering;
 internal class RenderAssets : IDisposable
 {
     private readonly Dictionary<GuidAsset<ShaderData>, (Pipeline pipeline, VertexAttribute mask)> _renderToPipeline;
