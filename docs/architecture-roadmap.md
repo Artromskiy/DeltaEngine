@@ -1,4 +1,4 @@
-# DeltaEngine architecture roadmap
+# Delta.Engine architecture roadmap
 
 This document is the current source of truth for the engine integration work.
 The existing source remains a reference and migration target; new architecture
@@ -15,24 +15,24 @@ rewrite.
 - Use a Delta-owned XAML dialect for UI authoring.
 - Replace Arch with DeltaECS after the standalone ECS passes correctness and
   performance gates.
-- Use GLSH and KibiHex.Maths as the shader authoring/math path.
+- Use GLSH and Delta.Maths as the shader authoring/math path.
 
 ## Dependency direction
 
 ```text
-KibiHex.Maths
+Delta.Maths
      ^
 GLSH ---------> SPIR-V + manifest
                     |
 DeltaECS       DeltaRender
       \          /
-       DeltaEngine
+       Delta.Engine
             |
        Game / Editor host
 ```
 
-DeltaEngine may depend on DeltaECS, DeltaRender, GLSH runtime contracts, and
-KibiHex.Maths. Those standalone projects must not depend on DeltaEngine.
+Delta.Engine may depend on DeltaECS, DeltaRender, GLSH runtime contracts, and
+Delta.Maths. Those standalone projects must not depend on Delta.Engine.
 
 ## Workstream ownership
 
@@ -41,7 +41,7 @@ KibiHex.Maths. Those standalone projects must not depend on DeltaEngine.
 - `DeltaRender/`: SDL3 platform layer, Vulkan/MoltenVK, render graph, UI runtime,
   and XAML.
 - `GLSH/`: shader compiler, analyzers, SPIR-V artifacts, and reflection manifest.
-- `DeltaEngine/`: runtime composition, scenes, assets, serialization, module
+- `Delta.Engine/`: runtime composition, scenes, assets, serialization, module
   lifecycle, editor/game hosts, and migration adapters.
 
 Do not edit another workstream's new project to unblock local work. Define a
@@ -66,7 +66,7 @@ or XAML layout/rendering.
 ## Migration approach
 
 1. Inventory current dependencies and produce a build/test baseline for the
-   existing `DeltaEngine/Source` solution.
+   existing `Delta.Engine/Source` solution.
 2. Define narrow engine-facing contracts for world/runtime, rendering/extraction,
    input snapshots, UI documents, assets, clocks, jobs, and diagnostics.
 3. Add a small new host/composition project without deleting the existing

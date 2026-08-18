@@ -1,0 +1,37 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Delta.Engine.Editor.FlyoutSearchControl"
+             LostFocus="SearchLostFocus"
+             Cursor="Arrow">
+
+  <Grid RowDefinitions="20,*">
+
+      <!--Search field-->
+      <TextBox Grid.Row="0"
+               FontSize="12"
+               MinHeight="0"
+               CornerRadius="3"
+               x:Name="SearchTextBox"
+               x:FieldModifier="private"
+               VerticalAlignment="Stretch"
+               VerticalContentAlignment="Center"
+               KeyDown="SearchKeyDown"
+               TextChanged="SearchTextChanged"
+               Watermark="Search"/>
+
+    <ScrollViewer Grid.Row="1"
+                  ScrollViewer.VerticalScrollBarVisibility="Hidden">
+      <StackPanel Orientation="Vertical"
+                  x:Name="ChildrenStackPanel"
+                  Spacing="2"
+                  x:FieldModifier="private"
+                  Margin="0,2,0,0">
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+
+
+</UserControl>

@@ -1,0 +1,51 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:uc="clr-namespace:Delta.Engine.Editor;assembly=Delta.Engine.Editor"
+             mc:Ignorable="d" d:DesignWidth="455" d:DesignHeight="20"
+             x:Class="Delta.Engine.Editor.QuaternionNodeControl">
+
+  <Grid Height="20"
+        ColumnDefinitions="*,4*">
+    <Label Grid.Column="0"
+           x:Name="FieldName"
+           x:FieldModifier="private"
+           VerticalContentAlignment="Center"
+           FontSize="12">
+      fieldName
+    </Label>
+    
+    <Grid Grid.Column="1"
+          ColumnDefinitions="*,*,*">
+
+      <!--X-->
+      <uc:NamedTextField FieldName="X"
+                         Data="6,28"
+                         Grid.Column="0"
+                         x:Name="FieldX"
+                         FieldNameAlignment="Right"
+                         x:FieldModifier="private"
+                         Cursor="SizeWestEast"/>
+
+      <!--Y-->
+      <uc:NamedTextField FieldName="Y"
+                         Data="1"
+                         Grid.Column="1"
+                         x:Name="FieldY"
+                         FieldNameAlignment="Right"
+                         x:FieldModifier="private"
+                         Cursor="SizeWestEast"/>
+
+      <!--Z-->
+      <uc:NamedTextField FieldName="Z"
+                         Data="1"
+                         Grid.Column="2"
+                         x:Name="FieldZ"
+                         FieldNameAlignment="Right"
+                         x:FieldModifier="private"
+                         Cursor="SizeWestEast"/>
+      
+    </Grid>
+  </Grid>
+</UserControl>

@@ -1,0 +1,76 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+
+    <RootNamespace>Delta.Engine.Editor</RootNamespace>
+    <AssemblyName>Delta.Engine.Editor</AssemblyName>
+    <PackageId>Delta.Engine.Editor</PackageId>
+
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.1.3" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.1.3" />
+    <PackageReference Include="Avalonia.Svg.Skia" Version="11.1.0.1" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.1.3" />
+    <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.1.0" />
+    <PackageReference Include="Semi.Avalonia" Version="11.1.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\Icons\**">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <AvaloniaResource Include="Assets\**" />
+    <AvaloniaResource Include="Assets\Icons\**" />
+    <AvaloniaXaml Remove="Assets\SmallButtonStyle.axaml" />
+    <AvaloniaResource Update="Assets\SmallButtonStyle.axaml">
+      <SubType>Designer</SubType>
+    </AvaloniaResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Delta.Engine.EditorLib\Delta.Engine.EditorLib.csproj" />
+    <ProjectReference Include="..\Delta.Engine\Delta.Engine.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="FlyoutSearchControl.axaml.cs">
+      <DependentUpon>FlyoutSearchControl.axaml</DependentUpon>
+    </Compile>
+    <Compile Update="FlyoutSearchItem.axaml.cs">
+      <DependentUpon>FlyoutSearchItem.axaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+<!--
+  <ItemGroup>
+    <Compile Update="Hierarchy\HierarchyControl.axaml.cs">
+      <DependentUpon>HierarchyControl.axaml</DependentUpon>
+    </Compile>
+    <Compile Update="Inspector\AddComponentItemControl.axaml.cs">
+      <DependentUpon>AddComponentItemControl.axaml</DependentUpon>
+    </Compile>
+    <Compile Update="EditorPanelHeader.axaml.cs">
+      <DependentUpon>EditorPanelHeader.axaml</DependentUpon>
+    </Compile>
+    <Compile Update="Inspector\Nodes\CompositeNodeControl.axaml.cs">
+      <DependentUpon>CompositeNodeControl.axaml</DependentUpon>
+    </Compile>
+    <Compile Update="Inspector\Nodes\GuidAssetNodeControl.axaml.cs">
+      <DependentUpon>GuidAssetNodeControl.axaml</DependentUpon>
+    </Compile>
+    <Compile Update="Inspector\Nodes\QuaternionNodeControl.axaml.cs">
+      <DependentUpon>QuaternionNodeControl.axaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+-->
+</Project>

@@ -1,0 +1,94 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1920" d:DesignHeight="30"
+             x:Class="Delta.Engine.Editor.EditorBar">
+  <Grid Height="30"
+        ColumnDefinitions="Auto,*,Auto">
+
+    <!--Global Tools-->
+    <Border Grid.Column="0">
+
+      <StackPanel Orientation="Horizontal"
+                  Margin="10,0"
+                  Spacing="2"
+                  VerticalAlignment="Center">
+        <!--Hand-->
+        <Button CornerRadius="6,0,0,6"
+                Width="30"
+                Padding="3">
+          <Svg Path="/Assets/Icons/drag_hand.svg"/>
+        </Button>
+        
+        <!--Move-->
+        <Button CornerRadius="0"
+                Width="30"
+                Padding="3">
+          <Svg Path="/Assets/Icons/move_arrows.svg"/>
+        </Button>
+        <!--Rotate-->
+        <Button CornerRadius="0"
+                Width="30"
+                Padding="3">
+          <Svg Path="/Assets/Icons/rotate_arrows.svg"/>
+        </Button>
+        <!--Scale-->
+        <Button CornerRadius="0"
+                Width="30"
+                Padding="3">
+          <Svg Path="/Assets/Icons/scale_arrows.svg"/>
+        </Button>
+        <!--Transform-->
+        <Button CornerRadius="0,6,6,0"
+                Width="30"
+                Padding="3">
+          <Svg Path="/Assets/Icons/transform_arrows.svg"/>
+        </Button>
+      </StackPanel>
+
+    </Border>
+
+    <Border Grid.Column="1"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Stretch">
+
+      <!--Play Commands-->
+      <StackPanel Orientation="Horizontal"
+                  Margin="10,0"
+                  Spacing="2"
+                  VerticalAlignment="Center">
+        <!--Play-->
+        <ToggleButton x:Name="PlayButton"
+                      x:FieldModifier="private"
+                      CornerRadius="6,0,0,6"
+                      BorderBrush="Transparent"
+                      Width="30"
+                      Padding="3">
+          <Svg Path="/Assets/Icons/play.svg"/>
+        </ToggleButton>
+        <!--Pause-->
+        <ToggleButton x:Name="PauseButton"
+                      x:FieldModifier="private"
+                      CornerRadius="0"
+                      BorderBrush="Transparent"
+                      Width="30"
+                      Padding="3">
+          <Svg Path="/Assets/Icons/pause.svg"/>
+        </ToggleButton>
+        <!--Next-->
+        <Button x:Name="NextButton"
+                x:FieldModifier="private"
+                CornerRadius="0,6,6,0"
+                BorderBrush="Transparent"
+                Width="30"
+                Padding="3">
+          <Svg Path="/Assets/Icons/next.svg"/>
+        </Button>
+      </StackPanel>
+
+    </Border>
+    <Border Grid.Column="2"
+            Background="Magenta"/>
+  </Grid>
+</UserControl>

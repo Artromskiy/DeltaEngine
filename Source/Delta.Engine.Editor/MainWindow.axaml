@@ -1,0 +1,80 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:uc="clr-namespace:Delta.Engine.Editor;assembly=Delta.Engine.Editor"
+        mc:Ignorable="d" d:DesignWidth="1920" d:DesignHeight="1200"
+        x:Class="Delta.Engine.Editor.MainWindow"
+        Title="Delta.Engine.Editor"
+        
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="PreferSystemChrome"
+        ExtendClientAreaTitleBarHeightHint="-1"
+        SystemDecorations="Full"
+        RequestedThemeVariant="Default">
+
+  <Grid
+    RowDefinitions="Auto,*,3,*">
+
+    <uc:EditorBar Grid.Row="0"/>
+
+    <Grid Grid.Row="1"
+          ColumnDefinitions="*,3,*,3,*"
+          RowDefinitions="*">
+
+      
+      <uc:HierarchyControl x:Name="Hierarchy"
+                           Grid.Column="0"/>
+
+      
+      <GridSplitter Grid.Column="1"
+                    ResizeDirection="Columns"/>
+
+      <uc:SceneControl x:Name="Scene"
+                       Grid.Column="2"/>
+
+      <GridSplitter Grid.Column="3"
+                    ResizeDirection="Columns"/>
+
+      <uc:InspectorControl x:Name="Inspector"
+                           Grid.Column="4"/>
+
+    </Grid>
+
+    <GridSplitter Grid.Row="2"
+                  ResizeDirection="Rows"/>
+
+    <!--Explorer-->
+    <Grid Grid.Row="3"
+          ColumnDefinitions="*"
+          RowDefinitions="40,*">
+
+      <Label Grid.Row="0"
+             Content="Explorer"/>
+
+      <ScrollViewer Grid.Row="1">
+        <StackPanel Orientation="Vertical"
+                  Spacing="25">
+
+          <Button Click="CreateTestScene"
+                  Content="Create new scene"/>
+
+          <Button 
+                  Content="Save scene"/>
+
+          <Button 
+                  Content="Try compile project"/>
+
+          <Button Click="OpenProjectFolder"
+                  Content="Open project folder"/>
+
+          <Button Click="OpenTempFolder"
+                  Content="Open temp folder"/>
+
+        </StackPanel>
+      </ScrollViewer>
+
+    </Grid>
+
+  </Grid>
+</Window>

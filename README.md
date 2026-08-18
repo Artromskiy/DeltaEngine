@@ -1,4 +1,12 @@
 # Delta Engine
+
+> Current development direction: the engine is being split into standalone
+> `DeltaECS` and `DeltaRender` projects. The target stack is SDL3-CS, Vulkan,
+> MoltenVK on macOS, a Delta-owned XAML UI, GLSH, and Delta.Maths. Avalonia and
+> Arch remain only as migration dependencies in the existing source. See the
+> [architecture roadmap](docs/architecture-roadmap.md) before making new engine
+> changes.
+
 This repository contains the editor and game engine project.
 This is the very beginning of development and, like any other similar project, it can cease to exist even without becoming a minimum viable product. At least we tried.
 
@@ -30,5 +38,3 @@ Editor wip (old one using MAUI)
 
 Here's fourth letter :) (it was at the very beginning)
 ![image](https://github.com/Artromskiy/DeltaEngine/assets/47901401/442aabe0-061f-4497-aec7-f45e5c2b7bb1)
-
-

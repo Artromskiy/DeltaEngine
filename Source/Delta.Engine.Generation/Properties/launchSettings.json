@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Profile 1": {
+      "commandName": "DebugRoslynComponent",
+      "targetProject": "..\\Delta.Engine.Generation.Tests\\Delta.Engine.Generation.Tests.csproj"
+    }
+  }
+}

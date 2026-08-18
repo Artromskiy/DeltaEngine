@@ -1,0 +1,105 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="DebugPerf" />
+    <BuildType Name="Perf" />
+    <BuildType Name="Release" />
+  </Configurations>
+  <Folder Name="/Solution Items/">
+    <File Path="Delta.Engine\.editorconfig" />
+  </Folder>
+  <Project Path="..\Depend\Arch\src\Arch.SourceGen\Arch.SourceGen.csproj">
+    <BuildType Solution="DebugPerf|*" Project="Debug-PureECS" />
+    <BuildType Solution="Debug|*" Project="Debug-PureECS" />
+    <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Release|*" Project="Release" />
+  </Project>
+  <Project Path="..\Depend\Arch\src\Arch\Arch.csproj">
+    <BuildType Solution="DebugPerf|*" Project="Debug-PureECS" />
+    <BuildType Solution="Debug|*" Project="Debug-PureECS" />
+    <BuildType Solution="Perf|*" Project="Release-PureECS" />
+    <BuildType Solution="Release|*" Project="Release-PureECS" />
+  </Project>
+  <Project Path="Delta.Engine.ConsoleModelImporter\Delta.Engine.ConsoleModelImporter.csproj">
+    <BuildType Solution="DebugPerf|*" Project="Debug" />
+    <BuildType Solution="Debug|*" Project="Debug" />
+    <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Release|*" Project="Release" />
+  </Project>
+  <Project Path="Delta.Engine.Benchmarks\Delta.Engine.Benchmarks.csproj">
+    <BuildType Solution="DebugPerf|*" Project="Debug" />
+    <BuildType Solution="Debug|*" Project="Debug" />
+    <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Release|*" Project="Release" />
+  </Project>
+  <Project Path="Delta.Engine.EditorLib\Delta.Engine.EditorLib.csproj">
+    <BuildType Solution="DebugPerf|*" Project="Debug" />
+    <BuildType Solution="Debug|*" Project="Debug" />
+    <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Release|*" Project="Release" />
+  </Project>
+  <Project Path="Delta.Engine.Editor\Delta.Engine.Editor.csproj">
+    <BuildType Solution="DebugPerf|*" Project="Debug" />
+    <BuildType Solution="Debug|*" Project="Debug" />
+    <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Release|*" Project="Release" />
+  </Project>
+  <Project Path="Delta.Engine\Delta.Engine.csproj">
+    <BuildType Solution="DebugPerf|*" Project="Debug" />
+    <BuildType Solution="Debug|*" Project="Debug" />
+    <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Release|*" Project="Release" />
+  </Project>
+  <Project Path="Delta.Engine.Generation.Core\Delta.Engine.Generation.Core.csproj">
+    <BuildType Solution="DebugPerf|*" Project="Debug" />
+    <BuildType Solution="Debug|*" Project="Debug" />
+    <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Release|*" Project="Release" />
+  </Project>
+  <Project Path="Delta.Engine.Generation.Internal\Delta.Engine.Generation.Internal.csproj">
+    <BuildType Solution="DebugPerf|*" Project="Debug" />
+    <BuildType Solution="Debug|*" Project="Debug" />
+    <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Release|*" Project="Release" />
+  </Project>
+  <Project Path="Delta.Engine.Generation.Tests\Delta.Engine.Generation.Tests.csproj">
+    <BuildType Solution="DebugPerf|*" Project="Debug" />
+    <BuildType Solution="Debug|*" Project="Debug" />
+    <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Release|*" Project="Release" />
+  </Project>
+  <Project Path="Delta.Engine.Generation\Delta.Engine.Generation.csproj">
+    <BuildType Solution="DebugPerf|*" Project="Debug" />
+    <BuildType Solution="Debug|*" Project="Debug" />
+    <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Release|*" Project="Release" />
+  </Project>
+  <Project Path="Delta.Engine.Runner\Delta.Engine.Runner.csproj">
+    <BuildType Solution="DebugPerf|*" Project="Debug" />
+    <BuildType Solution="Debug|*" Project="Debug" />
+    <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Release|*" Project="Release" />
+  </Project>
+  <Project Path="Delta.Engine.Integration\Delta.Engine.Integration.csproj">
+    <BuildType Solution="DebugPerf|*" Project="Debug" />
+    <BuildType Solution="Debug|*" Project="Debug" />
+    <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Release|*" Project="Release" />
+  </Project>
+  <Project Path="Delta.Engine.Integration.Tests\Delta.Engine.Integration.Tests.csproj">
+    <BuildType Solution="DebugPerf|*" Project="Debug" />
+    <BuildType Solution="Debug|*" Project="Debug" />
+    <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Release|*" Project="Release" />
+  </Project>
+  <Project Path="GLCSharp\GLCSharp.csproj">
+    <BuildType Solution="DebugPerf|*" Project="Debug" />
+    <BuildType Solution="Debug|*" Project="Debug" />
+    <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Release|*" Project="Release" />
+  </Project>
+  <Properties Name="Visual Studio">
+    <Property Name="OpenWith" Value="17" />
+  </Properties>
+  <Folder Name="/Generators/" />
+</Solution>

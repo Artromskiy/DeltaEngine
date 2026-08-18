@@ -1,0 +1,64 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:uc="clr-namespace:Delta.Engine.Editor;assembly=Delta.Engine.Editor"
+             mc:Ignorable="d" d:DesignWidth="455" d:DesignHeight="612"
+             x:Class="Delta.Engine.Editor.HierarchyControl">
+
+  <Grid RowDefinitions="20,20,*">
+
+    <!--Menu Name-->
+    <uc:EditorPanelHeader PanelName="Hierarchy"
+                          PanelIcon="/Assets/Icons/hierarchy.svg"
+                          Grid.Row="0"
+                          x:Name="PanelHeader"
+                          x:FieldModifier="private"/>
+
+    <Grid Grid.Row="1"
+          ColumnDefinitions="Auto,*,Auto">
+
+      <!--Add Entity etc-->
+      <Button Grid.Column="0"
+              Classes="Iconed"
+              CornerRadius="3,0,0,3"
+              Click="CreateNewEntity">
+        <Svg Path="/Assets/Icons/add.svg"/>
+      </Button>
+
+      <!--Search field-->
+      <TextBox Grid.Column="1"
+               MinHeight="0"
+               VerticalAlignment="Stretch"
+               CornerRadius="0"
+               FontSize="12"
+               VerticalContentAlignment="Center"
+               Watermark="Search"/>
+
+      <Button Grid.Column="2"
+              Classes="Iconed"
+              CornerRadius="0,3,3,0">
+        <Svg Path="/Assets/Icons/search.svg"/>
+      </Button>
+    </Grid>
+
+    <!--Entities-->
+    <Border Grid.Row="2">
+      <ScrollViewer VerticalScrollBarVisibility="Visible"
+                    Padding="0,0,15,0">
+        <StackPanel x:Name="EntityNodeStack"
+                    x:FieldModifier="private">
+
+          <!--TestEntity-->
+
+          <!--
+          <uc:HierarchyNodeControl/>
+          -->
+
+        </StackPanel>
+      </ScrollViewer>
+    </Border>
+
+  </Grid>
+
+</UserControl>
