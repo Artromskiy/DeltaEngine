@@ -41,7 +41,7 @@ public class RuntimeLoader
         _compilerModule.Recompile();
 
         var ctx = RuntimeContextFactory.CreateHeadlessContext(_projectPath);
-        _runtime = new Runtime(ctx);
+        _runtime = new Delta.Engine.Runtime.Runtime(ctx);
 
         _executionModule = new RuntimeScheduler(_runtime, _threadGetter);
         var directory = Directory.GetCurrentDirectory();
@@ -58,7 +58,7 @@ public class RuntimeLoader
         _compilerModule.Recompile();
 
         var ctx = RuntimeContextFactory.CreateHeadlessContext(_projectPath);
-        _runtime = new Runtime(ctx);
+        _runtime = new Delta.Engine.Runtime.Runtime(ctx);
         _executionModule = new RuntimeScheduler(_runtime, _threadGetter);
     }
 

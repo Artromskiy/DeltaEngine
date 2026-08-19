@@ -1,9 +1,11 @@
 using Delta.Engine.ECS.Attributes;
+using Delta.Engine.Integration;
 using Delta.Engine.Runtime;
 using Delta.Engine.EditorLib.Scripting;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
@@ -40,11 +42,30 @@ internal class CompilerModule : ICompilerModule
     private void Compile()
     {
         Debug.Assert(_context != null);
-        var scriptsPath = _compileHelper.CompileScripts();
-        _context.LoadFromAssemblyPath(scriptsPath);
+        LoadAssembly(_compileHelper.CompileScripts());
         HashSet<Type> components = new(GetComponents());
-        var accessorsPath = _compileHelper.CompileAccessors(components);
-        _context.LoadFromAssemblyPath(accessorsPath);
+        LoadAssembly(_compileHelper.CompileAccessors(components));
+    }
+
+    private void LoadAssembly(ScriptCompilationResult result)
+    {
+        if (!result.Success)
+        {
+            string diagnostics = string.Join(
+                Environment.NewLine,
+                result.Diagnostics.Select(d => $"{d.Id}: {d.Message}"));
+            throw new InvalidOperationException($"Script compilation failed.{Environment.NewLine}{diagnostics}");
+        }
+
+        using var assemblyStream = new MemoryStream(result.AssemblyBytes.ToArray(), writable: false);
+        if (result.PdbBytes.IsEmpty)
+        {
+            _context!.LoadFromStream(assemblyStream);
+            return;
+        }
+
+        using var pdbStream = new MemoryStream(result.PdbBytes.ToArray(), writable: false);
+        _context!.LoadFromStream(assemblyStream, pdbStream);
     }
 
     private AssemblyLoadContext NewLoadContext()

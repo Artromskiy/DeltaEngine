@@ -35,6 +35,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Delta.Engine.Runner", "Delt
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Delta.Engine.Integration", "Delta.Engine.Integration\Delta.Engine.Integration.csproj", "{B8F3B3C9-0A7E-4C3E-9A7B-8D9F1D6D2C41}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Delta.Editor.Scripting", "Delta.Editor.Scripting\Delta.Editor.Scripting.csproj", "{2C5E2D3E-7B4D-4F1A-9F37-81B726BBD0A2}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Delta.Engine.Integration.Tests", "Delta.Engine.Integration.Tests\Delta.Engine.Integration.Tests.csproj", "{C4E6A5B1-7D32-4F8A-B0C9-2E1D3F6A9B54}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Utilities", "Utilities", "{E9D77E21-BE19-43B3-98A6-DE951B75A547}"
@@ -207,6 +209,18 @@ Global
 		{B8F3B3C9-0A7E-4C3E-9A7B-8D9F1D6D2C41}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B8F3B3C9-0A7E-4C3E-9A7B-8D9F1D6D2C41}.Release-PureECS|Any CPU.ActiveCfg = Release|Any CPU
 		{B8F3B3C9-0A7E-4C3E-9A7B-8D9F1D6D2C41}.Release-PureECS|Any CPU.Build.0 = Release|Any CPU
+		{2C5E2D3E-7B4D-4F1A-9F37-81B726BBD0A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C5E2D3E-7B4D-4F1A-9F37-81B726BBD0A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C5E2D3E-7B4D-4F1A-9F37-81B726BBD0A2}.DebugPerf|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C5E2D3E-7B4D-4F1A-9F37-81B726BBD0A2}.DebugPerf|Any CPU.Build.0 = Debug|Any CPU
+		{2C5E2D3E-7B4D-4F1A-9F37-81B726BBD0A2}.Debug-PureECS|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C5E2D3E-7B4D-4F1A-9F37-81B726BBD0A2}.Debug-PureECS|Any CPU.Build.0 = Debug|Any CPU
+		{2C5E2D3E-7B4D-4F1A-9F37-81B726BBD0A2}.Perf|Any CPU.ActiveCfg = Release|Any CPU
+		{2C5E2D3E-7B4D-4F1A-9F37-81B726BBD0A2}.Perf|Any CPU.Build.0 = Release|Any CPU
+		{2C5E2D3E-7B4D-4F1A-9F37-81B726BBD0A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C5E2D3E-7B4D-4F1A-9F37-81B726BBD0A2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C5E2D3E-7B4D-4F1A-9F37-81B726BBD0A2}.Release-PureECS|Any CPU.ActiveCfg = Release|Any CPU
+		{2C5E2D3E-7B4D-4F1A-9F37-81B726BBD0A2}.Release-PureECS|Any CPU.Build.0 = Release|Any CPU
 		{C4E6A5B1-7D32-4F8A-B0C9-2E1D3F6A9B54}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C4E6A5B1-7D32-4F8A-B0C9-2E1D3F6A9B54}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C4E6A5B1-7D32-4F8A-B0C9-2E1D3F6A9B54}.DebugPerf|Any CPU.ActiveCfg = Debug|Any CPU

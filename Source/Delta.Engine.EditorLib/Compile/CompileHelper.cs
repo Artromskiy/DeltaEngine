@@ -1,12 +1,8 @@
+using Delta.Editor.Scripting;
+using Delta.Engine.Integration;
 using Delta.Engine.Runtime;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Emit;
-using Microsoft.CodeAnalysis.Text;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -15,94 +11,54 @@ namespace Delta.Engine.EditorLib.Compile;
 
 internal class CompileHelper(IProjectPath projectPath)
 {
-    private const string Underscore = "_";
     private const string CsSearch = "*.cs";
-    private const string dllExt = ".dll";
-    private const string pdbExt = ".pdb";
     private const string Scripts = "Scripts";
     private const string Accessors = "Accessors";
-    private const string ScriptsPathSuffix = Underscore + Scripts + dllExt;
-    private const string AccessorsPathSuffix = Underscore + Accessors + dllExt;
 
     private readonly IProjectPath _projectPath = projectPath;
-    private string RandomScriptsDllName => Path.Combine(_projectPath.DllsDirectory, Path.GetRandomFileName() + ScriptsPathSuffix);
-    private string RandomAccessorsDllName => Path.Combine(_projectPath.DllsDirectory, Path.GetRandomFileName() + AccessorsPathSuffix);
-    private string RandomPdbName => Path.Combine(_projectPath.DllsDirectory, Path.GetRandomFileName() + pdbExt);
 
-    private static readonly CSharpParseOptions _parseOptions = new(LanguageVersion.CSharp12);
-    private static readonly CSharpCompilationOptions _compilationOptions = new
-    (
-        OutputKind.DynamicallyLinkedLibrary,
-        optimizationLevel: OptimizationLevel.Release,
-        allowUnsafe: true
-    );
+    private readonly IScriptCompiler _compiler = new RoslynScriptCompiler();
+    private IReadOnlyList<IScriptReference>? _references;
 
-
-    public string CompileScripts()
+    public ScriptCompilationResult CompileScripts()
     {
-        var sourceFiles = Directory.EnumerateFiles(_projectPath.ScriptsDirectory, CsSearch, SearchOption.AllDirectories);
-        var trees = sourceFiles.Select(x =>
-        {
-            using var stream = File.OpenRead(x);
-            return CSharpSyntaxTree.ParseText(SourceText.From(stream), _parseOptions);
-        });
-
-        var references = GetReferences(trees);
-
-        var compilation = CSharpCompilation.Create(Scripts, trees, references, _compilationOptions);
-        var dllPath = RandomScriptsDllName;
-        var result = compilation.Emit(dllPath, RandomPdbName);
-
-        LogCompilation(result);
-
-        return dllPath;
+        var sources = Directory.EnumerateFiles(_projectPath.ScriptsDirectory, CsSearch, SearchOption.AllDirectories)
+            .Order(StringComparer.Ordinal)
+            .Select(path => new ScriptSource(path, File.ReadAllText(path)))
+            .ToArray();
+        return _compiler.Compile(new ScriptCompilationRequest(sources, GetReferences(), Scripts));
     }
 
-    public string CompileAccessors(HashSet<Type> components)
+    public ScriptCompilationResult CompileAccessors(HashSet<Type> components)
     {
         var code = AccessorGenerator.GenerateAccessors(components);
-        code = CSharpSyntaxTree.ParseText(code).GetRoot().NormalizeWhitespace().SyntaxTree.GetText().ToString();
-        SyntaxTree[] trees = [CSharpSyntaxTree.ParseText(SourceText.From(code), _parseOptions)];
-
-        var references = GetReferences(trees);
-
-        var compilation = CSharpCompilation.Create(Accessors, trees, references, _compilationOptions);
-
-        var dllPath = RandomAccessorsDllName;
-        var result = compilation.Emit(dllPath, RandomPdbName);
-
-        LogCompilation(result);
-
-        return dllPath;
+        return _compiler.Compile(new ScriptCompilationRequest(
+            [new ScriptSource("Accessors.g.cs", code)],
+            GetReferences(),
+            Accessors));
     }
 
-    private static List<MetadataReference> GetReferences(IEnumerable<SyntaxTree> trees)
+    private IReadOnlyList<IScriptReference> GetReferences()
     {
-        MetadataReference mscorlib = MetadataReference.CreateFromFile(typeof(object).Assembly.Location);
-        MetadataReference engineLib = MetadataReference.CreateFromFile(typeof(IRuntime).Assembly.Location);
-        List<MetadataReference> references = [mscorlib, engineLib];
+        if (_references != null)
+            return _references;
 
-        string assemblyPath = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
-        references.AddRange(Assembly.
-            GetEntryAssembly()!.
-            GetReferencedAssemblies().
-            Select(a => MetadataReference.CreateFromFile(Assembly.Load(a).Location)));
+        var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var trustedPlatformAssemblies = AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") as string;
+        if (trustedPlatformAssemblies != null)
+            foreach (var path in trustedPlatformAssemblies.Split(Path.PathSeparator))
+                paths.Add(path);
 
-        references.AddRange(trees.
-            Select(tree => tree.GetRoot().ChildNodes().
-            OfType<UsingDirectiveSyntax>().
-            Where(x => x.Name != null).
-            Select(x => x.Name)).
-        SelectMany(s => s).
-        Select(u => Path.Combine(assemblyPath, u!.ToString() + ".dll")).
-        Where(File.Exists).
-        Select(p => MetadataReference.CreateFromFile(p)));
-        return references;
-    }
+        paths.Add(typeof(IRuntime).Assembly.Location);
+        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            if (!string.IsNullOrEmpty(assembly.Location))
+                paths.Add(assembly.Location);
 
-    private static void LogCompilation(EmitResult result)
-    {
-        foreach (var item in result.Diagnostics)
-            Debug.Assert(false, item.GetMessage());
+        _references = paths
+            .Where(File.Exists)
+            .OrderBy(path => path, StringComparer.Ordinal)
+            .Select(path => (IScriptReference)new FileScriptReference(path))
+            .ToArray();
+        return _references;
     }
 }

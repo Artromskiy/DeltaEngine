@@ -86,6 +86,12 @@
     <BuildType Solution="Perf|*" Project="Release" />
     <BuildType Solution="Release|*" Project="Release" />
   </Project>
+  <Project Path="Delta.Editor.Scripting\Delta.Editor.Scripting.csproj">
+    <BuildType Solution="DebugPerf|*" Project="Debug" />
+    <BuildType Solution="Debug|*" Project="Debug" />
+    <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Release|*" Project="Release" />
+  </Project>
   <Project Path="Delta.Engine.Integration.Tests\Delta.Engine.Integration.Tests.csproj">
     <BuildType Solution="DebugPerf|*" Project="Debug" />
     <BuildType Solution="Debug|*" Project="Debug" />

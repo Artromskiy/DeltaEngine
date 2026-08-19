@@ -7,29 +7,28 @@ internal class TestCompileFiles
     private const string TestCsFileName = "Something";
     private const string TestCsFile =
         """
-        using System;
-using         Delta.Engine;
-using         Delta.Engine.Scripting;
-        using System.Diagnostics;
+using System;
+using Delta.Engine;
+using Delta.Engine.Scripting;
+using System.Diagnostics;
 
-        [Component]
-        public class Something
-        {
-            // Creates 50 MB array
-            public static byte[] values = new byte[1024*1024*50];
+[Component]
+public class Something
+{
+    // Creates 50 MB array
+    public static byte[] values = new byte[1024*1024*50];
 
-            public void Do()
-            {
-                Debug.WriteLine("Compile World!");
-            }
+    public void Do()
+    {
+        Debug.WriteLine("Compile World!");
+    }
 
-            public Something()
-            {
-                Random.Shared.NextBytes(values);
-            }
-        }
-        """
-        ;
+    public Something()
+    {
+        Random.Shared.NextBytes(values);
+    }
+}
+""";
 
     public static void CreateTestScript(string path)
     {

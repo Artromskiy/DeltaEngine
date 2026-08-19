@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Delta.Editor.Scripting</RootNamespace>
+    <AssemblyName>Delta.Editor.Scripting</AssemblyName>
+    <PackageId>Delta.Editor.Scripting</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.9.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Delta.Engine.Integration\Delta.Engine.Integration.csproj" />
+  </ItemGroup>
+
+</Project>

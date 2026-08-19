@@ -19,6 +19,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Delta.Editor.Scripting\Delta.Editor.Scripting.csproj" />
+    <ProjectReference Include="..\Delta.Engine.Integration\Delta.Engine.Integration.csproj" />
     <ProjectReference Include="..\Delta.Engine\Delta.Engine.csproj" />
   </ItemGroup>
 
