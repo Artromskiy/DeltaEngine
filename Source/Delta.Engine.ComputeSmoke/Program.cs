@@ -15,24 +15,13 @@ internal static class Program
         var world = new ComputeWorld(journal, 64);
         world.Update();
 
-        byte[] shader = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "fixtures", "compute_double.spv"));
-        var metadata = new ComputeShaderMetadata(
-            ComputeAbiLayout.Std430,
-            64,
-            1,
-            1,
-            new[]
-            {
-                new ComputeDescriptorBinding(
-                    0,
-                    0,
-                    ComputeDescriptorKind.StorageBuffer,
-                    ComputeBufferAccess.ReadWrite)
-            });
+        var artifact = EngineComputeArtifact.LoadFixture(
+            Path.Combine(AppContext.BaseDirectory, "fixtures", "compute_double.spv"));
+        var metadata = artifact.ToRenderMetadata();
 
         await using var renderer = new VulkanRenderer(new VulkanRendererOptions());
         await using IComputeDevice device = renderer.CreateComputeDevice();
-        await using IComputePipeline pipeline = device.CreateComputePipeline(shader, in metadata);
+        await using IComputePipeline pipeline = device.CreateComputePipeline(artifact.Spirv.Span, in metadata);
         await using IComputeStorageBuffer buffer = device.CreateStorageBuffer((ulong)world.Values.Length * sizeof(uint));
 
         var computeRenderer = new ComputeRenderer(device, pipeline, buffer, world.Values);
