@@ -58,12 +58,17 @@ public class ModelImporter : IDisposable
             indexNum += count;
         }
         int vertexCount = (int)mesh->MNumVertices;
-        var vertices = new ReadOnlySpan<float3>((void*)mesh->MVertices, vertexCount);
+        var positions = new float3[vertexCount];
         var vertices2 = new float2[vertexCount];
-        for (var i = 0; i < vertices.Length; i++)
-            vertices2[i] = new float2(vertices[i].x, vertices[i].y);
+        for (var i = 0; i < vertexCount; i++)
+        {
+            var source = mesh->MVertices[i];
+            positions[i] = new float3(source.X, source.Y, source.Z);
+            vertices2[i] = new float2(source.X, source.Y);
+        }
         var meshData = new MeshData(vertexCount, indices.ToArray());
-        meshData.SetData(VertexAttribute.Pos3, mesh->MVertices);
+        fixed (float3* p = positions)
+            meshData.SetData(VertexAttribute.Pos3, p);
         fixed (float2* v2 = vertices2)
             meshData.SetData(VertexAttribute.Pos2, v2);
         meshData.SetData(VertexAttribute.Norm, mesh->MNormals);
