@@ -45,8 +45,7 @@ internal static class Serialization
     public static T Deserialize<T>(string path)
     {
         using Stream stream = new FileStream(path, FileMode.Open, FileAccess.Read);
-        T result = JsonSerializer.Deserialize<T>(stream, _options);
-        return result;
+        return JsonSerializer.Deserialize<T>(stream, _options)!;
     }
 
     private static void AddPrivateFieldsModifier(JsonTypeInfo jsonTypeInfo)

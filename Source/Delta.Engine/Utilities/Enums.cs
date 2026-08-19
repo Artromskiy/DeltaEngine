@@ -13,7 +13,6 @@ internal class Enums
         public static readonly T[] values;
         public static readonly int count;
         public static readonly bool hasFlagsAttribute;
-        public static readonly T allFlags;
         static EnumBakedValues()
         {
             values = Enum.GetValues<T>();

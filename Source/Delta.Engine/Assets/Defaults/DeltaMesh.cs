@@ -1,4 +1,4 @@
-using Delta.Engine.Rendering;
+using Delta.Engine.Assets;
 using Delta.Engine.Runtime;
 using Delta.Maths;
 using System;

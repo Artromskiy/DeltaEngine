@@ -1,3 +1,4 @@
+using Delta.Engine.Assets;
 using Delta.Engine.Assets.Defaults;
 public class Defaults
 {

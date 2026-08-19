@@ -9,25 +9,25 @@ All owned projects in `Source` use the `Delta.Engine` root. The namespace migrat
 also renames owned project paths, assembly names, and package identities to the same
 `Delta.Engine.*` family:
 
-| Previous identifier | New identifier |
-| --- | --- |
-| `DVG.Engine` | `Delta.Engine` |
-| `DVG.Engine.Editor` | `Delta.Engine.Editor` |
-| `DVG.Engine.EditorLib` | `Delta.Engine.EditorLib` |
-| `DVG.Engine.Generation` | `Delta.Engine.Generation` |
-| `DVG.Engine.Generation.Core` | `Delta.Engine.Generation.Core` |
-| `DVG.Engine.Generation.Internal` | `Delta.Engine.Generation.Internal` |
-| `DVG.Engine.Generation.Tests` | `Delta.Engine.Generation.Tests` |
-| `DVG.Engine.Benchmarks` | `Delta.Engine.Benchmarks` |
-| `DVG.Engine.Runner` | `Delta.Engine.Runner` |
-| `DVG.Engine.ConsoleModelImporter` | `Delta.Engine.ConsoleModelImporter` |
-| `DVG.Engine.Integration` | `Delta.Engine.Integration` |
-| `DVG.Engine.Integration.Tests` | `Delta.Engine.Integration.Tests` |
+| Owned identifier |
+| --- |
+| `Delta.Engine` |
+| `Delta.Engine.Editor` |
+| `Delta.Engine.EditorLib` |
+| `Delta.Engine.Generation` |
+| `Delta.Engine.Generation.Core` |
+| `Delta.Engine.Generation.Internal` |
+| `Delta.Engine.Generation.Tests` |
+| `Delta.Engine.Benchmarks` |
+| `Delta.Engine.Runner` |
+| `Delta.Engine.ConsoleModelImporter` |
+| `Delta.Engine.Integration` |
+| `Delta.Engine.Integration.Tests` |
 
 `Depend/Arch` and its namespaces are external/vendored and are intentionally
 unchanged. This is a source, assembly, and package identity compatibility break for
-consumers that reference the old owned projects; the rename is intentionally explicit
-so project, namespace, and artifact identities agree.
+consumers that reference pre-migration owned projects; the rename is intentionally
+explicit so project, namespace, and artifact identities agree.
 
 ## Dependency/migration inventory snapshot
 

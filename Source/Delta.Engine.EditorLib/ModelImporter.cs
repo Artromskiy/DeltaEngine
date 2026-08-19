@@ -1,4 +1,3 @@
-using Delta.Engine.Rendering;
 using Delta.Engine.Runtime;
 using Delta.Maths;
 using Silk.NET.Assimp;

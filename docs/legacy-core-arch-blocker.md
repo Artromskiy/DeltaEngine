@@ -1,24 +1,30 @@
-# Legacy core build blocker
+# Legacy core graph status
 
-The legacy `Delta.Engine` build remains manual-only. Its project graph still
-references the vendored `Depend/Arch/src/Arch/Arch.csproj` and the owned
-source-generator projects as analyzers:
+The legacy `Delta.Engine` core project now has a bounded Release build with no
+warnings or errors. Its remaining intentional project references are the
+vendored `Depend/Arch/src/Arch/Arch.csproj`, `Delta.Maths`, and the owned
+source-generator projects:
 
 ```text
 Delta.Engine -> Arch
 Delta.Engine -> Delta.Engine.Generation (Analyzer)
-Delta.Engine -> Delta.Engine.Generation.Internal (Analyzer)
+Delta.Engine -> Delta.Engine.Generation.Core (Analyzer dependency)
 ```
 
-The current Arch source exposes `World.IsAlive(Entity)`,
-`World.IsAlive(EntityReference)`, and `EntityReference.IsAlive(World)`. The
-engine-side `EntityReferenceExtensions` calls the reference/world overload, so
-the previously reported missing-`IsAlive` source error is not reproducible at
-this checkout. The remaining blocker is the legacy Arch/analyzer build graph
-itself: a bounded Release core build with project references and analyzers
-disabled still does not reach a compiler result within 30 seconds. The only
-diagnostic emitted before stopping is `NU1900` from the unavailable NuGet
-advisory feed. This note does not change Arch or attempt a core rewrite.
+The current Arch build is not compiled with `PURE_ECS`, so the available
+reference API is `EntityReference.IsAlive()`; the engine adapter uses that
+instance API and does not modify Arch. The removed `Generation.Internal`
+analyzer used to emit the deleted renderer `RenderBatcher`/GPU collection
+types. `Generation.Core` remains an explicit analyzer dependency so the
+owned `Generation` analyzer can load its shared generator base.
+
+The optional dependent projects still have independent source blockers:
+`Delta.Engine.EditorLib` stops at the malformed raw string in
+`Scripting/TestCompileFiles.cs`, and `Delta.Engine.Benchmarks` stops at the
+malformed namespace declaration in `RefGetBench.cs`. Those files are outside
+the analyzer/core graph fix and benchmark workload execution remains disabled.
+
+This note does not change Arch or attempt a core rewrite.
 
 Standalone `Delta.Engine.Integration` remains the automatic gate. The optional
 ComputeSmoke project is independent of the legacy core project.

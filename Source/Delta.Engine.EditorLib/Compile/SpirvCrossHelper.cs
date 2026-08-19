@@ -1,4 +1,4 @@
-using Delta.Engine.Rendering;
+using Delta.Engine.Assets;
 using Silk.NET.SPIRV.Cross;
 using Silk.NET.SPIRV;
 using System;

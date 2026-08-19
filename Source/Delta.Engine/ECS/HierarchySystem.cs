@@ -153,9 +153,9 @@ internal class HierarchySystem
     private LinkedListNode<TreeNode> GetOrCreateNode()
     {
         if (!_cachedNodes.TryPop(out var node))
-            node = new LinkedListNode<TreeNode>(default);
-        if (!_cachedTreeNodes.TryPop(out node.ValueRef))
-            node.Value = new TreeNode();
+            node = new LinkedListNode<TreeNode>(new TreeNode());
+        else if (_cachedTreeNodes.TryPop(out var cachedTreeNode))
+            node.Value = cachedTreeNode;
         return node;
     }
 

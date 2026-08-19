@@ -1,4 +1,4 @@
-namespace Delta.Engine.Runtime;
+using Delta.Engine.Runtime;
 
 namespace Delta.Engine.Integration.Adapters;
 

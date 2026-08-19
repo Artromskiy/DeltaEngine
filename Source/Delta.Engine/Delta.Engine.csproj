@@ -58,8 +58,8 @@
     <ProjectReference Include="..\Delta.Engine.Integration\Delta.Engine.Integration.csproj" />
     <ProjectReference Include="..\..\..\Maths\Delta.Maths.csproj" />
     <ProjectReference Include="..\..\Depend\Arch\src\Arch\Arch.csproj" />
+    <ProjectReference Include="..\Delta.Engine.Generation.Core\Delta.Engine.Generation.Core.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Delta.Engine.Generation\Delta.Engine.Generation.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-    <ProjectReference Include="..\Delta.Engine.Generation.Internal\Delta.Engine.Generation.Internal.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 
