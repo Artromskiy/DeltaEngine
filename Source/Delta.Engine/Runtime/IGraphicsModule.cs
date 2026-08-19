@@ -1,17 +1,15 @@
-using Delta.Engine.ECS.Components;
-using Delta.Engine.Rendering;
-using Delta.Engine.Rendering.Headless;
 using System;
+using Delta.Engine.Integration;
 
-using Delta.Engine.Runtime;
-public interface IGraphicsModule
+namespace Delta.Engine.Runtime;
+
+public interface IGraphicsModule : IDisposable
 {
-    internal RenderBase RenderData { get; }
-    internal void AddRenderBatcher(IRenderBatcher renderBatcher);
-    internal void RemoveRenderBatcher(IRenderBatcher renderBatcher);
-    public (int width, int height) Size { get; set; }
-    internal void Execute();
-    public void DrawGizmos(Render render, Transform transform);
-    public void DrawMesh(Render render, Transform transform);
-    public Memory<byte> RenderStream { get; }
+    IRenderer Renderer { get; }
+
+    (int width, int height) Size { get; set; }
+
+    void Resize(int width, int height);
+
+    void Execute(float deltaSeconds = 0);
 }

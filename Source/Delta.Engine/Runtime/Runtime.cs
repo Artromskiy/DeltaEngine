@@ -1,6 +1,5 @@
 ﻿using Arch.Core;
 using Delta.Engine.ECS;
-using Delta.Engine.Rendering;
 using System;
 using System.Diagnostics;
 using Schedulers;
@@ -17,19 +16,16 @@ public sealed class Runtime : IRuntime, IDisposable
         var path = projectPath;
         var assets = new GlobalAssetCollection();
         var sceneManager = new SceneManager();
-        var graphics = new Rendering.Headless.HeadlessGraphicsModule("Delta Editor");
+        var graphics = new Rendering.NullGraphicsModule("Delta Editor");
 
         Context = new DefaultRuntimeContext(path, assets, sceneManager, graphics);
         IRuntimeContext.Current = Context;
 
-        graphics.AddRenderBatcher(new SceneBatcher());
     }
     public Runtime(IRuntimeContext context)
     {
         Context = context;
         IRuntimeContext.Current = Context;
-        IRuntimeContext.Current.GraphicsModule.AddRenderBatcher(new SceneBatcher());
-        IRuntimeContext.Current.GraphicsModule.AddRenderBatcher(new UISceneBatcher());
     }
 
     public void Run()

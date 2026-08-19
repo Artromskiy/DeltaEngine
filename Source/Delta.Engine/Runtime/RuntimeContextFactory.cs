@@ -1,5 +1,4 @@
-﻿using Silk.NET.Windowing;
-
+﻿using Delta.Engine.Rendering;
 using Delta.Engine.Runtime;
 public static class RuntimeContextFactory
 {
@@ -8,7 +7,7 @@ public static class RuntimeContextFactory
         var path = projectPath;
         var assets = new GlobalAssetCollection();
         var sceneManager = new SceneManager();
-        var graphics = new Rendering.Headless.HeadlessGraphicsModule("Delta Editor");
+        var graphics = new NullGraphicsModule("Delta Editor");
 
         return new DefaultRuntimeContext(path, assets, sceneManager, graphics);
     }
@@ -18,7 +17,7 @@ public static class RuntimeContextFactory
         var path = projectPath;
         var assets = new GlobalAssetCollection();
         var sceneManager = new SceneManager();
-        var graphics = new Rendering.Windowed.WindowedGraphicsModule("Delta Editor");
+        var graphics = new NullGraphicsModule("Delta Editor");
 
         return new DefaultRuntimeContext(path, assets, sceneManager, graphics);
     }

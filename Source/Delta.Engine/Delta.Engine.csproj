@@ -50,13 +50,8 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.2.2" />
-    <PackageReference Include="Silk.NET.Vulkan" Version="2.20.0" />
-    <PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" Version="2.20.0" />
-    <PackageReference Include="Silk.NET.Vulkan.Extensions.KHR" Version="2.20.0" />
-    <PackageReference Include="Silk.NET.Windowing" Version="2.21.0" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.5" />
     <PackageReference Include="System.Memory" Version="4.5.5" />
-    <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -69,10 +64,6 @@
 
 
   <ItemGroup>
-    <Using Include="Delta.Engine.DebugHelper">
-      <Static>True</Static>
-    </Using>
-
     <Using Include="Delta.Engine.InlineConstants">
       <Static>True</Static>
     </Using>

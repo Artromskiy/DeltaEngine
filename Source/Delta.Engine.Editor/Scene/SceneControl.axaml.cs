@@ -3,15 +3,12 @@ using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Delta.Engine.Runtime;
-using Delta.Engine.Utilities;
 
 namespace Delta.Engine.Editor;
 
 public partial class SceneControl : UserControl
 {
     private WriteableBitmap? _bitmap;
-    private WriteableBitmap? _prevBitmap;
-    private readonly UnmanagedMemoryManager<byte> _bitmapMemoryManager = new(0, 0);
     public SceneControl()
     {
         InitializeComponent();
@@ -31,17 +28,12 @@ public partial class SceneControl : UserControl
         var w = (int)bounds.Width;
         var h = (int)bounds.Height;
 
-        if (!ResizeBitmap(w, h))
-        {
-            _prevBitmap?.Dispose();
-            _prevBitmap = null;
-            WriteBitmap(_bitmap!, _bitmapMemoryManager);
-            Render.InvalidateVisual();
-        }
-        else
+        if (ResizeBitmap(w, h))
         {
             IRuntimeContext.Current.GraphicsModule.Size = (w, h);
         }
+
+        Render.InvalidateVisual();
         PanelHeader.StopDebug();
     }
 
@@ -49,16 +41,6 @@ public partial class SceneControl : UserControl
     {
         return width != 0 && height != 0 && double.IsNormal(width) && double.IsNormal(height);
     }
-
-    private static unsafe void WriteBitmap(WriteableBitmap bitmap, UnmanagedMemoryManager<byte> bitmapMemoryManager)
-    {
-        using var frameBuffer = bitmap.Lock();
-        var renderStream = IRuntimeContext.Current.GraphicsModule.RenderStream;
-        var size = frameBuffer.RowBytes * frameBuffer.Size.Height;
-        bitmapMemoryManager.UpdateSource(frameBuffer.Address, size);
-        IRuntimeContext.Current.GraphicsModule.RenderStream.CopyToParallel(bitmapMemoryManager.Memory, 8);
-    }
-
 
     private bool ResizeBitmap(int width, int height)
     {
@@ -68,7 +50,7 @@ public partial class SceneControl : UserControl
             var dpi = new Vector(96, 96);
             var pFormat = PixelFormat.Rgb32;
             var aFormat = AlphaFormat.Opaque;
-            _prevBitmap = _bitmap;
+            _bitmap?.Dispose();
             _bitmap = new WriteableBitmap(size, dpi, pFormat, aFormat);
             Render.Source = _bitmap;
             return true;
