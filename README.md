@@ -2,7 +2,7 @@
 
 > Current development direction: the engine is being split into standalone
 > `DeltaECS` and `DeltaRender` projects. The target stack is SDL3-CS, Vulkan,
-> MoltenVK on macOS, a Delta-owned XAML UI, Delta.Shader, and Delta.Maths. Avalonia and
+> MoltenVK on macOS, a Delta-owned XAML UI, DeltaShader, and Delta.Maths. Avalonia and
 > Arch remain only as migration dependencies in the existing source. See the
 > [architecture roadmap](docs/architecture-roadmap.md) before making new engine
 > changes.
@@ -12,7 +12,7 @@ This is the very beginning of development and, like any other similar project, i
 
 **For those who stumbled upon this repository and think it's gone**
 
-I realized that the current implementation heavily depends on Avalonia, since the engine is ultimately forced to work in the same thread with it, or very tightly synchronize with the ui thread, in addition, the render from the camera has to be copied from the GPU to the CPU to display it inside the ui of Avalonia. This leads to difficulties in development and support, and to the fact that a lot of processor time is spent copying the render. To solve this problem, I wanted to write a ui renderer on xaml and the current renderer, but it was necessary to standardize the shaders and the graphics pipeline in general. For this, I started the Delta.Shader project, which is a mellinoe/ShaderGen recreated from scratch specifically for Vulcan. At the moment, I am working on developing the game and simultaneously developing and improving the code for Delta.Shader.
+I realized that the current implementation heavily depends on Avalonia, since the engine is ultimately forced to work in the same thread with it, or very tightly synchronize with the ui thread, in addition, the render from the camera has to be copied from the GPU to the CPU to display it inside the ui of Avalonia. This leads to difficulties in development and support, and to the fact that a lot of processor time is spent copying the render. To solve this problem, I wanted to write a ui renderer on xaml and the current renderer, but it was necessary to standardize the shaders and the graphics pipeline in general. For this, I started the DeltaShader project, which is a mellinoe/ShaderGen recreated from scratch specifically for Vulkan. At the moment, I am working on developing the game and simultaneously developing and improving the code for DeltaShader.
 
 **Motivation**
 
