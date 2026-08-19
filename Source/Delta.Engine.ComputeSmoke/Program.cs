@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using Delta.Engine.Integration;
+using Delta.Shader.Abstractions;
 using Delta.Render.Core;
 using Delta.Render.Vulkan;
 
@@ -15,13 +16,13 @@ internal static class Program
         var world = new ComputeWorld(journal, 64);
         world.Update();
 
-        var artifact = EngineComputeArtifact.LoadFixture(
-            Path.Combine(AppContext.BaseDirectory, "fixtures", "compute_double.spv"));
-        var metadata = artifact.ToRenderMetadata();
+        var shaderPath = Path.Combine(AppContext.BaseDirectory, "fixtures", "compute_double.spv");
+        var manifestPath = Path.Combine(AppContext.BaseDirectory, "fixtures", "compute_double.shader.json");
+        ShaderArtifact artifact = await GeneratedShaderArtifactLoader.LoadAsync(shaderPath, manifestPath);
 
         await using var renderer = new VulkanRenderer(new VulkanRendererOptions());
         await using IComputeDevice device = renderer.CreateComputeDevice();
-        await using IComputePipeline pipeline = device.CreateComputePipeline(artifact.Spirv.Span, in metadata);
+        await using IComputePipeline pipeline = device.CreateComputePipeline(artifact);
         await using IComputeStorageBuffer buffer = device.CreateStorageBuffer((ulong)world.Values.Length * sizeof(uint));
 
         var computeRenderer = new ComputeRenderer(device, pipeline, buffer, world.Values);

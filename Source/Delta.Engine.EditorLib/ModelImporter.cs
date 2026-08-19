@@ -1,11 +1,11 @@
 using Delta.Engine.Rendering;
 using Delta.Engine.Runtime;
+using Delta.Maths;
 using Silk.NET.Assimp;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
-using System.Numerics;
 using Scene = Silk.NET.Assimp.Scene;
 
 namespace Delta.Engine.Assets;
@@ -58,10 +58,13 @@ public class ModelImporter : IDisposable
             indexNum += count;
         }
         int vertexCount = (int)mesh->MNumVertices;
-        var vertices2 = Array.ConvertAll(new Span<Vector3>(mesh->MVertices, vertexCount).ToArray(), x => new Vector2(x.X, x.Y));
+        var vertices = new ReadOnlySpan<float3>((void*)mesh->MVertices, vertexCount);
+        var vertices2 = new float2[vertexCount];
+        for (var i = 0; i < vertices.Length; i++)
+            vertices2[i] = new float2(vertices[i].x, vertices[i].y);
         var meshData = new MeshData(vertexCount, indices.ToArray());
         meshData.SetData(VertexAttribute.Pos3, mesh->MVertices);
-        fixed (Vector2* v2 = vertices2)
+        fixed (float2* v2 = vertices2)
             meshData.SetData(VertexAttribute.Pos2, v2);
         meshData.SetData(VertexAttribute.Norm, mesh->MNormals);
         meshData.SetData(VertexAttribute.Bitan, mesh->MBitangents);
@@ -70,9 +73,9 @@ public class ModelImporter : IDisposable
             meshData.SetData(VertexAttribute.Col, mesh->MColors[0]);
         else
         {
-            var white = new Vector4[vertexCount];
-            Array.Fill(white, new Vector4(1, 1, 1, 1));
-            fixed (Vector4* c = white)
+            var white = new float4[vertexCount];
+            Array.Fill(white, new float4(1, 1, 1, 1));
+            fixed (float4* c = white)
                 meshData.SetData(VertexAttribute.Col, c);
         }
 

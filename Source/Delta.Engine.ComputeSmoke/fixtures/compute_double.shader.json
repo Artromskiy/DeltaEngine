@@ -1,0 +1,30 @@
+{
+  "Version": 1,
+  "Stage": 0,
+  "SourceEntryPointName": "main",
+  "EntryPointName": "main",
+  "TargetProfile": "vulkan1.2",
+  "GlslVersion": "450",
+  "SpirvVersion": "1.5",
+  "StorageLayout": "std430",
+  "LocalSizeX": 64,
+  "LocalSizeY": 1,
+  "LocalSizeZ": 1,
+  "Resources": [
+    {
+      "Name": "values",
+      "ParameterName": "values",
+      "Category": "storage-buffer",
+      "Set": 0,
+      "Binding": 0,
+      "GlslType": "uint",
+      "Access": 2,
+      "Layout": "std430",
+      "Offset": 0,
+      "Alignment": 4,
+      "Size": 4,
+      "ArrayStride": 4,
+      "MatrixStride": null
+    }
+  ]
+}

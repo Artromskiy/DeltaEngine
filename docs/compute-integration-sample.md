@@ -5,19 +5,19 @@ path. It consumes the existing checked-in SPIR-V artifact used by the
 Delta.Render compute smoke fixture; `fixtures/compute_double.comp` records the
 shader source/provenance. No Vulkan implementation is duplicated in DeltaEngine.
 
-There is currently no checked-in `.spv` artifact under Delta.Shader in the workspace, so
-this sample does not claim to run Delta.Shader emission at build time. The exact future
-Delta.Shader hookup is the `byte[]`/`ReadOnlySpan<byte>` passed to
-`IComputeDevice.CreateComputePipeline`; replacing the fixture producer there
-does not require changing the renderer or the compute flow.
+The sample uses the generated `compute_double.spv` and
+`compute_double.shader.json` pair. Engine loads both into
+`Delta.Shader.Abstractions.ShaderArtifact`, then passes that shared artifact to
+`Delta.Render`; Render derives pipeline metadata from the ABI manifest. The
+runtime path does not reference Roslyn, MSBuild, or the shader compiler.
 
 The sample uses only public `Delta.Render` contracts:
 
 1. `VulkanRenderer.CreateComputeDevice()` creates the compute device.
 2. `IComputeDevice.CreateStorageBuffer()` allocates the SSBO.
 3. `IComputeDevice.Upload()` transfers engine input data.
-4. `IComputeDevice.CreateComputePipeline()` consumes the SPIR-V bytes and
-   `ComputeShaderMetadata`.
+4. `IComputeDevice.CreateComputePipeline()` consumes the shared
+   `ShaderArtifact`.
 5. `IComputeDevice.Dispatch()` executes one workgroup.
 6. `IComputeDevice.Readback()` returns the result for the oracle check.
 
