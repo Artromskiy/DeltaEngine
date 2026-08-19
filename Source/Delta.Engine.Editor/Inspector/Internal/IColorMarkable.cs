@@ -2,7 +2,7 @@
 using Avalonia.Media;
 using Avalonia.VisualTree;
 
-Delta.Engine.Editor.Inspector.Internal
+namespace Delta.Engine.Editor.Inspector.Internal
 {
     internal interface IColorMarkable
     {

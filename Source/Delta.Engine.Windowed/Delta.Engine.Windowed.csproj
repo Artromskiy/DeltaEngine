@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Delta.Engine.Windowed</RootNamespace>
+    <AssemblyName>Delta.Engine.Windowed</AssemblyName>
+    <PackageId>Delta.Engine.Windowed</PackageId>
+    <RuntimeIdentifiers>osx-arm64;win-x64;linux-x64</RuntimeIdentifiers>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NuGetAudit>false</NuGetAudit>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Delta.Engine.Integration\Delta.Engine.Integration.csproj" />
+    <ProjectReference Include="..\..\..\Maths\Delta.Maths.csproj" />
+    <ProjectReference Include="..\..\..\Delta.Shader\src\Delta.Shader.Abstractions\Delta.Shader.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\DeltaRender\src\Delta.Render.Core\Delta.Render.Core.csproj" />
+    <ProjectReference Include="..\..\..\DeltaRender\src\Delta.Render.Platform.SDL3\Delta.Render.Platform.SDL3.csproj" />
+    <ProjectReference Include="..\..\..\DeltaRender\src\Delta.Render.Vulkan\Delta.Render.Vulkan.csproj" />
+    <PackageReference Include="SDL3-CS" Version="3.4.12.6" />
+    <PackageReference Include="Silk.NET.MoltenVK.Native" Version="2.23.0" GeneratePathProperty="true" />
+    <Content Include="$(PkgSilk_NET_MoltenVK_Native)/runtimes/osx/native/libMoltenVK.dylib" Condition=" '$(RuntimeIdentifier)' == 'osx-arm64' Or '$(RuntimeIdentifier)' == 'osx-x64' ">
+      <Link>libMoltenVK.dylib</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(PkgSilk_NET_MoltenVK_Native)/runtimes/osx/native/MoltenVK_icd.json" Condition=" '$(RuntimeIdentifier)' == 'osx-arm64' Or '$(RuntimeIdentifier)' == 'osx-x64' ">
+      <Link>MoltenVK_icd.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\DeltaRender\samples\Delta.Render.Smoke\shaders\fullscreen-rounded-rectangle.vert.spv" Link="shaders\fullscreen-rounded-rectangle.vert.spv" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\..\DeltaRender\samples\Delta.Render.Smoke\shaders\fullscreen-rounded-rectangle.vert.shader.json" Link="shaders\fullscreen-rounded-rectangle.vert.shader.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\..\DeltaRender\samples\Delta.Render.Smoke\shaders\fullscreen-rounded-rectangle.frag.spv" Link="shaders\fullscreen-rounded-rectangle.frag.spv" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\..\DeltaRender\samples\Delta.Render.Smoke\shaders\fullscreen-rounded-rectangle.frag.shader.json" Link="shaders\fullscreen-rounded-rectangle.frag.shader.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

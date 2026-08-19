@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-Delta.Engine.Editor.Hierarchy
+namespace Delta.Engine.Editor.Hierarchy
 {
     public class HierarchyNodeCreator
     {

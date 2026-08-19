@@ -17,6 +17,7 @@ public sealed class EngineHost(
 
     private int _nextFrameNumber;
     private int _completedFrames;
+    private float _elapsedSeconds;
     private bool _isDisposed;
     private bool _isRunning;
 
@@ -53,12 +54,13 @@ public sealed class EngineHost(
             throw new ArgumentOutOfRangeException(nameof(deltaSeconds), "Delta time must be finite and non-negative.");
 
         var frameNumber = _nextFrameNumber++;
+        _elapsedSeconds += deltaSeconds;
 
         AddStage(EngineLifecycleStage.FrameStarted, frameNumber);
         var input = _inputService.PollInput(frameNumber, deltaSeconds);
         AddStage(EngineLifecycleStage.InputPolled, frameNumber);
 
-        var context = new EngineFrameContext(frameNumber, deltaSeconds, input);
+        var context = new EngineFrameContext(frameNumber, deltaSeconds, input, _elapsedSeconds);
 
         AddStage(EngineLifecycleStage.WorldUpdated, frameNumber);
         _worldService.Update(context);

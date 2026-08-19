@@ -1,6 +1,6 @@
 ﻿using Avalonia.Media;
 
-Delta.Engine.Editor.Tools
+namespace Delta.Engine.Editor.Tools
 {
     internal class Colors
     {

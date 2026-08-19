@@ -80,6 +80,24 @@
     <BuildType Solution="Perf|*" Project="Release" />
     <BuildType Solution="Release|*" Project="Release" />
   </Project>
+  <Project Path="Delta.Engine.ComputeSmoke\Delta.Engine.ComputeSmoke.csproj">
+    <BuildType Solution="DebugPerf|*" Project="Debug" />
+    <BuildType Solution="Debug|*" Project="Debug" />
+    <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Release|*" Project="Release" />
+  </Project>
+  <Project Path="Delta.Engine.Windowed\Delta.Engine.Windowed.csproj">
+    <BuildType Solution="DebugPerf|*" Project="Debug" />
+    <BuildType Solution="Debug|*" Project="Debug" />
+    <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Release|*" Project="Release" />
+  </Project>
+  <Project Path="Delta.Engine.Windowed.Tests\Delta.Engine.Windowed.Tests.csproj">
+    <BuildType Solution="DebugPerf|*" Project="Debug" />
+    <BuildType Solution="Debug|*" Project="Debug" />
+    <BuildType Solution="Perf|*" Project="Release" />
+    <BuildType Solution="Release|*" Project="Release" />
+  </Project>
   <Project Path="Delta.Engine.Integration\Delta.Engine.Integration.csproj">
     <BuildType Solution="DebugPerf|*" Project="Debug" />
     <BuildType Solution="Debug|*" Project="Debug" />
@@ -93,12 +111,6 @@
     <BuildType Solution="Release|*" Project="Release" />
   </Project>
   <Project Path="Delta.Engine.Integration.Tests\Delta.Engine.Integration.Tests.csproj">
-    <BuildType Solution="DebugPerf|*" Project="Debug" />
-    <BuildType Solution="Debug|*" Project="Debug" />
-    <BuildType Solution="Perf|*" Project="Release" />
-    <BuildType Solution="Release|*" Project="Release" />
-  </Project>
-  <Project Path="GLCSharp\GLCSharp.csproj">
     <BuildType Solution="DebugPerf|*" Project="Debug" />
     <BuildType Solution="Debug|*" Project="Debug" />
     <BuildType Solution="Perf|*" Project="Release" />

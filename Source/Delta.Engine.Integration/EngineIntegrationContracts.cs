@@ -60,7 +60,11 @@ public readonly record struct InputSnapshot(
     EngineSurfaceSnapshot Surface = default,
     ReadOnlyMemory<EngineInputEvent> Events = default);
 
-public readonly record struct EngineFrameContext(int FrameNumber, float DeltaSeconds, InputSnapshot Input)
+public readonly record struct EngineFrameContext(
+    int FrameNumber,
+    float DeltaSeconds,
+    InputSnapshot Input,
+    float ElapsedSeconds = 0)
 {
     public EngineSurfaceSnapshot Surface => Input.Surface;
 }
