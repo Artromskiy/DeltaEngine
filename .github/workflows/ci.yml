@@ -50,6 +50,11 @@ jobs:
         uses: actions/checkout@v7
         with:
           path: DeltaEngine
+      - name: Checkout Delta.Maths
+        uses: actions/checkout@v7
+        with:
+          repository: Artromskiy/DeltaMaths
+          path: Maths
       - name: Install .NET 8
         uses: actions/setup-dotnet@v6
         with:
@@ -58,7 +63,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ${{ env.NUGET_PACKAGES }}
-          key: delta-engine-nuget-${{ runner.os }}-${{ hashFiles('DeltaEngine/Source/Delta.Engine.Integration/**/*.csproj', 'DeltaEngine/Source/Delta.Engine.Integration.Tests/**/*.csproj') }}
+          key: delta-engine-nuget-${{ runner.os }}-${{ hashFiles('DeltaEngine/Source/Delta.Engine.Integration/**/*.csproj', 'DeltaEngine/Source/Delta.Engine.Integration.Tests/**/*.csproj', 'Maths/Delta.Maths.csproj') }}
           restore-keys: delta-engine-nuget-${{ runner.os }}-
       - name: Restore and build stable headless contracts
         working-directory: DeltaEngine
