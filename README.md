@@ -2,7 +2,7 @@
 
 > Current development direction: the engine is being split into standalone
 > `DeltaECS` and `DeltaRender` projects. The target stack is SDL3-CS, Vulkan,
-> MoltenVK on macOS, a Delta-owned XAML UI, GLSH, and Delta.Maths. Avalonia and
+> MoltenVK on macOS, a Delta-owned XAML UI, Delta.Shader, and Delta.Maths. Avalonia and
 > Arch remain only as migration dependencies in the existing source. See the
 > [architecture roadmap](docs/architecture-roadmap.md) before making new engine
 > changes.
@@ -12,7 +12,7 @@ This is the very beginning of development and, like any other similar project, i
 
 **For those who stumbled upon this repository and think it's gone**
 
-I realized that the current implementation heavily depends on Avalonia, since the engine is ultimately forced to work in the same thread with it, or very tightly synchronize with the ui thread, in addition, the render from the camera has to be copied from the GPU to the CPU to display it inside the ui of Avalonia. This leads to difficulties in development and support, and to the fact that a lot of processor time is spent copying the render. To solve this problem, I wanted to write a ui renderer on xaml and the current renderer, but it was necessary to standardize the shaders and the graphics pipeline in general. For this, I started the GLSH project, which is a mellinoe/ShaderGen recreated from scratch specifically for Vulcan. At the moment, I am working on developing the game and simultaneously developing and improving the code for GLSH.
+I realized that the current implementation heavily depends on Avalonia, since the engine is ultimately forced to work in the same thread with it, or very tightly synchronize with the ui thread, in addition, the render from the camera has to be copied from the GPU to the CPU to display it inside the ui of Avalonia. This leads to difficulties in development and support, and to the fact that a lot of processor time is spent copying the render. To solve this problem, I wanted to write a ui renderer on xaml and the current renderer, but it was necessary to standardize the shaders and the graphics pipeline in general. For this, I started the Delta.Shader project, which is a mellinoe/ShaderGen recreated from scratch specifically for Vulcan. At the moment, I am working on developing the game and simultaneously developing and improving the code for Delta.Shader.
 
 **Motivation**
 
@@ -38,3 +38,37 @@ Editor wip (old one using MAUI)
 
 Here's fourth letter :) (it was at the very beginning)
 ![image](https://github.com/Artromskiy/DeltaEngine/assets/47901401/442aabe0-061f-4497-aec7-f45e5c2b7bb1)
+
+
+## CI, tests, and benchmarks
+
+The GitHub Actions workflow is [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+Pull requests and pushes to `main` build the stable headless Integration boundary
+in Release and run its correctness tests; they do not record performance numbers.
+Measured benchmarks run only from **Actions → Build, tests and benchmarks → Run
+workflow** with `run_benchmarks=true`. Results are uploaded from
+`artifacts/benchmarks` for 30 days.
+
+Repository conventions:
+
+- correctness projects are named `*.Tests.csproj`; projects using
+  `Microsoft.NET.Test.Sdk` run through `dotnet test`, while custom executable
+  harnesses must be listed explicitly in the workflow and return a non-zero exit
+  code on failure;
+- BenchmarkDotNet projects are named `*.Benchmarks.csproj`; this filename is how
+  the workflow discovers them;
+- their entry point must forward CLI arguments with
+  `BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args)`;
+- mark the Delta implementation with `[Benchmark(Baseline = true)]` within every
+  comparable benchmark category; use exactly one baseline per category;
+- add sibling repositories to the checkout steps whenever a
+  `ProjectReference` escapes this repository.
+
+A benchmark added without the naming convention or without CLI argument
+forwarding is not registered and must not be treated as CI coverage. Shared
+GitHub runners are suitable for comparisons within one run, not for small
+cross-run regression claims.
+
+The legacy engine/Arch analyzer graph is still being migrated after renderer
+removal. Consequently, the existing engine benchmark project is manual-only
+until that graph builds cleanly again; it is not part of the automatic PR gate.

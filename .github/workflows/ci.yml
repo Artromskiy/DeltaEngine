@@ -1,0 +1,130 @@
+name: Build, tests and benchmarks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_benchmarks:
+        description: Run registered BenchmarkDotNet projects
+        required: true
+        default: false
+        type: boolean
+      filter:
+        description: BenchmarkDotNet filter
+        required: true
+        default: "*"
+        type: string
+      warmup_count:
+        required: true
+        default: 3
+        type: number
+      iteration_count:
+        required: true
+        default: 5
+        type: number
+      launch_count:
+        required: true
+        default: 1
+        type: number
+
+permissions:
+  contents: read
+
+concurrency:
+  group: delta-engine-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: 1
+  NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout DeltaEngine
+        uses: actions/checkout@v7
+        with:
+          path: DeltaEngine
+      - name: Install .NET 8
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+      - name: Cache NuGet packages
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: delta-engine-nuget-${{ runner.os }}-${{ hashFiles('DeltaEngine/Source/Delta.Engine.Integration/**/*.csproj', 'DeltaEngine/Source/Delta.Engine.Integration.Tests/**/*.csproj') }}
+          restore-keys: delta-engine-nuget-${{ runner.os }}-
+      - name: Restore and build stable headless contracts
+        working-directory: DeltaEngine
+        run: |
+          dotnet restore Source/Delta.Engine.Integration.Tests/Delta.Engine.Integration.Tests.csproj
+          dotnet build Source/Delta.Engine.Integration.Tests/Delta.Engine.Integration.Tests.csproj -c Release --no-restore
+      - name: Run tests
+        working-directory: DeltaEngine
+        run: dotnet test Source/Delta.Engine.Integration.Tests/Delta.Engine.Integration.Tests.csproj -c Release --no-build --no-restore
+
+  benchmarks:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_benchmarks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    env:
+      FILTER: ${{ inputs.filter || '*' }}
+      WARMUP_COUNT: ${{ inputs.warmup_count || 3 }}
+      ITERATION_COUNT: ${{ inputs.iteration_count || 5 }}
+      LAUNCH_COUNT: ${{ inputs.launch_count || 1 }}
+    steps:
+      - name: Checkout DeltaEngine
+        uses: actions/checkout@v7
+        with:
+          path: DeltaEngine
+      - name: Checkout Delta.Maths
+        uses: actions/checkout@v7
+        with:
+          repository: Artromskiy/Delta.Maths
+          path: Maths
+      - name: Install .NET 8
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+      - name: Run registered benchmarks
+        working-directory: DeltaEngine
+        shell: bash
+        run: |
+          mkdir -p artifacts/benchmarks
+          mapfile -t projects < <(find . -type f -name '*.Benchmarks.csproj' | sort)
+          if [ ${#projects[@]} -eq 0 ]; then
+            echo 'No *.Benchmarks.csproj is registered.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          for project in "${projects[@]}"; do
+            dotnet run --project "$project" -c Release -- \
+              --filter "$FILTER" \
+              --warmupCount "$WARMUP_COUNT" \
+              --iterationCount "$ITERATION_COUNT" \
+              --launchCount "$LAUNCH_COUNT" \
+              --exporters json csv markdown github \
+              --artifacts artifacts/benchmarks
+          done
+      - name: Add reports to workflow summary
+        if: always()
+        working-directory: DeltaEngine
+        shell: bash
+        run: |
+          while IFS= read -r report; do
+            echo "## $(basename "$report")" >> "$GITHUB_STEP_SUMMARY"
+            sed -n '1,180p' "$report" >> "$GITHUB_STEP_SUMMARY"
+          done < <(find artifacts/benchmarks -type f -name '*-report-github.md' | sort)
+      - name: Upload benchmark artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: delta-engine-benchmarks-${{ runner.arch }}-${{ github.run_number }}
+          path: DeltaEngine/artifacts/benchmarks
+          if-no-files-found: warn
+          retention-days: 30

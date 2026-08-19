@@ -5,9 +5,9 @@ path. It consumes the existing checked-in SPIR-V artifact used by the
 Delta.Render compute smoke fixture; `fixtures/compute_double.comp` records the
 shader source/provenance. No Vulkan implementation is duplicated in DeltaEngine.
 
-There is currently no checked-in `.spv` artifact under GLSH in the workspace, so
-this sample does not claim to run GLSH emission at build time. The exact future
-GLSH hookup is the `byte[]`/`ReadOnlySpan<byte>` passed to
+There is currently no checked-in `.spv` artifact under Delta.Shader in the workspace, so
+this sample does not claim to run Delta.Shader emission at build time. The exact future
+Delta.Shader hookup is the `byte[]`/`ReadOnlySpan<byte>` passed to
 `IComputeDevice.CreateComputePipeline`; replacing the fixture producer there
 does not require changing the renderer or the compute flow.
 

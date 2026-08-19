@@ -11,7 +11,7 @@ renderer-neutral boundary:
   headless engine/editor/game runs.
 
 The core `Delta.Engine` project no longer references Vulkan, Silk.NET Vulkan,
-Silk.NET Windowing, GLSH, or `Delta.Render`. Runtime context creation uses
+Silk.NET Windowing, Delta.Shader, or `Delta.Render`. Runtime context creation uses
 `NullGraphicsModule` for both headless and the currently-unimplemented
 windowed path. SDL3-CS platform ownership remains outside this legacy core
 layer and is not replaced here.

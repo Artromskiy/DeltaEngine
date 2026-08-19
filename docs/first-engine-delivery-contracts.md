@@ -37,7 +37,7 @@ so project, namespace, and artifact identities agree.
 | Vulkan/graphics wrappers | `Silk.NET.Vulkan`, `Silk.NET.Vulkan.Extensions.*` and `Silk.NET.Windowing` in `Source/Delta.Engine/Delta.Engine.csproj` | Kept for compatibility in legacy renderer/runtime | `DeltaRender` should provide SDL3 + Vulkan/MoltenVK implementation through renderer-facing contracts |
 | Renderer windowed stack | `Delta.Engine/Rendering` classes (`Windowed*`, `Headless*`) | Present and compile-only in this pass | Replace by `DeltaRender` adapter + sample surface/present |
 | Editor composition | `Avalonia` packages in `Source/Delta.Engine.Editor/Delta.Engine.Editor.csproj` | Kept while migration is incremental | `Delta`-owned XAML runtime and editor UI should replace direct Avalonia usage later |
-| Math/shader tooling | `Delta.Maths` and GLSH are external references outside this repo | `Delta.Maths` project/API available | Runtime math now consumes `Delta.Maths`; GLSH remains an adapter boundary |
+| Math/shader tooling | `Delta.Maths` and Delta.Shader are external references outside this repo | `Delta.Maths` project/API available | Runtime math now consumes `Delta.Maths`; Delta.Shader remains an adapter boundary |
 
 ## Engine-facing contracts added in this pass
 
@@ -187,12 +187,12 @@ These adapters are intentionally minimal and are only used as migration bridges 
   `IEngineRenderFrameSink` before forwarding the frame. This is still an adapter boundary;
   it is not the permanent `RenderPacket` API.
 - `IEngineShaderModuleSource` is the shader-owner boundary. It exchanges opaque module bytes
-  by `EngineShaderId`; GLSH reflection/compiler types stay inside the shader adapter.
+  by `EngineShaderId`; Delta.Shader reflection/compiler types stay inside the shader adapter.
 
 The dependency direction is:
 
 `Delta.Maths` -> `Delta.Engine` runtime data; `Delta.Engine.Integration` contains only neutral
-contracts; future `Delta.ECS`, `Delta.Render`, and `Delta.Shaders` adapters may depend on the
+contracts; future `Delta.ECS`, `Delta.Render`, and `Delta.Shader` adapters may depend on the
 integration contracts, but the integration project must not depend on any of them. The
 legacy `Delta.Engine` project may reference the integration project for coexistence adapters;
 the new sibling projects must not reference the legacy project.

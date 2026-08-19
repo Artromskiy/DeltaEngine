@@ -15,14 +15,14 @@ rewrite.
 - Use a Delta-owned XAML dialect for UI authoring.
 - Replace Arch with DeltaECS after the standalone ECS passes correctness and
   performance gates.
-- Use GLSH and Delta.Maths as the shader authoring/math path.
+- Use Delta.Shader and Delta.Maths as the shader authoring/math path.
 
 ## Dependency direction
 
 ```text
 Delta.Maths
      ^
-GLSH ---------> SPIR-V + manifest
+Delta.Shader ---------> SPIR-V + manifest
                     |
 DeltaECS       DeltaRender
       \          /
@@ -31,7 +31,7 @@ DeltaECS       DeltaRender
        Game / Editor host
 ```
 
-Delta.Engine may depend on DeltaECS, DeltaRender, GLSH runtime contracts, and
+Delta.Engine may depend on DeltaECS, DeltaRender, Delta.Shader runtime contracts, and
 Delta.Maths. Those standalone projects must not depend on Delta.Engine.
 
 ## Workstream ownership
@@ -40,7 +40,7 @@ Delta.Maths. Those standalone projects must not depend on Delta.Engine.
   benchmarks.
 - `DeltaRender/`: SDL3 platform layer, Vulkan/MoltenVK, render graph, UI runtime,
   and XAML.
-- `GLSH/`: shader compiler, analyzers, SPIR-V artifacts, and reflection manifest.
+- `Delta.Shader/`: shader compiler, analyzers, SPIR-V artifacts, and reflection manifest.
 - `Delta.Engine/`: runtime composition, scenes, assets, serialization, module
   lifecycle, editor/game hosts, and migration adapters.
 
@@ -76,7 +76,7 @@ or XAML layout/rendering.
    DeltaECS supplies an equivalent adapter.
 6. Replace Avalonia editor panels with Delta XAML controls incrementally. The
    Vulkan viewport remains a GPU image and is composited directly.
-7. Move shader assets to GLSH manifests/SPIR-V while preserving a fixture path
+7. Move shader assets to Delta.Shader manifests/SPIR-V while preserving a fixture path
    for hand-authored shaders during transition.
 8. Delete old adapters and dependencies only after feature and test parity.
 
