@@ -65,11 +65,22 @@ public sealed class EngineHost(
         AddStage(EngineLifecycleStage.WorldUpdated, frameNumber);
         _worldService.Update(context);
 
-        AddStage(EngineLifecycleStage.RenderUpdated, frameNumber);
-        _renderService.Render(context);
+        if (_uiService is IEngineUiFrameSource frameSource)
+        {
+            AddStage(EngineLifecycleStage.UiUpdated, frameNumber);
+            frameSource.PrepareFrame(context);
 
-        AddStage(EngineLifecycleStage.UiUpdated, frameNumber);
-        _uiService.Update(context);
+            AddStage(EngineLifecycleStage.RenderUpdated, frameNumber);
+            _renderService.Render(context);
+        }
+        else
+        {
+            AddStage(EngineLifecycleStage.RenderUpdated, frameNumber);
+            _renderService.Render(context);
+
+            AddStage(EngineLifecycleStage.UiUpdated, frameNumber);
+            _uiService.Update(context);
+        }
 
         AddStage(EngineLifecycleStage.FrameCompleted, frameNumber);
         _completedFrames++;
