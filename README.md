@@ -1,74 +1,49 @@
-# Delta Engine
+# DeltaEngine
 
-> Current development direction: the engine is being split into standalone
-> `DeltaECS` and `DeltaRender` projects. The target stack is SDL3-CS, Vulkan,
-> MoltenVK on macOS, a Delta-owned XAML UI, DeltaShader, and Delta.Maths. Avalonia and
-> Arch remain only as migration dependencies in the existing source. See the
-> [architecture roadmap](docs/architecture-roadmap.md) before making new engine
-> changes.
+Composition and runtime layer for the Furnace stack. The target is one C# game
+and editor runtime using Delta.Maths, DeltaECS, DeltaShader, DeltaRender,
+DeltaXAML and SDL3-CS.
 
-This repository contains the editor and game engine project.
-This is the very beginning of development and, like any other similar project, it can cease to exist even without becoming a minimum viable product. At least we tried.
+## Ownership
 
-**For those who stumbled upon this repository and think it's gone**
+DeltaEngine owns frame timing, SDL event polling, input translation, close and
+resize handling, scene/runtime orchestration and adapters between subsystems.
+It does not own Vulkan resource implementation, shader compilation, retained UI
+layout, or ECS storage.
 
-I realized that the current implementation heavily depends on Avalonia, since the engine is ultimately forced to work in the same thread with it, or very tightly synchronize with the ui thread, in addition, the render from the camera has to be copied from the GPU to the CPU to display it inside the ui of Avalonia. This leads to difficulties in development and support, and to the fact that a lot of processor time is spent copying the render. To solve this problem, I wanted to write a ui renderer on xaml and the current renderer, but it was necessary to standardize the shaders and the graphics pipeline in general. For this, I started the DeltaShader project, which is a mellinoe/ShaderGen recreated from scratch specifically for Vulkan. At the moment, I am working on developing the game and simultaneously developing and improving the code for DeltaShader.
+```text
+DeltaEngine host
+  -> DeltaECS simulation
+  -> DeltaXAML frame/layout/input
+  -> DeltaRender extraction and presentation
+```
 
-**Motivation**
+Headless `Delta.Engine.Integration` remains independent of SDL, Vulkan,
+DeltaRender and DeltaShader. Editor-owned Roslyn scripting is being extracted to
+the sibling DeltaEditor repository. Avalonia and Arch are migration-only code;
+new runtime work must not deepen those dependencies.
 
-In my opinion, a game engine does not have to be stuffed with AAA graphics, a particle system, realistic physics, etc. All I need is a simple engine and a simple editor.
+## Current integration priorities
 
-**By a simple engine** I mean the absence of C++ mixed with a scripting language. One graphic backend and 3D and UI renderer. Simple user input system and sound. Serialization, scenes. And a pipeline for executing user code.
+1. Compose real ShaderArtifacts and DeltaRender in the windowed host.
+2. Adapt DeltaXAML draw lists without moving UI ownership into the engine.
+3. Preserve a headless integration path for tests and tooling.
+4. Remove compatibility copies only after all consumers migrate.
 
-**By a simple editor** I mean the ability to import 3D models, images, sounds. Import text files and various data in the form of json. Ability to create JSON based on JSONSchema from user classes. Ability to create and edit prefabs and scenes. A simple cross-platform build without situations where something always crashes, doesn’t work, works but not like that, but not everywhere, etc.
+Hierarchy redesign is not part of the current split.
 
-**Afterword**
+## Build and test
 
-This will be enough to create games. AAA graphics or cool shaders and particles are something that can always be added and changed, but cutting out a couple of graphic backends or a scripting language from the engine is clearly not easier.
-There's also some [notes](https://github.com/Artromskiy/DeltaEngine/blob/main/Notes.md) about possible benefits of creating such an engine.
+```bash
+dotnet build Source/Delta.Engine.Windowed/Delta.Engine.Windowed.csproj \
+  -c Release --no-restore --disable-build-servers -m:1 \
+  /p:UseSharedCompilation=false
+dotnet build Source/Delta.Engine.slnx -c Release --no-restore \
+  --disable-build-servers -m:1 /p:UseSharedCompilation=false -v:minimal
+dotnet test Source/Delta.Engine.slnx -c Release --no-build --no-restore \
+  --disable-build-servers -m:1
+```
 
-To know which libraries and other third-party solutions used see [**Third-party**](https://github.com/Artromskiy/DeltaEngine/blob/main/Third-party.md).
-
-Here's editor app:
-
-![image](https://github.com/user-attachments/assets/0f48b8f4-78c7-4ab7-914f-5a7e9ff61160)
-
-Editor wip (old one using MAUI)
-![image](https://github.com/Artromskiy/DeltaEngine/assets/47901401/c9ef1b42-5504-4191-b614-07a620dd166a)
-
-Here's fourth letter :) (it was at the very beginning)
-![image](https://github.com/Artromskiy/DeltaEngine/assets/47901401/442aabe0-061f-4497-aec7-f45e5c2b7bb1)
-
-
-## CI, tests, and benchmarks
-
-The GitHub Actions workflow is [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
-Pull requests and pushes to `main` build the stable headless Integration boundary
-in Release and run its correctness tests; they do not record performance numbers.
-Measured benchmarks run only from **Actions → Build, tests and benchmarks → Run
-workflow** with `run_benchmarks=true`. Results are uploaded from
-`artifacts/benchmarks` for 30 days.
-
-Repository conventions:
-
-- correctness projects are named `*.Tests.csproj`; projects using
-  `Microsoft.NET.Test.Sdk` run through `dotnet test`, while custom executable
-  harnesses must be listed explicitly in the workflow and return a non-zero exit
-  code on failure;
-- BenchmarkDotNet projects are named `*.Benchmarks.csproj`; this filename is how
-  the workflow discovers them;
-- their entry point must forward CLI arguments with
-  `BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args)`;
-- mark the Delta implementation with `[Benchmark(Baseline = true)]` within every
-  comparable benchmark category; use exactly one baseline per category;
-- add sibling repositories to the checkout steps whenever a
-  `ProjectReference` escapes this repository.
-
-A benchmark added without the naming convention or without CLI argument
-forwarding is not registered and must not be treated as CI coverage. Shared
-GitHub runners are suitable for comparisons within one run, not for small
-cross-run regression claims.
-
-The legacy engine/Arch analyzer graph is still being migrated after renderer
-removal. Consequently, the existing engine benchmark project is manual-only
-until that graph builds cleanly again; it is not part of the automatic PR gate.
+Known legacy warnings include nullable/Avalonia diagnostics, the old generator
+dependency load warning, and ImageSharp advisories. Keep dependency upgrades in
+separate changes. Benchmarks are manual until the legacy graph is removed.
