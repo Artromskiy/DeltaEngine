@@ -58,7 +58,8 @@ public readonly record struct InputSnapshot(
     int FrameNumber,
     bool ExitRequested = false,
     EngineSurfaceSnapshot Surface = default,
-    ReadOnlyMemory<EngineInputEvent> Events = default);
+    ReadOnlyMemory<EngineInputEvent> Events = default,
+    ReadOnlyMemory<EngineUiInputPacket> UiPackets = default);
 
 public readonly record struct EngineFrameContext(
     int FrameNumber,
