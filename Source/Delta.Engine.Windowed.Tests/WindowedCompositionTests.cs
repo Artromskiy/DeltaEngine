@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
+using System.Text.Json;
 using Delta.Engine.Integration;
 using Delta.Engine.Windowed;
 using Delta.Render.Core;
@@ -46,6 +48,38 @@ public sealed class WindowedCompositionTests
         var renderMethods = typeof(IEngineRenderService).GetMethods().Select(static method => method.Name).ToArray();
 
         Assert.DoesNotContain(nameof(IEngineInputService.PollInput), renderMethods);
+    }
+
+    [Fact]
+    public void Ui_provider_selects_generated_ui_pair_with_matching_push_constant_metadata()
+    {
+        var fullscreen = WindowShaderArtifactSelection.For(false);
+        var ui = WindowShaderArtifactSelection.For(true);
+
+        Assert.Equal("fullscreen-rounded-rectangle.vert", fullscreen.VertexName);
+        Assert.Equal("fullscreen-rounded-rectangle.frag", fullscreen.FragmentName);
+        Assert.Equal("ui-panel.vert", ui.VertexName);
+        Assert.Equal("ui-panel.frag", ui.FragmentName);
+        Assert.True(ui.UsesUiPushConstants);
+        Assert.False(fullscreen.UsesUiPushConstants);
+
+        var fullscreenVertex = ReadManifest(fullscreen.VertexName);
+        var fullscreenFragment = ReadManifest(fullscreen.FragmentName);
+        var uiVertex = ReadManifest(ui.VertexName);
+        var uiFragment = ReadManifest(ui.FragmentName);
+
+        Assert.Equal(Delta.Shader.Abstractions.ShaderStage.Vertex, uiVertex.Stage);
+        Assert.Equal(Delta.Shader.Abstractions.ShaderStage.Fragment, uiFragment.Stage);
+        Assert.Equal(uiVertex.PushConstants[0].Size, uiFragment.PushConstants[0].Size);
+        Assert.True(fullscreenVertex.PushConstants.Count == 0);
+        Assert.NotEqual(fullscreenFragment.PushConstants[0].Size, uiFragment.PushConstants[0].Size);
+    }
+
+    private static Delta.Shader.Abstractions.ShaderAbiManifest ReadManifest(string shaderName)
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "shaders", shaderName + ".shader.json");
+        return JsonSerializer.Deserialize<Delta.Shader.Abstractions.ShaderAbiManifest>(File.ReadAllText(path))
+            ?? throw new InvalidDataException(path);
     }
 
     private sealed class FakeInput(List<string> calls) : IEnginePlatformShell

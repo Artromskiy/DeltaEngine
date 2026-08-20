@@ -147,6 +147,25 @@ public sealed class Sdl3FrameClock : IEngineFrameClock
     }
 }
 
+public readonly record struct WindowShaderArtifactSelection(
+    string VertexName,
+    string FragmentName,
+    bool UsesUiPushConstants)
+{
+    public static WindowShaderArtifactSelection Fullscreen => new(
+        "fullscreen-rounded-rectangle.vert",
+        "fullscreen-rounded-rectangle.frag",
+        false);
+
+    public static WindowShaderArtifactSelection UiPanel => new(
+        "ui-panel.vert",
+        "ui-panel.frag",
+        true);
+
+    public static WindowShaderArtifactSelection For(bool hasUiProvider)
+        => hasUiProvider ? UiPanel : Fullscreen;
+}
+
 public sealed class VulkanWindowRenderService : IEngineRenderService
 {
     private readonly Sdl3PlatformShell _platform;
@@ -172,8 +191,9 @@ public sealed class VulkanWindowRenderService : IEngineRenderService
     {
         ThrowIfDisposed();
         _session = _renderer.CreateWindowSession(_platform.Window);
-        var vertex = LoadShaderArtifact("fullscreen-rounded-rectangle.vert");
-        var fragment = LoadShaderArtifact("fullscreen-rounded-rectangle.frag");
+        var selection = WindowShaderArtifactSelection.For(_uiDrawListProvider is not null);
+        var vertex = LoadShaderArtifact(selection.VertexName);
+        var fragment = LoadShaderArtifact(selection.FragmentName);
         var program = new GraphicsShaderProgram(vertex, fragment);
         _graphicsPipeline = _session.CreateGraphicsPipeline(in program);
         _lastSurface = _platform.Surface;

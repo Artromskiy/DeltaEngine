@@ -12,4 +12,10 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.5.8" />
     <ProjectReference Include="..\Delta.Engine.Windowed\Delta.Engine.Windowed.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\..\..\DeltaRender\samples\Delta.Render.Smoke\shaders\fullscreen-rounded-rectangle.vert.shader.json" Link="shaders\fullscreen-rounded-rectangle.vert.shader.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\..\DeltaRender\samples\Delta.Render.Smoke\shaders\fullscreen-rounded-rectangle.frag.shader.json" Link="shaders\fullscreen-rounded-rectangle.frag.shader.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\..\DeltaRender\samples\Delta.Render.Smoke\shaders\ui-panel.vert.shader.json" Link="shaders\ui-panel.vert.shader.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\..\DeltaRender\samples\Delta.Render.Smoke\shaders\ui-panel.frag.shader.json" Link="shaders\ui-panel.frag.shader.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

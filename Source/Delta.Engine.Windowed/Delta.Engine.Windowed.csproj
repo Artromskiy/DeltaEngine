@@ -31,5 +31,9 @@
     <Content Include="..\..\..\DeltaRender\samples\Delta.Render.Smoke\shaders\fullscreen-rounded-rectangle.vert.shader.json" Link="shaders\fullscreen-rounded-rectangle.vert.shader.json" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\..\DeltaRender\samples\Delta.Render.Smoke\shaders\fullscreen-rounded-rectangle.frag.spv" Link="shaders\fullscreen-rounded-rectangle.frag.spv" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\..\DeltaRender\samples\Delta.Render.Smoke\shaders\fullscreen-rounded-rectangle.frag.shader.json" Link="shaders\fullscreen-rounded-rectangle.frag.shader.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\..\DeltaRender\samples\Delta.Render.Smoke\shaders\ui-panel.vert.spv" Link="shaders\ui-panel.vert.spv" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\..\DeltaRender\samples\Delta.Render.Smoke\shaders\ui-panel.vert.shader.json" Link="shaders\ui-panel.vert.shader.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\..\DeltaRender\samples\Delta.Render.Smoke\shaders\ui-panel.frag.spv" Link="shaders\ui-panel.frag.spv" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\..\DeltaRender\samples\Delta.Render.Smoke\shaders\ui-panel.frag.shader.json" Link="shaders\ui-panel.frag.shader.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
