@@ -151,15 +151,21 @@ public sealed class VulkanWindowRenderService : IEngineRenderService
 {
     private readonly Sdl3PlatformShell _platform;
     private readonly VulkanRenderer _renderer;
+    private readonly IEngineUiDrawListProvider? _uiDrawListProvider;
     private IRenderWindowFrameSession? _session;
     private IGraphicsPipeline? _graphicsPipeline;
+    private UiQuad[] _uiQuads = [];
     private EngineSurfaceSnapshot _lastSurface;
     private bool _disposed;
 
-    public VulkanWindowRenderService(Sdl3PlatformShell platform, VulkanRenderer renderer)
+    public VulkanWindowRenderService(
+        Sdl3PlatformShell platform,
+        VulkanRenderer renderer,
+        IEngineUiDrawListProvider? uiDrawListProvider = null)
     {
         _platform = platform ?? throw new ArgumentNullException(nameof(platform));
         _renderer = renderer ?? throw new ArgumentNullException(nameof(renderer));
+        _uiDrawListProvider = uiDrawListProvider;
     }
 
     public void Initialize()
@@ -207,6 +213,40 @@ public sealed class VulkanWindowRenderService : IEngineRenderService
 
         var uniforms = FullscreenSdfShaderFixture.CreateUniforms(context.Surface, context.ElapsedSeconds);
         var parameters = new GraphicsFrameParameters(uniforms.Resolution.x, uniforms.Resolution.y, uniforms.TimeSeconds);
+
+        if (_uiDrawListProvider is not null)
+        {
+            var source = _uiDrawListProvider.CurrentDrawList.Span;
+            if (_uiQuads.Length < source.Length)
+            {
+                _uiQuads = new UiQuad[source.Length];
+            }
+
+            for (var index = 0; index < source.Length; index++)
+            {
+                var quad = source[index];
+                _uiQuads[index] = new UiQuad(
+                    quad.X, quad.Y, quad.Width, quad.Height,
+                    quad.Red, quad.Green, quad.Blue, quad.Alpha)
+                {
+                    Clip = new UiClipRect(quad.Clip.X, quad.Clip.Y, quad.Clip.Width, quad.Clip.Height)
+                };
+            }
+
+            var uiFrameSucceeded = _session.EndFrame(
+                in frameState,
+                _graphicsPipeline,
+                in parameters,
+                _uiQuads.AsSpan(0, source.Length),
+                ReadOnlySpan<RenderRecordChange>.Empty);
+            if (!uiFrameSucceeded)
+            {
+                throw new InvalidOperationException("Vulkan UI frame submission failed.");
+            }
+
+            return;
+        }
+
         var drawSucceeded = _session.DrawFullscreenTriangle(_graphicsPipeline, in parameters);
         var frameSucceeded = _session.EndFrame(in frameState, ReadOnlySpan<RenderRecordChange>.Empty);
         if (!drawSucceeded || !frameSucceeded)
