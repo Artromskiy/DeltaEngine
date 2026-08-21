@@ -25,10 +25,19 @@ new runtime work must not deepen those dependencies.
 
 ## Current integration priorities
 
-1. Compose real ShaderArtifacts and DeltaRender in the windowed host.
-2. Adapt DeltaXAML draw lists without moving UI ownership into the engine.
-3. Preserve a headless integration path for tests and tooling.
-4. Remove compatibility copies only after all consumers migrate.
+1. Translate SDL pointer, wheel, keyboard and UTF text events into neutral UI
+   packets; preserve a future IME composition boundary.
+2. Schedule the same selected-entity inspector frame across user systems,
+   DeltaXAML update/layout and DeltaRender submission.
+3. Expose neutral component/system discovery and scripting lifecycle contracts
+   while Roslyn and collectible loading remain owned by DeltaEditor.
+4. Preserve a headless integration path for scripting, inspector and tooling
+   tests; remove compatibility copies only after all consumers migrate.
+
+The colored XAML shell is complete. The active end-to-end target is the live
+component inspector in [`../EDITOR_UI_TODO.md`](../EDITOR_UI_TODO.md), P5 and
+P7-P8. Engine never renders glyphs, parses XAML or performs direct ECS field
+reflection in the frame loop.
 
 Hierarchy redesign is not part of the current split.
 
